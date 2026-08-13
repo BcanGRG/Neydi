@@ -9,7 +9,7 @@
 # uygulama modulu icin degil. Diger cikis yolu
 # android.builtInKotlin=false + android.newDsl=false, ki Google bunu "gecici
 # bypass" diye tanimliyor. KMP ekosistemi AGP 9'a gecene kadar 8.x'te kaliyoruz.
-agp = "8.13.2"
+agp = "9.3.1"
 kotlin = "2.4.10"
 composeMultiplatform = "1.11.1"          # Nav3 icin minimum 1.10
 # material3 CMP'de AYRI SURUMLENIYOR. compose.material3 kisayolu 1.11.1'i degil
@@ -22,9 +22,14 @@ ksp = "2.3.11"                            # KSP2 bagimsiz surumleme; Room baglan
 
 # --- Android ---
 androidMinSdk = "26"
-androidTargetSdk = "36"
-androidCompileSdk = "36"
-androidxActivityCompose = "1.12.0"
+androidTargetSdk = "37"
+androidCompileSdk = "37"
+# 1.12.4: modul bolunmesinden SONRA zorunlu oldu. Tek moduldeyken derleme ve
+# calisma zamani ayni classpath'ti ve kayma gorunmuyordu; bolununce
+# :androidApp 1.12.0'a derleyip 1.12.4 calistirdi ve setContent imzasi
+# degistigi icin uygulama acilista NoSuchMethodError ile coktu.
+# Grafigi 1.12.4'e ceken baska bir bagimlilik var; pini ona hizaliyoruz.
+androidxActivityCompose = "1.12.4"
 
 # --- Navigation 3 (CMP) ---
 # navigation3-runtime AndroidX'ten gelir ve zaten KMP.
@@ -33,7 +38,7 @@ navigation3Ui = "1.1.1"
 # lifecycle 2.11.0 DEGIL: AGP 9.1.0+ ve compileSdk 37 dayatiyor, AGP 8'de kalma
 # kararimizla cakisiyor. 2.10.0 zaten JetBrains'in CMP+Nav3 dokumaninda yazan surum.
 # Kural: CMP tarafinda "Maven'daki en son" degil, "JetBrains'in dokumanda yazdigi" alinir.
-lifecycle = "2.10.0"
+lifecycle = "2.11.0"
 
 # --- DI / async / serialization ---
 koin = "4.2.2"
@@ -119,6 +124,9 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
+# AGP 9'dan itibaren KMP modulu com.android.application UYGULAYAMAZ.
+# composeApp bu eklentiyle kutuphane olur; APK'yi ince :androidApp uretir.
+androidKmpLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
