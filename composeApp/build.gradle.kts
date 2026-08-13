@@ -70,6 +70,11 @@ kotlin {
     }
 }
 
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.neydi.app.resources"
+}
+
 android {
     namespace = "com.neydi.app"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()

@@ -100,13 +100,19 @@ fun NeydiTheme(
     val colorScheme = if (darkTheme) NeydiDarkColors else NeydiLightColors
     val extras = if (darkTheme) DarkExtraColors else LightExtraColors
 
+    // Font aileleri Compose Resources uzerinden @Composable olarak cozuluyor,
+    // o yuzden tipografi top-level val degil, burada kuruluyor.
+    val typography = rememberNeydiTypography()
+    val textStyles = rememberNeydiTextStyles()
+
     CompositionLocalProvider(
         LocalNeydiExtraColors provides extras,
+        LocalNeydiTextStyles provides textStyles,
         LocalIndication provides NeydiIndication,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = NeydiTypography,
+            typography = typography,
             shapes = NeydiShapes,
             content = content,
         )
