@@ -43,6 +43,12 @@ import androidx.room3.RoomDatabaseConstructor
 @ConstructedBy(NeydiDatabaseConstructor::class)
 abstract class NeydiDatabase : RoomDatabase() {
     abstract fun householdDao(): HouseholdDao
+    abstract fun memberDao(): MemberDao
+    abstract fun categoryDao(): CategoryDao
+    abstract fun catalogSeedDao(): CatalogSeedDao
+    abstract fun productDao(): ProductDao
+    abstract fun tripDao(): TripDao
+    abstract fun tripLineDao(): TripLineDao
 }
 
 /**
