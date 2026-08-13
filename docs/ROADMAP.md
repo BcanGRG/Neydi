@@ -2,7 +2,7 @@
 
 Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 2 / 67 — *Sırada **F1.1** (fontlar). Fiş ölçümü paralel izde, sende bekliyor.*
+**İlerleme:** 3 / 67 — *sırada **F1.6** (edge-to-edge), sonra **F3.1** (bileşen kütüphanesi — ilk gerçek görsel çıktı). Fiş ölçümü paralel izde, sende bekliyor.*
 
 ---
 
@@ -81,7 +81,7 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 
 ## Faz 1 — Temel borçlar
 
-- [ ] **1.1 — Fontları bundle et.** Plus Jakarta Sans variable (wght ekseni) + Fraunces **statik instance** (`opsz 72 · SOFT 30 · WONK 0 · wght 600`, `fontTools varLib.instancer` ile üretilir). Variable olarak bundle edilmez: CMP'de `FontVariation.Settings` iOS'ta güvenilir değil ve sessizce `opsz 14` varsayılanına düşer, 44sp'de yanlış görünür. → `Type.kt` TODO(font) kapanır.
+- [x] **1.1 — Fontları bundle et.** ✅ *Cihazda doğrulandı — Galaxy S10+, açık ve karanlık modda Fraunces başlık + Plus Jakarta Sans gövde, crash yok.* Plus Jakarta Sans **5 statik ağırlık** (400/500/600/700/800) + Fraunces statik instance (`opsz 72 · SOFT 30 · WONK 0 · wght 600`), hepsi `fontTools varLib.instancer` ile üretildi. **Değişiklik:** PJS de variable değil statik bundle edildi — `FontVariation.Settings` iOS'ta güvenilir değil ve Mac olmadığı için doğrulayamayız, statikte o risk tamamen yok. Türkçe glif kapsamı 6 dosyada da doğrulandı (`Ğğ İı Şş ÇçÖöÜü` tam). `Font()` Compose Resources'ta `@Composable` olduğu için tipografi top-level `val`'den `rememberNeydiTypography()`'ye taşındı; M3'te karşılığı olmayan stiller (`itemName`, `priceChip`, …) `LocalNeydiTextStyles` ile sağlanıyor. APK +0,27 MB. → `Type.kt` TODO(font) kapandı.
 - [ ] **1.2 — Kontrast birim testi** *(cihazsız)*. `Color.kt` token'ları üzerinden WCAG oranlarını hesaplayan test. Amber kuralı (accent ışık modunda 2.08:1, kenarlık zorunlu) regresyona karşı kilitlenir.
 - [ ] **1.3 — CMP deprecation temizliği.** `compose.runtime` / `foundation` / `material3` / `components.resources` / `preview` kısayolları yerine katalogdan açık koordinatlar. Şu an 7 deprecation uyarısı üretiyor.
 - [ ] **1.4 — Nav3 saveable back stack.** `rememberNavBackStack` + `SavedStateConfiguration` + polymorphic `SerializersModule`. iOS ve web'de reflection tabanlı serialization yok; bu yapılmazsa iOS'ta "back stack restore olmuyor" diye sessizce tezahür eder. → `App.kt` TODO(saveable) ve `Destinations.kt` TODO(ios-serialization) kapanır.
