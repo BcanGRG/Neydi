@@ -2,7 +2,7 @@
 
 Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 1 / 67 — *F0.0 tamamlandı (cihaz: Galaxy S10+, Android 12).*
+**İlerleme:** 2 / 67 — *F0.1 tamamlandı. Sırada F0.2: fişleri koşuma vermek (kimlik doğrulama gerekiyor).*
 
 ---
 
@@ -41,7 +41,7 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 > Araştırmanın "tek satır Kotlin yazmadan önce yapılacak en değerli iş" dediği yer. **Ürünün yarısının kapsamı buranın sonucuna bağlı.** Fiş satır adları güvenilir çıkmazsa Neydi bir fiyat takipçisi değil, harcama defteri olur — ve bunu 4. ayda değil şimdi öğrenmek gerekiyor.
 
 - [x] **0.0 — Cihaz kurulumu.** ✅ Samsung Galaxy S10+ (SM-G975F), **Android 12 / API 31**, 1080×2280 @ 420dpi. `installDebug` çalışıyor, uygulama crash'siz açılıyor, açık ve karanlık mod referans görüntüleri alındı. Tema doğrulandı: açık modda krem `#FBF7F2` + terracotta `#B34418`, karanlık modda `#13100E` + somon `#FF9166`. **İki hata yakalandı → F1.6.** (API 31 ayrıca F8.4 için önemli: Android 12+ SplashScreen API'si bu cihazda geçerli.)
-- [ ] **0.1 — Fiş test koşumu** *(cihazsız)*. `tools/receipt-eval/`: Türkçe fişe özel prompt + JSON şeması + skorlama script'i. `thinking` **kapalı** (varsayılan açık, maliyeti 2–3x yapar ve mobil yakalama akışına saniyeler ekler), structured output açık.
+- [x] **0.1 — Fiş test koşumu** *(cihazsız)*. ✅ `tools/receipt-eval/` — TypeScript (Node 24, derleme adımı yok; üretimdeki Cloudflare Worker de TS olacağı için istek şekli birebir aynı). Türkçe fiş prompt'u + structured output şeması + ad/fiyat **ayrı** skorlama + aritmetik kapısı. API şekli `claude-api` skill'inden doğrulandı ve **üç varsayımım yanlış çıktı**: (a) Claude Opus 5'te thinking **varsayılan açık**, ve `disabled` yalnızca `effort` ≤ `high` ile kabul ediliyor — `xhigh`/`max` ile 400; (b) structured output `output_config.format` ile veriliyor, `output_format` kullanımdan kalkmış; (c) şema `minimum`/`minLength` kabul etmiyor ve nullable alanlar `anyOf` ile yazılmak zorunda.
 - [ ] **0.2 — İlk ölçüm** *(cihazsız)*. Eldeki 2 fişi (farklı zincir) çalıştır. **Satır adı doğruluğunu fiyat doğruluğundan ayrı skorla**, zincir bazında raporla. Ad alanı, karşılaştırma özelliğinin ihtiyaç duyduğu ve başarısız olması beklenen alan.
 - [ ] **0.3 — Aritmetik değişmez** *(cihazsız)*. `Σ(satır) − İNDİRİM = TOPLAM`, ±0,05 TL tolerans (tartılı ürün yuvarlaması). Araştırmanın ilk yazdığı `+KDV` formülü **yanlıştı** — Türkiye'de perakende fiyatları kanunen KDV dahil, TOPKDV toplamın içindeki verginin dökümü. O formül %100 fişi manuel düzeltmeye yollardı.
 - [ ] **0.4 — Kanonik ürün kimliği** *(cihazsız)*. Çıkan satır adlarını marketfiyati `/api/v2/search` ile bulanık eşleştir. `User-Agent` header'ı zorunlu — yoksa endpoint 404 döner. Barkod yolu **yok**: `searchByIdentity` gerçek EAN-13'lerde 6/6 boş döndü, katalogda barkod alanı hiç bulunmuyor.

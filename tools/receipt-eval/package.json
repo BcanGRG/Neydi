@@ -1,0 +1,16 @@
+{
+  "name": "neydi-receipt-eval",
+  "private": true,
+  "type": "module",
+  "description": "F0.1 - Turk market fisi cikarim dogruluk kosumu. Node 24 .ts dosyalarini dogrudan calistirir, derleme adimi yok.",
+  "engines": {
+    "node": ">=23"
+  },
+  "scripts": {
+    "extract": "node extract.ts",
+    "score": "node score.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0"
+  }
+}
