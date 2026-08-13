@@ -8,12 +8,35 @@ import androidx.room3.RoomDatabaseConstructor
 /**
  * Neydi'nin yerel veritabani. OFFLINE-FIRST: bu dosya kaynak, bulut kopya.
  *
- * F2.1'de tek entity var (Household). Kalan 15'i F2.2'de gelecek; bu adimin
- * isi zincirin ucundan ucuna calistigini kanitlamak - KSP her hedefte kod
- * uretiyor mu, veritabani cihazda gercekten aciliyor mu.
+ * 16 entity. Ortak sozlesme Conventions.kt'de - yeni tablo eklemeden ONCE oku.
+ *
+ * KISITLAR HENUZ YOK: UNIQUE(tripId, productId) ve
+ * UNIQUE(householdId, storeChain, rawTextNormalized) F2.3'te geliyor. O zamana
+ * kadar sema bunlari ZORLAMIYOR - iki es ayni urunu eklerse veritabani bugun
+ * kabul eder.
+ *
+ * Surum 1 ve henuz yayinlanmis veri yok, o yuzden F2.3 migration degil sema
+ * yenilemesi olacak.
  */
 @Database(
-    entities = [Household::class],
+    entities = [
+        Household::class,
+        Member::class,
+        Category::class,
+        CatalogSeed::class,
+        Product::class,
+        ProductAlias::class,
+        ProductStats::class,
+        Store::class,
+        Trip::class,
+        TripLine::class,
+        Receipt::class,
+        ReceiptLine::class,
+        PriceObservation::class,
+        SuggestionEvent::class,
+        PendingOp::class,
+        SyncMeta::class,
+    ],
     version = 1,
     exportSchema = true,
 )
