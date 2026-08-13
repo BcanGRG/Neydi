@@ -1,6 +1,7 @@
 package com.neydi.app.data.db
 
 import androidx.room3.Entity
+import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
 /**
@@ -52,7 +53,10 @@ enum class ReceiptStatus {
  * matchedProductId null + needsReview true = kullaniciya soruluyor. Tahmini
  * sessizce kabul etmek fiyat gecmisini kirletir.
  */
-@Entity(tableName = "receipt_line")
+@Entity(
+    tableName = "receipt_line",
+    indices = [Index(value = ["receiptId"]), Index(value = ["matchedProductId"])],
+)
 data class ReceiptLine(
     @PrimaryKey val id: String,
     val householdId: String,
@@ -84,7 +88,15 @@ data class ReceiptLine(
  * yakalayamayan bir fiyat hafizasi shrinkflation'i "fiyat sabit" diye rapor
  * eder - yani yalan soyler. PriceHint.PackChanged tam olarak buradan besleniyor.
  */
-@Entity(tableName = "price_observation")
+@Entity(
+    tableName = "price_observation",
+    indices = [
+        // "Bu urunu en son ne kadara aldik" ve trend cizimi bu index'ten gecer.
+        // observedAt DESC siralamasi icin urunle birlikte.
+        Index(value = ["productId", "observedAt"]),
+        Index(value = ["storeId"]),
+    ],
+)
 data class PriceObservation(
     @PrimaryKey val id: String,
     val householdId: String,

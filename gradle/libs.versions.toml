@@ -89,6 +89,7 @@ lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:l
 
 # Kotlin ekosistemi
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 
@@ -106,6 +107,10 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+# Host testleri JVM'de kosuyor ve sqlite-bundled'in ANDROID varyanti JNI'yi
+# cihazdan yukluyor -> "no sqliteJni in java.library.path". Masaustu native'leri
+# tasiyan jvm varyanti yalnizca test siniffina eklenir.
+sqlite-bundled-jvm = { module = "androidx.sqlite:sqlite-bundled-jvm", version.ref = "sqlite" }
 
 # --- Asagidakiler catalog'da hazir bekliyor, henuz build.gradle.kts'e eklenmedi ---
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
