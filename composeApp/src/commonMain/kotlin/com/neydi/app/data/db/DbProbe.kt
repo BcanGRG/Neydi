@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.neydi.app.data.catalog.tohumlaKatalog
 import kotlinx.coroutines.flow.first
 
 /**
@@ -34,9 +35,13 @@ fun rememberDbProbe(): String {
                     ),
                 )
             }
+            // Katalog tohumlamasi: ilk acilista yazar, sonrakilerde atlar.
+            val tohum = db.tohumlaKatalog()
+
             // Flow uzerinden oku: yalnizca yazma degil, invalidation da calisiyor mu.
             val gozlenen = dao.observeActive().first()
-            "hane: ${gozlenen?.name ?: "YOK"} · Flow gozlemi calisti"
+            val katalog = if (tohum.atlandi) "katalog zaten yuklu" else "katalog: ${tohum.urun} urun / ${tohum.kategori} kategori"
+            "hane: ${gozlenen?.name ?: "YOK"} · $katalog"
         }.getOrElse { "HATA: ${it::class.simpleName}: ${it.message}" }
     }
 
