@@ -1,0 +1,64 @@
+package com.neydi.app.ui.components
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.unit.dp
+import com.neydi.app.ui.theme.SizesExtra
+
+/**
+ * 24x16dp fiyat sparkline'i. El yazimi Canvas - kutuphane yok.
+ *
+ * Neden hazir grafik kutuphanesi degil: bu cizim bir polyline, ~30 satir.
+ * Bir bagimlilik eklemek tema kontrolunu kaybettirir, CMP'de iOS destegi
+ * belirsiz olur ve APK'ya kutuphane girer. Faz 5'teki buyuk fiyat grafigi de
+ * ayni sekilde Canvas'ta cizilecek.
+ *
+ * 2 GOZLEMIN ALTINDA HIC CIZILMEZ. Tek noktadan trend cikarmak bir yalandir;
+ * cagiran taraf zaten [PriceHint.Trend] kurmadan buraya gelemez ama bu bilesen
+ * de kendini korur.
+ */
+@Composable
+fun Sparkline(
+    values: List<Float>,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    if (values.size < 2) return
+
+    Canvas(modifier = modifier.size(SizesExtra.sparkline)) {
+        val min = values.min()
+        val max = values.max()
+        val span = (max - min).takeIf { it > 0f } ?: 1f
+        val stepX = size.width / (values.size - 1)
+        // 1dp'lik cizgi kalinliginin yarisi kadar ust/alt pay birak ki
+        // en yuksek ve en dusuk nokta kirpilmasin.
+        val inset = 1.dp.toPx()
+        val usableHeight = size.height - inset * 2
+
+        val points = values.mapIndexed { i, v ->
+            Offset(
+                x = i * stepX,
+                // Ekran koordinatinda y asagi buyur, fiyat yukari - ters cevir.
+                y = inset + usableHeight * (1f - (v - min) / span),
+            )
+        }
+
+        for (i in 0 until points.lastIndex) {
+            drawLine(
+                color = color,
+                start = points[i],
+                end = points[i + 1],
+                strokeWidth = 1.5.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+        }
+
+        // Son nokta vurgulanir - "su an buradayiz".
+        drawCircle(color = color, radius = 1.5.dp.toPx(), center = points.last())
+    }
+}

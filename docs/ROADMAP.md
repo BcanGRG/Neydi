@@ -2,7 +2,7 @@
 
 Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 4 / 67 — *sırada **F3.1** (bileşen kütüphanesi — ilk gerçek görsel çıktı). Fiş ölçümü paralel izde, sende bekliyor.*
+**İlerleme:** 5 / 67 — *sırada **F1.3** (CMP deprecation temizliği). Fiş ölçümü paralel izde, sende bekliyor.*
 
 ---
 
@@ -103,7 +103,7 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 >
 > **F3.1 yürütme sırasında öne alındı** (3. adım): bileşen kütüphanesi sahte veriyle çalışır, Room'u beklemez, ve cihazda görülen ilk gerçek görsel çıktıdır. Ekranın kalanı (F3.2–3.8) veri katmanından sonra gelir.
 
-- [ ] **3.1 — Bileşen kütüphanesi.** Liste satırı (normal / sabit / işaretli / eş-eklemiş), `PriceChip`, delta çipi, Canvas sparkline (24×16dp), öneri çipi, kategori başlığı, kategori kutucuğu + **iki-harf fallback**. Fallback'i **önce** yap — öğelerin %80'i onu gösterecek.
+- [x] **3.1 — Bileşen kütüphanesi.** Liste satırı (normal / sabit / işaretli / eş-eklemiş), `PriceChip`, delta çipi, Canvas sparkline (24×16dp), öneri çipi, kategori başlığı, kategori kutucuğu + **iki-harf fallback**. Fallback'i **önce** yap — öğelerin %80'i onu gösterecek.
 - [ ] **3.2 — Planlama modu.** Bölümler, reyon gruplama, "Her zamankiler" (%70 opaklık + raptiye — kullanıcı eklediklerinden görsel olarak hafif olmalı ki "uygulama ağzıma laf koydu" hissi vermesin), "Alındı" bölümü.
 - [ ] **3.3 — Hızlı ekleme.** Alta sabit alan, **skora göre sıralı** otomatik tamamlama (alfabetik **değil** — algılanan zekânın ~%40'ı bu, ve sıfıra mal oluyor), satırda son ödenen fiyat, inline miktar ayrıştırma (`2 kg elma`).
 - [ ] **3.4 — Pano yapıştırma.** Panoda 3+ satır varsa tek dokunuşluk çip. Mevcut WhatsApp akışını doğrudan değiştiren en ucuz 1. gün kazanımı.

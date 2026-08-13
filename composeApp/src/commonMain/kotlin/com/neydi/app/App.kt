@@ -9,12 +9,14 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.nav.AlisverisiBitir
 import com.neydi.app.nav.Ayarlar
+import com.neydi.app.nav.Bilesenler
 import com.neydi.app.nav.EksikOlabilir
 import com.neydi.app.nav.Gecmis
 import com.neydi.app.nav.Kurulum
 import com.neydi.app.nav.Liste
 import com.neydi.app.ui.screens.AlisverisiBitirScreen
 import com.neydi.app.ui.screens.AyarlarScreen
+import com.neydi.app.ui.screens.ComponentGalleryScreen
 import com.neydi.app.ui.screens.EksikOlabilirScreen
 import com.neydi.app.ui.screens.GecmisScreen
 import com.neydi.app.ui.screens.KurulumScreen
@@ -46,8 +48,11 @@ fun App() {
                         onAlisveriseCik = { git(EksikOlabilir) },
                         onGecmis = { git(Gecmis) },
                         onAyarlar = { git(Ayarlar) },
+                        onBilesenler = { git(Bilesenler) },
                     )
                 }
+                // GECICI: F3.2'de gercek Liste ekrani gelince kaldirilacak.
+                entry<Bilesenler> { ComponentGalleryScreen(onGeri = { geri() }) }
                 entry<EksikOlabilir> {
                     EksikOlabilirScreen(
                         onEkle = { git(AlisverisiBitir()) },

@@ -40,6 +40,14 @@ data object Ayarlar : NeydiKey
 data object Kurulum : NeydiKey
 
 /**
+ * GECICI GELISTIRICI HEDEFI. F3.2'de gercek Liste ekrani gelince bu hedef ve
+ * ComponentGallery.kt SILINECEK. IA'ya ait bir ekran degil - bilesenleri sahte
+ * veriyle cihazda gormek icin var.
+ */
+@Serializable
+data object Bilesenler : NeydiKey
+
+/**
  * TODO(ios-serialization): rememberNavBackStack varsayilan olarak JVM'de reflection
  * tabanli serialization kullaniyor. iOS ve web'de reflection YOK - orada back stack
  * kalicilığı icin SavedStateConfiguration'a acik bir SerializersModule verip
