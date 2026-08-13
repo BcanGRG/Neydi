@@ -1,8 +1,8 @@
 # Neydi — Yol Haritası
 
-Tek gerçek kaynak. 11 faz, 66 adım. Her adım bir PR.
+Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 0 / 66
+**İlerleme:** 1 / 67 — *F0.0 tamamlandı (cihaz: Galaxy S10+, Android 12).*
 
 ---
 
@@ -40,7 +40,7 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 
 > Araştırmanın "tek satır Kotlin yazmadan önce yapılacak en değerli iş" dediği yer. **Ürünün yarısının kapsamı buranın sonucuna bağlı.** Fiş satır adları güvenilir çıkmazsa Neydi bir fiyat takipçisi değil, harcama defteri olur — ve bunu 4. ayda değil şimdi öğrenmek gerekiyor.
 
-- [ ] **0.0 — Cihaz kurulumu.** Telefonda geliştirici seçenekleri + USB hata ayıklama; `adb devices` cihazı görüyor; `installDebug` ile mevcut iskelet kuruluyor. Placeholder ekranların ve temanın referans ekran görüntüsü alınır — sonraki her değişiklik buna göre karşılaştırılacak. Bu adım tüm yol haritasının doğrulama zeminini kurar.
+- [x] **0.0 — Cihaz kurulumu.** ✅ Samsung Galaxy S10+ (SM-G975F), **Android 12 / API 31**, 1080×2280 @ 420dpi. `installDebug` çalışıyor, uygulama crash'siz açılıyor, açık ve karanlık mod referans görüntüleri alındı. Tema doğrulandı: açık modda krem `#FBF7F2` + terracotta `#B34418`, karanlık modda `#13100E` + somon `#FF9166`. **İki hata yakalandı → F1.6.** (API 31 ayrıca F8.4 için önemli: Android 12+ SplashScreen API'si bu cihazda geçerli.)
 - [ ] **0.1 — Fiş test koşumu** *(cihazsız)*. `tools/receipt-eval/`: Türkçe fişe özel prompt + JSON şeması + skorlama script'i. `thinking` **kapalı** (varsayılan açık, maliyeti 2–3x yapar ve mobil yakalama akışına saniyeler ekler), structured output açık.
 - [ ] **0.2 — İlk ölçüm** *(cihazsız)*. Eldeki 2 fişi (farklı zincir) çalıştır. **Satır adı doğruluğunu fiyat doğruluğundan ayrı skorla**, zincir bazında raporla. Ad alanı, karşılaştırma özelliğinin ihtiyaç duyduğu ve başarısız olması beklenen alan.
 - [ ] **0.3 — Aritmetik değişmez** *(cihazsız)*. `Σ(satır) − İNDİRİM = TOPLAM`, ±0,05 TL tolerans (tartılı ürün yuvarlaması). Araştırmanın ilk yazdığı `+KDV` formülü **yanlıştı** — Türkiye'de perakende fiyatları kanunen KDV dahil, TOPKDV toplamın içindeki verginin dökümü. O formül %100 fişi manuel düzeltmeye yollardı.
@@ -54,6 +54,7 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 - [ ] **1.3 — CMP deprecation temizliği.** `compose.runtime` / `foundation` / `material3` / `components.resources` / `preview` kısayolları yerine katalogdan açık koordinatlar. Şu an 7 deprecation uyarısı üretiyor.
 - [ ] **1.4 — Nav3 saveable back stack.** `rememberNavBackStack` + `SavedStateConfiguration` + polymorphic `SerializersModule`. iOS ve web'de reflection tabanlı serialization yok; bu yapılmazsa iOS'ta "back stack restore olmuyor" diye sessizce tezahür eder. → `App.kt` TODO(saveable) ve `Destinations.kt` TODO(ios-serialization) kapanır.
 - [ ] **1.5 — `Modifier.pressable` zorunluluğu.** `Placeholders.kt`'deki ham `clickable`/`Button` kullanımlarını taşı. Ripple'ı global olarak kaldırdığımız için basılı hal sözleşmesi tek yerden uygulanmalı.
+- [ ] **1.6 — Edge-to-edge sistem çubukları.** *(F0.0'da cihazda bulundu.)* `enableEdgeToEdge()` çağrılıyor ama iki sorun var: **(a)** karanlık modda status bar ikonları koyu kalıyor, siyah zemin üstünde neredeyse okunmuyor; **(b)** alt gezinme çubuğu şeridi karanlık modda açık renk kalıyor, ekranın altında beyaz bant bırakıyor. `SystemBarStyle` temaya bağlanacak. Bu iş iOS'ta karşılığı olmayan bir alan — `preferredStatusBarStyle` common koddan set edilemiyor (bkz. F9.3), o yüzden çözüm baştan platform-ayrık kurgulanmalı.
 
 ## Faz 2 — Veri katmanı
 
