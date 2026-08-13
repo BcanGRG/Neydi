@@ -117,15 +117,20 @@ fun NeydiTheme(
     val typography = rememberNeydiTypography()
     val textStyles = rememberNeydiTextStyles()
 
-    CompositionLocalProvider(
-        LocalNeydiExtraColors provides extras,
-        LocalNeydiTextStyles provides textStyles,
-        LocalIndication provides NeydiIndication,
+    // SIRALAMA KRITIK: provider MaterialTheme'in ICINDE olmali, ustunde degil.
+    // MaterialTheme kendi govdesinde `LocalIndication provides ripple()` yapiyor
+    // (material3 1.9.0, MaterialTheme.kt:102). Ustte verilen LocalIndication
+    // content'e hic ulasmiyordu - ripple'i kaldirma karari yazildigindan beri
+    // yururlukte DEGILDI ve hicbir yerde hata vermedigi icin sessizce yanlisti.
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = typography,
+        shapes = NeydiShapes,
     ) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = typography,
-            shapes = NeydiShapes,
+        CompositionLocalProvider(
+            LocalNeydiExtraColors provides extras,
+            LocalNeydiTextStyles provides textStyles,
+            LocalIndication provides NeydiIndication,
             content = content,
         )
     }
