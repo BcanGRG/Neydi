@@ -16,7 +16,8 @@ kotlin {
     // uygulanamiyor. APK'yi ince :androidApp uretiyor, burasi kutuphane.
     // namespace :androidApp'inkinden FARKLI olmali - ayni olursa R siniflari catisir.
     // (Kotlin paketleri etkilenmiyor; namespace yalnizca R ve manifest icin.)
-    androidLibrary {
+    // 'androidLibrary' AGP 9.1'den beri deprecate; dogru ad 'android'.
+    android {
         namespace = "com.neydi.app.shared"
         compileSdk = libs.versions.androidCompileSdk.get().toInt()
         minSdk = libs.versions.androidMinSdk.get().toInt()
@@ -91,6 +92,13 @@ kotlin {
 
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+
+        // Host testleri gercek SQLite'a ihtiyac duyuyor; Android varyanti JNI'yi
+        // cihazdan yukledigi icin JVM'de yuklenemiyor. Yalnizca test siniffi.
+        getByName("androidHostTest").dependencies {
+            implementation(libs.sqlite.bundled.jvm)
         }
     }
 }

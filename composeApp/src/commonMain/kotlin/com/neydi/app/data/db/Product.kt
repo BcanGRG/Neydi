@@ -1,13 +1,24 @@
 package com.neydi.app.data.db
 
 import androidx.room3.Entity
+import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
 /**
  * Hanenin gercek urunu. CatalogSeed'den turemis olabilir de olmayabilir de -
  * kullanici katalogda olmayan bir sey yazdiginda seedId null kalir.
  */
-@Entity(tableName = "product")
+@Entity(
+    tableName = "product",
+    indices = [
+        // Yazarken tamamlama ve fis eslemesi matchKey uzerinden arar.
+        // UNIQUE DEGIL: ayni matchKey'e sahip iki urun mesru olabilir
+        // (farkli kategori, farkli ambalaj). Tekillestirme urun birlestirme
+        // isidir, sema kisiti degil.
+        Index(value = ["householdId", "matchKey"]),
+        Index(value = ["categoryId"]),
+    ],
+)
 data class Product(
     @PrimaryKey val id: String,
     val householdId: String,
@@ -41,7 +52,17 @@ data class Product(
  *
  * F2.3: UNIQUE(householdId, storeChain, rawTextNormalized)
  */
-@Entity(tableName = "product_alias")
+@Entity(
+    tableName = "product_alias",
+    indices = [
+        // Ayni zincirde ayni ham metin TEK bir urune baglanabilir. Ikinci bir
+        // esleme girerse hangisinin dogru oldugu belirsizlesir ve fiyat
+        // gecmisi iki urune bolunur.
+        Index(value = ["householdId", "storeChain", "rawTextNormalized"], unique = true),
+        // Fis okurken en sik sorgu: bu zincirde bu metin daha once gorulmus mu.
+        Index(value = ["productId"]),
+    ],
+)
 data class ProductAlias(
     @PrimaryKey val id: String,
     val householdId: String,
