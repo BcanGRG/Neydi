@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidKmpLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
@@ -12,7 +12,25 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
+    // com.android.application DEGIL: AGP 9'dan itibaren KMP moduluyle birlikte
+    // uygulanamiyor. APK'yi ince :androidApp uretiyor, burasi kutuphane.
+    // namespace :androidApp'inkinden FARKLI olmali - ayni olursa R siniflari catisir.
+    // (Kotlin paketleri etkilenmiyor; namespace yalnizca R ve manifest icin.)
+    androidLibrary {
+        namespace = "com.neydi.app.shared"
+        compileSdk = libs.versions.androidCompileSdk.get().toInt()
+        minSdk = libs.versions.androidMinSdk.get().toInt()
+
+        // ZORUNLU: kapaliyken Compose Resources (bu projede fontlar) calisma
+        // zamaninda patliyor. Kutuphane modulunde varsayilan KAPALI.
+        androidResources {
+            enable = true
+        }
+
+        withHostTestBuilder {}.configure {
+            isIncludeAndroidResources = true
+        }
+
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
@@ -89,8 +107,6 @@ room3 {
 // Preview'i CIZEN renderer. KMP kaynak kumelerinin debug/release varyanti yok,
 // o yuzden debugImplementation buradan verilir - release APK'ya girmemeli.
 dependencies {
-    debugImplementation(libs.compose.ui.tooling)
-
     // Room isleyicisi HER hedef icin ayri kaydedilir. Birini unutursan o
     // platformda uretilmis kod olmaz ve hata ancak o hedef derlenirken cikar -
     // yani iOS'unki Mac'e gecene kadar gorunmez. Hedef listesi yukaridaki
@@ -105,26 +121,3 @@ compose.resources {
     packageOfResClass = "com.neydi.app.resources"
 }
 
-android {
-    namespace = "com.neydi.app"
-    compileSdk = libs.versions.androidCompileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "com.neydi.app"
-        minSdk = libs.versions.androidMinSdk.get().toInt()
-        targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
-    }
-
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
