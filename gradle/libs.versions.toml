@@ -97,11 +97,12 @@ koin-android = { module = "io.insert-koin:koin-android" }
 # Android
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 
-# --- Asagidakiler catalog'da hazir bekliyor, henuz build.gradle.kts'e eklenmedi ---
+# Room 3 (androidx.room3 - 2.x DEGIL)
 room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
-room-gradle-plugin = { module = "androidx.room3:room3-gradle-plugin", version.ref = "room" }
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+
+# --- Asagidakiler catalog'da hazir bekliyor, henuz build.gradle.kts'e eklenmedi ---
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
@@ -123,3 +124,5 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMul
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+# Marker: androidx.room3:androidx.room3.gradle.plugin - Google Maven'de mevcut (dogrulandi).
+androidxRoom3 = { id = "androidx.room3", version.ref = "room" }

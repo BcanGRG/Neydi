@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.androidxRoom3)
 }
 
 kotlin {
@@ -59,6 +61,9 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            implementation(libs.room.runtime)
+            implementation(libs.sqlite.bundled)
         }
 
         androidMain.dependencies {
@@ -72,10 +77,27 @@ kotlin {
     }
 }
 
+// Semalar VERSIYON KONTROLUNE girer. Migration yazarken tek referans bunlar;
+// uretilmeyip commit edilmezse "sema neydi" sorusunun cevabi kalmaz.
+// EKLENTI ADI `room` DEGIL `room3`. Room 2 icin yazilmis her ornek `room { }`
+// diyor; Room 3'te plugin extension'i "room3" adiyla kaydediyor
+// (room3-gradle-plugin-3.0.1.jar, RoomGradlePlugin: ExtensionContainer.create("room3", ...)).
+room3 {
+    schemaDirectory("$projectDir/schemas")
+}
+
 // Preview'i CIZEN renderer. KMP kaynak kumelerinin debug/release varyanti yok,
 // o yuzden debugImplementation buradan verilir - release APK'ya girmemeli.
 dependencies {
     debugImplementation(libs.compose.ui.tooling)
+
+    // Room isleyicisi HER hedef icin ayri kaydedilir. Birini unutursan o
+    // platformda uretilmis kod olmaz ve hata ancak o hedef derlenirken cikar -
+    // yani iOS'unki Mac'e gecene kadar gorunmez. Hedef listesi yukaridaki
+    // kotlin { } blogundakiyle ayni kalmali.
+    add("kspAndroid", libs.room.compiler)
+    add("kspIosArm64", libs.room.compiler)
+    add("kspIosSimulatorArm64", libs.room.compiler)
 }
 
 compose.resources {
