@@ -40,6 +40,24 @@ Sırada: Claude Design çıktısının token'lara dönüştürülmesi → Room �
 
 **iOS Windows'ta derlenmez.** Hedefler `composeApp/build.gradle.kts` içinde tanımlı ve Gradle host'un desteklemediği task'leri çalıştırmıyor — Mac'e geçildiğinde tek satır değişiklik gerekmeden derlenmeye başlar.
 
+## Bilgi grafiği (graphify)
+
+Proje bir graphify bilgi grafiği taşıyor: **177 node · 236 edge · 17 topluluk**. Kod AST ile (ücretsiz), `docs/` semantik çıkarımla işlendi. Rapor `graphify-out/GRAPH_REPORT.md` altında ve repoda takip ediliyor; `graph.json` / `graph.html` yeniden üretilebilir olduğu için gitignore'da.
+
+Grafın en çok bağlantılı düğümü bir özellik değil, bir yöntem: `Adversaryal Doğrulama Ajanı` (15 kenar) — aynı doğrulama mekanizması hem isim elemesinde hem fizibilite kontrolünde çalıştığı için iki ayrı topluluğu birbirine bağlıyor.
+
+**Klondan sonra hook'u yeniden kur.** `.git/hooks/` versiyon kontrolüne girmez, yani başka bir makinede (örneğin iOS için Mac'e geçtiğinde) hook gelmez:
+
+```bash
+graphify hook install
+```
+
+⚠️ **Windows / PowerShell 5.1 tuzağı:** graphify'ın kurulum adımı durum dosyalarını (`graphify-out/.graphify_python`, `.graphify_root`) `Out-File -Encoding utf8` ile yazar; PS 5.1 bunlara **BOM** ekler ve hook yolu `﻿C:\...` diye okuyup `WinError 123` ile patlar. Aynı sınıf hata `local.properties` için de geçerli. Dosyaları BOM'suz yaz:
+
+```bash
+python -c "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.write_text(p.read_text(encoding='utf-8-sig'), encoding='utf-8')" graphify-out/.graphify_root
+```
+
 ## Bilinen ve kasıtlı borçlar
 
 - `App.kt` düz `mutableStateListOf` back stack kullanıyor. `rememberNavBackStack`'e geçmeden önce iOS için `SavedStateConfiguration` + polymorphic `SerializersModule` gerekiyor — iOS ve web'de reflection tabanlı serialization yok. Android'de bugün sorun değil; iOS'ta "back stack restore olmuyor" diye sessizce tezahür eder.
