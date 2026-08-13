@@ -248,7 +248,11 @@ private fun MetaText(text: String, color: Color, modifier: Modifier = Modifier) 
         text = text,
         // 14sp - govde minimumu. 13sp %60 opaklikla okunabilirlik sinirinin altina duser.
         style = MaterialTheme.typography.bodySmall,
-        color = color.copy(alpha = 0.75f),
+        // ALFA YOK. onSurfaceVariant ZATEN soluklastirma token'i (isikta 7.40:1,
+        // onSurface 16.06:1). Ustune 0.75 alfa koymak cift-soluklastiriyordu ve
+        // efektif orani 3.98:1'e dusuruyordu - 14sp normal metin icin AA sinirinin
+        // (4.5:1) altinda. Hiyerarsiyi token sagliyor, alfa gereksizdi.
+        color = color,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
