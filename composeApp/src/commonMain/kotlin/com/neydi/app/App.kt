@@ -2,10 +2,9 @@ package com.neydi.app
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.nav.AlisverisiBitir
 import com.neydi.app.nav.Ayarlar
@@ -14,6 +13,7 @@ import com.neydi.app.nav.EksikOlabilir
 import com.neydi.app.nav.Gecmis
 import com.neydi.app.nav.Kurulum
 import com.neydi.app.nav.Liste
+import com.neydi.app.nav.NeydiSavedStateConfig
 import com.neydi.app.ui.screens.AlisverisiBitirScreen
 import com.neydi.app.ui.screens.AyarlarScreen
 import com.neydi.app.ui.screens.ComponentGalleryScreen
@@ -26,10 +26,9 @@ import com.neydi.app.ui.theme.NeydiTheme
 @Composable
 fun App() {
     NeydiTheme(darkTheme = isSystemInDarkTheme()) {
-        // TODO(saveable): rememberNavBackStack'e gecilecek. Once iOS icin
-        // SavedStateConfiguration + polymorphic SerializersModule gerekiyor
-        // (bkz. nav/Destinations.kt sonundaki not). Milestone 1'de duz liste.
-        val backStack = remember { mutableStateListOf<NavKey>(Liste) }
+        // Surec olumunu ve konfigurasyon degisimini asar. Serializer kaydi
+        // Destinations.kt'de; oradaki `when` kaydi unutmayi derleme hatasina cevirir.
+        val backStack = rememberNavBackStack(NeydiSavedStateConfig, Liste)
 
         fun git(key: NavKey) {
             backStack.add(key)
