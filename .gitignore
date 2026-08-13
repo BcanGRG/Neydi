@@ -19,10 +19,13 @@ xcuserdata/
 iosApp/Pods/
 iosApp/*.xcodeproj/project.xcworkspace/xcuserdata/
 
-# graphify - uretilen graf ciktilari yeniden uretilebilir, sadece rapor takip edilir.
-# graph.json ve graph.html her rebuild'de degisir, diff gurultusu yaratir.
-graphify-out/*
-!graphify-out/GRAPH_REPORT.md
+# graphify - tum ciktilar yeniden uretilebilir, hicbiri takip edilmez.
+#
+# GRAPH_REPORT.md once takip ediliyordu ama post-commit hook onu HER commit'ten
+# sonra yeniden yaziyor; takip edilen bir dosyanin surekli yeniden yazilmasi
+# calisma agacini kirli birakiyor ve `git checkout` bloke oluyor. Rapor zaten
+# `graphify export html` / `graphify update` ile saniyeler icinde yeniden uretilir.
+graphify-out/
 
 # Gizli anahtarlar - Anthropic API anahtari ASLA repoya girmez.
 # Cagrilar Cloudflare Worker proxy uzerinden yapilacak, anahtar Worker secret'inda durur.
