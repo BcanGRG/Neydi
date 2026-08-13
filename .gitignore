@@ -1,0 +1,27 @@
+*.iml
+.gradle/
+**/build/
+/local.properties
+.idea/
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Kotlin/Native
+kotlin-js-store/
+.kotlin/
+
+# iOS
+xcuserdata/
+*.xcworkspace/xcuserdata/
+iosApp/Pods/
+iosApp/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Gizli anahtarlar - Anthropic API anahtari ASLA repoya girmez.
+# Cagrilar Cloudflare Worker proxy uzerinden yapilacak, anahtar Worker secret'inda durur.
+secrets.properties
+*.keystore
+!debug.keystore
+.env

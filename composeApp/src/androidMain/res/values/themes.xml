@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      TODO(splash): Logo hazir olunca splash buraya baglanacak.
+
+      Android 12+ SplashScreen API HER ZAMAN calisir, kapatilamaz. Kendi splash
+      Activity'ni eklersen sistemin splash'ine EK OLARAK gorunur - ekleme.
+
+      Baglanirken:
+      - windowSplashScreenBackground TEK DUZ OPAK RENK olmak zorunda (#FBF7F2 =
+        Sicak Kiler surface) ve ilk Compose karesiyle BIREBIR AYNI olmali,
+        yoksa acilista gorunur bir flas olur.
+      - Ikon canvas'i 288x288dp, anlamli icerik ORTADAKI 192dp CAPLI DAIREYE
+        sigmali - sistem daireye maskeler, kosedeki her sey kesilir.
+      - Ikonda metin YOK. windowSplashScreenBrandingImage KULLANMA.
+      - AVD kullanilacaksa sure <= 1000ms (pratikte ~800ms).
+      Bu ozellikler API 31+ oldugu icin values-v31/themes.xml altina konacak.
+    -->
+    <style name="Theme.Neydi" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FBF7F2</item>
+    </style>
+</resources>

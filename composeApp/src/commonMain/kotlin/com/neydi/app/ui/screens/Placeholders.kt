@@ -1,0 +1,108 @@
+package com.neydi.app.ui.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import com.neydi.app.ui.theme.Spacing
+
+/**
+ * ISKELET EKRANLARI - hepsi gecici.
+ *
+ * Claude Design'dan gelen tasarim sistemi ve ekranlar bunlarin yerini alacak.
+ * Simdilik amac tek sey: Nav3 grafiginin iki platformda da ayakta oldugunu
+ * ve temanin uygulandigini kanitlamak.
+ */
+@Composable
+private fun Iskele(
+    baslik: String,
+    aciklama: String,
+    modifier: Modifier = Modifier,
+    aksiyonlar: @Composable () -> Unit = {},
+) {
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding() // iOS home indicator + notch: pazarlik konusu degil
+                .padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(baslik, style = MaterialTheme.typography.headlineMedium)
+            Text(
+                aciklama,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            aksiyonlar()
+        }
+    }
+}
+
+@Composable
+fun ListeScreen(
+    onAlisveriseCik: () -> Unit,
+    onGecmis: () -> Unit,
+    onAyarlar: () -> Unit,
+) = Iskele(
+    baslik = "Liste",
+    aciklama = "Uygulamanin kalbi. Uc modu var: planlama, alisveris, alisveris sonrasi.",
+) {
+    Button(onClick = onAlisveriseCik) { Text("Alisverise cikiyorum") }
+    Button(onClick = onGecmis) { Text("Gecmis") }
+    Button(onClick = onAyarlar) { Text("Ayarlar") }
+}
+
+@Composable
+fun EksikOlabilirScreen(onEkle: () -> Unit, onBosver: () -> Unit) = Iskele(
+    baslik = "Eksik olabilir",
+    aciklama = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",
+) {
+    Button(onClick = onEkle) { Text("Ekle") }
+    Button(onClick = onBosver) { Text("Bosver") }
+}
+
+@Composable
+fun AlisverisiBitirScreen(tripId: String?, onOnayla: () -> Unit) = Iskele(
+    baslik = "Alisverisi bitir",
+    aciklama = if (tripId == null) {
+        "Fis cek / fissiz bitir. Fotograf ASLA bloklamaz - alisveris aninda kapanir."
+    } else {
+        "Gecmisten okuma modu: $tripId"
+    },
+) {
+    Button(onClick = onOnayla) { Text("Onayla ve bitir") }
+}
+
+@Composable
+fun GecmisScreen(onGeri: () -> Unit) = Iskele(
+    baslik = "Gecmis",
+    aciklama = "Yanlis okunmus bir fise geri donmenin tek yolu. Uygulamanin en ucuz ekrani.",
+) {
+    Button(onClick = onGeri) { Text("Geri") }
+}
+
+@Composable
+fun AyarlarScreen(onGeri: () -> Unit) = Iskele(
+    baslik = "Ayarlar",
+    aciklama = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.",
+) {
+    Button(onClick = onGeri) { Text("Geri") }
+}
+
+@Composable
+fun KurulumScreen(onBitir: () -> Unit) = Iskele(
+    baslik = "Kurulum",
+    aciklama = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
+) {
+    Button(onClick = onBitir) { Text("Bitir") }
+}

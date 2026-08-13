@@ -1,0 +1,92 @@
+[versions]
+# --- Temel ---
+# Hepsi 2026-08-13'te Maven metadata'sindan dogrulandi.
+# AGP 9.x KASITLI OLARAK KULLANILMIYOR.
+# AGP 9.0'dan itibaren 'com.android.application' ile
+# 'org.jetbrains.kotlin.multiplatform' ayni modulde birlikte uygulanamiyor
+# (BuiltInKotlinServices.failIfIncompatiblePluginsArePresent). Google'in onerdigi
+# cikis yolu 'com.android.kotlin.multiplatform.library' ama o KUTUPHANE icin,
+# uygulama modulu icin degil. Diger cikis yolu
+# android.builtInKotlin=false + android.newDsl=false, ki Google bunu "gecici
+# bypass" diye tanimliyor. KMP ekosistemi AGP 9'a gecene kadar 8.x'te kaliyoruz.
+agp = "8.13.2"
+kotlin = "2.4.10"
+composeMultiplatform = "1.11.1"          # Nav3 icin minimum 1.10
+ksp = "2.3.11"                            # KSP2 bagimsiz surumleme; Room baglanirken tekrar dogrula
+
+# --- Android ---
+androidMinSdk = "26"
+androidTargetSdk = "36"
+androidCompileSdk = "36"
+androidxActivityCompose = "1.12.0"
+
+# --- Navigation 3 (CMP) ---
+# navigation3-runtime AndroidX'ten gelir ve zaten KMP.
+# navigation3-ui'nin iOS hedefi YOK -> JetBrains portu kullanilir.
+navigation3Ui = "1.1.1"
+# lifecycle 2.11.0 DEGIL: AGP 9.1.0+ ve compileSdk 37 dayatiyor, AGP 8'de kalma
+# kararimizla cakisiyor. 2.10.0 zaten JetBrains'in CMP+Nav3 dokumaninda yazan surum.
+# Kural: CMP tarafinda "Maven'daki en son" degil, "JetBrains'in dokumanda yazdigi" alinir.
+lifecycle = "2.10.0"
+
+# --- DI / async / serialization ---
+koin = "4.2.2"
+coroutines = "1.11.0"
+serialization = "1.11.0"
+datetime = "0.8.0"
+
+# --- Henuz baglanmadi, sirasi gelince acilacak ---
+room = "3.0.1"                            # androidx.room3 (2.x DEGIL - koordinat degisti)
+sqlite = "2.7.0"
+ktor = "3.5.2"
+supabase = "3.7.0"
+filekit = "0.14.2"                        # 0.15.0 cok yeni; 2 aylik saha suresi olani pinliyoruz
+coil = "3.5.0"
+
+[libraries]
+# Navigation 3
+navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3Ui" }
+lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+
+# Kotlin ekosistemi
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
+
+# DI
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-compose = { module = "io.insert-koin:koin-compose" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
+koin-android = { module = "io.insert-koin:koin-android" }
+
+# Android
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
+
+# --- Asagidakiler catalog'da hazir bekliyor, henuz build.gradle.kts'e eklenmedi ---
+room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
+room-gradle-plugin = { module = "androidx.room3:room3-gradle-plugin", version.ref = "room" }
+sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+supabase-bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "supabase" }
+supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
+supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
+supabase-storage = { module = "io.github.jan-tennert.supabase:storage-kt" }
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
