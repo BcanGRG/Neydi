@@ -1,7 +1,11 @@
 package com.neydi.app.nav
 
 import androidx.navigation3.runtime.NavKey
+import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
 /**
  * Nav3 hedefleri.
@@ -48,14 +52,58 @@ data object Kurulum : NeydiKey
 data object Bilesenler : NeydiKey
 
 /**
- * TODO(ios-serialization): rememberNavBackStack varsayilan olarak JVM'de reflection
- * tabanli serialization kullaniyor. iOS ve web'de reflection YOK - orada back stack
- * kalicilığı icin SavedStateConfiguration'a acik bir SerializersModule verip
- * NeydiKey alt tiplerini polymorphic olarak kaydetmek gerekiyor.
+ * Back stack'in surec olumunden sonra geri yuklenmesi icin gereken serializer kaydi.
  *
- * Kaynak: kotlinlang.org/docs/multiplatform/compose-navigation-3.html
+ * `rememberNavBackStack`in Android'e ozel bir asiri yuklemesi daha var; o reflection
+ * kullanip alt tipleri kendisi buluyor - ama SADECE Android'de. Buradaki
+ * SavedStateConfiguration'li asiri yukleme her platformda calisan tek surum.
  *
- * Mac'e gecip iOS'u ilk kez derledigimizde yapilacak ilk is bu. Android'de
- * simdiden calisiyor, o yuzden bugun bloklayici degil - ama iOS'ta sessizce
- * "back stack restore olmuyor" seklinde tezahur eder, o yuzden buraya yazildi.
+ * KAYIT UNUTULURSA NE OLUR: `rememberNavBackStack` varsayilan SerializersModule'u
+ * `require` ile reddediyor, yani modulu hic vermezsen uygulama ACILIR ACILMAZ
+ * IllegalArgumentException ile patliyor - Android dahil her platformda ayni sekilde.
+ * Tek bir alt tipi kaydetmeyi unutursan da o hedef back stack'teyken surec olumunden
+ * donunce SerializationException aliyorsun. Ikisi de gurultulu; sessiz bozulma yok.
+ *
+ * (Bu adimin roadmap'teki ilk gerekcesi "iOS'ta sessizce back stack restore olmaz"
+ * idi. Yanlisti: navigation3-runtime 1.1.1 kaynagi, RememberNavBackStack.kt:64,
+ * kosulsuz `require`. Gerekce yanlis olsa da is gerekliydi - o asiri yukleme
+ * olmadan uygulama iOS'ta hic derlenmezdi.)
  */
+val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(Liste::class)
+            subclass(EksikOlabilir::class)
+            subclass(AlisverisiBitir::class)
+            subclass(Gecmis::class)
+            subclass(Ayarlar::class)
+            subclass(Kurulum::class)
+            // GECICI: F3.2'de Bilesenler hedefiyle birlikte bu satir da silinecek.
+            subclass(Bilesenler::class)
+        }
+    }
+}
+
+/**
+ * BU FONKSIYONUN TEK ISI DERLEMEYI BOZMAK.
+ *
+ * NeydiKey sealed oldugu icin asagidaki `when` derleyici tarafindan exhaustive
+ * kontrol ediliyor. Yeni bir hedef eklendiginde burasi derlenmez ve seni tam da
+ * kaydin yapilmasi gereken dosyaya getirir. Kaydi unutmanin bedeli calisma
+ * zamaninda bir kilitlenme; o bedeli derleme zamanina cekiyoruz.
+ *
+ * Dogrulandi: gecici bir `SondaHedef` eklenince derleyici
+ * "'when' expression must be exhaustive. Add the 'SondaHedef' branch" diyor.
+ *
+ * Yeni hedef eklerken: once yukariya `subclass(...)`, sonra buraya bir dal.
+ */
+@Suppress("unused")
+private fun NeydiKey.serializerKaydiVarMi(): Unit = when (this) {
+    is Liste -> Unit
+    is EksikOlabilir -> Unit
+    is AlisverisiBitir -> Unit
+    is Gecmis -> Unit
+    is Ayarlar -> Unit
+    is Kurulum -> Unit
+    is Bilesenler -> Unit
+}
