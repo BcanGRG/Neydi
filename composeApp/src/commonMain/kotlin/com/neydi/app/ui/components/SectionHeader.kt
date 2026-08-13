@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.neydi.app.ui.theme.Spacing
 
 /**
@@ -44,4 +45,14 @@ fun SectionHeader(
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         )
     }
+}
+
+// --- Preview ---------------------------------------------------------------
+
+@PreviewLightDark
+@Composable
+private fun SectionHeaderPreview() = NeydiPreview {
+    SectionHeader("Fırın-Ekmek", 3)
+    SectionHeader("Süt-Kahvaltılık", 5)
+    SectionHeader("Temizlik", 12)
 }

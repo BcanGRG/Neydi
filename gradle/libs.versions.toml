@@ -12,6 +12,12 @@
 agp = "8.13.2"
 kotlin = "2.4.10"
 composeMultiplatform = "1.11.1"          # Nav3 icin minimum 1.10
+# material3 CMP'de AYRI SURUMLENIYOR. compose.material3 kisayolu 1.11.1'i degil
+# ComposeBuildConfig.composeMaterial3Version'i cozuyordu, o da 1.9.0. Kisayoldan
+# acik koordinata gecerken buraya "1.11.1" yazmak artifact'i BULAMAZ (material3'un
+# 1.11.1 diye bir surumu hic yok; stabil zinciri 1.9.0'da, sonrasi 1.12.0-alpha).
+# Dogrulama: compose-gradle-plugin-1.11.1.jar icindeki ComposeBuildConfig.kt.
+composeMaterial3 = "1.9.0"
 ksp = "2.3.11"                            # KSP2 bagimsiz surumleme; Room baglanirken tekrar dogrula
 
 # --- Android ---
@@ -44,6 +50,33 @@ filekit = "0.14.2"                        # 0.15.0 cok yeni; 2 aylik saha suresi
 coil = "3.5.0"
 
 [libraries]
+# Compose Multiplatform
+# compose.runtime / foundation / material3 / ui / components.resources / preview
+# kisayollarinin HEPSI CMP 1.11.1'de @Deprecated("Specify dependency directly").
+# Gradle bunlari basmaz (Kotlin DSL script uyarilari yuzeye cikmaz), IDE gosterir.
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMaterial3" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
+
+# Preview: IKI AYRI ARTIFACT VAR, ayni ismi tasiyan IKI AYRI anotasyonla.
+#   components:components-ui-tooling-preview -> org.jetbrains.compose.ui.tooling.preview.Preview
+#       7 parametre. uiMode YOK, MultiPreview YOK.
+#   ui:ui-tooling-preview                    -> androidx.compose.ui.tooling.preview.Preview
+#       13 parametre + @PreviewLightDark / @PreviewFontScale + @PreviewWrapper.
+# Ikincisini aliyoruz: bu uygulamanin ayri bir karanlik paleti var, previewlerin
+# tek anotasyonla iki temayi da gosterebilmesi sart. 1.11.1'de ikisi de bu projenin
+# iki iOS hedefini (iosarm64 + iossimulatorarm64) yayinliyor, commonMain'de guvenli.
+#
+# TUZAK: IDE'nin compose.components.uiToolingPreview icin onerdigi ReplaceWith
+# "org.jetbrains.compose.ui:ui-tooling-preview" diyor ama accessor aslinda
+# components-ui-tooling-preview'i cozuyor. Quick-fix'e korlemesine uyarsan
+# artifact SESSIZCE degisir. Buradaki secim bilincli.
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
+# Previewleri Android Studio'da CIZEN renderer. Yalnizca debug, yalnizca Android.
+compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "composeMultiplatform" }
+
 # Navigation 3
 navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3Ui" }
 lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }

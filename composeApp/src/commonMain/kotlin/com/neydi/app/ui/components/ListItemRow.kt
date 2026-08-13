@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
@@ -251,4 +252,68 @@ private fun MetaText(text: String, color: Color, modifier: Modifier = Modifier) 
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
+}
+
+// --- Preview ---------------------------------------------------------------
+// Sahte veri kasten gercekci: kisa/uzun ad, Turkce karakter, ve satirin
+// yatay butcesini gercekten zorlayan bir kombinasyon. Preview'in isi
+// "cizildi mi" degil, "sikistiginda ne feda ediliyor" sorusunu gostermek.
+
+@PreviewLightDark
+@Composable
+private fun ListItemRowStatesPreview() = NeydiPreview {
+    ListItemRow(ListRow("Karabiber"))
+    ListItemRow(ListRow("Yumurta 10'lu", quantity = "2x"))
+    ListItemRow(ListRow("Domates", quantity = "1 kg", addedByInitial = "A"))
+    ListItemRow(ListRow("Tam Buğday Ekmek", isStaple = true))
+    ListItemRow(ListRow("Zeytinyağı 1 L", checked = true))
+}
+
+@PreviewLightDark
+@Composable
+private fun ListItemRowPriceHintsPreview() = NeydiPreview {
+    ListItemRow(
+        ListRow("Zeytinyağı 1 L", priceHint = PriceHint.Single("289,00 TL", "A101", 12)),
+    )
+    ListItemRow(
+        ListRow(
+            "Ayçiçek Yağı 5 L",
+            priceHint = PriceHint.Trend(
+                from = "389,00", to = "455,00 TL", deltaPercent = 17, rising = true,
+                history = listOf(371f, 375f, 389f, 389f, 402f, 431f, 448f, 455f),
+            ),
+        ),
+    )
+    ListItemRow(
+        ListRow("Pınar Süt", priceHint = PriceHint.PackChanged("1 L", "900 ml", "aynı fiyat")),
+    )
+    ListItemRow(ListRow("Bulaşık Deterjanı", suggestionReason = "12 gündür almadın"))
+}
+
+/**
+ * Satirin en dar hali: uzun ad + fiyat + ucuz-alternatif cipi ayni anda.
+ * Bu preview F3.1'de cihazda yakalanan hatanin nobetcisi - cip ana satirda
+ * kardes oldugunda urun adi "Beyaz Peynir …" diye kirpiliyordu.
+ */
+@PreviewLightDark
+@Composable
+private fun ListItemRowCrowdedPreview() = NeydiPreview {
+    ListItemRow(
+        ListRow(
+            "Beyaz Peynir 600 g Tam Yağlı",
+            priceHint = PriceHint.Single("184,50 TL", "Migros", 9),
+            cheaperElsewhere = "A101'de 159,90",
+        ),
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun ListItemRowShoppingModePreview() = NeydiPreview {
+    ListItemRow(ListRow("Ayçiçek Yağı 5 L", quantity = "2x"), shoppingMode = true)
+    ListItemRow(
+        ListRow("Beyaz Peynir 600 g", priceHint = PriceHint.Single("184,50 TL", "Migros", 9)),
+        shoppingMode = true,
+    )
+    ListItemRow(ListRow("Tam Buğday Ekmek", isStaple = true, checked = true), shoppingMode = true)
 }

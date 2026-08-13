@@ -1,7 +1,9 @@
 package com.neydi.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,9 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.SizesExtra
+import com.neydi.app.ui.theme.Spacing
 
 /**
  * 56dp squircle kategori kutucugu, iki harfli fallback ile.
@@ -50,5 +54,20 @@ fun CategoryTile(
             color = contentColor,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+// --- Preview ---------------------------------------------------------------
+
+/**
+ * Turkce buyuk harf nobetcisi. "incir" -> IN cikarsa turkishInitials bozulmus
+ * demektir; locale'siz uppercase() tam olarak bunu yapar.
+ */
+@PreviewLightDark
+@Composable
+private fun CategoryTilePreview() = NeydiPreview {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        listOf("Tam Buğday Ekmek", "incir", "ıspanak", "Şeftali", "Ğ")
+            .forEach { CategoryTile(turkishInitials(it)) }
     }
 }
