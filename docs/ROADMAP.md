@@ -2,7 +2,7 @@
 
 Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 3 / 67 — *sırada **F1.6** (edge-to-edge), sonra **F3.1** (bileşen kütüphanesi — ilk gerçek görsel çıktı). Fiş ölçümü paralel izde, sende bekliyor.*
+**İlerleme:** 4 / 67 — *sırada **F3.1** (bileşen kütüphanesi — ilk gerçek görsel çıktı). Fiş ölçümü paralel izde, sende bekliyor.*
 
 ---
 
@@ -86,7 +86,7 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 - [ ] **1.3 — CMP deprecation temizliği.** `compose.runtime` / `foundation` / `material3` / `components.resources` / `preview` kısayolları yerine katalogdan açık koordinatlar. Şu an 7 deprecation uyarısı üretiyor.
 - [ ] **1.4 — Nav3 saveable back stack.** `rememberNavBackStack` + `SavedStateConfiguration` + polymorphic `SerializersModule`. iOS ve web'de reflection tabanlı serialization yok; bu yapılmazsa iOS'ta "back stack restore olmuyor" diye sessizce tezahür eder. → `App.kt` TODO(saveable) ve `Destinations.kt` TODO(ios-serialization) kapanır.
 - [ ] **1.5 — `Modifier.pressable` zorunluluğu.** `Placeholders.kt`'deki ham `clickable`/`Button` kullanımlarını taşı. Ripple'ı global olarak kaldırdığımız için basılı hal sözleşmesi tek yerden uygulanmalı.
-- [ ] **1.6 — Edge-to-edge sistem çubukları.** *(F0.0'da cihazda bulundu.)* `enableEdgeToEdge()` çağrılıyor ama iki sorun var: **(a)** karanlık modda status bar ikonları koyu kalıyor, siyah zemin üstünde neredeyse okunmuyor; **(b)** alt gezinme çubuğu şeridi karanlık modda açık renk kalıyor, ekranın altında beyaz bant bırakıyor. `SystemBarStyle` temaya bağlanacak. Bu iş iOS'ta karşılığı olmayan bir alan — `preferredStatusBarStyle` common koddan set edilemiyor (bkz. F9.3), o yüzden çözüm baştan platform-ayrık kurgulanmalı.
+- [x] **1.6 — Edge-to-edge sistem çubukları.** ✅ *Üç senaryoda da cihazda doğrulandı: açık mod, karanlıkta temiz açılış, ve **uygulama açıkken** karanlığa geçiş.* **Kök neden:** manifest'te `configChanges` içinde `uiMode` var → karanlık moda geçince Activity yeniden yaratılmıyor → `onCreate`'te bir kez çağrılan `enableEdgeToEdge()` açılıştaki stilde donuyor. Compose renkleri güncelliyordu ama sistem çubukları güncellenmiyordu. **Çözüm:** çubuk görünümü `ApplySystemBarAppearance(darkTheme)` ile Compose'dan, temaya bağlı sürülüyor (`expect`/`actual`). Android'de `SystemBarStyle` + şeffaf çubuklar; iOS `actual`'ı **kasıtlı olarak boş** — orada karşılığı `preferredStatusBarStyle` ve common koddan set edilemiyor (F9.3). *Aşağıdaki orijinal tanım kayıt için bırakıldı:* `enableEdgeToEdge()` çağrılıyor ama iki sorun var: **(a)** karanlık modda status bar ikonları koyu kalıyor, siyah zemin üstünde neredeyse okunmuyor; **(b)** alt gezinme çubuğu şeridi karanlık modda açık renk kalıyor, ekranın altında beyaz bant bırakıyor. `SystemBarStyle` temaya bağlanacak. Bu iş iOS'ta karşılığı olmayan bir alan — `preferredStatusBarStyle` common koddan set edilemiyor (bkz. F9.3), o yüzden çözüm baştan platform-ayrık kurgulanmalı.
 
 ## Faz 2 — Veri katmanı
 
