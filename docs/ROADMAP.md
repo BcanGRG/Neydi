@@ -178,7 +178,17 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 
 ## Faz 10 — Sürekli / refactor
 
-- [ ] **10.1 — AGP 9'a geçiş** *(cihazsız)*. KMP ekosistemi hazır olunca. Şu an `com.android.application` + `org.jetbrains.kotlin.multiplatform` aynı modülde uygulanamıyor.
+- [x] **10.1 — AGP 9'a geçiş.** ✅ *("cihazsız" işareti kaldırıldı — fazlasıyla cihaz gerektirdi.)* AGP **9.3.1**, compileSdk/targetSdk **37**, lifecycle **2.11.0**. **Engel hâlâ duruyor:** `com.android.application` + `org.jetbrains.kotlin.multiplatform` aynı modülde 9.3.1'de de reddediliyor, birebir aynı hatayla. Bypass flag'leri (`android.builtInKotlin=false` + `android.newDsl=false`) çalışıyor ve ölçüldü — ama AGP 10.0'da kaldırılıyorlar ve `newDsl=false` AGP 9'un yeni DSL'ini kapatıyor, yani sürüm 9 DSL 8 olurdu. **Modül ikiye ayrıldı:** `:composeApp` artık `com.android.kotlin.multiplatform.library` ile kütüphane, APK'yı ince `:androidApp` üretiyor (yalnızca `MainActivity` + manifest + tema). JetBrains Mayıs 2026'dan beri KMP sihirbazında zaten bunu üretiyor.
+
+  **Dört tuzak — üçü sessiz:**
+  1. **`:androidApp` Compose derleyici eklentisini uygulamak ZORUNDA.** AGP 9'un `builtInKotlin`'i Kotlin'i derliyor ama Compose eklentisini getirmiyor. Onsuz `setContent { App() }` içindeki `@Composable` lambda düz `Function0` olarak derleniyor, kütüphane `Function2` bekliyor. **Derleme sessizce geçiyor**, uygulama açılışta `NoSuchMethodError` ile çöküyor. Dex'i açıp imzaları karşılaştırarak bulundu (`dexdump`).
+  2. **`androidResources { enable = true }` zorunlu** — kütüphane modülünde varsayılan kapalı, kapalıyken Compose Resources (bu projede fontlar) çalışma zamanında patlıyor.
+  3. **Tüm eklentiler kökte `apply false` ile bildirilmeli.** İki modül aynı AGP'yi sürümle isterse Gradle `already on the classpath with an unknown version` diyip reddediyor.
+  4. **Test görevi yeniden adlandı:** `testDebugUnitTest` → `testAndroidHostTest`. Eski adla çağırınca görev bulunamıyor; daha kötüsü, yanlış ada rağmen yeşil görünen bir koşu sıfır test çalıştırabiliyor.
+
+  **Bonus bulgu:** bölünme gizli bir sürüm kaymasını açığa çıkardı — `activity-compose` derlemede 1.12.0, çalışma zamanında 1.12.4'tü. Tek modüldeyken ikisi aynı classpath olduğu için görünmüyordu. 1.12.4'e hizalandı. (Çökmenin sebebi bu değildi — sebep 1. maddeydi — ama gerçek bir kaymaydı.)
+
+  **Ölçüldü:** 8 birim test geçiyor, 79 iOS task'ı hâlâ tanımlı, Room şeması ve KSP üretimi sağlam, cihazda galeri + Room sondası + süreç ölümünden back stack geri dönüşü çalışıyor, çökme yok.
 - [ ] **10.2 — Bottom sheet'leri Nav3 Scene'e taşı.** Şu an ekran state'i; Nav3'ün custom Scene API'si doğru yer.
 - [ ] **10.3 — `graph.json` takip kararı** *(cihazsız)*. Mac'e geçişte yeniden değerlendir — merge driver kurulu ama graph.json gitignore'da olduğu için şu an atıl.
 - [ ] **10.4 — Araştırma güncellemesi** *(cihazsız)*. Faz 0 sonucunu `docs/03-arastirma-bulgulari.md`'ye işle; çürütülen varsayımları güncelle.
@@ -192,7 +202,7 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 | `TODO(font)` | `ui/theme/Type.kt` | F1.1 |
 | `TODO(saveable)` | `App.kt` | F1.4 |
 | `TODO(ios-serialization)` | `nav/Destinations.kt` | F1.4 |
-| `TODO(splash)` | `androidMain/res/values/themes.xml` | F8.4 |
+| `TODO(splash)` | `androidApp/src/main/res/values/themes.xml` | F8.4 |
 | `TODO(ios)` | `iosMain/MainViewController.kt` | F9.3 |
 | `TODO(tnum)` | `ui/theme/Type.kt` | F9.4 |
 

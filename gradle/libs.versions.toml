@@ -1,14 +1,14 @@
 [versions]
 # --- Temel ---
 # Hepsi 2026-08-13'te Maven metadata'sindan dogrulandi.
-# AGP 9.x KASITLI OLARAK KULLANILMIYOR.
-# AGP 9.0'dan itibaren 'com.android.application' ile
-# 'org.jetbrains.kotlin.multiplatform' ayni modulde birlikte uygulanamiyor
-# (BuiltInKotlinServices.failIfIncompatiblePluginsArePresent). Google'in onerdigi
-# cikis yolu 'com.android.kotlin.multiplatform.library' ama o KUTUPHANE icin,
-# uygulama modulu icin degil. Diger cikis yolu
-# android.builtInKotlin=false + android.newDsl=false, ki Google bunu "gecici
-# bypass" diye tanimliyor. KMP ekosistemi AGP 9'a gecene kadar 8.x'te kaliyoruz.
+# AGP 9. Engel HALA VAR ama artik yapisal olarak asildi:
+# 'com.android.application' ile 'org.jetbrains.kotlin.multiplatform' ayni modulde
+# 9.3.1'de de uygulanamiyor. Cozum bypass flag'i degil, MODUL BOLUNMESI:
+#   :composeApp -> com.android.kotlin.multiplatform.library (kutuphane)
+#   :androidApp -> com.android.application (APK, ince)
+# Bypass flag'leri (android.builtInKotlin=false + android.newDsl=false) calisiyor
+# ama AGP 10.0'da kaldiriliyorlar ve newDsl=false yeni DSL'i kapatiyor.
+# Detay ve tuzaklar: docs/ROADMAP.md F10.1.
 agp = "9.3.1"
 kotlin = "2.4.10"
 composeMultiplatform = "1.11.1"          # Nav3 icin minimum 1.10
