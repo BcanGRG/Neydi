@@ -1,6 +1,7 @@
 package com.neydi.app.data.db
 
 import androidx.room3.Entity
+import androidx.room3.Index
 import androidx.room3.PrimaryKey
 
 /**
@@ -27,7 +28,16 @@ data class Store(
  * storeId null olabilir: alisverise cikarken nereye gidilecegi her zaman
  * belli degil, fis okununca doluyor.
  */
-@Entity(tableName = "trip")
+@Entity(
+    tableName = "trip",
+    indices = [
+        // "Ayni anda tek aktif trip" KISMI bir unique index gerektirir
+        // (WHERE completedAt IS NULL) ve Room'un @Index'i kismi index ifade
+        // EDEMIYOR. Sema bunu zorlamiyor; kural repository katmaninda (F2.6).
+        // Burada yalnizca sorgu indexi var.
+        Index(value = ["householdId", "completedAt"]),
+    ],
+)
 data class Trip(
     @PrimaryKey val id: String,
     val householdId: String,
@@ -51,7 +61,20 @@ data class Trip(
  * isaretlendi yoksa evde mi" ayrimi kaybolur, o da alisveris suresi
  * istatistigini imkansiz kilar.
  */
-@Entity(tableName = "trip_line")
+@Entity(
+    tableName = "trip_line",
+    indices = [
+        // ISTATISTIK KATMANININ DAYANDIGI KISIT. Iki es de ekmek eklerse
+        // veritabani TEK satir tutmali: iki satir olursa ProductStats iki ayri
+        // satin alma sayar, medianIntervalDays yariya duser ve uygulama ekmegi
+        // iki kat sik onermeye baslar. Yani bu kisit olmadan oneri motoru
+        // sessizce yanlis calisir - hata vermez, sadece rahatsiz eder.
+        Index(value = ["tripId", "productId"], unique = true),
+        // Aktif alisverisin satirlarini cekmek en sik sorgu.
+        Index(value = ["tripId"]),
+        Index(value = ["productId"]),
+    ],
+)
 data class TripLine(
     @PrimaryKey val id: String,
     val householdId: String,

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6c3b717422a5065dd392918edf9faf52",
+    "identityHash": "79a4b5c5f6f322a4419646c47e027adb",
     "entities": [
       {
         "tableName": "household",
@@ -238,7 +238,28 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_product_householdId_matchKey",
+            "unique": false,
+            "columnNames": [
+              "householdId",
+              "matchKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_product_householdId_matchKey` ON `${TABLE_NAME}` (`householdId`, `matchKey`)"
+          },
+          {
+            "name": "index_product_categoryId",
+            "unique": false,
+            "columnNames": [
+              "categoryId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_product_categoryId` ON `${TABLE_NAME}` (`categoryId`)"
+          }
+        ]
       },
       {
         "tableName": "product_alias",
@@ -296,7 +317,29 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_product_alias_householdId_storeChain_rawTextNormalized",
+            "unique": true,
+            "columnNames": [
+              "householdId",
+              "storeChain",
+              "rawTextNormalized"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_product_alias_householdId_storeChain_rawTextNormalized` ON `${TABLE_NAME}` (`householdId`, `storeChain`, `rawTextNormalized`)"
+          },
+          {
+            "name": "index_product_alias_productId",
+            "unique": false,
+            "columnNames": [
+              "productId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_product_alias_productId` ON `${TABLE_NAME}` (`productId`)"
+          }
+        ]
       },
       {
         "tableName": "product_stats",
@@ -445,7 +488,19 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_trip_householdId_completedAt",
+            "unique": false,
+            "columnNames": [
+              "householdId",
+              "completedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_householdId_completedAt` ON `${TABLE_NAME}` (`householdId`, `completedAt`)"
+          }
+        ]
       },
       {
         "tableName": "trip_line",
@@ -532,7 +587,37 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_trip_line_tripId_productId",
+            "unique": true,
+            "columnNames": [
+              "tripId",
+              "productId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_trip_line_tripId_productId` ON `${TABLE_NAME}` (`tripId`, `productId`)"
+          },
+          {
+            "name": "index_trip_line_tripId",
+            "unique": false,
+            "columnNames": [
+              "tripId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_line_tripId` ON `${TABLE_NAME}` (`tripId`)"
+          },
+          {
+            "name": "index_trip_line_productId",
+            "unique": false,
+            "columnNames": [
+              "productId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_line_productId` ON `${TABLE_NAME}` (`productId`)"
+          }
+        ]
       },
       {
         "tableName": "receipt",
@@ -697,7 +782,27 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_receipt_line_receiptId",
+            "unique": false,
+            "columnNames": [
+              "receiptId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_receipt_line_receiptId` ON `${TABLE_NAME}` (`receiptId`)"
+          },
+          {
+            "name": "index_receipt_line_matchedProductId",
+            "unique": false,
+            "columnNames": [
+              "matchedProductId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_receipt_line_matchedProductId` ON `${TABLE_NAME}` (`matchedProductId`)"
+          }
+        ]
       },
       {
         "tableName": "price_observation",
@@ -770,7 +875,28 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_price_observation_productId_observedAt",
+            "unique": false,
+            "columnNames": [
+              "productId",
+              "observedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_observation_productId_observedAt` ON `${TABLE_NAME}` (`productId`, `observedAt`)"
+          },
+          {
+            "name": "index_price_observation_storeId",
+            "unique": false,
+            "columnNames": [
+              "storeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_observation_storeId` ON `${TABLE_NAME}` (`storeId`)"
+          }
+        ]
       },
       {
         "tableName": "suggestion_event",
@@ -937,7 +1063,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c3b717422a5065dd392918edf9faf52')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '79a4b5c5f6f322a4419646c47e027adb')"
     ]
   }
 }
