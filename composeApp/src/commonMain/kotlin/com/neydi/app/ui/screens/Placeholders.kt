@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -13,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.neydi.app.data.db.rememberDbProbe
+import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.theme.Spacing
 
 /**
@@ -60,10 +60,10 @@ fun ListeScreen(
     aciklama = "Uygulamanin kalbi. Uc modu var: planlama, alisveris, alisveris sonrasi.",
 ) {
     // GECICI: F3.2'de bu ekranin yerini gercek Liste alacak, buton da gidecek.
-    Button(onClick = onBilesenler) { Text("Bileşenler") }
-    Button(onClick = onAlisveriseCik) { Text("Alisverise cikiyorum") }
-    Button(onClick = onGecmis) { Text("Gecmis") }
-    Button(onClick = onAyarlar) { Text("Ayarlar") }
+    NeydiButton("Bileşenler", onBilesenler)
+    NeydiButton("Alisverise cikiyorum", onAlisveriseCik)
+    NeydiButton("Gecmis", onGecmis)
+    NeydiButton("Ayarlar", onAyarlar)
 }
 
 @Composable
@@ -71,8 +71,8 @@ fun EksikOlabilirScreen(onEkle: () -> Unit, onBosver: () -> Unit) = Iskele(
     baslik = "Eksik olabilir",
     aciklama = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",
 ) {
-    Button(onClick = onEkle) { Text("Ekle") }
-    Button(onClick = onBosver) { Text("Bosver") }
+    NeydiButton("Ekle", onEkle)
+    NeydiButton("Bosver", onBosver)
 }
 
 @Composable
@@ -84,7 +84,7 @@ fun AlisverisiBitirScreen(tripId: String?, onOnayla: () -> Unit) = Iskele(
         "Gecmisten okuma modu: $tripId"
     },
 ) {
-    Button(onClick = onOnayla) { Text("Onayla ve bitir") }
+    NeydiButton("Onayla ve bitir", onOnayla)
 }
 
 @Composable
@@ -92,7 +92,7 @@ fun GecmisScreen(onGeri: () -> Unit) = Iskele(
     baslik = "Gecmis",
     aciklama = "Yanlis okunmus bir fise geri donmenin tek yolu. Uygulamanin en ucuz ekrani.",
 ) {
-    Button(onClick = onGeri) { Text("Geri") }
+    NeydiButton("Geri", onGeri)
 }
 
 @Composable
@@ -102,7 +102,7 @@ fun AyarlarScreen(onGeri: () -> Unit) = Iskele(
     aciklama = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.\n\n" +
         "Room -> ${rememberDbProbe()}",
 ) {
-    Button(onClick = onGeri) { Text("Geri") }
+    NeydiButton("Geri", onGeri)
 }
 
 @Composable
@@ -110,5 +110,5 @@ fun KurulumScreen(onBitir: () -> Unit) = Iskele(
     baslik = "Kurulum",
     aciklama = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
 ) {
-    Button(onClick = onBitir) { Text("Bitir") }
+    NeydiButton("Bitir", onBitir)
 }
