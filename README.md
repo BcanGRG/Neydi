@@ -28,14 +28,26 @@
 
 ## Durum
 
-**Milestone 1 — iskelet.** Nav3 grafiği ayakta, tema ("Sıcak Kiler") bağlı, 6 hedef placeholder ekran olarak duruyor.
+**Milestone 1 — iskelet.** Nav3 grafiği ayakta, tema ("Sıcak Kiler") bağlı, tasarım devir paketi indirilmiş, 6 hedef placeholder ekran olarak duruyor.
 
-Sırada: Claude Design çıktısının token'lara dönüştürülmesi → Room şeması → fiş okuma → Supabase senkron.
+## Yol haritası
+
+Tüm iş **[`docs/ROADMAP.md`](docs/ROADMAP.md)** altında: 11 faz, 66 adım, her adım bir PR.
+
+Sıralama **risk azaltma önce**: fiş okuma doğruluğu ölçülmeden ekran yazılmıyor, çünkü satır adı doğruluğu kötü çıkarsa ürünün yarısının kapsamı değişir.
+
+Her adımın iki kapısı var — `assembleDebug` yeşil **ve** değişikliğin bağlı telefonda gözle doğrulanması. Cihazda görülmeyen bir şey "bitti" sayılmıyor.
 
 ## Geliştirme
 
 ```bash
 ./gradlew :composeApp:assembleDebug
+```
+
+Bağlı fiziksel cihaza kur (her adımın 2. kapısı):
+
+```bash
+./gradlew :composeApp:installDebug
 ```
 
 **iOS Windows'ta derlenmez.** Hedefler `composeApp/build.gradle.kts` içinde tanımlı ve Gradle host'un desteklemediği task'leri çalıştırmıyor — Mac'e geçildiğinde tek satır değişiklik gerekmeden derlenmeye başlar.
