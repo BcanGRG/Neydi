@@ -53,10 +53,13 @@ fun ListeScreen(
     onAlisveriseCik: () -> Unit,
     onGecmis: () -> Unit,
     onAyarlar: () -> Unit,
+    onBilesenler: () -> Unit = {},
 ) = Iskele(
     baslik = "Liste",
     aciklama = "Uygulamanin kalbi. Uc modu var: planlama, alisveris, alisveris sonrasi.",
 ) {
+    // GECICI: F3.2'de bu ekranin yerini gercek Liste alacak, buton da gidecek.
+    Button(onClick = onBilesenler) { Text("Bileşenler") }
     Button(onClick = onAlisveriseCik) { Text("Alisverise cikiyorum") }
     Button(onClick = onGecmis) { Text("Gecmis") }
     Button(onClick = onAyarlar) { Text("Ayarlar") }
