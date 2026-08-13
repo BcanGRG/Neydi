@@ -119,15 +119,25 @@ val ItemNameShopping = TextStyle(
 )
 
 /**
- * Fiyat ve adet. tabular figures ("tnum") istiyor.
+ * Fiyat stilleri IKIYE AYRILDI (tasarim reconciliation karari): tek 15sp stil
+ * iki baglami da tam karsilamiyordu.
  *
- * TODO(tnum): Skia desteklemedigi OpenType ozelliklerini SESSIZCE yok sayabiliyor.
- * Font baglaninca gercek bir iPhone'da dogrula. Bu yuzden fiyat sutunu ayrica
- * sabit genislik + saga dayali tasarlandi - tnum uygulanmasa da duzen ayakta kalir.
+ * TODO(tnum): Ikisi de tabular figures ("tnum") istiyor. Skia desteklemedigi
+ * OpenType ozelliklerini SESSIZCE yok sayabiliyor - font baglaninca gercek bir
+ * iPhone'da dogrula. Bu yuzden fiyat sutunu ayrica SizesExtra.priceColumn (92dp)
+ * sabit genislik + TextAlign.End ile kuruluyor; tnum uygulanmasa da duzen kalir.
  */
-val PriceText = TextStyle(
+
+/** Liste satirindaki fiyat cipi. Kendi 44dp dokunma hedefi var. */
+val PriceChip = TextStyle(
     fontFamily = uiFamily, fontWeight = FontWeight.SemiBold,
-    fontSize = 15.sp, lineHeight = 20.sp,
+    fontSize = 14.sp, lineHeight = 19.sp,
+)
+
+/** Fis kontrol ekranindaki satir fiyati - duzeltilebilir, o yuzden daha buyuk. */
+val PriceRow = TextStyle(
+    fontFamily = uiFamily, fontWeight = FontWeight.SemiBold,
+    fontSize = 17.sp, lineHeight = 22.sp,
 )
 
 val QuantityBadge = TextStyle(
