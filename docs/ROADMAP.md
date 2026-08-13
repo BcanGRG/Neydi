@@ -2,7 +2,7 @@
 
 Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 2 / 67 — *F0.1 tamamlandı. Sırada F0.2: fişleri koşuma vermek (kimlik doğrulama gerekiyor).*
+**İlerleme:** 2 / 67 — *Sırada **F1.1** (fontlar). Fiş ölçümü paralel izde, sende bekliyor.*
 
 ---
 
@@ -36,9 +36,41 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 
 ---
 
-## Faz 0 — Risk azaltma (kod yazmadan önce)
+## Yürütme sırası
 
-> Araştırmanın "tek satır Kotlin yazmadan önce yapılacak en değerli iş" dediği yer. **Ürünün yarısının kapsamı buranın sonucuna bağlı.** Fiş satır adları güvenilir çıkmazsa Neydi bir fiyat takipçisi değil, harcama defteri olur — ve bunu 4. ayda değil şimdi öğrenmek gerekiyor.
+> **Numaralar kimliktir, sıra değildir.** `F3.1` her zaman `F3.1`'dir — PR başlıkları ve geçmiş referanslar bozulmasın diye numaralar sabit. Hangi sırayla yapıldıkları bu bölümde yazar ve değişebilir.
+
+**Karar (13 Ağu 2026): görünür ilerleme öne alındı.** Liste yarısı fiş ölçümünden bağımsız — o kod ölçüm ne çıkarsa çıksın yazılacak. Fiş testi paralel ize taşındı.
+
+### Ana hat
+
+| # | Adım | Neden bu sırada |
+|---|---|---|
+| 1 | **F1.1** Fontlar | Tipografi metrikleri bileşen yazmadan önce oturmalı, yoksa hepsini yeniden ölçeriz |
+| 2 | **F1.6** Edge-to-edge | Cihazda görülen bir hata, ucuz, ve düzeltmesi hemen görünüyor |
+| 3 | **F3.1** Bileşen kütüphanesi | **İlk gerçek görsel çıktı.** Sahte veriyle çalışır, Room'u beklemez |
+| 4 | **F1.3 · F1.4 · F1.5 · F1.2** | Temel borç temizliği — deprecation, Nav3 saveable, pressable, kontrast testi |
+| 5 | **F2.1 → F2.6** | Room + katalog. Listenin kalıcı olması için gerekli |
+| 6 | **F3.2 → F3.8** | Gerçek Liste ekranı: bölümler, hızlı ekleme, alışveriş modu, boş durumlar |
+| 7 | **Faz 4** → **Faz 6** → **Faz 5** → **Faz 7** → **Faz 8** → **Faz 9** → **Faz 10** | Fiş yakalama, öneri motoru, fiyat hafızası, senkron, marka, iOS, refactor |
+
+**Faz 5 (fiyat hafızası) bilinçli olarak Faz 6'dan sonraya kaydı** — kapsamı F0.5'in kararına bağlı ve o karar paralel izden gelecek.
+
+### Paralel iz — fiş ölçümü
+
+Ana hattı bloklamaz. Sen fiş biriktirdikçe ve kimlik doğrulama hazır olunca ilerler.
+
+**F0.2** → **F0.3** → **F0.4** → **F0.5**
+
+Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2, 3, 4, 6 bu izden tamamen bağımsız — hiçbiri fiş ölçümünü beklemiyor.
+
+---
+
+## Faz 0 — Fiş ölçümü *(paralel iz)*
+
+> **Ürünün yarısının kapsamı buranın sonucuna bağlı.** Fiş satır adları güvenilir çıkmazsa Neydi bir fiyat takipçisi değil, harcama defteri olur — ve bunu 4. ayda değil şimdi öğrenmek gerekiyor.
+>
+> Bu iz artık **paralel** ilerliyor: kimlik doğrulama ve fiş biriktirme kullanıcı tarafında olduğu için ana hattı bekletmiyor. Çıktısı **yalnızca Faz 5'i** kapılıyor.
 
 - [x] **0.0 — Cihaz kurulumu.** ✅ Samsung Galaxy S10+ (SM-G975F), **Android 12 / API 31**, 1080×2280 @ 420dpi. `installDebug` çalışıyor, uygulama crash'siz açılıyor, açık ve karanlık mod referans görüntüleri alındı. Tema doğrulandı: açık modda krem `#FBF7F2` + terracotta `#B34418`, karanlık modda `#13100E` + somon `#FF9166`. **İki hata yakalandı → F1.6.** (API 31 ayrıca F8.4 için önemli: Android 12+ SplashScreen API'si bu cihazda geçerli.)
 - [x] **0.1 — Fiş test koşumu** *(cihazsız)*. ✅ `tools/receipt-eval/` — TypeScript (Node 24, derleme adımı yok; üretimdeki Cloudflare Worker de TS olacağı için istek şekli birebir aynı). Türkçe fiş prompt'u + structured output şeması + ad/fiyat **ayrı** skorlama + aritmetik kapısı. API şekli `claude-api` skill'inden doğrulandı ve **üç varsayımım yanlış çıktı**: (a) Claude Opus 5'te thinking **varsayılan açık**, ve `disabled` yalnızca `effort` ≤ `high` ile kabul ediliyor — `xhigh`/`max` ile 400; (b) structured output `output_config.format` ile veriliyor, `output_format` kullanımdan kalkmış; (c) şema `minimum`/`minLength` kabul etmiyor ve nullable alanlar `anyOf` ile yazılmak zorunda.
@@ -68,6 +100,8 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 ## Faz 3 — Liste ekranı (uygulamanın kalbi)
 
 > Uygulamada geçirilen sürenin %90'ı burada. Tek mükemmel olması gereken ekran.
+>
+> **F3.1 yürütme sırasında öne alındı** (3. adım): bileşen kütüphanesi sahte veriyle çalışır, Room'u beklemez, ve cihazda görülen ilk gerçek görsel çıktıdır. Ekranın kalanı (F3.2–3.8) veri katmanından sonra gelir.
 
 - [ ] **3.1 — Bileşen kütüphanesi.** Liste satırı (normal / sabit / işaretli / eş-eklemiş), `PriceChip`, delta çipi, Canvas sparkline (24×16dp), öneri çipi, kategori başlığı, kategori kutucuğu + **iki-harf fallback**. Fallback'i **önce** yap — öğelerin %80'i onu gösterecek.
 - [ ] **3.2 — Planlama modu.** Bölümler, reyon gruplama, "Her zamankiler" (%70 opaklık + raptiye — kullanıcı eklediklerinden görsel olarak hafif olmalı ki "uygulama ağzıma laf koydu" hissi vermesin), "Alındı" bölümü.
