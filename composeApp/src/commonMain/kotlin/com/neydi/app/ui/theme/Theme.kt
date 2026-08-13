@@ -2,6 +2,7 @@ package com.neydi.app.ui.theme
 
 import androidx.compose.foundation.IndicationNodeFactory
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -92,9 +93,14 @@ private class NeydiIndicationNode(
     }
 }
 
+/**
+ * @param darkTheme varsayilani sistem ayari. Varsayilan olmasi sart:
+ * `@PreviewLightDark` temayi `uiMode` uzerinden surer ve preview'in tema
+ * argumani gecmesi mumkun degil - varsayilan olmazsa previewler hep acik cikar.
+ */
 @Composable
 fun NeydiTheme(
-    darkTheme: Boolean,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) NeydiDarkColors else NeydiLightColors

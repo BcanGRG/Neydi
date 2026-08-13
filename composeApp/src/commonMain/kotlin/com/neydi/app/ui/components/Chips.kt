@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
@@ -172,4 +173,26 @@ fun MemberAvatar(initial: String, modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.secondary,
         )
     }
+}
+
+// --- Preview ---------------------------------------------------------------
+
+@PreviewLightDark
+@Composable
+private fun ChipsPreview() = NeydiPreview {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DeltaChip(17, rising = true)
+        DeltaChip(6, rising = false)
+        QuantityBadge("2x")
+        QuantityBadge("1 kg")
+        MemberAvatar("A")
+    }
+    PriceChip("455,00 TL")
+    // Dort haneli fiyat: 92dp sutun butcesini zorlayan gercek senaryo.
+    PriceChip("1.289,90 TL")
+    SuggestionChip("Yumurta", "14 gün oldu") {}
+    SuggestionChip("Çay", "genelde 4 alışverişte bir") {}
 }

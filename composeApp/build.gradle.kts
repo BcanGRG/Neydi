@@ -37,11 +37,14 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
+            // compose.* kisayollari DEGIL: hepsi CMP 1.11.1'de @Deprecated.
+            // Surumler katalogda; material3'unki bilerek AYRI (bkz. libs.versions.toml).
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.ui.tooling.preview)
 
             // Navigation 3 (CMP portu - iOS dahil tum platformlar)
             implementation(libs.navigation3.ui)
@@ -59,7 +62,6 @@ kotlin {
         }
 
         androidMain.dependencies {
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
         }
@@ -68,6 +70,12 @@ kotlin {
             implementation(kotlin("test"))
         }
     }
+}
+
+// Preview'i CIZEN renderer. KMP kaynak kumelerinin debug/release varyanti yok,
+// o yuzden debugImplementation buradan verilir - release APK'ya girmemeli.
+dependencies {
+    debugImplementation(libs.compose.ui.tooling)
 }
 
 compose.resources {

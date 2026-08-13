@@ -1,14 +1,20 @@
 package com.neydi.app.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.SizesExtra
+import com.neydi.app.ui.theme.Spacing
 
 /**
  * 24x16dp fiyat sparkline'i. El yazimi Canvas - kutuphane yok.
@@ -60,5 +66,22 @@ fun Sparkline(
 
         // Son nokta vurgulanir - "su an buradayiz".
         drawCircle(color = color, radius = 1.5.dp.toPx(), center = points.last())
+    }
+}
+
+// --- Preview ---------------------------------------------------------------
+
+@PreviewLightDark
+@Composable
+private fun SparklinePreview() = NeydiPreview {
+    val extras = LocalNeydiExtraColors.current
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Sparkline(listOf(371f, 375f, 389f, 402f, 431f, 455f), extras.priceUp)
+        Sparkline(listOf(455f, 431f, 402f, 389f, 375f, 371f), extras.priceDown)
+        Sparkline(listOf(400f, 400f, 400f, 400f), extras.priceUp)   // duz seri
+        Sparkline(listOf(400f), extras.priceUp)                     // tek nokta: HIC cizilmez
     }
 }
