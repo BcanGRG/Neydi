@@ -51,10 +51,12 @@ room = "3.0.1"                            # androidx.room3 (2.x DEGIL - koordina
 sqlite = "2.7.0"
 ktor = "3.5.2"
 supabase = "3.7.0"
+mlkitText = "16.0.1"                      # cihazda, ucretsiz, Latin betigi Turkce'yi kapsiyor
 filekit = "0.14.2"                        # 0.15.0 cok yeni; 2 aylik saha suresi olani pinliyoruz
 coil = "3.5.0"
 
 [libraries]
+mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitText" }
 # Compose Multiplatform
 # compose.runtime / foundation / material3 / ui / components.resources / preview
 # kisayollarinin HEPSI CMP 1.11.1'de @Deprecated("Specify dependency directly").
