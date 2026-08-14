@@ -6,216 +6,233 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Ayristirici elde yazilmis kurallardan olusuyor, yani her kural elle test
- * edilmeli. Bu testler ODEMELI YOLDA YAZILAMAZDI: orada dogrulama ancak canli
- * API'ye karsi, ucret odeyerek ve yavas kosardi.
+ * Testler GERCEK FISLERIN OCR CIKTISINDAN geliyor, elle yazilmis ornekten degil.
+ *
+ * NEDEN BU FARK ONEMLI: onceki surumde 17 test vardi, hepsi geciyordu ve
+ * hicbiri bir sey kanitlamiyordu - cunku ornek fisleri de kurallari da ben
+ * yazmistim, yani kendi varsayimlarimi kendime onaylatiyordum. Iki gercek fis
+ * uc varsayimi birden curuttu (nokta ondalik, toplam satirinda KDV gecmesi,
+ * miktar satirinin urunden once gelmesi).
+ *
+ * Asagidaki satirlar cihazda ML Kit'in urettigi ve gorsel satirlara gruplanmis
+ * CIKTININ AYNISI - OCR hatalari dahil, hicbiri temizlenmedi. `TURŞU KORNI ŞON`
+ * bolunmus kelime, `21.` bozuk KDV isareti, `x484.58` yildiz yerine x, `2 ad %
+ * 25.50` carpim yerine yuzde: hepsi gercek ve hepsi gecmek zorunda.
  */
 class ReceiptParserTest {
 
+    /** BIM, 13.08.2026, cihazda okunan hali. */
+    private val bim = listOf(
+        "E-Arsiv Fatura",
+        "BIM BIRLESIK MAGAZALAR A.S.",
+        "BADEMLIK MAH.BADEML IK YOLU CAD.",
+        "NO :55/A-B KEÇIÖREN / ANKARA",
+        "Buyük Mükel lefler VDM 1750051846",
+        "FATURA N0:T082026082544469",
+        "13.08.2026 18:49 Sira No : 218",
+        "ETTNO483dfaa-6f61 -43ef-9b1e-09a6159393c3",
+        "12479021308613420218",
+        "TCKN/VKN:11111111111-NIHAL TÜKETICI",
+        "2 ad X 53.00",
+        "KREMA 18YAĞLI 200ML %1. *106.00",
+        "TURŞU KORNI ŞON 670G 21. *84.50",
+        "ALIŞVERIŞ POŞETi BiM 220 *1.00",
+        "GOFRET FIND KREM142G %1. *34.00",
+        "TOPLAM KDV *2.39",
+        "Odenecek KDV Dahil Tutar *225.50",
+        "Banka Kredi Kartı (1) *225.50",
+        "GARANT! BANKASI",
+        "1:1982030 T:03394805 519324******3594",
+        "13.08.2026 18:49 B:3004 S:4742",
+        "Onay No:700733 Ref.No:622576613383",
+        "KDV MATRAH %1. 222.28 220 0.83 KDV TUTAR *0.17 *2.22 KDV DAHIL *224.50 *1.00",
+        "POS:2 - 342619 - Mxx** G**** 9519124792",
+        "12479NECID AZheECiÖRENSlan342",
+    )
+
+    /** File Market, 12.08.2026, cihazda okunan hali. */
+    private val file = listOf(
+        "aalye",
+        "E-frslv Fatura",
+        "FiLE OVACIK / KEÇ1ÖREN/ ANKARA",
+        "FiLE MARKET MAĞAZACIL IK ANONiM ŞIRKET!",
+        "OVACIK MAHALLESI, YOZGAT BULVARI 84-A KE",
+        "ÇlöREN / ANKARA",
+        "Sarigazi VDM 3671427056",
+        "FATURA NO:VO82026003852402",
+        "12.08.2026 18:46 Sira No : 153",
+        "ETTNS745a21 C-ccAd-4a08-8fa0-889F91102659",
+        "23230031208605520153",
+        "TCKN/VKN:11111111111-NiHAi TüKETiCi",
+        "İNCEYULAF350G HARRAS %1. *49.00",
+        "2 ad X 41.50",
+        "HARRAS ACI BiBER SOS %1. *83.00",
+        "0.182 kg X 690.00",
+        "KRUVASAN+ KG %1. *125.58",
+        "HARRAS SUTLÜ CIK.80G %1. *47.00",
+        "SRIRACHA S0S 230 GR %1. *129.00",
+        "2 ad % 25.50",
+        "HARRAS VYEBiTSIN HIND %1. *51.00",
+        "TOPLAM KDV 4.80",
+        "Odenecek KDV Dahil Tutar 484.58",
+        "Ippos Kredi Kartı (1) x484.58",
+        "GARANTI BANKASI",
+        "I:2936784 T:04284345 519324****3594",
+        "12.08.2026 18:47 B:1187 S:8",
+        "Onay No:782192 Ref.No:622478677539",
+        "KDV MATRAH %1. 479.78 KDV TUTAR KDV DAHIL *4.80 *484.58",
+        "POS:3 - 430831 - į*** Gk*** 940123233",
+        "223 nvarK / KECiÖREN/ ANKAGS No: 552",
+    )
+
+    // --- Para ---------------------------------------------------------------
+
+    /** Ilk surum noktayi REDDEDIYORDU ve iki zincirin ikisi de nokta basiyor. */
     @Test
-    fun parsesTurkishMoneyToMinor() {
-        assertEquals(1250, parseMinor("12,50"))
-        assertEquals(500, parseMinor("5,00"))
-        assertEquals(123456, parseMinor("1.234,56"))
-        // Binlik nokta olmadan da ayni sayi - fisler ikisini de basiyor.
-        assertEquals(123456, parseMinor("1234,56"))
-        assertEquals(-500, parseMinor("-5,00"))
+    fun parsesDotAsDecimalSeparator() {
+        assertEquals(10600, parseMinor("106.00"))
+        assertEquals(48458, parseMinor("484.58"))
+        assertEquals(18, parseMinor("0.18"))
     }
 
-    /** Kurus hanesi olmayan sayi PARA DEGIL: "%1" ya da "0,850 KG" tutar sanilmamali. */
+    /** Virgul de kabul: baska zincirler oyle basabilir, ikisini de destekliyoruz. */
+    @Test
+    fun parsesCommaAsDecimalSeparator() {
+        assertEquals(1250, parseMinor("12,50"))
+        assertEquals(123456, parseMinor("1.234,56"))
+        assertEquals(123456, parseMinor("1,234.56"))
+    }
+
+    /** OCR yildizi bazen `x` okuyor, bazen hic okumuyor - ucu de gecmeli. */
+    @Test
+    fun acceptsStarOrXOrNoPrefix() {
+        assertEquals(10600, parseMinor("*106.00"))
+        assertEquals(48458, parseMinor("x484.58"))
+        assertEquals(480, parseMinor("4.80"))
+    }
+
+    /** Iki ondalik hanesi olmayan sayi PARA DEGIL. */
     @Test
     fun rejectsNonMoneyNumbers() {
         assertNull(parseMinor("1"))
-        assertNull(parseMinor("0,850"))
+        assertNull(parseMinor("0.182"))
+        assertNull(parseMinor("%1."))
         assertNull(parseMinor("abc"))
     }
 
+    // --- BIM fisi -----------------------------------------------------------
+
     @Test
-    fun parsesSimpleReceipt() {
-        val reading = parseReceipt(
-            listOf(
-                "MIGROS TICARET A.S.",
-                "TARIH 14.08.2026",
-                "EKMEK %1 5,00",
-                "SUT 1 L %1 32,50",
-                "TOPKDV 2,45",
-                "TOPLAM 37,50",
-                "NAKIT 40,00",
-                "PARA USTU 2,50",
-            )
+    fun bimReceiptYieldsFourProducts() {
+        val r = parseReceipt(bim)
+        assertEquals(
+            listOf(10600L, 8450L, 100L, 3400L),
+            r.lines.map { it.amountMinor },
         )
-        assertEquals("MIGROS TICARET A.S.", reading.storeName)
-        assertEquals(2, reading.rows.size)
-        assertEquals("EKMEK", reading.rows[0].name)
-        assertEquals(500, reading.rows[0].amountMinor)
-        assertEquals("SUT 1 L", reading.rows[1].name)
-        assertEquals(3250, reading.rows[1].amountMinor)
-        assertEquals(3750, reading.totalMinor)
     }
 
-    /**
-     * KDV dokumu URUN DEGIL. Bu satiri urun sayarsak hem sahte bir urun
-     * dogar hem de toplam tutmaz - iki hata birden.
-     */
+    /** Toplam satiri "Odenecek KDV Dahil Tutar" - icinde KDV gectigi halde bulunmali. */
     @Test
-    fun vatLineIsNotAProduct() {
-        val reading = parseReceipt(listOf("MARKET", "EKMEK 5,00", "TOPKDV 0,45", "TOPLAM 5,00"))
-        assertEquals(1, reading.rows.size)
-        assertEquals("EKMEK", reading.rows[0].name)
+    fun bimTotalIsFoundDespiteContainingVat() {
+        assertEquals(22550, parseReceipt(bim).totalMinor)
     }
 
-    /** "TOPLAM KDV" ikisini de iceriyor; vergi tutari fis toplami sanilmamali. */
+    /** "TOPLAM KDV *2.39" urun DEGIL: toplamin icindeki verginin dokumu. */
     @Test
-    fun vatTotalIsNotMistakenForReceiptTotal() {
-        val reading = parseReceipt(listOf("MARKET", "EKMEK 5,00", "TOPLAM KDV 0,45", "TOPLAM 5,00"))
-        assertEquals(500, reading.totalMinor)
-        assertEquals(1, reading.rows.size)
+    fun bimVatLineIsNotAProduct() {
+        assertTrue(parseReceipt(bim).lines.none { it.amountMinor == 239L })
     }
 
-    /** Tartili urun IKI SATIR: ad ustte, agirlik ve tutar altta. */
+    /** Odeme satiri toplamla AYNI tutari tasiyor; urun sayilirsa toplam ikiye katlanir. */
     @Test
-    fun mergesWeighedItemFromTwoLines() {
-        val reading = parseReceipt(
-            listOf("MARKET", "DOMATES %1", "0,850 KG x 24,90 TL/KG 21,17", "TOPLAM 21,17")
+    fun bimPaymentLineIsNotAProduct() {
+        assertTrue(parseReceipt(bim).lines.none { it.amountMinor == 22550L })
+    }
+
+    /** Miktar satiri urunden ONCE geliyor: "2 ad X 53.00" sonra KREMA *106.00. */
+    @Test
+    fun bimQuantityLineBindsToFollowingProduct() {
+        val krema = parseReceipt(bim).lines.first()
+        assertEquals(2.0, krema.count)
+        assertEquals("ad", krema.unit)
+        assertEquals(5300, krema.unitPriceMinor)
+        assertEquals(10600, krema.amountMinor)
+    }
+
+    /** Bozuk KDV isareti ("21.", "220") urun adindan temizlenmeli. */
+    @Test
+    fun bimStripsMangledVatMarkFromName() {
+        val names = parseReceipt(bim).lines.map { it.name }
+        assertTrue(names.none { it.endsWith("21.") || it.endsWith("220") }, "kalan: $names")
+    }
+
+    @Test
+    fun bimArithmeticHolds() {
+        assertEquals(true, arithmeticHolds(parseReceipt(bim)))
+    }
+
+    // --- File Market fisi ---------------------------------------------------
+
+    @Test
+    fun fileReceiptYieldsSixProducts() {
+        val r = parseReceipt(file)
+        assertEquals(
+            listOf(4900L, 8300L, 12558L, 4700L, 12900L, 5100L),
+            r.lines.map { it.amountMinor },
         )
-        assertEquals(1, reading.rows.size)
-        val row = reading.rows[0]
-        assertEquals("DOMATES", row.name)
-        assertEquals(0.850, row.quantity)
-        assertEquals("kg", row.unit)
-        assertEquals(2490, row.unitPriceMinor)
-        assertEquals(2117, row.amountMinor)
     }
 
-    /** OCR termal yazicinin ince carpisini bazen yildiz okuyor. */
+    /** Bu fiste tutarlarin oneki YOK: "Odenecek KDV Dahil Tutar 484.58". */
     @Test
-    fun acceptsAllMultiplicationSigns() {
-        for (sign in listOf("x", "X", "*", "×")) {
-            val reading = parseReceipt(
-                listOf("MARKET", "ELMA", "1,000 KG $sign 30,00 TL/KG 30,00", "TOPLAM 30,00")
-            )
-            assertEquals(1, reading.rows.size, "carpim isareti: $sign")
-            assertEquals(3000, reading.rows[0].amountMinor)
-        }
+    fun fileTotalIsFoundWithoutStarPrefix() {
+        assertEquals(48458, parseReceipt(file).totalMinor)
     }
 
-    /** Isareti bayrak tasiyor, sayi degil - yoksa toplama iki kez eksi girerdi. */
+    /** Tartili urun: "0.182 kg X 690.00" -> KRUVASAN, 0,182 kg, 125,58 TL. */
     @Test
-    fun discountStoredAsPositiveAmountPlusFlag() {
-        val reading = parseReceipt(listOf("MARKET", "EKMEK 5,00", "INDIRIM -1,00", "TOPLAM 4,00"))
-        val discount = reading.rows.single { it.discount }
-        assertEquals(100, discount.amountMinor)
-        assertTrue(discount.discount)
+    fun fileWeighedItemCarriesWeightAndUnitPrice() {
+        val kruvasan = parseReceipt(file).lines.first { it.amountMinor == 12558L }
+        assertEquals(0.182, kruvasan.count)
+        assertEquals("kg", kruvasan.unit)
+        assertEquals(69000, kruvasan.unitPriceMinor)
     }
 
-    /** OCR Turkce karakter basmayabilir; iki yazim da ayni satiri bulmali. */
+    /** OCR carpiyi `%` okumus: "2 ad % 25.50" yine miktar satiri sayilmali. */
     @Test
-    fun findsDiscountInTurkishAndAsciiSpelling() {
-        for (spelling in listOf("İNDİRİM", "INDIRIM", "indirim")) {
-            val reading = parseReceipt(listOf("MARKET", "EKMEK 5,00", "$spelling -1,00", "TOPLAM 4,00"))
-            assertEquals(1, reading.rows.count { it.discount }, "yazim: $spelling")
-        }
+    fun filePercentIsAcceptedAsMultiplicationSign() {
+        val hindi = parseReceipt(file).lines.first { it.amountMinor == 5100L }
+        assertEquals(2.0, hindi.count)
+        assertEquals(2550, hindi.unitPriceMinor)
     }
 
     @Test
-    fun dropsPaymentAndHeaderLines() {
-        val reading = parseReceipt(
-            listOf(
-                "A101",
-                "FIS NO 0042",
-                "EKMEK 5,00",
-                "NAKIT 10,00",
-                "PARA USTU 5,00",
-                "TESEKKUR EDERIZ",
-                "TOPLAM 5,00",
-            )
-        )
-        assertEquals(1, reading.rows.size)
-        assertEquals("EKMEK", reading.rows[0].name)
+    fun fileArithmeticHolds() {
+        assertEquals(true, arithmeticHolds(parseReceipt(file)))
     }
 
     // --- Aritmetik kapisi ---------------------------------------------------
 
-    @Test
-    fun acceptsReceiptWhoseTotalAddsUp() {
-        val reading = parseReceipt(listOf("MARKET", "EKMEK 5,00", "SUT 32,50", "TOPLAM 37,50"))
-        assertEquals(true, arithmeticHolds(reading))
-    }
-
     /** Kacirilan satir toplami bozar - kapinin butun varlik sebebi bu. */
     @Test
-    fun catchesMissingLine() {
-        val reading = ReceiptReading(
-            storeName = null,
-            rows = listOf(ParsedLine(rawText = "EKMEK 5,00", name = "EKMEK", amountMinor = 500)),
-            totalMinor = 3750,
-            rawLines = emptyList(),
-        )
-        assertEquals(false, arithmeticHolds(reading))
-    }
-
-    /** Tartili urun yuvarlamasi 5 kurusa kadar oynatabilir; bu fis TUTARSIZ degil. */
-    @Test
-    fun allowsFiveMinorTolerance() {
-        val reading = ReceiptReading(
-            storeName = null,
-            rows = listOf(ParsedLine(rawText = "", name = "DOMATES", amountMinor = 2117)),
-            totalMinor = 2120,
-            rawLines = emptyList(),
-        )
-        assertEquals(true, arithmeticHolds(reading))
-    }
-
-    @Test
-    fun rejectsBeyondTolerance() {
-        val reading = ReceiptReading(
-            storeName = null,
-            rows = listOf(ParsedLine(rawText = "", name = "DOMATES", amountMinor = 2117)),
-            totalMinor = 2130,
-            rawLines = emptyList(),
-        )
-        assertEquals(false, arithmeticHolds(reading))
-    }
-
-    @Test
-    fun subtractsDiscountFromTotal() {
-        val reading = parseReceipt(
-            listOf("MARKET", "EKMEK 5,00", "SUT 32,50", "INDIRIM -2,50", "TOPLAM 35,00")
-        )
-        assertEquals(true, arithmeticHolds(reading))
+    fun missingLineIsCaught() {
+        val eksik = parseReceipt(bim).let { r ->
+            r.copy(lines = r.lines.dropLast(1))
+        }
+        assertEquals(false, arithmeticHolds(eksik))
     }
 
     /** "Dogrulanamadi" ile "tutmadi" AYRI SEYLER - null bunu tasiyor. */
     @Test
     fun returnsNullWhenTotalUnreadable() {
-        val reading = parseReceipt(listOf("MARKET", "EKMEK 5,00"))
-        assertNull(arithmeticHolds(reading))
+        val toplamsiz = parseReceipt(bim.filter { !it.contains("Odenecek") })
+        assertNull(arithmeticHolds(toplamsiz))
     }
 
-    /** Gercekci bir fis: tartili urun, KDV dokumu, indirim ve odeme bir arada. */
+    /** Tartili urun yuvarlamasi bes kurusa kadar oynatabilir. */
     @Test
-    fun realisticReceiptAddsUp() {
-        val reading = parseReceipt(
-            listOf(
-                "MIGROS TICARET A.S.",
-                "SUBE 0421  KASA 03",
-                "TARIH 14.08.2026 SAAT 18:42",
-                "DOMATES %1",
-                "0,850 KG x 24,90 TL/KG 21,17",
-                "EKMEK 200 GR %1 8,50",
-                "SUT 1 L %1 32,50",
-                "PEYNIR 500 GR %8 149,90",
-                "INDIRIM -12,07",
-                "TOPKDV 18,44",
-                "TOPLAM 200,00",
-                "KREDI KARTI 200,00",
-                "TESEKKUR EDERIZ",
-            )
-        )
-        assertEquals("MIGROS TICARET A.S.", reading.storeName)
-        assertEquals(4, reading.rows.count { !it.discount })
-        assertEquals(1, reading.rows.count { it.discount })
-        assertEquals(20000, reading.totalMinor)
-        assertEquals(true, arithmeticHolds(reading))
+    fun allowsFiveMinorTolerance() {
+        val r = parseReceipt(bim)
+        assertEquals(true, arithmeticHolds(r.copy(totalMinor = r.totalMinor!! + 4)))
+        assertEquals(false, arithmeticHolds(r.copy(totalMinor = r.totalMinor!! + 13)))
     }
 }
