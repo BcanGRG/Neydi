@@ -5,7 +5,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-private val AYLAR = listOf(
+private val MONTH_NAMES = listOf(
     "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
     "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 )
@@ -29,12 +29,12 @@ fun formatDayMonthTime(epochMillis: Long, zone: TimeZone = TimeZone.currentSyste
     val t = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(zone)
     val saat = t.hour.toString().padStart(2, '0')
     val dakika = t.minute.toString().padStart(2, '0')
-    return "${t.day} ${AYLAR[t.month.ordinal]} $saat:$dakika"
+    return "${t.day} ${MONTH_NAMES[t.month.ordinal]} $saat:$dakika"
 }
 
 /** Epoch millis -> "13 Ağustos 2026". */
 @OptIn(ExperimentalTime::class)
 fun formatDayMonthYear(epochMillis: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
     val t = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(zone)
-    return "${t.day} ${AYLAR[t.month.ordinal]} ${t.year}"
+    return "${t.day} ${MONTH_NAMES[t.month.ordinal]} ${t.year}"
 }
