@@ -7,11 +7,9 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.neydi.app.data.bootstrap
-import com.neydi.app.data.db.NeydiDatabase
+import com.neydi.app.di.AppBootstrap
 import com.neydi.app.nav.AlisverisiBitir
 import com.neydi.app.nav.Ayarlar
-import com.neydi.app.nav.Bilesenler
 import com.neydi.app.nav.EksikOlabilir
 import com.neydi.app.nav.Gecmis
 import com.neydi.app.nav.Kurulum
@@ -19,11 +17,10 @@ import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
 import com.neydi.app.ui.screens.AlisverisiBitirScreen
 import com.neydi.app.ui.screens.AyarlarScreen
-import com.neydi.app.ui.screens.ComponentGalleryScreen
 import com.neydi.app.ui.screens.EksikOlabilirScreen
 import com.neydi.app.ui.screens.GecmisScreen
 import com.neydi.app.ui.screens.KurulumScreen
-import com.neydi.app.ui.screens.ListeScreen
+import com.neydi.app.ui.liste.ListeEkrani
 import com.neydi.app.ui.theme.NeydiTheme
 import org.koin.compose.koinInject
 
@@ -31,8 +28,8 @@ import org.koin.compose.koinInject
 fun App() {
     // Katalog tohumlamasi acilista bir kez. Idempotent, ekrani BLOKLAMIYOR -
     // ilk acilista 257 satir yazilirken kullanici bos ekrana bakmamali.
-    val db = koinInject<NeydiDatabase>()
-    LaunchedEffect(Unit) { db.bootstrap() }
+    val bootstrap = koinInject<AppBootstrap>()
+    LaunchedEffect(Unit) { bootstrap() }
 
     NeydiTheme(darkTheme = isSystemInDarkTheme()) {
         // Surec olumunu ve konfigurasyon degisimini asar. Serializer kaydi
@@ -52,15 +49,12 @@ fun App() {
             onBack = { geri() },
             entryProvider = entryProvider {
                 entry<Liste> {
-                    ListeScreen(
+                    ListeEkrani(
                         onAlisveriseCik = { git(EksikOlabilir) },
                         onGecmis = { git(Gecmis) },
                         onAyarlar = { git(Ayarlar) },
-                        onBilesenler = { git(Bilesenler) },
                     )
                 }
-                // GECICI: F3.2'de gercek Liste ekrani gelince kaldirilacak.
-                entry<Bilesenler> { ComponentGalleryScreen(onGeri = { geri() }) }
                 entry<EksikOlabilir> {
                     EksikOlabilirScreen(
                         onEkle = { git(AlisverisiBitir()) },

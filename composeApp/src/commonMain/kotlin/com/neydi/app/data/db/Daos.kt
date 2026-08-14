@@ -112,6 +112,38 @@ interface TripLineDao {
     @Query("SELECT * FROM trip_line WHERE tripId = :tripId AND deletedAt IS NULL ORDER BY createdAt")
     fun observeLines(tripId: String): Flow<List<TripLine>>
 
+    /**
+     * Liste ekraninin tek sorgusu. JOIN Kotlin tarafinda birlestirmekten iyi:
+     * ucu ayri Flow'u combine etmek her degisimde uc yeniden yayin uretir ve
+     * satirlar bir kare bosluklu gorunur.
+     *
+     * Siralama: once REYON (market gezme sirasi), sonra eklenme zamani.
+     * Alfabetik siralamak insani markette ileri geri yurutur.
+     */
+    @Query(
+        """
+        SELECT
+            tl.id            AS satirId,
+            p.id             AS urunId,
+            p.name           AS ad,
+            tl.quantity      AS adet,
+            tl.unit          AS birim,
+            tl.checked       AS isaretli,
+            p.isStaple       AS sabitMi,
+            c.id             AS kategoriId,
+            c.name           AS kategoriAdi,
+            c.sortOrder      AS kategoriSirasi,
+            tl.addedByMemberId AS ekleyenUyeId,
+            tl.note          AS notu
+        FROM trip_line tl
+        JOIN product p  ON p.id = tl.productId
+        JOIN category c ON c.id = p.categoryId
+        WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL AND p.deletedAt IS NULL
+        ORDER BY c.sortOrder, tl.createdAt
+        """,
+    )
+    fun observeListe(tripId: String): Flow<List<ListeSatiri>>
+
     @Query("SELECT * FROM trip_line WHERE tripId = :tripId AND productId = :productId AND deletedAt IS NULL LIMIT 1")
     suspend fun find(tripId: String, productId: String): TripLine?
 
@@ -158,6 +190,14 @@ interface MemberDao {
 
     @Query("SELECT * FROM member WHERE householdId = :householdId AND isSelf = 1 AND deletedAt IS NULL LIMIT 1")
     suspend fun self(householdId: String): Member?
+
+    /**
+     * Flow olarak da var, cunku uyeyi bootstrap YARATIYOR ve ekran ondan ONCE
+     * acilabiliyor. Tek seferlik okuma o yaristas null donuyor ve sonra hic
+     * guncellenmiyordu - her ekleme sessizce hicbir sey yapmiyordu.
+     */
+    @Query("SELECT * FROM member WHERE householdId = :householdId AND isSelf = 1 AND deletedAt IS NULL LIMIT 1")
+    fun observeSelf(householdId: String): Flow<Member?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(member: Member)
