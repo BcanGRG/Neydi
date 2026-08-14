@@ -61,7 +61,7 @@ data class UiRow(
  *   ekledigunde cizilir. Kendi ekledigimizde cizmek her satira gurultu ekler
  *   ve hicbir sey soylemez.
  */
-internal fun ListRowProjection.uiSatiri(myMemberId: String?): UiRow = UiRow(
+internal fun ListRowProjection.toUiRow(myMemberId: String?): UiRow = UiRow(
     id = rowId,
     row = ListRow(
         name = name,
@@ -113,11 +113,11 @@ internal fun List<ListRowProjection>.toSections(
 
     val sections = remaining
         .groupBy { it.categoryName }
-        .map { (title, rows) -> ListSection(title, rows.map { it.uiSatiri(myMemberId) }) }
+        .map { (title, rows) -> ListSection(title, rows.map { it.toUiRow(myMemberId) }) }
         .filter { it.rows.isNotEmpty() }
     return ListState(
         sections = sections,
-        taken = alinan.map { it.uiSatiri(myMemberId) },
+        taken = alinan.map { it.toUiRow(myMemberId) },
         loading = false,
         shoppingMode = shoppingMode,
         emptyKind = emptyKind,

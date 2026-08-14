@@ -21,6 +21,7 @@ import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.ListRepository
+import com.neydi.app.data.repo.resolveProduct
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -201,12 +202,35 @@ class ListViewModel(
             // mutabakat ikinci kez CALISMIYOR; calissaydi satin almalar cift
             // sayilir ve oneri araliklari yariya duserdi.
             _summaryTripId = trip.id
-            val kapatan = repo.closeTrip(trip.id, memberId = myMemberId.value ?: return@launch)
-            if (!kapatan) {
-                // Simdilik yalnizca not: Faz 7'de senkron gelince kullaniciya
-                // "esin zaten kapatti" demek gerekecek.
+            val closed = repo.closeTrip(trip.id, memberId = myMemberId.value ?: return@launch)
+            if (closed) {
+                // VARSAYILAN-IYIMSER MUTABAKAT (F4.8): isaretlenmemis planli
+                // satirlar alindi sayiliyor. Yalnizca KAPATAN cihaz yaziyor -
+                // closed false ise gezi baska cihazda kapanmis ve mutabakat
+                // orada calismis; burada tekrar calistirmak satin almalari
+                // cift sayardi.
+                val reconciled = repo.reconcileOptimistically(trip.id)
+                // Ozet karti mutabakat SONRASI sayiyi gostermeli: "3/5 aldim"
+                // yazip ardindan besini de alinmis kaydetmek kullaniciya yalan
+                // soylemek olurdu.
+                if (reconciled > 0) {
+                    _summary.value = _summary.value?.copy(takenCount = rows.size)
+                }
             }
         }
+    }
+
+    /**
+     * Okunacak fis hazir - kimligi Fis Kontrol ekranini acmak icin.
+     *
+     * TEK SEFERLIK OLAY, kalici state DEGIL: tuketilmezse konfigurasyon
+     * degisiminde ayni ekran tekrar acilir.
+     */
+    private val _openReceiptId = MutableStateFlow<String?>(null)
+    val openReceiptId: StateFlow<String?> = _openReceiptId
+
+    fun consumeOpenReceipt() {
+        _openReceiptId.value = null
     }
 
     /**
@@ -241,11 +265,15 @@ class ListViewModel(
             // dondurdugu dosya bir `content://` URI ve onun uzerinden silme
             // cihazda sessizce hicbir sey yapmadi - ham dosya diskte kaldi.
             if (destPath != rawPath) deleteFileAt(rawPath)
-            repo.enqueueReceipt(
+            val receipt = repo.enqueueReceipt(
                 householdId = household,
                 tripId = tripId,
                 imagePath = destPath,
             )
+            // Fis Kontrol ekranini ACMAK ICIN kimligi yayinla. Tek seferlik
+            // olay: tuketilmezse konfigurasyon degisiminde ekran ikinci kez
+            // acilirdi.
+            _openReceiptId.value = receipt.id
         }
     }
 
@@ -258,6 +286,14 @@ class ListViewModel(
      * ustune yazilir.
      */
     private var _summaryTripId: String? = null
+
+    /**
+     * Ozet kartinin ait oldugu gezi. Bitir ekranina gecerken gerekiyor.
+     *
+     * openOrGetActiveTrip'ten OKUNMUYOR: gezi kapali oldugu icin o cagri YENI
+     * bir gezi acardi ve duzeltme ekrani bos gorunurdu.
+     */
+    val summaryTripId: String? get() = _summaryTripId
 
     fun dismissSummary() { _summary.value = null }
 
@@ -346,25 +382,16 @@ class ListViewModel(
             val memberId = myMemberId.value ?: memberDao.self(household)?.id ?: return
             val trip = repo.openOrGetActiveTrip(household)
 
-            // Kategori verilmediyse katalogda ayni matchKey'i ara: kullanici
-            // elle yazsa bile urun dogru reyona dussun. Bulunmazsa son care
-            // olarak "Temel Gida" - kategorisiz urun listede bolumsuz kalirdi.
-            val key = matchKey(name)
-            val seed = if (categoryId != null) {
-                null
-            } else {
-                catalogSeedDao.search(key, limit = 1).firstOrNull { it.matchKey == key }
-            }
-
-            val product = repo.findOrCreateProduct(
+            // Kategori/kanonik ad cozumlemesi ORTAK: fis duzeltmesi de ayni
+            // fonksiyondan geciyor (ProductResolver), yoksa iki kapi ayni urunu
+            // iki farkli yazimla olusturabilirdi.
+            val product = resolveProduct(
+                repo = repo,
+                catalogSeedDao = catalogSeedDao,
                 householdId = household,
-                // Katalogda eslesme varsa KANONIK adi kullan: "sut" yazan biri
-                // listede "Süt" gormeli. Yazildigi gibi birakmak ilk yazanin
-                // yazimini kalici yapar - matchKey ikisini ayni urun saydigi
-                // icin sonradan duzeltilemez de.
-                name = seed?.name ?: name,
-                categoryId = categoryId ?: seed?.categoryId ?: DEFAULT_CATEGORY,
-                unit = unit ?: seed?.defaultUnit ?: "adet",
+                name = name,
+                categoryId = categoryId,
+                unit = unit,
             )
             repo.add(
                 householdId = household,
@@ -377,10 +404,6 @@ class ListViewModel(
             _suggestions.value = emptyList()
     }
 
-    private companion object {
-        /** Katalogda eslesmeyen serbest urunler buraya duser. */
-        const val DEFAULT_CATEGORY = "temel-gida"
-    }
 }
 
 /** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */

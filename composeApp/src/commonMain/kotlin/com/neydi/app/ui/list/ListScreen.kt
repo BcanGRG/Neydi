@@ -1,6 +1,8 @@
 package com.neydi.app.ui.list
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -64,9 +66,22 @@ fun ListScreen(
     onGoShopping: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onOpenReceipt: (String) -> Unit,
+    onFixTaken: (String) -> Unit,
     vm: ListViewModel = koinViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+
+    // Fis kaydedilir kaydedilmez Fis Kontrol ekranina gecis. Kullaniciyi
+    // "fotograf cektim, sonra ne oldu" belirsizliginde birakmak, okuma
+    // basarisiz olsa bile en kotu sonuc olurdu.
+    val openReceiptId by vm.openReceiptId.collectAsStateWithLifecycle()
+    LaunchedEffect(openReceiptId) {
+        openReceiptId?.let { id ->
+            vm.consumeOpenReceipt()
+            onOpenReceipt(id)
+        }
+    }
     val input by vm.input.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
     val categories by vm.categories.collectAsStateWithLifecycle()
@@ -184,6 +199,7 @@ fun ListScreen(
                 amountMinor = o.amountMinor,
                 durationMinutes = o.durationMinutes,
                 onDismiss = vm::dismissSummary,
+                onFixTaken = vm.summaryTripId?.let { id -> { onFixTaken(id) } },
                 onTakeReceipt = {
                     receiptsDir.createDirectories()
                     // Ad zaman damgasi: iki fis birbirini EZMESIN. Sabit ad
@@ -399,14 +415,29 @@ private fun ListHeader(
         // Alisveris modunda gezinme butonlari GIZLI: reyonda yanlislikla
         // Ayarlar'a dusmek listeyi kaybetmek gibi hissettirir.
         if (!state.shoppingMode) {
+            // YATAY KAYDIRMA SART, sigdirma denemesi degil.
+            //
+            // Cihazda olculdu: uc buton ekrana sigmiyordu ve "Ayarlar" sag
+            // kenarda KESILIYORDU - Row tasan icerigi kirpiyor, kaydirmiyor.
+            // Gecmis butonu eklenince dorde cikti; kaydirma olmadan F4.9'un
+            // ekrani erisilemez kalirdi ve "yanlis okunmus fise donmenin tek
+            // yolu" hicbir yerden acilamazdi.
             Row(
-                modifier = Modifier.padding(top = Spacing.sm),
+                modifier = Modifier
+                    .padding(top = Spacing.sm)
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 NeydiButton("Alışveriş modu", { onShoppingMode(true) })
                 NeydiButton(
                     text = "Reyonlardan ekle",
                     onClick = onOpenSheet,
+                    container = MaterialTheme.colorScheme.surfaceVariant,
+                    content = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                NeydiButton(
+                    text = "Geçmiş",
+                    onClick = onHistory,
                     container = MaterialTheme.colorScheme.surfaceVariant,
                     content = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

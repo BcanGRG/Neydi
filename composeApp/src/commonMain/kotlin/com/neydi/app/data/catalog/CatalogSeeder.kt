@@ -20,7 +20,7 @@ import com.neydi.app.data.matchKey
  * kurali (F2.4) tek yerde kalsin. Kural degisirse katalog yeniden tohumlanir,
  * iki ayri gercek kaynagi olusmaz.
  */
-suspend fun NeydiDatabase.tohumlaKatalog(): CatalogSeedResult {
+suspend fun NeydiDatabase.seedCatalog(): CatalogSeedResult {
     val existing = useWriterConnection { t ->
         t.usePrepared("SELECT COUNT(*) FROM category") { it.step(); it.getLong(0) }
     }

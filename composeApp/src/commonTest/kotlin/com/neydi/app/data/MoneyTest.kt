@@ -42,6 +42,6 @@ class MoneyTest {
 
     @Test
     fun currencySuffixCanBeDropped() {
-        assertEquals("289,00", formatMinor(28900, paraBirimi = ""))
+        assertEquals("289,00", formatMinor(28900, currency = ""))
     }
 }

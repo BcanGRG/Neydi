@@ -1,0 +1,282 @@
+package com.neydi.app.data.receipt
+
+import androidx.room3.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neydi.app.data.db.Household
+import com.neydi.app.data.db.NeydiDatabase
+import com.neydi.app.data.db.NeydiDatabaseConstructor
+import com.neydi.app.data.db.Product
+import com.neydi.app.data.db.ProductAlias
+import com.neydi.app.data.db.Receipt
+import com.neydi.app.data.db.ReceiptStatus
+import com.neydi.app.data.db.Trip
+import com.neydi.app.data.matchKey
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+
+/**
+ * ReceiptProcessor testleri. Okuyucu SAHTE - OCR'i degil, OCR sonrasi kararlari
+ * dogruluyoruz: okunamayan fis esigi, alias onceligi, aritmetik durumu.
+ *
+ * Fis satirlari yine GERCEK cihaz ciktisi (bkz. ReceiptParserTest) - burada da
+ * kendi yazdigim ornekle kendimi onaylamak istemiyorum.
+ */
+class ReceiptProcessorTest {
+
+    private val home = "h1"
+    private val trip = "t1"
+
+    /** Cihazda BIM fisinden okunan gorsel satirlar. */
+    private val bimLines = listOf(
+        "BIM BIRLESIK MAGAZALAR A.S.",
+        "13.08.2026 18:49 Sira No : 218",
+        "2 ad X 53.00",
+        "KREMA 18YAĞLI 200ML %1. *106.00",
+        "TURŞU KORNI ŞON 670G 21. *84.50",
+        "ALIŞVERIŞ POŞETi BiM 220 *1.00",
+        "GOFRET FIND KREM142G %1. *34.00",
+        "TOPLAM KDV *2.39",
+        "Odenecek KDV Dahil Tutar *225.50",
+        "Banka Kredi Kartı (1) *225.50",
+    )
+
+    private class FakeReader(
+        private val lines: List<String>,
+        private val error: Throwable? = null,
+    ) : ReceiptReader {
+        var lastRotation: Int? = null
+            private set
+
+        override suspend fun readLines(imagePath: String, forceRotation: Int?): Result<List<String>> {
+            lastRotation = forceRotation
+            return error?.let { Result.failure(it) } ?: Result.success(lines)
+        }
+    }
+
+    private fun db() = Room.inMemoryDatabaseBuilder<NeydiDatabase>(
+        factory = { NeydiDatabaseConstructor.initialize() },
+    ).setDriver(BundledSQLiteDriver()).build()
+
+    private suspend fun prepare(db: NeydiDatabase) {
+        db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
+        db.tripDao().insert(Trip(id = trip, householdId = home, startedAt = 0, createdAt = 0))
+        db.receiptDao().insert(
+            Receipt(
+                id = "r1",
+                householdId = home,
+                tripId = trip,
+                imagePath = "/tmp/r1.jpg",
+                capturedAt = 100,
+                createdAt = 100,
+            ),
+        )
+    }
+
+    private fun processor(db: NeydiDatabase, reader: ReceiptReader): ReceiptProcessor {
+        var n = 0
+        return ReceiptProcessor(
+            reader = reader,
+            receiptDao = db.receiptDao(),
+            receiptLineDao = db.receiptLineDao(),
+            productDao = db.productDao(),
+            aliasDao = db.productAliasDao(),
+            clock = { 500L },
+            newId = { "line-${++n}" },
+        )
+    }
+
+    // --- Okuma ve satir yazma -----------------------------------------------
+
+    @Test
+    fun writesOneLinePerProduct() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        val lines = db.receiptLineDao().forReceipt("r1")
+        assertEquals(listOf(10600L, 8450L, 100L, 3400L), lines.map { it.lineTotalMinor })
+    }
+
+    @Test
+    fun verifiedWhenArithmeticHolds() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        val receipt = db.receiptDao().byId("r1")
+        assertEquals(ReceiptStatus.VERIFIED, receipt?.status)
+        assertEquals(22550, receipt?.totalMinor)
+    }
+
+    /** Toplam satiri okunmadiysa MISMATCHED ama satirlar YINE yaziliyor. */
+    @Test
+    fun keepsLinesWhenTotalUnreadable() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines.filter { !it.contains("Odenecek") })).process("r1")
+
+        assertEquals(ReceiptStatus.MISMATCHED, db.receiptDao().byId("r1")?.status)
+        assertTrue(db.receiptLineDao().forReceipt("r1").isNotEmpty())
+    }
+
+    /**
+     * YENIDEN ISLEME USTUNE EKLEMEZ.
+     *
+     * Eklerse ayni fis iki kez sayilir ve aritmetik kapisi bunu ancak rastgele
+     * yakalar - kullanici da "toplam tutmuyor" gorup neden oldugunu anlamaz.
+     */
+    @Test
+    fun reprocessReplacesLinesInsteadOfAppending() = runTest {
+        val db = db(); prepare(db)
+        val p = processor(db, FakeReader(bimLines))
+        p.process("r1")
+        p.process("r1")
+
+        assertEquals(4, db.receiptLineDao().forReceipt("r1").size)
+    }
+
+    // --- Okunamayan fis -----------------------------------------------------
+
+    /**
+     * Olculmus gercek durum: ~60 kalemlik fis tek karede satir basina 4,7
+     * piksele dusuyor ve ML Kit 60 satirin 2'sini okuyabiliyor. Sessizce bos
+     * sonuc gostermek en kotusu olurdu.
+     */
+    @Test
+    fun tooFewLinesIsFailureWithExplanation() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(listOf("AKYURT", "*12.50"))).process("r1")
+
+        val receipt = db.receiptDao().byId("r1")
+        assertEquals(ReceiptStatus.FAILED, receipt?.status)
+        assertEquals(UNREADABLE_MESSAGE, receipt?.errorMessage)
+    }
+
+    @Test
+    fun readerFailureBecomesFailedStatus() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(emptyList(), error = IllegalStateException("gorsel acilamadi")))
+            .process("r1")
+
+        val receipt = db.receiptDao().byId("r1")
+        assertEquals(ReceiptStatus.FAILED, receipt?.status)
+        assertEquals("gorsel acilamadi", receipt?.errorMessage)
+    }
+
+    // --- Eslestirme ---------------------------------------------------------
+
+    /** Eslesme yoksa satir ONAYA duser - tahmini eslestirme YOK. */
+    @Test
+    fun unmatchedLinesNeedReview() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        assertTrue(db.receiptLineDao().forReceipt("r1").all { it.needsReview })
+        assertTrue(db.receiptLineDao().forReceipt("r1").all { it.matchedProductId == null })
+    }
+
+    /**
+     * ALIAS ONCELIKLI ve kullanicinin kararini tekrar SORMUYOR.
+     *
+     * Tekrar sormak F4.7'nin butun degerini yok ederdi: her fiste ayni
+     * duzeltmeyi yapmak zorunda kalan kullanici duzeltmeyi birakir.
+     */
+    @Test
+    fun aliasMatchesAndSkipsReview() = runTest {
+        val db = db(); prepare(db)
+        db.productDao().insert(
+            Product(
+                id = "p1", householdId = home, name = "Turşu",
+                matchKey = "tursu", categoryId = "temel-gida",
+                defaultUnit = "adet", createdAt = 0,
+            ),
+        )
+        db.productAliasDao().insert(
+            ProductAlias(
+                id = "a1", householdId = home, storeChain = "bim",
+                rawTextNormalized = matchKey("TURŞU KORNI ŞON 670G"),
+                productId = "p1", createdAt = 0,
+            ),
+        )
+
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        val tursu = db.receiptLineDao().forReceipt("r1").first { it.lineTotalMinor == 8450L }
+        assertEquals("p1", tursu.matchedProductId)
+        assertEquals(false, tursu.needsReview)
+        assertEquals(1.0, tursu.confidence)
+    }
+
+    /** Alias SUBE degil ZINCIR bazli: baska subede de eslesmeli. */
+    @Test
+    fun chainKeyIgnoresBranch() {
+        assertEquals("bim", chainKey("BIM BIRLESIK MAGAZALAR A.S."))
+        assertEquals("bim", chainKey("BIM BADEMLIK SUBESI"))
+        assertEquals("file", chainKey("FiLE MARKET MAĞAZACIL IK"))
+        assertEquals("bilinmiyor", chainKey(null))
+    }
+
+    // --- Yon zorlamasi ------------------------------------------------------
+
+    /** Elle cevirme okuyucuya GECIYOR; yoksa buton hicbir sey yapmazdi. */
+    @Test
+    fun forcedRotationReachesReader() = runTest {
+        val db = db(); prepare(db)
+        val reader = FakeReader(bimLines)
+        processor(db, reader).process("r1", forceRotation = 90)
+
+        assertEquals(90, reader.lastRotation)
+    }
+
+    @Test
+    fun missingReceiptIsReported() = runTest {
+        val db = db(); prepare(db)
+        assertEquals(
+            ReceiptReadOutcome.MISSING,
+            processor(db, FakeReader(bimLines)).process("yok"),
+        )
+    }
+
+    /**
+     * ELLE YON CEVIRME IYI OKUMAYI BOZAMAZ.
+     *
+     * Cihazda yasandi: dik gorunen bir fis aslinda dondurulmus cekilmisti,
+     * 0 dereceyi zorlayan buton okumayi iki satira dusurdu ve dogru
+     * ayristirilmis alti satir erisilemez oldu. Kullanici bir butona basarak
+     * calisan bir seyi kaybetmemeli.
+     */
+    @Test
+    fun failedRereadKeepsPreviousReading() = runTest {
+        val db = db(); prepare(db)
+        // Ilk okuma iyi.
+        processor(db, FakeReader(bimLines)).process("r1")
+        val before = db.receiptLineDao().forReceipt("r1")
+
+        // Ikinci okuma kullanilamaz.
+        val outcome = processor(db, FakeReader(listOf("AKYURT", "*12.50"))).process("r1")
+
+        assertEquals(ReceiptReadOutcome.KEPT_PREVIOUS, outcome)
+        assertEquals(before.map { it.lineTotalMinor }, db.receiptLineDao().forReceipt("r1").map { it.lineTotalMinor })
+        // Durum da geri alinmali: FAILED kalirsa ekran satirlari gizler.
+        assertEquals(ReceiptStatus.VERIFIED, db.receiptDao().byId("r1")?.status)
+    }
+
+    @Test
+    fun outcomeIsUnreadableWhenNothingToKeep() = runTest {
+        val db = db(); prepare(db)
+        assertEquals(
+            ReceiptReadOutcome.UNREADABLE,
+            processor(db, FakeReader(listOf("AKYURT", "*12.50"))).process("r1"),
+        )
+    }
+
+    @Test
+    fun storeNameIsRecorded() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        val store = db.receiptDao().byId("r1")?.storeNameRaw
+        assertNotNull(store)
+        assertTrue(store.contains("BIM"), "magaza adi: $store")
+    }
+}

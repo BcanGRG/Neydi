@@ -1,5 +1,7 @@
 package com.neydi.app.di
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import com.neydi.app.data.db.NEYDI_DB_FILE
@@ -39,3 +41,6 @@ actual fun platformModule(): Module = module {
         )
     }
 }
+
+/** Native'de ayri IO havuzu yok; Default dogru secim. */
+actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default

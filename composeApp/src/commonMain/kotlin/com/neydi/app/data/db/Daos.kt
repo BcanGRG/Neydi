@@ -212,6 +212,35 @@ interface TripLineDao {
     @Update
     suspend fun update(line: TripLine)
 
+    /**
+     * VARSAYILAN-IYIMSER MUTABAKAT (F4.8).
+     *
+     * Isaretlenmemis butun planli satirlari ALINDI yaziyor. Gerekcesi: fis
+     * cekilmeyen gezide (BIM/A101/SOK ya da unutulan fotograf) tek bilgi
+     * kaynagi listenin kendisi, ve kullanicinin reyonda her satiri tek tek
+     * isaretlemesini beklemek gercekci degil - tembel kullanim da
+     * KULLANILABILIR VERI uretmeli, yoksa oneri motoru hic beslenmez ve
+     * uygulamanin ikinci varlik sebebi hic calismaz.
+     *
+     * Yanlis yonde iyimser olmasi bilincli: "aldim sandim ama almadim"
+     * kullanicinin Bitir ekranindan tek dokunusla geri alabilecegi bir hata;
+     * "almadim sandim ama aldim" ise hicbir yerde gorunmez ve satin alma
+     * gecmisinde kalici bir bosluk birakir.
+     *
+     * IKI KEZ CALISMAMALI: cagiran taraf yalnizca closeIfOpen 1 dondurunce
+     * cagiriyor. Iki cihaz ayni geziyi kapatirsa satin almalar cift sayilir ve
+     * medianIntervalDays yariya duser.
+     *
+     * @return alindi yazilan satir sayisi.
+     */
+    @Query(
+        """
+        UPDATE trip_line SET checked = 1, checkedAt = :at
+        WHERE tripId = :tripId AND checked = 0 AND deletedAt IS NULL
+        """,
+    )
+    suspend fun markAllTaken(tripId: String, at: Long): Int
+
     @Query("UPDATE trip_line SET checked = :checked, checkedAt = :at WHERE id = :id")
     suspend fun setChecked(id: String, checked: Boolean, at: Long?)
 
@@ -305,4 +334,77 @@ interface ReceiptDao {
 
     @Query("UPDATE receipt SET status = :status, errorMessage = :error WHERE id = :id")
     suspend fun setStatus(id: String, status: ReceiptStatus, error: String? = null)
+
+    @Query("UPDATE receipt SET totalMinor = :total, storeNameRaw = :store, extractedAt = :at WHERE id = :id")
+    suspend fun setTotal(id: String, total: Long?, store: String?, at: Long)
+
+    /**
+     * Gecmis ekraninin besledigi sorgu (F4.9).
+     *
+     * BASARISIZ FISLER DE DONUYOR: Gecmis, yanlis okunmus bir fise geri
+     * donmenin TEK yolu. FAILED satirlari filtrelemek onlari erisilemez
+     * yapardi - fotograf diskte durur, kullanici bir daha ulasamaz.
+     */
+    @Query(
+        """
+        SELECT * FROM receipt
+        WHERE householdId = :householdId AND deletedAt IS NULL
+        ORDER BY capturedAt DESC LIMIT :limit
+        """,
+    )
+    fun observeForHousehold(householdId: String, limit: Int = 100): Flow<List<Receipt>>
+}
+
+/** Fisten cikan satirlarin DAO'su. Sema degismiyor - ReceiptLine zaten kayitli. */
+@Dao
+interface ReceiptLineDao {
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertAll(lines: List<ReceiptLine>)
+
+    @Query("SELECT * FROM receipt_line WHERE receiptId = :receiptId AND deletedAt IS NULL ORDER BY createdAt")
+    fun observeForReceipt(receiptId: String): Flow<List<ReceiptLine>>
+
+    @Query("SELECT * FROM receipt_line WHERE receiptId = :receiptId AND deletedAt IS NULL ORDER BY createdAt")
+    suspend fun forReceipt(receiptId: String): List<ReceiptLine>
+
+    /** Kullanici duzeltmesi: urun baglandi, artik onay beklemiyor. */
+    @Query("UPDATE receipt_line SET matchedProductId = :productId, needsReview = 0 WHERE id = :id")
+    suspend fun confirmMatch(id: String, productId: String)
+
+    @Query("UPDATE receipt_line SET lineTotalMinor = :amountMinor WHERE id = :id")
+    suspend fun setAmount(id: String, amountMinor: Long)
+
+    @Query("DELETE FROM receipt_line WHERE receiptId = :receiptId")
+    suspend fun clearForReceipt(receiptId: String)
+}
+
+/** ProductAlias DAO'su - F4.7 ogrenmesi buradan geciyor. */
+@Dao
+interface ProductAliasDao {
+    /**
+     * REPLACE, IGNORE DEGIL.
+     *
+     * (householdId, storeChain, rawTextNormalized) uzerinde tekil index var ve
+     * IGNORE ile kullanicinin IKINCI karari sessizce yutuluyordu: bir fis
+     * metnini once yanlis urune baglayip sonra duzeltirsen duzeltme yazilmaz,
+     * eski alias sonsuza kadar kalir ve her fiste ayni yanlis eslesmeyi
+     * uretir - ustelik kullanici duzeltmeyi yapmis oldugu icin bir daha
+     * bakmaz. Ogrenen bir sistemde son karar kazanmali.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(alias: ProductAlias)
+
+    /**
+     * Zincir + ham metin -> urun. F4.7'nin butun degeri bu sorguda: ayni fis
+     * metni bir kez duzeltildikten sonra bir daha sorulmuyor.
+     */
+    @Query(
+        """
+        SELECT * FROM product_alias
+        WHERE householdId = :householdId AND storeChain = :chain
+          AND rawTextNormalized = :normalized AND deletedAt IS NULL
+        LIMIT 1
+        """,
+    )
+    suspend fun find(householdId: String, chain: String, normalized: String): ProductAlias?
 }

@@ -5,8 +5,11 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.ListRepository
+import com.neydi.app.data.receipt.ReceiptProcessor
+import com.neydi.app.ui.finish.FinishShoppingViewModel
+import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
-import kotlinx.coroutines.Dispatchers
+import com.neydi.app.ui.receipt.ReceiptCheckViewModel
 // kotlinx.datetime.Clock artik kotlin.time.Clock'a deprecate typealias.
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -31,7 +34,7 @@ val dataModule = module {
     single<NeydiDatabase> {
         get<RoomDatabase.Builder<NeydiDatabase>>()
             .setDriver(BundledSQLiteDriver())
-            .setQueryCoroutineContext(Dispatchers.IO)
+            .setQueryCoroutineContext(ioDispatcher)
             .build()
     }
 
@@ -43,6 +46,8 @@ val dataModule = module {
     single { get<NeydiDatabase>().tripDao() }
     single { get<NeydiDatabase>().tripLineDao() }
     single { get<NeydiDatabase>().receiptDao() }
+    single { get<NeydiDatabase>().receiptLineDao() }
+    single { get<NeydiDatabase>().productAliasDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
@@ -54,6 +59,41 @@ val dataModule = module {
             repo = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
+        )
+    }
+
+    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get()) }
+
+    viewModel { (tripId: String?) ->
+        FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get())
+    }
+
+    // receiptId parametreyle geliyor: hangi fisi kontrol ettigimiz hedefin
+    // kendisinde yaziyor, ViewModel'in onu tahmin etmesi gerekmiyor.
+    viewModel { (receiptId: String) ->
+        ReceiptCheckViewModel(
+            receiptId = receiptId,
+            processor = get(),
+            receiptDao = get(),
+            receiptLineDao = get(),
+            productDao = get(),
+            aliasDao = get(),
+            catalogSeedDao = get(),
+            repo = get(),
+            clock = ::now,
+            newId = ::newUuid,
+        )
+    }
+
+    single {
+        ReceiptProcessor(
+            reader = get(),
+            receiptDao = get(),
+            receiptLineDao = get(),
+            productDao = get(),
+            aliasDao = get(),
+            clock = ::now,
+            newId = ::newUuid,
         )
     }
 

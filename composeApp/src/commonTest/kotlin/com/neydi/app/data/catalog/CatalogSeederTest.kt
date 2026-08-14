@@ -26,7 +26,7 @@ class CatalogSeederTest {
     @Test
     fun catalogIsSeeded() = runTest {
         val db = db()
-        val result = db.tohumlaKatalog()
+        val result = db.seedCatalog()
 
         assertEquals(false, result.skipped)
         assertEquals(SEED_CATEGORIES.size.toLong(), db.number("SELECT COUNT(*) FROM category"))
@@ -40,8 +40,8 @@ class CatalogSeederTest {
     @Test
     fun secondCallWritesNothing() = runTest {
         val db = db()
-        db.tohumlaKatalog()
-        val second = db.tohumlaKatalog()
+        db.seedCatalog()
+        val second = db.seedCatalog()
 
         assertTrue(second.skipped, "ikinci tohumlama atlanmadi")
         assertEquals(SEED_PRODUCTS.size.toLong(), db.number("SELECT COUNT(*) FROM catalog_seed"))
@@ -51,7 +51,7 @@ class CatalogSeederTest {
     @Test
     fun matchKeyIsDerivedOnWrite() = runTest {
         val db = db()
-        db.tohumlaKatalog()
+        db.seedCatalog()
 
         assertEquals(
             matchKey("Ayçiçek Yağı"),
