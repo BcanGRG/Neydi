@@ -88,6 +88,9 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
+            // Cihazda OCR. Model GOMULU (~4MB): Play Services varyanti daha
+            // kucuk ama ilk kullanimda indirme bekletiyordu.
+            implementation(libs.mlkit.text.recognition)
         }
 
         commonTest.dependencies {
