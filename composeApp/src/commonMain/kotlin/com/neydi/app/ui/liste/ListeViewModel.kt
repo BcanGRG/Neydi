@@ -5,19 +5,24 @@ import androidx.lifecycle.viewModelScope
 import com.neydi.app.data.VARSAYILAN_HANE_ID
 import com.neydi.app.data.db.CatalogSeed
 import com.neydi.app.data.db.CatalogSeedDao
+import com.neydi.app.data.db.Category
+import com.neydi.app.data.db.CategoryDao
 import com.neydi.app.data.db.MemberDao
+import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.miktarAyristir
+import com.neydi.app.data.panoSatirlari
 import com.neydi.app.data.repo.ListeRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -32,7 +37,9 @@ class ListeViewModel(
     private val repo: ListeRepository,
     private val tripLineDao: TripLineDao,
     private val memberDao: MemberDao,
+    private val productDao: ProductDao,
     private val catalogSeedDao: CatalogSeedDao,
+    private val categoryDao: CategoryDao,
 ) : ViewModel() {
 
     private val hane = VARSAYILAN_HANE_ID
@@ -46,6 +53,16 @@ class ListeViewModel(
             .map { it?.id }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    private val _alisverisModu = MutableStateFlow(false)
+    val alisverisModu: StateFlow<Boolean> = _alisverisModu
+
+    /**
+     * Bos durumu ILK GUN mu DONGU ORTASI mi ayirt eder.
+     * Hane hic urun gormediyse ilk gun; gormus ama liste bossa dongu ortasi.
+     */
+    private val bosTur: Flow<BosTur> = productDao.observeAll(hane)
+        .map { if (it.isEmpty()) BosTur.ILK_GUN else BosTur.DONGU_ORTASI }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val durum: StateFlow<ListeDurumu> =
         combine(
@@ -53,7 +70,9 @@ class ListeViewModel(
                 if (trip == null) flowOf(emptyList()) else tripLineDao.observeListe(trip.id)
             },
             benimUyeId,
-        ) { satirlar, uyeId -> satirlar.bolumlere(uyeId) }
+            _alisverisModu,
+            bosTur,
+        ) { satirlar, uyeId, mod, tur -> satirlar.bolumlere(uyeId, mod, tur) }
             .stateIn(
                 scope = viewModelScope,
                 // 5 saniye: konfigurasyon degisiminde akis kopmasin, ama
@@ -64,6 +83,43 @@ class ListeViewModel(
 
     fun isaretle(satirId: String, isaretli: Boolean) {
         viewModelScope.launch { repo.isaretle(satirId, isaretli) }
+    }
+
+    fun alisverisModunuDegistir(acik: Boolean) {
+        _alisverisModu.value = acik
+    }
+
+    /** Bos durumdaki reyon cipleri. */
+    val kategoriler: StateFlow<List<Category>> = categoryDao.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Bir reyona dokununca o reyonun en yaygin urunleri oneri olur. */
+    fun kategoriSecildi(kategori: Category) {
+        viewModelScope.launch {
+            _oneriler.value = catalogSeedDao.byCategory(kategori.id, limit = 8)
+            _girdi.value = ""
+        }
+    }
+
+    /**
+     * PANODAN TOPLU EKLEME (F3.4).
+     *
+     * Mevcut aliskanligi dogrudan degistiren en ucuz kazanc: liste bugun
+     * WhatsApp'ta yaziliyor. Kopyalayip yapistirmak, 12 urunu tek tek
+     * yazmaya gore dakikalar kazandiriyor.
+     *
+     * Her satir miktar ayristiricidan geciyor, yani "2 kg elma" panodan da
+     * dogru dusuyor. Bos satirlar ve madde isaretleri atiliyor.
+     */
+    fun panodanEkle(metin: String) {
+        val satirlar = panoSatirlari(metin)
+        if (satirlar.isEmpty()) return
+        viewModelScope.launch {
+            satirlar.forEach { satir ->
+                val m = miktarAyristir(satir)
+                if (m.ad.isNotBlank()) ekleBekle(m.ad, null, m.birim, m.adet)
+            }
+        }
     }
 
     fun cikar(satirId: String) {
@@ -116,10 +172,18 @@ class ListeViewModel(
     }
 
     private fun ekleIc(ad: String, kategoriId: String?, birim: String?, adet: Double) {
-        viewModelScope.launch {
+        viewModelScope.launch { ekleBekle(ad, kategoriId, birim, adet) }
+    }
+
+    /**
+     * Panodan toplu ekleme SIRAYLA calismali, o yuzden suspend. Her satiri
+     * ayri coroutine'e atsaydik ayni urunu iki kez iceren bir pano iki satir
+     * acmayi deneyip UNIQUE kisitina carpardi.
+     */
+    private suspend fun ekleBekle(ad: String, kategoriId: String?, birim: String?, adet: Double) {
             // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
             // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
-            val uyeId = benimUyeId.value ?: memberDao.self(hane)?.id ?: return@launch
+            val uyeId = benimUyeId.value ?: memberDao.self(hane)?.id ?: return
             val trip = repo.aktifAlisverisiAcVeyaAl(hane)
 
             // Kategori verilmediyse katalogda ayni matchKey'i ara: kullanici
@@ -151,7 +215,6 @@ class ListeViewModel(
             )
             _girdi.value = ""
             _oneriler.value = emptyList()
-        }
     }
 
     private companion object {

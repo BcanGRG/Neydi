@@ -48,7 +48,10 @@ val dataModule = module {
     single { AppBootstrap(db = get(), saat = ::simdi, yeniId = ::yeniUuid) }
 
     viewModel {
-        ListeViewModel(repo = get(), tripLineDao = get(), memberDao = get(), catalogSeedDao = get())
+        ListeViewModel(
+            repo = get(), tripLineDao = get(), memberDao = get(),
+            productDao = get(), catalogSeedDao = get(), categoryDao = get(),
+        )
     }
 
     single {
