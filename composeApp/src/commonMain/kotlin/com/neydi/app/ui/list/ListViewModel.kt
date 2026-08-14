@@ -12,6 +12,11 @@ import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
+import com.neydi.app.data.receipt.downscaleForOcr
+import com.neydi.app.data.receipt.deleteFileAt
+import com.neydi.app.data.receipt.writeBytesTo
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.readBytes
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
@@ -195,6 +200,7 @@ class ListViewModel(
             // kartini yine gosteriyoruz - kullanici bitirdigini gormeli - ama
             // mutabakat ikinci kez CALISMIYOR; calissaydi satin almalar cift
             // sayilir ve oneri araliklari yariya duserdi.
+            _summaryTripId = trip.id
             val kapatan = repo.closeTrip(trip.id, memberId = myMemberId.value ?: return@launch)
             if (!kapatan) {
                 // Simdilik yalnizca not: Faz 7'de senkron gelince kullaniciya
@@ -202,6 +208,56 @@ class ListViewModel(
             }
         }
     }
+
+    /**
+     * Cekilen fisi kuyruga alir. OCR BURADA KOSMUYOR.
+     *
+     * Sira onemli: gezi zaten kapanmis (ozet karti gorunuyor demek ki
+     * kapandi), yani bu is hicbir seyi bekletmiyor. Kucultme basarisiz olursa
+     * ORIJINAL yol saklaniyor - fotograf kullanicinin tek kaniti.
+     */
+    fun attachReceipt(source: PlatformFile, destPath: String, rawPath: String) {
+        // Gezi kimligi ozet kartindan geliyor, openOrGetActiveTrip'ten DEGIL.
+        // O cagri burada YENI bir gezi acardi - gezi kapali cunku - ve fis bos,
+        // yeni acilmis yanlis geziye baglanirdi. Ustelik her fis ekleme hayalet
+        // bir gezi dogururdu.
+        val tripId = _summaryTripId ?: return
+        viewModelScope.launch {
+            // Baytlari BURADA okuyoruz: kaynak `content://` URI de olabilir
+            // (kamera FileProvider uzerinden yaziyor) ve PlatformFile ikisini
+            // de cozuyor. Kucultmeye yol vermek cihazda sessizce basarisizdi.
+            val bytes = source.readBytes()
+            val ok = downscaleForOcr(bytes, destPath)
+            if (!ok) {
+                // Kucultemedik: HAM BAYTLARI ayni yola yaz. Boylece kayitli yol
+                // HER ZAMAN bizim dosyamiz - `content://` URI saklamak yanlis
+                // olurdu, izin baglari kalici degil ve yol yarin cozulmez.
+                writeBytesTo(destPath, bytes)
+            }
+            // Ham dosyayi SIL. Fis fotograflari kisisel veri; iki kopya tutmak
+            // hem yer hem gereksiz maruziyet, kucultulmus hali OCR icin yeterli.
+            //
+            // YOL uzerinden, PlatformFile.delete() uzerinden DEGIL: kameranin
+            // dondurdugu dosya bir `content://` URI ve onun uzerinden silme
+            // cihazda sessizce hicbir sey yapmadi - ham dosya diskte kaldi.
+            if (destPath != rawPath) deleteFileAt(rawPath)
+            repo.enqueueReceipt(
+                householdId = household,
+                tripId = tripId,
+                imagePath = destPath,
+            )
+        }
+    }
+
+    /**
+     * Ozet kartinin ait oldugu gezi. Fis ONA baglanmali.
+     *
+     * `openOrGetActiveTrip` KULLANILAMAZ: gezi kapandigi icin o cagri YENI bir
+     * gezi acar ve fis yanlis geziye - bos, yeni acilmis olana - baglanirdi.
+     * Sessiz bir yanlis eslesme; fis dogru okunur ama yanlis alisverisin
+     * ustune yazilir.
+     */
+    private var _summaryTripId: String? = null
 
     fun dismissSummary() { _summary.value = null }
 
