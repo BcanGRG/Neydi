@@ -8,30 +8,30 @@ import kotlin.test.assertTrue
 
 class ListStateTest {
 
-    private var sayac = 0
+    private var counter = 0
 
-    private fun satir(
-        ad: String,
-        kategoriAdi: String = "Meyve-Sebze",
-        kategoriSirasi: Int = 0,
-        isaretli: Boolean = false,
-        adet: Double = 1.0,
-        birim: String = "adet",
-        sabitMi: Boolean = false,
-        ekleyen: String = "ben",
+    private fun row(
+        name: String,
+        categoryName: String = "Meyve-Sebze",
+        categoryOrder: Int = 0,
+        checked: Boolean = false,
+        count: Double = 1.0,
+        unit: String = "adet",
+        isStaple: Boolean = false,
+        addedBy: String = "ben",
     ) = ListRowProjection(
-        satirId = "s${++sayac}",
-        urunId = "u$sayac",
-        ad = ad,
-        adet = adet,
-        birim = birim,
-        isaretli = isaretli,
-        sabitMi = sabitMi,
-        kategoriId = kategoriAdi.lowercase(),
-        kategoriAdi = kategoriAdi,
-        kategoriSirasi = kategoriSirasi,
-        ekleyenUyeId = ekleyen,
-        notu = null,
+        rowId = "s${++counter}",
+        productId = "u$counter",
+        name = name,
+        count = count,
+        unit = unit,
+        checked = checked,
+        isStaple = isStaple,
+        categoryId = categoryName.lowercase(),
+        categoryName = categoryName,
+        categoryOrder = categoryOrder,
+        addedByMemberId = addedBy,
+        note = null,
     )
 
     // --- Adet etiketi -------------------------------------------------------
@@ -64,64 +64,64 @@ class ListStateTest {
      */
     @Test
     fun checkedRowsMoveToTaken() {
-        val durum = listOf(
-            satir("Domates"),
-            satir("Elma", isaretli = true),
-            satir("Ekmek", kategoriAdi = "Fırın-Ekmek", kategoriSirasi = 1),
-        ).toSections(benimUyeId = "ben")
+        val state = listOf(
+            row("Domates"),
+            row("Elma", checked = true),
+            row("Ekmek", categoryName = "Fırın-Ekmek", categoryOrder = 1),
+        ).toSections(myMemberId = "ben")
 
-        assertEquals(1, durum.alinanlar.size)
-        assertEquals("Elma", durum.alinanlar.single().row.name)
-        assertTrue(durum.bolumler.none { b -> b.satirlar.any { it.row.name == "Elma" } })
+        assertEquals(1, state.taken.size)
+        assertEquals("Elma", state.taken.single().row.name)
+        assertTrue(state.sections.none { b -> b.rows.any { it.row.name == "Elma" } })
     }
 
     /** Bos bolum CIZILMEZ - SectionHeader'in sozlesmesi. */
     @Test
     fun fullyCheckedSectionIsNeverCreated() {
-        val durum = listOf(
-            satir("Elma", isaretli = true),
-            satir("Domates", isaretli = true),
-        ).toSections(benimUyeId = "ben")
+        val state = listOf(
+            row("Elma", checked = true),
+            row("Domates", checked = true),
+        ).toSections(myMemberId = "ben")
 
-        assertTrue(durum.bolumler.isEmpty(), "bos bolum olusturuldu: ${durum.bolumler}")
-        assertEquals(2, durum.alinanlar.size)
+        assertTrue(state.sections.isEmpty(), "bos bolum olusturuldu: ${state.sections}")
+        assertEquals(2, state.taken.size)
     }
 
     /** Girdi sirasi SQL'den geliyor; gruplama onu BOZMAMALI. */
     @Test
     fun aisleOrderIsPreserved() {
-        val durum = listOf(
-            satir("Domates", "Meyve-Sebze", 0),
-            satir("Ekmek", "Fırın-Ekmek", 1),
-            satir("Süt", "Süt-Kahvaltılık", 2),
-            satir("Salatalık", "Meyve-Sebze", 0),
-        ).toSections(benimUyeId = "ben")
+        val state = listOf(
+            row("Domates", "Meyve-Sebze", 0),
+            row("Ekmek", "Fırın-Ekmek", 1),
+            row("Süt", "Süt-Kahvaltılık", 2),
+            row("Salatalık", "Meyve-Sebze", 0),
+        ).toSections(myMemberId = "ben")
 
         assertEquals(
             listOf("Meyve-Sebze", "Fırın-Ekmek", "Süt-Kahvaltılık"),
-            durum.bolumler.map { it.baslik },
+            state.sections.map { it.title },
         )
-        assertEquals(2, durum.bolumler.first().satirlar.size)
+        assertEquals(2, state.sections.first().rows.size)
     }
 
     /** Avatar YALNIZCA es ekledigunde. Kendi ekledigimizde her satira gurultu. */
     @Test
     fun avatarOnlyDrawnWhenPartnerAdded() {
-        val durum = listOf(
-            satir("Domates", ekleyen = "ben"),
-            satir("Ekmek", kategoriAdi = "Fırın-Ekmek", kategoriSirasi = 1, ekleyen = "es"),
-        ).toSections(benimUyeId = "ben")
+        val state = listOf(
+            row("Domates", addedBy = "ben"),
+            row("Ekmek", categoryName = "Fırın-Ekmek", categoryOrder = 1, addedBy = "es"),
+        ).toSections(myMemberId = "ben")
 
-        assertNull(durum.bolumler[0].satirlar.single().row.addedByInitial)
-        assertEquals("E", durum.bolumler[1].satirlar.single().row.addedByInitial)
+        assertNull(state.sections[0].rows.single().row.addedByInitial)
+        assertEquals("E", state.sections[1].rows.single().row.addedByInitial)
     }
 
     /** Satir kimligi ListRow'da degil UiSatir'da; isaretleme ona dayaniyor. */
     @Test
     fun rowIdentityIsPreserved() {
-        val kaynak = satir("Domates")
-        val durum = listOf(kaynak).toSections(benimUyeId = "ben")
-        assertEquals(kaynak.satirId, durum.bolumler.single().satirlar.single().id)
+        val source = row("Domates")
+        val state = listOf(source).toSections(myMemberId = "ben")
+        assertEquals(source.rowId, state.sections.single().rows.single().id)
     }
 
     // --- Alisveris modu -----------------------------------------------------
@@ -134,51 +134,51 @@ class ListStateTest {
      */
     @Test
     fun checkedRowStaysInPlaceInShoppingMode() {
-        val girdi = listOf(
-            satir("Domates"),
-            satir("Elma", isaretli = true),
-            satir("Salatalik"),
+        val input = listOf(
+            row("Domates"),
+            row("Elma", checked = true),
+            row("Salatalik"),
         )
 
-        val planlama = girdi.toSections("ben", alisverisModu = false)
-        val alisveris = girdi.toSections("ben", alisverisModu = true)
+        val planning = input.toSections("ben", shoppingMode = false)
+        val trip = input.toSections("ben", shoppingMode = true)
 
         // Planlamada tasiniyor...
-        assertEquals(1, planlama.alinanlar.size)
-        assertEquals(2, planlama.bolumler.single().satirlar.size)
+        assertEquals(1, planning.taken.size)
+        assertEquals(2, planning.sections.single().rows.size)
 
         // ...alisveriste tasinmiyor: uc satir da reyonda, SIRASI BOZULMADAN.
-        assertTrue(alisveris.alinanlar.isEmpty(), "alisveris modunda satir Alindi'ya tasindi")
+        assertTrue(trip.taken.isEmpty(), "alisveris modunda satir Alindi'ya tasindi")
         assertEquals(
             listOf("Domates", "Elma", "Salatalik"),
-            alisveris.bolumler.single().satirlar.map { it.row.name },
+            trip.sections.single().rows.map { it.row.name },
         )
     }
 
     /** Alt cubuktaki "kac kaldi" yalnizca isaretsizleri sayar. */
     @Test
     fun remainingCountsUncheckedRows() {
-        val durum = listOf(
-            satir("Domates"),
-            satir("Elma", isaretli = true),
-            satir("Salatalik"),
-        ).toSections("ben", alisverisModu = true)
+        val state = listOf(
+            row("Domates"),
+            row("Elma", checked = true),
+            row("Salatalik"),
+        ).toSections("ben", shoppingMode = true)
 
-        assertEquals(3, durum.toplamSatir)
-        assertEquals(2, durum.kalanSatir)
+        assertEquals(3, state.totalRows)
+        assertEquals(2, state.remainingRow)
     }
 
     @Test
     fun emptyKindIsCarried() {
-        val durum = emptyList<ListRowProjection>().toSections("ben", bosTur = EmptyKind.DONGU_ORTASI)
-        assertEquals(EmptyKind.DONGU_ORTASI, durum.bosTur)
-        assertTrue(durum.bosMu)
+        val state = emptyList<ListRowProjection>().toSections("ben", emptyKind = EmptyKind.DONGU_ORTASI)
+        assertEquals(EmptyKind.DONGU_ORTASI, state.emptyKind)
+        assertTrue(state.isEmpty)
     }
 
     @Test
     fun emptyList() {
-        val durum = emptyList<ListRowProjection>().toSections(benimUyeId = "ben")
-        assertTrue(durum.bosMu)
-        assertEquals(0, durum.toplamSatir)
+        val state = emptyList<ListRowProjection>().toSections(myMemberId = "ben")
+        assertTrue(state.isEmpty)
+        assertEquals(0, state.totalRows)
     }
 }

@@ -23,8 +23,8 @@ import com.neydi.app.ui.theme.Spacing
  */
 @Composable
 private fun AppScaffold(
-    baslik: String,
-    aciklama: String,
+    title: String,
+    description: String,
     modifier: Modifier = Modifier,
     aksiyonlar: @Composable () -> Unit = {},
 ) {
@@ -37,9 +37,9 @@ private fun AppScaffold(
             verticalArrangement = Arrangement.spacedBy(Spacing.sm, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(baslik, style = MaterialTheme.typography.headlineMedium)
+            Text(title, style = MaterialTheme.typography.headlineMedium)
             Text(
-                aciklama,
+                description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -49,18 +49,18 @@ private fun AppScaffold(
 }
 
 @Composable
-fun MissingItemsScreen(onEkle: () -> Unit, onBosver: () -> Unit) = AppScaffold(
-    baslik = "Eksik olabilir",
-    aciklama = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",
+fun MissingItemsScreen(onAdd: () -> Unit, onBosver: () -> Unit) = AppScaffold(
+    title = "Eksik olabilir",
+    description = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",
 ) {
-    NeydiButton("Ekle", onEkle)
+    NeydiButton("Ekle", onAdd)
     NeydiButton("Bosver", onBosver)
 }
 
 @Composable
 fun FinishShoppingScreen(tripId: String?, onOnayla: () -> Unit) = AppScaffold(
-    baslik = "Alisverisi bitir",
-    aciklama = if (tripId == null) {
+    title = "Alisverisi bitir",
+    description = if (tripId == null) {
         "Fis cek / fissiz bitir. Fotograf ASLA bloklamaz - alisveris aninda kapanir."
     } else {
         "Gecmisten okuma modu: $tripId"
@@ -70,25 +70,25 @@ fun FinishShoppingScreen(tripId: String?, onOnayla: () -> Unit) = AppScaffold(
 }
 
 @Composable
-fun HistoryScreen(onGeri: () -> Unit) = AppScaffold(
-    baslik = "Gecmis",
-    aciklama = "Yanlis okunmus bir fise geri donmenin tek yolu. Uygulamanin en ucuz ekrani.",
+fun HistoryScreen(onBack: () -> Unit) = AppScaffold(
+    title = "Gecmis",
+    description = "Yanlis okunmus bir fise geri donmenin tek yolu. Uygulamanin en ucuz ekrani.",
 ) {
-    NeydiButton("Geri", onGeri)
+    NeydiButton("Geri", onBack)
 }
 
 @Composable
-fun SettingsScreen(onGeri: () -> Unit) = AppScaffold(
-    baslik = "Ayarlar",
-    aciklama = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.",
+fun SettingsScreen(onBack: () -> Unit) = AppScaffold(
+    title = "Ayarlar",
+    description = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.",
 ) {
-    NeydiButton("Geri", onGeri)
+    NeydiButton("Geri", onBack)
 }
 
 @Composable
-fun SetupScreen(onBitir: () -> Unit) = AppScaffold(
-    baslik = "Kurulum",
-    aciklama = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
+fun SetupScreen(onFinish: () -> Unit) = AppScaffold(
+    title = "Kurulum",
+    description = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
 ) {
-    NeydiButton("Bitir", onBitir)
+    NeydiButton("Bitir", onFinish)
 }

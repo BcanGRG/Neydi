@@ -25,8 +25,8 @@ class ListRepository(
     private val tripDao: TripDao,
     private val tripLineDao: TripLineDao,
     private val productDao: ProductDao,
-    private val saat: () -> Long,
-    private val yeniId: () -> String,
+    private val clock: () -> Long,
+    private val newId: () -> String,
 ) {
 
     fun activeTrip(householdId: String): Flow<Trip?> = tripDao.observeActive(householdId)
@@ -36,7 +36,7 @@ class ListRepository(
      * planlama modunda henuz gezi baslamamis olabilir.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun satirlar(householdId: String): Flow<List<TripLine>> =
+    fun rows(householdId: String): Flow<List<TripLine>> =
         tripDao.observeActive(householdId).flatMapLatest { trip ->
             if (trip == null) flowOf(emptyList()) else tripLineDao.observeLines(trip.id)
         }
@@ -51,16 +51,16 @@ class ListRepository(
     suspend fun openOrGetActiveTrip(householdId: String): Trip {
         tripDao.activeOrNull(householdId)?.let { return it }
         val trip = Trip(
-            id = yeniId(),
+            id = newId(),
             householdId = householdId,
-            startedAt = saat(),
-            createdAt = saat(),
+            startedAt = clock(),
+            createdAt = clock(),
         )
         tripDao.insert(trip)
         return trip
     }
 
-    suspend fun finishShopping(tripId: String) = tripDao.complete(tripId, saat())
+    suspend fun finishShopping(tripId: String) = tripDao.complete(tripId, clock())
 
     /**
      * Urunu listeye ekler. ZATEN VARSA adet artirir, ikinci satir ACMAZ.
@@ -74,55 +74,55 @@ class ListRepository(
         tripId: String,
         product: Product,
         memberId: String,
-        adet: Double = 1.0,
-        oneridenMi: Boolean = false,
+        count: Double = 1.0,
+        isFromSuggestion: Boolean = false,
     ): TripLine {
         // SILINMISLERE DE bakiyoruz: tombstone satiri tabloda kaliyor ve
         // UNIQUE(tripId, productId) deletedAt'i bilmiyor. Yalnizca canli
         // satirlara baksaydik "cikardim, geri ekledim" akisi kisita carpip
         // uygulamayi cokertirdi - kullanicinin yapacagi en dogal ikinci hareket.
-        val mevcut = tripLineDao.findIncludingDeleted(tripId, product.id)
-        if (mevcut != null) {
-            val guncel = if (mevcut.deletedAt != null) {
+        val existing = tripLineDao.findIncludingDeleted(tripId, product.id)
+        if (existing != null) {
+            val current = if (existing.deletedAt != null) {
                 // Mezardan cikar: yeni satir gibi davran ama AYNI id'yi koru.
                 // Yeni id uretmek senkronda "silindi" ve "eklendi" olaylarini
                 // birbirinden kopuk iki satira baglardi.
-                mevcut.copy(
+                existing.copy(
                     deletedAt = null,
-                    quantity = adet,
+                    quantity = count,
                     checked = false,
                     checkedAt = null,
                     addedByMemberId = memberId,
-                    fromSuggestion = oneridenMi,
-                    createdAt = saat(),
+                    fromSuggestion = isFromSuggestion,
+                    createdAt = clock(),
                 )
             } else {
                 // Es zaten eklemis: adedi artir, "kim ekledi"yi EZME.
-                mevcut.copy(quantity = mevcut.quantity + adet)
+                existing.copy(quantity = existing.quantity + count)
             }
-            tripLineDao.update(guncel)
-            return guncel
+            tripLineDao.update(current)
+            return current
         }
-        val satir = TripLine(
-            id = yeniId(),
+        val row = TripLine(
+            id = newId(),
             householdId = householdId,
             tripId = tripId,
             productId = product.id,
-            quantity = adet,
+            quantity = count,
             unit = product.defaultUnit,
             addedByMemberId = memberId,
-            fromSuggestion = oneridenMi,
-            createdAt = saat(),
+            fromSuggestion = isFromSuggestion,
+            createdAt = clock(),
         )
-        tripLineDao.insert(satir)
-        return satir
+        tripLineDao.insert(row)
+        return row
     }
 
     /** checkedAt SAKLANIYOR: reyonda mi evde mi isaretlendi sorusu sonra lazim olacak. */
-    suspend fun toggleChecked(satirId: String, isaretli: Boolean) =
-        tripLineDao.setChecked(satirId, isaretli, if (isaretli) saat() else null)
+    suspend fun toggleChecked(rowId: String, checked: Boolean) =
+        tripLineDao.setChecked(rowId, checked, if (checked) clock() else null)
 
-    suspend fun remove(satirId: String) = tripLineDao.softDelete(satirId, saat())
+    suspend fun remove(rowId: String) = tripLineDao.softDelete(rowId, clock())
 
     /**
      * Adiyla urun bulur, yoksa olusturur. matchKey uzerinden bakiyor ki
@@ -130,22 +130,22 @@ class ListRepository(
      */
     suspend fun findOrCreateProduct(
         householdId: String,
-        ad: String,
-        kategoriId: String,
-        birim: String,
+        name: String,
+        categoryId: String,
+        unit: String,
     ): Product {
-        val anahtar = matchKey(ad)
-        productDao.findByMatchKey(householdId, anahtar)?.let { return it }
-        val urun = Product(
-            id = yeniId(),
+        val key = matchKey(name)
+        productDao.findByMatchKey(householdId, key)?.let { return it }
+        val product = Product(
+            id = newId(),
             householdId = householdId,
-            name = ad,
-            matchKey = anahtar,
-            categoryId = kategoriId,
-            defaultUnit = birim,
-            createdAt = saat(),
+            name = name,
+            matchKey = key,
+            categoryId = categoryId,
+            defaultUnit = unit,
+            createdAt = clock(),
         )
-        productDao.insert(urun)
-        return urun
+        productDao.insert(product)
+        return product
     }
 }

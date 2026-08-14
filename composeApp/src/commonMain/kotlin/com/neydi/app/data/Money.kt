@@ -6,23 +6,23 @@ package com.neydi.app.data
  * ONDALIK AYIRICI VIRGUL, binlik NOKTA: Turkce yazim. 1.289,90 gibi.
  * Kotlin'in sayi bicimlendirmesi commonMain'de locale bilmiyor, o yuzden elle.
  */
-fun formatMinor(kurus: Long, paraBirimi: String = "TL"): String {
-    val negatif = kurus < 0
-    val mutlak = if (negatif) -kurus else kurus
-    val lira = mutlak / 100
-    val kalan = mutlak % 100
+fun formatMinor(minor: Long, paraBirimi: String = "TL"): String {
+    val negative = minor < 0
+    val absolute = if (negative) -minor else minor
+    val major = absolute / 100
+    val remaining = absolute % 100
 
-    val liraMetni = buildString {
-        val basamaklar = lira.toString()
-        basamaklar.forEachIndexed { i, c ->
-            if (i > 0 && (basamaklar.length - i) % 3 == 0) append('.')
+    val majorText = buildString {
+        val digits = major.toString()
+        digits.forEachIndexed { i, c ->
+            if (i > 0 && (digits.length - i) % 3 == 0) append('.')
             append(c)
         }
     }
-    val kurusMetni = if (kalan < 10) "0$kalan" else kalan.toString()
+    val minorText = if (remaining < 10) "0$remaining" else remaining.toString()
     return buildString {
-        if (negatif) append('-')
-        append(liraMetni); append(','); append(kurusMetni)
+        if (negative) append('-')
+        append(majorText); append(','); append(minorText)
         if (paraBirimi.isNotEmpty()) { append(' '); append(paraBirimi) }
     }
 }

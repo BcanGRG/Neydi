@@ -43,22 +43,22 @@ private val TURKISH_FOLDING: Map<Char, Char> = mapOf(
  */
 fun matchKey(raw: String): String {
     val sb = StringBuilder(raw.length)
-    var oncekiBosluk = true // bastaki bosluklari yut
+    var prevWasSpace = true // bastaki bosluklari yut
 
     for (ch in raw) {
-        val katlanmis = TURKISH_FOLDING[ch] ?: ch
+        val folded = TURKISH_FOLDING[ch] ?: ch
         when {
-            katlanmis.isLetterOrDigit() -> {
+            folded.isLetterOrDigit() -> {
                 // Kalan harfler icin lowercase() guvenli: Turkce'ye ozel olanlari
                 // yukaridaki tablo zaten ele aldi.
-                sb.append(katlanmis.lowercaseChar())
-                oncekiBosluk = false
+                sb.append(folded.lowercaseChar())
+                prevWasSpace = false
             }
             // Noktalama BOSLUGA cevriliyor, silinmiyor: "T.BUGDAY" -> "t bugday".
             // Silseydik "tbugday" olurdu ve "TAM BUGDAY" ile hic eslesmezdi.
-            !oncekiBosluk -> {
+            !prevWasSpace -> {
                 sb.append(' ')
-                oncekiBosluk = true
+                prevWasSpace = true
             }
         }
     }

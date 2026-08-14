@@ -11,17 +11,17 @@ package com.neydi.app.data.db
  * kategoriSirasi MARKET GEZME sirasi - bolumler bununla siralaniyor.
  */
 data class ListRowProjection(
-    val satirId: String,
-    val urunId: String,
-    val ad: String,
-    val adet: Double,
-    val birim: String,
-    val isaretli: Boolean,
-    val sabitMi: Boolean,
-    val kategoriId: String,
-    val kategoriAdi: String,
-    val kategoriSirasi: Int,
-    val ekleyenUyeId: String,
-    /** `not` SQL'de ayrilmis kelime - alan adi bilerek `notu`. */
-    val notu: String?,
+    val rowId: String,
+    val productId: String,
+    val name: String,
+    val count: Double,
+    val unit: String,
+    val checked: Boolean,
+    val isStaple: Boolean,
+    val categoryId: String,
+    val categoryName: String,
+    val categoryOrder: Int,
+    val addedByMemberId: String,
+    /** `not` SQL'de ayrilmis kelime - alan adi bilerek `note`. */
+    val note: String?,
 )

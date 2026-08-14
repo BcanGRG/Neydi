@@ -11,10 +11,10 @@ package com.neydi.app.data
  * yazip listede "10 adet Yumurta" gormek istemez.
  */
 data class Quantity(
-    val adet: Double,
+    val count: Double,
     /** Taninan birim; yoksa null ve cagiran taraf urunun varsayilanini kullanir. */
-    val birim: String?,
-    val ad: String,
+    val unit: String?,
+    val name: String,
 )
 
 /**
@@ -40,31 +40,31 @@ private val PATTERN = Regex(
     """^\s*(\d+(?:[.,]\d+)?)\s*([\p{L}]+)?\s+(.+)$""",
 )
 
-fun parseQuantity(girdi: String): Quantity {
-    val temiz = girdi.trim()
-    val eslesme = PATTERN.find(temiz) ?: return Quantity(1.0, null, temiz)
+fun parseQuantity(input: String): Quantity {
+    val cleaned = input.trim()
+    val match = PATTERN.find(cleaned) ?: return Quantity(1.0, null, cleaned)
 
-    val sayi = eslesme.groupValues[1].replace(',', '.').toDoubleOrNull()
-        ?: return Quantity(1.0, null, temiz)
+    val number = match.groupValues[1].replace(',', '.').toDoubleOrNull()
+        ?: return Quantity(1.0, null, cleaned)
     // Sifir ya da negatif miktar anlamsiz; ayristirma, ad kabul et.
-    if (sayi <= 0.0) return Quantity(1.0, null, temiz)
+    if (number <= 0.0) return Quantity(1.0, null, cleaned)
 
-    val olasiBirim = eslesme.groupValues[2].takeIf { it.isNotEmpty() }
-    val kalan = eslesme.groupValues[3].trim()
+    val maybeUnit = match.groupValues[2].takeIf { it.isNotEmpty() }
+    val remaining = match.groupValues[3].trim()
 
     // Birim tanindiysa ayir. Taninmadiysa o kelime ADIN PARCASI:
     // "2 tam bugday ekmek" -> "tam" birim degil.
-    val kanonik = olasiBirim?.let { UNITS[it.lowercase()] }
-    val ad = when {
-        kanonik != null -> kalan
-        olasiBirim == null -> kalan
-        else -> "$olasiBirim $kalan"
+    val canonical = maybeUnit?.let { UNITS[it.lowercase()] }
+    val name = when {
+        canonical != null -> remaining
+        maybeUnit == null -> remaining
+        else -> "$maybeUnit $remaining"
     }
 
     // Geriye URUN ADI kalmadiysa ayristirma. "2 kg" yazan biri iki kilo
     // "kg" istemiyor - ortada urun yok, tum metin ad kabul edilmeli ki
     // kullanici ne yazdiysa onu gorsun.
-    if (ad.isBlank() || UNITS.containsKey(ad.lowercase())) return Quantity(1.0, null, temiz)
+    if (name.isBlank() || UNITS.containsKey(name.lowercase())) return Quantity(1.0, null, cleaned)
 
-    return Quantity(sayi, kanonik, ad)
+    return Quantity(number, canonical, name)
 }

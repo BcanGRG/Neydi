@@ -33,10 +33,10 @@ class NeydiColorTest {
 
     /** WCAG kontrast orani. Sira onemsiz - hangisi acik kendisi buluyor. */
     private fun contrast(a: Color, b: Color): Double {
-        val la = a.luminance()
+        val lumA = a.luminance()
         val lb = b.luminance()
-        val hi = maxOf(la, lb)
-        val lo = minOf(la, lb)
+        val hi = maxOf(lumA, lb)
+        val lo = minOf(lumA, lb)
         return (hi + 0.05) / (lo + 0.05)
     }
 
@@ -100,19 +100,19 @@ class NeydiColorTest {
      */
     @Test
     fun accentOutlineFlagMatchesMeasurement() {
-        val isikOrani = contrast(LightExtraColors.accent, NeydiLightColors.surface)
+        val lightRatio = contrast(LightExtraColors.accent, NeydiLightColors.surface)
         assertEquals(
-            isikOrani < 3.0,
+            lightRatio < 3.0,
             LightExtraColors.accentNeedsOutline,
-            "isik accent/surface ${format(isikOrani)}:1 ama accentNeedsOutline=" +
+            "isik accent/surface ${format(lightRatio)}:1 ama accentNeedsOutline=" +
                 "${LightExtraColors.accentNeedsOutline}. Bayrak olcumu takip etmeli.",
         )
 
-        val karanlikOrani = contrast(DarkExtraColors.accent, NeydiDarkColors.surface)
+        val darkRatio = contrast(DarkExtraColors.accent, NeydiDarkColors.surface)
         assertEquals(
-            karanlikOrani < 3.0,
+            darkRatio < 3.0,
             DarkExtraColors.accentNeedsOutline,
-            "karanlik accent/surface ${format(karanlikOrani)}:1 ama accentNeedsOutline=" +
+            "karanlik accent/surface ${format(darkRatio)}:1 ama accentNeedsOutline=" +
                 "${DarkExtraColors.accentNeedsOutline}. Bayrak olcumu takip etmeli.",
         )
     }
@@ -134,15 +134,15 @@ class NeydiColorTest {
      */
     @Test
     fun documentedRatiosStillHold() {
-        val beklenen = listOf(
+        val expected = listOf(
             Triple("accent/surface (isik)", contrast(LightExtraColors.accent, NeydiLightColors.surface), 2.08),
             Triple("accentOutline/surface (isik)", contrast(LightExtraColors.accentOutline, NeydiLightColors.surface), 5.56),
             Triple("accent/surface (karanlik)", contrast(DarkExtraColors.accent, NeydiDarkColors.surface), 11.29),
         )
-        beklenen.forEach { (ad, olculen, yazan) ->
+        expected.forEach { (name, olculen, yazan) ->
             assertTrue(
                 abs(olculen - yazan) < 0.01,
-                "$ad: Color.kt $yazan:1 diyor, olculen ${format(olculen)}:1",
+                "$name: Color.kt $yazan:1 diyor, olculen ${format(olculen)}:1",
             )
         }
     }
@@ -161,8 +161,8 @@ class NeydiColorTest {
             "karanlik" to (NeydiDarkColors.onSurface to NeydiDarkColors.surface),
         ).forEach { (tema, renkler) ->
             val (fg, bg) = renkler
-            val bilesik = fg.copy(alpha = STAPLE_ALPHA).compositeOver(bg)
-            assertAtLeast(4.5, bilesik, bg, "$tema sabit satir adi (alfa $STAPLE_ALPHA)")
+            val composite = fg.copy(alpha = STAPLE_ALPHA).compositeOver(bg)
+            assertAtLeast(4.5, composite, bg, "$tema sabit satir adi (alfa $STAPLE_ALPHA)")
         }
     }
 
@@ -181,8 +181,8 @@ class NeydiColorTest {
             "karanlik" to (NeydiDarkColors.onSurface to NeydiDarkColors.surface),
         ).forEach { (tema, renkler) ->
             val (fg, bg) = renkler
-            val bilesik = fg.copy(alpha = CHECKED_ALPHA).compositeOver(bg)
-            assertAtLeast(3.0, bilesik, bg, "$tema isaretli satir adi (alfa $CHECKED_ALPHA)")
+            val composite = fg.copy(alpha = CHECKED_ALPHA).compositeOver(bg)
+            assertAtLeast(3.0, composite, bg, "$tema isaretli satir adi (alfa $CHECKED_ALPHA)")
         }
     }
 

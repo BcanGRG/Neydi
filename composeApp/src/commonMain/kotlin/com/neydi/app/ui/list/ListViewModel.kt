@@ -45,37 +45,37 @@ class ListViewModel(
     private val priceObservationDao: PriceObservationDao,
 ) : ViewModel() {
 
-    private val hane = DEFAULT_HOUSEHOLD_ID
+    private val household = DEFAULT_HOUSEHOLD_ID
     /**
      * FLOW, tek seferlik okuma DEGIL: uyeyi bootstrap yaratiyor ve bu ekran
      * ondan once acilabiliyor. Tek okuma o yaristas null doner, bir daha
      * guncellenmez ve butun eklemeler sessizce hicbir sey yapmaz.
      */
-    private val benimUyeId: StateFlow<String?> =
-        memberDao.observeSelf(hane)
+    private val myMemberId: StateFlow<String?> =
+        memberDao.observeSelf(household)
             .map { it?.id }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private val _alisverisModu = MutableStateFlow(false)
-    val alisverisModu: StateFlow<Boolean> = _alisverisModu
+    private val _shoppingMode = MutableStateFlow(false)
+    val shoppingMode: StateFlow<Boolean> = _shoppingMode
 
     /**
      * Bos durumu ILK GUN mu DONGU ORTASI mi ayirt eder.
      * Hane hic urun gormediyse ilk gun; gormus ama liste bossa dongu ortasi.
      */
-    private val bosTur: Flow<EmptyKind> = productDao.observeAll(hane)
+    private val emptyKind: Flow<EmptyKind> = productDao.observeAll(household)
         .map { if (it.isEmpty()) EmptyKind.ILK_GUN else EmptyKind.DONGU_ORTASI }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val durum: StateFlow<ListState> =
+    val state: StateFlow<ListState> =
         combine(
-            repo.activeTrip(hane).flatMapLatest { trip ->
+            repo.activeTrip(household).flatMapLatest { trip ->
                 if (trip == null) flowOf(emptyList()) else tripLineDao.observeList(trip.id)
             },
-            benimUyeId,
-            _alisverisModu,
-            bosTur,
-        ) { satirlar, uyeId, mod, tur -> satirlar.toSections(uyeId, mod, tur) }
+            myMemberId,
+            _shoppingMode,
+            emptyKind,
+        ) { rows, memberId, mod, kind -> rows.toSections(memberId, mod, kind) }
             .stateIn(
                 scope = viewModelScope,
                 // 5 saniye: konfigurasyon degisiminde akis kopmasin, ama
@@ -84,56 +84,56 @@ class ListViewModel(
                 initialValue = ListState(),
             )
 
-    fun toggleChecked(satirId: String, isaretli: Boolean) {
-        viewModelScope.launch { repo.toggleChecked(satirId, isaretli) }
+    fun toggleChecked(rowId: String, checked: Boolean) {
+        viewModelScope.launch { repo.toggleChecked(rowId, checked) }
     }
 
-    fun setShoppingMode(acik: Boolean) {
-        _alisverisModu.value = acik
+    fun setShoppingMode(enabled: Boolean) {
+        _shoppingMode.value = enabled
     }
 
     /** Bos durumdaki reyon cipleri. */
-    val kategoriler: StateFlow<List<Category>> = categoryDao.observeAll()
+    val categories: StateFlow<List<Category>> = categoryDao.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Bir reyona dokununca o reyonun en yaygin urunleri oneri olur. */
-    fun onCategorySelected(kategori: Category) {
+    fun onCategorySelected(category: Category) {
         viewModelScope.launch {
-            _oneriler.value = catalogSeedDao.byCategory(kategori.id, limit = 8)
-            _girdi.value = ""
+            _suggestions.value = catalogSeedDao.byCategory(category.id, limit = 8)
+            _input.value = ""
         }
     }
 
     // --- Ekle sheet (F3.7) -----------------------------------------------
 
-    private val _sheetAcik = MutableStateFlow(false)
-    val sheetAcik: StateFlow<Boolean> = _sheetAcik
+    private val _sheetOpen = MutableStateFlow(false)
+    val sheetOpen: StateFlow<Boolean> = _sheetOpen
 
-    private val _sheetKategori = MutableStateFlow<Category?>(null)
-    val sheetKategori: StateFlow<Category?> = _sheetKategori
+    private val _sheetCategory = MutableStateFlow<Category?>(null)
+    val sheetCategory: StateFlow<Category?> = _sheetCategory
 
-    private val _sheetUrunler = MutableStateFlow<List<CatalogSeed>>(emptyList())
-    val sheetUrunler: StateFlow<List<CatalogSeed>> = _sheetUrunler
+    private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
 
-    fun openSheet() { _sheetAcik.value = true }
+    fun openSheet() { _sheetOpen.value = true }
 
     fun closeSheet() {
-        _sheetAcik.value = false
-        _sheetKategori.value = null
-        _sheetUrunler.value = emptyList()
+        _sheetOpen.value = false
+        _sheetCategory.value = null
+        _sheetProducts.value = emptyList()
     }
 
-    fun selectSheetCategory(kategori: Category) {
-        _sheetKategori.value = kategori
+    fun selectSheetCategory(category: Category) {
+        _sheetCategory.value = category
         viewModelScope.launch {
             // Sheet'te daha fazla urun: burada yer var, oneri seridinde yok.
-            _sheetUrunler.value = catalogSeedDao.byCategory(kategori.id, limit = 30)
+            _sheetProducts.value = catalogSeedDao.byCategory(category.id, limit = 30)
         }
     }
 
     fun sheetBack() {
-        _sheetKategori.value = null
-        _sheetUrunler.value = emptyList()
+        _sheetCategory.value = null
+        _sheetProducts.value = emptyList()
     }
 
     /** Sheet'ten urun eklemek sheet'i KAPATMAZ: pes pese ekleme normal. */
@@ -144,20 +144,20 @@ class ListViewModel(
     // --- Sepet tahmini + ozet (F3.8) ---------------------------------------
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val tahmin: StateFlow<BasketEstimate> =
-        repo.activeTrip(hane).flatMapLatest { trip ->
+    val estimate: StateFlow<BasketEstimate> =
+        repo.activeTrip(household).flatMapLatest { trip ->
             if (trip == null) {
                 flowOf(BasketEstimate())
             } else {
                 combine(
                     priceObservationDao.observeEstimate(trip.id),
                     priceObservationDao.observePricedCount(trip.id),
-                ) { tutar, fiyatli -> BasketEstimate(tutar, fiyatli) }
+                ) { amount, fiyatli -> BasketEstimate(amount, fiyatli) }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BasketEstimate())
 
-    private val _ozet = MutableStateFlow<ShoppingSummary?>(null)
-    val ozet: StateFlow<ShoppingSummary?> = _ozet
+    private val _summary = MutableStateFlow<ShoppingSummary?>(null)
+    val summary: StateFlow<ShoppingSummary?> = _summary
 
     /**
      * Alisverisi bitirir ve ozet kartini acar.
@@ -169,21 +169,21 @@ class ListViewModel(
      */
     fun finishShopping() {
         viewModelScope.launch {
-            val trip = repo.openOrGetActiveTrip(hane)
-            val satirlar = tripLineDao.observeList(trip.id).first()
-            _ozet.value = ShoppingSummary(
-                alinanSayisi = satirlar.count { it.isaretli },
-                toplamSayisi = satirlar.size,
+            val trip = repo.openOrGetActiveTrip(household)
+            val rows = tripLineDao.observeList(trip.id).first()
+            _summary.value = ShoppingSummary(
+                takenCount = rows.count { it.checked },
+                totalCount = rows.size,
                 // Tutar fisten gelecek (Faz 4); simdilik bilinmiyor.
-                tutarKurus = trip.totalMinor,
-                sureDakika = null,
+                amountMinor = trip.totalMinor,
+                durationMinutes = null,
             )
             repo.finishShopping(trip.id)
-            _alisverisModu.value = false
+            _shoppingMode.value = false
         }
     }
 
-    fun dismissSummary() { _ozet.value = null }
+    fun dismissSummary() { _summary.value = null }
 
     /**
      * PANODAN TOPLU EKLEME (F3.4).
@@ -195,68 +195,68 @@ class ListViewModel(
      * Her satir miktar ayristiricidan geciyor, yani "2 kg elma" panodan da
      * dogru dusuyor. Bos satirlar ve madde isaretleri atiliyor.
      */
-    fun addFromClipboard(metin: String) {
-        val satirlar = clipboardLines(metin)
-        if (satirlar.isEmpty()) return
+    fun addFromClipboard(text: String) {
+        val rows = clipboardLines(text)
+        if (rows.isEmpty()) return
         viewModelScope.launch {
-            satirlar.forEach { satir ->
-                val m = parseQuantity(satir)
-                if (m.ad.isNotBlank()) addAndAwait(m.ad, null, m.birim, m.adet)
+            rows.forEach { row ->
+                val m = parseQuantity(row)
+                if (m.name.isNotBlank()) addAndAwait(m.name, null, m.unit, m.count)
             }
         }
     }
 
-    fun remove(satirId: String) {
-        viewModelScope.launch { repo.remove(satirId) }
+    fun remove(rowId: String) {
+        viewModelScope.launch { repo.remove(rowId) }
     }
 
     // --- Hizli ekleme (F3.3) --------------------------------------------
 
-    private val _girdi = MutableStateFlow("")
-    val girdi: StateFlow<String> = _girdi
+    private val _input = MutableStateFlow("")
+    val input: StateFlow<String> = _input
 
     /**
      * Otomatik tamamlama. SKORA GORE siralaniyor, alfabetik DEGIL - kullanici
      * "ek" yazinca once Ekmek gormeli. Bu, algilanan zekanin buyuk kismini
      * sifir maliyetle veriyor; alfabetik siralamak ayni veriyle aptal gorunur.
      */
-    private val _oneriler = MutableStateFlow<List<CatalogSeed>>(emptyList())
-    val oneriler: StateFlow<List<CatalogSeed>> = _oneriler
+    private val _suggestions = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val suggestions: StateFlow<List<CatalogSeed>> = _suggestions
 
-    fun onInputChanged(yeni: String) {
-        _girdi.value = yeni
+    fun onInputChanged(value: String) {
+        _input.value = value
         viewModelScope.launch {
             // Miktar onekini ATIP arama yapiyoruz: "2 kg el" yazan biri
             // "el" ile eslesme bekler, "2 kg el" ile degil.
-            val ad = parseQuantity(yeni).ad
-            _oneriler.value = if (ad.isBlank()) {
+            val name = parseQuantity(value).name
+            _suggestions.value = if (name.isBlank()) {
                 emptyList()
             } else {
-                catalogSeedDao.search(matchKey(ad), limit = 6)
+                catalogSeedDao.search(matchKey(name), limit = 6)
             }
         }
     }
 
     /** Serbest metinden ekle: "2 kg elma" gibi. */
-    fun add(metin: String) {
-        val m = parseQuantity(metin)
-        if (m.ad.isBlank()) return
-        addInternal(ad = m.ad, kategoriId = null, birim = m.birim, adet = m.adet)
+    fun add(text: String) {
+        val m = parseQuantity(text)
+        if (m.name.isBlank()) return
+        addInternal(name = m.name, categoryId = null, unit = m.unit, count = m.count)
     }
 
     /** Oneri cipinden ekle: kategori ve birim katalogdan gelir. */
     fun addFromSuggestion(seed: CatalogSeed) {
-        val m = parseQuantity(_girdi.value)
+        val m = parseQuantity(_input.value)
         addInternal(
-            ad = seed.name,
-            kategoriId = seed.categoryId,
-            birim = m.birim ?: seed.defaultUnit,
-            adet = m.adet,
+            name = seed.name,
+            categoryId = seed.categoryId,
+            unit = m.unit ?: seed.defaultUnit,
+            count = m.count,
         )
     }
 
-    private fun addInternal(ad: String, kategoriId: String?, birim: String?, adet: Double) {
-        viewModelScope.launch { addAndAwait(ad, kategoriId, birim, adet) }
+    private fun addInternal(name: String, categoryId: String?, unit: String?, count: Double) {
+        viewModelScope.launch { addAndAwait(name, categoryId, unit, count) }
     }
 
     /**
@@ -264,58 +264,58 @@ class ListViewModel(
      * ayri coroutine'e atsaydik ayni urunu iki kez iceren bir pano iki satir
      * acmayi deneyip UNIQUE kisitina carpardi.
      */
-    private suspend fun addAndAwait(ad: String, kategoriId: String?, birim: String?, adet: Double) {
+    private suspend fun addAndAwait(name: String, categoryId: String?, unit: String?, count: Double) {
             // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
             // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
-            val uyeId = benimUyeId.value ?: memberDao.self(hane)?.id ?: return
-            val trip = repo.openOrGetActiveTrip(hane)
+            val memberId = myMemberId.value ?: memberDao.self(household)?.id ?: return
+            val trip = repo.openOrGetActiveTrip(household)
 
             // Kategori verilmediyse katalogda ayni matchKey'i ara: kullanici
             // elle yazsa bile urun dogru reyona dussun. Bulunmazsa son care
             // olarak "Temel Gida" - kategorisiz urun listede bolumsuz kalirdi.
-            val anahtar = matchKey(ad)
-            val seed = if (kategoriId != null) {
+            val key = matchKey(name)
+            val seed = if (categoryId != null) {
                 null
             } else {
-                catalogSeedDao.search(anahtar, limit = 1).firstOrNull { it.matchKey == anahtar }
+                catalogSeedDao.search(key, limit = 1).firstOrNull { it.matchKey == key }
             }
 
-            val urun = repo.findOrCreateProduct(
-                householdId = hane,
+            val product = repo.findOrCreateProduct(
+                householdId = household,
                 // Katalogda eslesme varsa KANONIK adi kullan: "sut" yazan biri
                 // listede "Süt" gormeli. Yazildigi gibi birakmak ilk yazanin
                 // yazimini kalici yapar - matchKey ikisini ayni urun saydigi
                 // icin sonradan duzeltilemez de.
-                ad = seed?.name ?: ad,
-                kategoriId = kategoriId ?: seed?.categoryId ?: VARSAYILAN_KATEGORI,
-                birim = birim ?: seed?.defaultUnit ?: "adet",
+                name = seed?.name ?: name,
+                categoryId = categoryId ?: seed?.categoryId ?: DEFAULT_CATEGORY,
+                unit = unit ?: seed?.defaultUnit ?: "adet",
             )
             repo.add(
-                householdId = hane,
+                householdId = household,
                 tripId = trip.id,
-                product = urun,
-                memberId = uyeId,
-                adet = adet,
+                product = product,
+                memberId = memberId,
+                count = count,
             )
-            _girdi.value = ""
-            _oneriler.value = emptyList()
+            _input.value = ""
+            _suggestions.value = emptyList()
     }
 
     private companion object {
         /** Katalogda eslesmeyen serbest urunler buraya duser. */
-        const val VARSAYILAN_KATEGORI = "temel-gida"
+        const val DEFAULT_CATEGORY = "temel-gida"
     }
 }
 
 /** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */
 data class BasketEstimate(
-    val tutarKurus: Long = 0,
-    val fiyatliSayisi: Int = 0,
+    val amountMinor: Long = 0,
+    val pricedCount: Int = 0,
 )
 
 data class ShoppingSummary(
-    val alinanSayisi: Int,
-    val toplamSayisi: Int,
-    val tutarKurus: Long?,
-    val sureDakika: Int?,
+    val takenCount: Int,
+    val totalCount: Int,
+    val amountMinor: Long?,
+    val durationMinutes: Int?,
 )

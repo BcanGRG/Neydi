@@ -10,20 +10,20 @@ import com.neydi.app.ui.components.turkishInitials
  * cizim aninda kontrol etmek her karede tekrar eder.
  */
 data class ListState(
-    val bolumler: List<ListSection> = emptyList(),
+    val sections: List<ListSection> = emptyList(),
     /**
      * "Alindi" bolumu ayri: reyon gruplamasinin disinda, en altta.
      * ALISVERIS MODUNDA HEP BOS - orada isaretli satirlar yerinde kalir.
      */
-    val alinanlar: List<UiRow> = emptyList(),
-    val yukleniyor: Boolean = true,
-    val alisverisModu: Boolean = false,
+    val taken: List<UiRow> = emptyList(),
+    val loading: Boolean = true,
+    val shoppingMode: Boolean = false,
     /** Bos durumu hangi metinle cizecegimizi belirler. */
-    val bosTur: EmptyKind = EmptyKind.ILK_GUN,
+    val emptyKind: EmptyKind = EmptyKind.ILK_GUN,
 ) {
-    val bosMu: Boolean get() = !yukleniyor && bolumler.isEmpty() && alinanlar.isEmpty()
-    val toplamSatir: Int get() = bolumler.sumOf { it.satirlar.size } + alinanlar.size
-    val kalanSatir: Int get() = bolumler.sumOf { b -> b.satirlar.count { !it.row.checked } }
+    val isEmpty: Boolean get() = !loading && sections.isEmpty() && taken.isEmpty()
+    val totalRows: Int get() = sections.sumOf { it.rows.size } + taken.size
+    val remainingRow: Int get() = sections.sumOf { b -> b.rows.count { !it.row.checked } }
 }
 
 /**
@@ -38,8 +38,8 @@ enum class EmptyKind {
 }
 
 data class ListSection(
-    val baslik: String,
-    val satirlar: List<UiRow>,
+    val title: String,
+    val rows: List<UiRow>,
 )
 
 /**
@@ -61,15 +61,15 @@ data class UiRow(
  *   ekledigunde cizilir. Kendi ekledigimizde cizmek her satira gurultu ekler
  *   ve hicbir sey soylemez.
  */
-internal fun ListRowProjection.uiSatiri(benimUyeId: String?): UiRow = UiRow(
-    id = satirId,
+internal fun ListRowProjection.uiSatiri(myMemberId: String?): UiRow = UiRow(
+    id = rowId,
     row = ListRow(
-        name = ad,
-        quantity = quantityLabel(adet, birim),
-        checked = isaretli,
-        isStaple = sabitMi,
-        addedByInitial = if (ekleyenUyeId != benimUyeId) turkishInitials(ad).take(1) else null,
-        note = notu,
+        name = name,
+        quantity = quantityLabel(count, unit),
+        checked = checked,
+        isStaple = isStaple,
+        addedByInitial = if (addedByMemberId != myMemberId) turkishInitials(name).take(1) else null,
+        note = note,
     ),
 )
 
@@ -79,14 +79,14 @@ internal fun ListRowProjection.uiSatiri(benimUyeId: String?): UiRow = UiRow(
  * Ondalik AYIRICI VIRGUL: Turkce'de 1.5 kg diye yazilmaz. Kotlin'in
  * varsayilan toString'i nokta uretir, o yuzden elle degistiriliyor.
  */
-internal fun quantityLabel(adet: Double, birim: String): String? {
-    if (adet == 1.0 && birim == "adet") return null
-    val sayi = if (adet % 1.0 == 0.0) {
-        adet.toInt().toString()
+internal fun quantityLabel(count: Double, unit: String): String? {
+    if (count == 1.0 && unit == "adet") return null
+    val number = if (count % 1.0 == 0.0) {
+        count.toInt().toString()
     } else {
-        adet.toString().replace('.', ',')
+        count.toString().replace('.', ',')
     }
-    return if (birim == "adet") "${sayi}x" else "$sayi $birim"
+    return if (unit == "adet") "${number}x" else "$number $unit"
 }
 
 /**
@@ -100,26 +100,26 @@ internal fun quantityLabel(adet: Double, birim: String): String? {
  * yeniden siralama yok - sadece gruplama.
  */
 internal fun List<ListRowProjection>.toSections(
-    benimUyeId: String?,
-    alisverisModu: Boolean = false,
-    bosTur: EmptyKind = EmptyKind.ILK_GUN,
+    myMemberId: String?,
+    shoppingMode: Boolean = false,
+    emptyKind: EmptyKind = EmptyKind.ILK_GUN,
 ): ListState {
     // ALISVERIS MODUNDA REYON SIRASI DONAR. Isaretlenen satir YERINDE kalir,
     // "Alindi"ya inmez. Hareket eden basparmagin altinda yeniden siralama bu
     // ekranin yapabilecegi en kotu hata: kullanici bir sonrakine dokunacakken
     // liste kayar ve yanlis urunu isaretler. Planlamada tasima dogru, reyonda
     // felaket.
-    val (alinan, kalan) = if (alisverisModu) emptyList<ListRowProjection>() to this else partition { it.isaretli }
+    val (alinan, remaining) = if (shoppingMode) emptyList<ListRowProjection>() to this else partition { it.checked }
 
-    val bolumler = kalan
-        .groupBy { it.kategoriAdi }
-        .map { (baslik, satirlar) -> ListSection(baslik, satirlar.map { it.uiSatiri(benimUyeId) }) }
-        .filter { it.satirlar.isNotEmpty() }
+    val sections = remaining
+        .groupBy { it.categoryName }
+        .map { (title, rows) -> ListSection(title, rows.map { it.uiSatiri(myMemberId) }) }
+        .filter { it.rows.isNotEmpty() }
     return ListState(
-        bolumler = bolumler,
-        alinanlar = alinan.map { it.uiSatiri(benimUyeId) },
-        yukleniyor = false,
-        alisverisModu = alisverisModu,
-        bosTur = bosTur,
+        sections = sections,
+        taken = alinan.map { it.uiSatiri(myMemberId) },
+        loading = false,
+        shoppingMode = shoppingMode,
+        emptyKind = emptyKind,
     )
 }

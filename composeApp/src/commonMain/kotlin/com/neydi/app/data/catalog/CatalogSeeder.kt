@@ -21,10 +21,10 @@ import com.neydi.app.data.matchKey
  * iki ayri gercek kaynagi olusmaz.
  */
 suspend fun NeydiDatabase.tohumlaKatalog(): CatalogSeedResult {
-    val mevcut = useWriterConnection { t ->
+    val existing = useWriterConnection { t ->
         t.usePrepared("SELECT COUNT(*) FROM category") { it.step(); it.getLong(0) }
     }
-    if (mevcut > 0) return CatalogSeedResult(atlandi = true, kategori = 0, urun = 0)
+    if (existing > 0) return CatalogSeedResult(skipped = true, category = 0, product = 0)
 
     useWriterConnection { transactor ->
         transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
@@ -33,8 +33,8 @@ suspend fun NeydiDatabase.tohumlaKatalog(): CatalogSeedResult {
             ) { st ->
                 SEED_CATEGORIES.forEach { k ->
                     st.bindText(1, k.id)
-                    st.bindText(2, k.ad)
-                    st.bindInt(3, k.sira)
+                    st.bindText(2, k.name)
+                    st.bindInt(3, k.order)
                     st.bindLong(4, k.tonArgb)
                     st.step()
                     st.reset()
@@ -50,12 +50,12 @@ suspend fun NeydiDatabase.tohumlaKatalog(): CatalogSeedResult {
                     // id yayginliktan turetiliyor: deterministik, yani ayni katalog
                     // her cihazda ayni id'leri uretir. Senkron acilinca iki telefon
                     // ayni tohum urununu ayri urun sanmaz.
-                    st.bindText(1, "seed-${u.yayginlik}")
-                    st.bindText(2, u.ad)
-                    st.bindText(3, matchKey(u.ad))
-                    st.bindText(4, u.kategoriId)
-                    st.bindInt(5, u.yayginlik)
-                    st.bindText(6, u.birim)
+                    st.bindText(1, "seed-${u.commonality}")
+                    st.bindText(2, u.name)
+                    st.bindText(3, matchKey(u.name))
+                    st.bindText(4, u.categoryId)
+                    st.bindInt(5, u.commonality)
+                    st.bindText(6, u.unit)
                     st.step()
                     st.reset()
                 }
@@ -63,14 +63,14 @@ suspend fun NeydiDatabase.tohumlaKatalog(): CatalogSeedResult {
         }
     }
     return CatalogSeedResult(
-        atlandi = false,
-        kategori = SEED_CATEGORIES.size,
-        urun = SEED_PRODUCTS.size,
+        skipped = false,
+        category = SEED_CATEGORIES.size,
+        product = SEED_PRODUCTS.size,
     )
 }
 
 data class CatalogSeedResult(
-    val atlandi: Boolean,
-    val kategori: Int,
-    val urun: Int,
+    val skipped: Boolean,
+    val category: Int,
+    val product: Int,
 )

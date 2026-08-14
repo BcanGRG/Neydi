@@ -45,14 +45,14 @@ import com.neydi.app.ui.theme.pressable
 @Composable
 internal fun AddSheetContent(
     /** Gezinme cubugu yuksekligi - sheet DISINDA okunup buraya geciliyor. */
-    altBosluk: Dp,
-    kategoriler: List<Category>,
-    secili: Category?,
-    urunler: List<CatalogSeed>,
-    onKategori: (Category) -> Unit,
-    onGeriKategoriler: () -> Unit,
-    onUrun: (CatalogSeed) -> Unit,
-    onSerbestMetin: () -> Unit,
+    bottomPadding: Dp,
+    categories: List<Category>,
+    selected: Category?,
+    products: List<CatalogSeed>,
+    onCategory: (Category) -> Unit,
+    onBackToCategories: () -> Unit,
+    onProduct: (CatalogSeed) -> Unit,
+    onFreeText: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // GRID YUKSEKLIGI EKRANA ORANLI, sabit dp DEGIL.
@@ -65,14 +65,14 @@ internal fun AddSheetContent(
     //                        "liste arkada gorunur kalsin" kurali bozuluyor
     // Dogrusu: grid ekran yuksekliginin bir orani kadar, sheet kismi kaliyor,
     // buton hep altta.
-    val ekranYuksekligi = with(LocalDensity.current) {
+    val screenHeight = with(LocalDensity.current) {
         LocalWindowInfo.current.containerSize.height.toDp()
     }
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.md)
-            .padding(bottom = Spacing.lg + altBosluk),
+            .padding(bottom = Spacing.lg + bottomPadding),
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         Row(
@@ -81,35 +81,35 @@ internal fun AddSheetContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = secili?.name ?: "Ne ekleyelim?",
+                text = selected?.name ?: "Ne ekleyelim?",
                 style = MaterialTheme.typography.titleMedium,
             )
-            if (secili != null) {
+            if (selected != null) {
                 Text(
                     text = "← Reyonlar",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.pressable(onTap = onGeriKategoriler).padding(Spacing.xs),
+                    modifier = Modifier.pressable(onTap = onBackToCategories).padding(Spacing.xs),
                 )
             }
         }
 
-        if (secili == null) {
+        if (selected == null) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 84.dp),
-                modifier = Modifier.heightIn(max = ekranYuksekligi * GRID_RATIO),
+                modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                items(kategoriler, key = { it.id }) { kategori ->
+                items(categories, key = { it.id }) { category ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-                        modifier = Modifier.pressable(onTap = { onKategori(kategori) }),
+                        modifier = Modifier.pressable(onTap = { onCategory(category) }),
                     ) {
-                        CategoryTile(turkishInitials(kategori.name))
+                        CategoryTile(turkishInitials(category.name))
                         Text(
-                            text = kategori.name,
+                            text = category.name,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -118,14 +118,14 @@ internal fun AddSheetContent(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.heightIn(max = ekranYuksekligi * GRID_RATIO),
+                modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                items(urunler, key = { it.id }) { urun ->
+                items(products, key = { it.id }) { product ->
                     SuggestionChip(
-                        label = urun.name,
-                        reason = urun.defaultUnit,
-                        onClick = { onUrun(urun) },
+                        label = product.name,
+                        reason = product.defaultUnit,
+                        onClick = { onProduct(product) },
                     )
                 }
             }
@@ -136,7 +136,7 @@ internal fun AddSheetContent(
         // sheet bir duvar olur.
         NeydiButton(
             text = "Listede yok, kendim yazayım",
-            onClick = onSerbestMetin,
+            onClick = onFreeText,
             container = MaterialTheme.colorScheme.surfaceVariant,
             content = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
@@ -161,22 +161,22 @@ private const val GRID_RATIO = 0.24f
 
 // --- Preview ---------------------------------------------------------------
 
-private fun k(id: String, ad: String) = Category(id, ad, 0, 0xFF6E8B3D)
-private fun u(id: String, ad: String, birim: String) =
-    CatalogSeed(id, ad, ad.lowercase(), "meyve-sebze", 1, birim)
+private fun k(id: String, name: String) = Category(id, name, 0, 0xFF6E8B3D)
+private fun u(id: String, name: String, unit: String) =
+    CatalogSeed(id, name, name.lowercase(), "meyve-sebze", 1, unit)
 
 @PreviewLightDark
 @Composable
 private fun AddSheetCategoriesPreview() = NeydiPreview {
     AddSheetContent(
-        altBosluk = 0.dp,
-        kategoriler = listOf(
+        bottomPadding = 0.dp,
+        categories = listOf(
             k("1", "Meyve-Sebze"), k("2", "Fırın-Ekmek"), k("3", "Süt-Kahvaltılık"),
             k("4", "Et-Tavuk-Balık"), k("5", "Temizlik"), k("6", "İçecek"),
         ),
-        secili = null,
-        urunler = emptyList(),
-        onKategori = {}, onGeriKategoriler = {}, onUrun = {}, onSerbestMetin = {},
+        selected = null,
+        products = emptyList(),
+        onCategory = {}, onBackToCategories = {}, onProduct = {}, onFreeText = {},
     )
 }
 
@@ -184,12 +184,12 @@ private fun AddSheetCategoriesPreview() = NeydiPreview {
 @Composable
 private fun AddSheetProductsPreview() = NeydiPreview {
     AddSheetContent(
-        altBosluk = 0.dp,
-        kategoriler = emptyList(),
-        secili = k("1", "Meyve-Sebze"),
-        urunler = listOf(
+        bottomPadding = 0.dp,
+        categories = emptyList(),
+        selected = k("1", "Meyve-Sebze"),
+        products = listOf(
             u("1", "Domates", "kg"), u("2", "Salatalık", "kg"), u("3", "Elma", "kg"),
         ),
-        onKategori = {}, onGeriKategoriler = {}, onUrun = {}, onSerbestMetin = {},
+        onCategory = {}, onBackToCategories = {}, onProduct = {}, onFreeText = {},
     )
 }

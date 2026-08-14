@@ -51,57 +51,57 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
-    onAlisveriseCik: () -> Unit,
-    onGecmis: () -> Unit,
-    onAyarlar: () -> Unit,
+    onGoShopping: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
     vm: ListViewModel = koinViewModel(),
 ) {
-    val durum by vm.durum.collectAsStateWithLifecycle()
-    val girdi by vm.girdi.collectAsStateWithLifecycle()
-    val oneriler by vm.oneriler.collectAsStateWithLifecycle()
-    val kategoriler by vm.kategoriler.collectAsStateWithLifecycle()
-    val tahmin by vm.tahmin.collectAsStateWithLifecycle()
-    val sheetAcik by vm.sheetAcik.collectAsStateWithLifecycle()
-    val sheetKategori by vm.sheetKategori.collectAsStateWithLifecycle()
-    val sheetUrunler by vm.sheetUrunler.collectAsStateWithLifecycle()
-    val ozet by vm.ozet.collectAsStateWithLifecycle()
+    val state by vm.state.collectAsStateWithLifecycle()
+    val input by vm.input.collectAsStateWithLifecycle()
+    val suggestions by vm.suggestions.collectAsStateWithLifecycle()
+    val categories by vm.categories.collectAsStateWithLifecycle()
+    val estimate by vm.estimate.collectAsStateWithLifecycle()
+    val sheetOpen by vm.sheetOpen.collectAsStateWithLifecycle()
+    val sheetCategory by vm.sheetCategory.collectAsStateWithLifecycle()
+    val sheetProducts by vm.sheetProducts.collectAsStateWithLifecycle()
+    val summary by vm.summary.collectAsStateWithLifecycle()
 
     // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
     // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
-    val altInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
-    val pano = LocalClipboardManager.current
-    var panoMetni by remember { mutableStateOf<String?>(null) }
+    val clipboard = LocalClipboardManager.current
+    var clipboardText by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        panoMetni = pano.getText()?.text?.takeIf { looksLikeList(it) }
+        clipboardText = clipboard.getText()?.text?.takeIf { looksLikeList(it) }
     }
 
     ListContent(
-        durum = durum,
-        girdi = girdi,
-        oneriler = oneriler,
-        kategoriler = kategoriler,
-        panoMetni = panoMetni,
-        onGirdiDegisti = vm::onInputChanged,
-        onEkle = vm::add,
-        onOneriSecildi = vm::addFromSuggestion,
-        onKategoriSecildi = vm::onCategorySelected,
-        onIsaretle = vm::toggleChecked,
-        onPano = {
-            panoMetni?.let(vm::addFromClipboard)
-            panoMetni = null
+        state = state,
+        input = input,
+        suggestions = suggestions,
+        categories = categories,
+        clipboardText = clipboardText,
+        onInputChange = vm::onInputChanged,
+        onAdd = vm::add,
+        onSuggestionSelected = vm::addFromSuggestion,
+        onCategorySelected = vm::onCategorySelected,
+        onToggleChecked = vm::toggleChecked,
+        onClipboard = {
+            clipboardText?.let(vm::addFromClipboard)
+            clipboardText = null
         },
-        onAlisverisModu = vm::setShoppingMode,
-        tahmin = tahmin,
-        onSheetAc = vm::openSheet,
-        onBitir = vm::finishShopping,
-        onGecmis = onGecmis,
-        onAyarlar = onAyarlar,
+        onShoppingMode = vm::setShoppingMode,
+        estimate = estimate,
+        onOpenSheet = vm::openSheet,
+        onFinish = vm::finishShopping,
+        onHistory = onHistory,
+        onSettings = onSettings,
     )
 
     // Sheet, EKRAN DEGIL: liste arkada gorunur kaliyor.
-    if (sheetAcik) {
+    if (sheetOpen) {
         ModalBottomSheet(
             onDismissRequest = vm::closeSheet,
             // ZEMIN RENGI ACIKCA VERILIYOR. M3 varsayilani surfaceContainerLow
@@ -121,31 +121,31 @@ fun ListScreen(
                 // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);
                 // sheet icerigi ekranin dibine oturup gezinme cubugunun altinda
                 // kaliyordu. Disaridan okunan deger belirsizlik birakmiyor.
-                altBosluk = altInset,
-                kategoriler = kategoriler,
-                secili = sheetKategori,
-                urunler = sheetUrunler,
-                onKategori = vm::selectSheetCategory,
-                onGeriKategoriler = vm::sheetBack,
-                onUrun = vm::addFromSheet,
-                onSerbestMetin = vm::closeSheet,
+                bottomPadding = bottomInset,
+                categories = categories,
+                selected = sheetCategory,
+                products = sheetProducts,
+                onCategory = vm::selectSheetCategory,
+                onBackToCategories = vm::sheetBack,
+                onProduct = vm::addFromSheet,
+                onFreeText = vm::closeSheet,
             )
         }
     }
 
     // Ozet karti TEK SEFERLIK: kapatilinca bir daha acilmiyor.
-    ozet?.let { o ->
+    summary?.let { o ->
         ModalBottomSheet(
             onDismissRequest = vm::dismissSummary,
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             SummaryCard(
-                altBosluk = altInset,
-                alinanSayisi = o.alinanSayisi,
-                toplamSayisi = o.toplamSayisi,
-                tutarKurus = o.tutarKurus,
-                sureDakika = o.sureDakika,
-                onKapat = vm::dismissSummary,
+                bottomPadding = bottomInset,
+                takenCount = o.takenCount,
+                totalCount = o.totalCount,
+                amountMinor = o.amountMinor,
+                durationMinutes = o.durationMinutes,
+                onDismiss = vm::dismissSummary,
             )
         }
     }
@@ -154,26 +154,26 @@ fun ListScreen(
 /** Durumsuz govde: preview ve test buradan geciyor, ViewModel'siz. */
 @Composable
 internal fun ListContent(
-    durum: ListState,
-    girdi: String,
-    oneriler: List<CatalogSeed>,
-    kategoriler: List<Category>,
-    panoMetni: String?,
-    onGirdiDegisti: (String) -> Unit,
-    onEkle: (String) -> Unit,
-    onOneriSecildi: (CatalogSeed) -> Unit,
-    onKategoriSecildi: (Category) -> Unit,
-    onIsaretle: (String, Boolean) -> Unit,
-    onPano: () -> Unit,
-    onAlisverisModu: (Boolean) -> Unit,
-    tahmin: BasketEstimate,
-    onSheetAc: () -> Unit,
-    onBitir: () -> Unit,
-    onGecmis: () -> Unit,
-    onAyarlar: () -> Unit,
+    state: ListState,
+    input: String,
+    suggestions: List<CatalogSeed>,
+    categories: List<Category>,
+    clipboardText: String?,
+    onInputChange: (String) -> Unit,
+    onAdd: (String) -> Unit,
+    onSuggestionSelected: (CatalogSeed) -> Unit,
+    onCategorySelected: (Category) -> Unit,
+    onToggleChecked: (String, Boolean) -> Unit,
+    onClipboard: () -> Unit,
+    onShoppingMode: (Boolean) -> Unit,
+    estimate: BasketEstimate,
+    onOpenSheet: () -> Unit,
+    onFinish: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
 ) {
-    KeepScreenOn(durum.alisverisModu)
-    val haptik = LocalHapticFeedback.current
+    KeepScreenOn(state.shoppingMode)
+    val haptics = LocalHapticFeedback.current
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
@@ -185,60 +185,60 @@ internal fun ListContent(
             ) {
                 item {
                     ListHeader(
-                        durum = durum,
-                        onAlisverisModu = onAlisverisModu,
-                        onSheetAc = onSheetAc,
-                        onGecmis = onGecmis,
-                        onAyarlar = onAyarlar,
+                        state = state,
+                        onShoppingMode = onShoppingMode,
+                        onOpenSheet = onOpenSheet,
+                        onHistory = onHistory,
+                        onSettings = onSettings,
                     )
                 }
 
                 // Tahmin BASLIKTAN sonra, satirlardan once: rakam listeye
                 // bakmadan once gorulmeli, alt tarafta kalirsa hic gorulmez.
-                if (!durum.bosMu) {
+                if (!state.isEmpty) {
                     item(key = "tahmin") {
                         EstimatedBasket(
-                            tutarKurus = tahmin.tutarKurus,
-                            fiyatliSayisi = tahmin.fiyatliSayisi,
-                            toplamSayisi = durum.toplamSatir,
+                            amountMinor = estimate.amountMinor,
+                            pricedCount = estimate.pricedCount,
+                            totalCount = state.totalRows,
                         )
                     }
                 }
 
-                if (durum.bosMu) {
+                if (state.isEmpty) {
                     item {
                         EmptyState(
-                            tur = durum.bosTur,
-                            kategoriler = kategoriler,
-                            panoVar = panoMetni != null,
-                            onKategori = onKategoriSecildi,
-                            onPano = onPano,
+                            kind = state.emptyKind,
+                            categories = categories,
+                            hasClipboard = clipboardText != null,
+                            onCategory = onCategorySelected,
+                            onClipboard = onClipboard,
                         )
                     }
-                } else if (panoMetni != null && !durum.alisverisModu) {
+                } else if (clipboardText != null && !state.shoppingMode) {
                     // Liste doluyken de yapistirilabilir - ama alisveris
                     // modunda ASLA: reyonda toplu ekleme yapilmaz.
                     item {
                         ClipboardChip(
-                            adet = com.neydi.app.data.clipboardLines(panoMetni).size,
-                            onPano = onPano,
+                            count = com.neydi.app.data.clipboardLines(clipboardText).size,
+                            onClipboard = onClipboard,
                         )
                     }
                 }
 
-                durum.bolumler.forEach { bolum ->
-                    item(key = "b-${bolum.baslik}") {
+                state.sections.forEach { section ->
+                    item(key = "b-${section.title}") {
                         // Baslik da animasyonlu: satir kayarken baslik ziplasaydi
                         // hareket iki parcaya bolunur ve daha rahatsiz olurdu.
                         SectionHeader(
-                            title = bolum.baslik,
-                            count = bolum.satirlar.size,
+                            title = section.title,
+                            count = section.rows.size,
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
                         )
                     }
-                    items(bolum.satirlar, key = { it.id }) { satir ->
+                    items(section.rows, key = { it.id }) { row ->
                         ListItemRow(
                             // ISARETLENEN SATIR "Alindi"ya KAYARAK iner.
                             // Anahtar iki bolumde de ayni (TripLine id), o yuzden
@@ -249,39 +249,39 @@ internal fun ListContent(
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
-                            row = satir.row,
-                            shoppingMode = durum.alisverisModu,
+                            row = row.row,
+                            shoppingMode = state.shoppingMode,
                             onToggle = {
                                 // Haptik onay: reyonda goz listede degil rafta.
                                 // Dokunusun islendigini parmak soyluyor.
                                 // SNACKBAR YOK - bir gezide 20 isaretleme var,
                                 // her birine snackbar ekrani felce ugratirdi.
-                                haptik.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onIsaretle(satir.id, !satir.row.checked)
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onToggleChecked(row.id, !row.row.checked)
                             },
                         )
                     }
                 }
 
-                if (durum.alinanlar.isNotEmpty()) {
+                if (state.taken.isNotEmpty()) {
                     item(key = "b-alindi") {
                         SectionHeader(
                             title = "Alındı",
-                            count = durum.alinanlar.size,
+                            count = state.taken.size,
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
                         )
                     }
-                    items(durum.alinanlar, key = { it.id }) { satir ->
+                    items(state.taken, key = { it.id }) { row ->
                         ListItemRow(
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
-                            row = satir.row,
+                            row = row.row,
                             onToggle = {
-                                haptik.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onIsaretle(satir.id, false)
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onToggleChecked(row.id, false)
                             },
                         )
                     }
@@ -290,21 +290,21 @@ internal fun ListContent(
 
             // Alisveris modunda hizli ekleme YOK: reyonda liste yazilmaz,
             // okunur. Klavye ekranin yarisini yerdi.
-            if (!durum.alisverisModu) {
+            if (!state.shoppingMode) {
                 QuickAdd(
                     modifier = Modifier.windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
                     ),
-                    girdi = girdi,
-                    oneriler = oneriler,
-                    onGirdiDegisti = onGirdiDegisti,
-                    onEkle = onEkle,
-                    onOneriSecildi = onOneriSecildi,
+                    input = input,
+                    suggestions = suggestions,
+                    onInputChange = onInputChange,
+                    onAdd = onAdd,
+                    onSuggestionSelected = onSuggestionSelected,
                 )
             } else {
                 ShoppingBottomBar(
-                    kalan = durum.kalanSatir,
-                    onBitir = onBitir,
+                    remaining = state.remainingRow,
+                    onFinish = onFinish,
                     modifier = Modifier.windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
                     ),
@@ -316,43 +316,43 @@ internal fun ListContent(
 
 @Composable
 private fun ListHeader(
-    durum: ListState,
-    onAlisverisModu: (Boolean) -> Unit,
-    onSheetAc: () -> Unit,
-    onGecmis: () -> Unit,
-    onAyarlar: () -> Unit,
+    state: ListState,
+    onShoppingMode: (Boolean) -> Unit,
+    onOpenSheet: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
         Text(
-            text = if (durum.alisverisModu) "Alışveriş" else "Liste",
+            text = if (state.shoppingMode) "Alışveriş" else "Liste",
             style = MaterialTheme.typography.headlineMedium,
         )
         Text(
             text = when {
-                durum.alisverisModu -> "${durum.kalanSatir} kaldı"
-                durum.toplamSatir == 0 -> "Henüz bir şey yok"
-                else -> "${durum.toplamSatir} ürün"
+                state.shoppingMode -> "${state.remainingRow} kaldı"
+                state.totalRows == 0 -> "Henüz bir şey yok"
+                else -> "${state.totalRows} ürün"
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         // Alisveris modunda gezinme butonlari GIZLI: reyonda yanlislikla
         // Ayarlar'a dusmek listeyi kaybetmek gibi hissettirir.
-        if (!durum.alisverisModu) {
+        if (!state.shoppingMode) {
             Row(
                 modifier = Modifier.padding(top = Spacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                NeydiButton("Alışveriş modu", { onAlisverisModu(true) })
+                NeydiButton("Alışveriş modu", { onShoppingMode(true) })
                 NeydiButton(
                     text = "Reyonlardan ekle",
-                    onClick = onSheetAc,
+                    onClick = onOpenSheet,
                     container = MaterialTheme.colorScheme.surfaceVariant,
                     content = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 NeydiButton(
                     text = "Ayarlar",
-                    onClick = onAyarlar,
+                    onClick = onSettings,
                     container = MaterialTheme.colorScheme.surfaceVariant,
                     content = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -368,11 +368,11 @@ private fun ListHeader(
  * kopyalanmis bir cumle, liste degil.
  */
 @Composable
-private fun ClipboardChip(adet: Int, onPano: () -> Unit) {
+private fun ClipboardChip(count: Int, onClipboard: () -> Unit) {
     Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs)) {
         NeydiButton(
-            text = "Panodaki $adet satırı ekle",
-            onClick = onPano,
+            text = "Panodaki $count satırı ekle",
+            onClick = onClipboard,
             container = MaterialTheme.colorScheme.surfaceVariant,
             content = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -386,7 +386,7 @@ private fun ClipboardChip(adet: Int, onPano: () -> Unit) {
  * elinde cevirmek zorunda kalirdi.
  */
 @Composable
-private fun ShoppingBottomBar(kalan: Int, onBitir: () -> Unit, modifier: Modifier = Modifier) {
+private fun ShoppingBottomBar(remaining: Int, onFinish: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -394,43 +394,43 @@ private fun ShoppingBottomBar(kalan: Int, onBitir: () -> Unit, modifier: Modifie
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         NeydiButton(
-            text = if (kalan == 0) "Hepsi tamam — bitir" else "Alışverişi bitir",
-            onClick = onBitir,
+            text = if (remaining == 0) "Hepsi tamam — bitir" else "Alışverişi bitir",
+            onClick = onFinish,
         )
     }
 }
 
 // --- Preview ---------------------------------------------------------------
 
-private fun s(id: String, ad: String, adet: String? = null, isaretli: Boolean = false) =
-    UiRow(id, ListRow(ad, quantity = adet, checked = isaretli))
+private fun s(id: String, name: String, count: String? = null, checked: Boolean = false) =
+    UiRow(id, ListRow(name, quantity = count, checked = checked))
 
 private val SAMPLE = ListState(
-    bolumler = listOf(
+    sections = listOf(
         ListSection("Meyve-Sebze", listOf(s("1", "Domates", "1 kg"), s("2", "Salatalık"))),
         ListSection("Fırın-Ekmek", listOf(s("3", "Tam Buğday Ekmek"))),
     ),
-    yukleniyor = false,
+    loading = false,
 )
 
 @Composable
 private fun ListPreviewHost(
-    durum: ListState,
-    pano: String? = null,
-    tahmin: BasketEstimate = BasketEstimate(),
+    state: ListState,
+    clipboard: String? = null,
+    estimate: BasketEstimate = BasketEstimate(),
 ) = ListContent(
-    durum = durum, girdi = "", oneriler = emptyList(), kategoriler = emptyList(),
-    panoMetni = pano,
-    onGirdiDegisti = {}, onEkle = {}, onOneriSecildi = {}, onKategoriSecildi = {},
-    onIsaretle = { _, _ -> }, onPano = {}, onAlisverisModu = {},
-    tahmin = tahmin, onSheetAc = {}, onBitir = {}, onGecmis = {}, onAyarlar = {},
+    state = state, input = "", suggestions = emptyList(), categories = emptyList(),
+    clipboardText = clipboard,
+    onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
+    onToggleChecked = { _, _ -> }, onClipboard = {}, onShoppingMode = {},
+    estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},
 )
 
 /** Tahmin satiri: fiyat verisi geldiginde boyle gorunecek. */
 @PreviewLightDark
 @Composable
 private fun WithEstimatePreview() = NeydiPreview(padding = Spacing.xs) {
-    ListPreviewHost(SAMPLE, tahmin = BasketEstimate(tutarKurus = 48750, fiyatliSayisi = 2))
+    ListPreviewHost(SAMPLE, estimate = BasketEstimate(amountMinor = 48750, pricedCount = 2))
 }
 
 @PreviewLightDark
@@ -443,9 +443,9 @@ private fun PlanningPreview() = NeydiPreview(padding = Spacing.xs) { ListPreview
 private fun ShoppingModePreview() = NeydiPreview(padding = Spacing.xs) {
     ListPreviewHost(
         SAMPLE.copy(
-            alisverisModu = true,
-            bolumler = listOf(
-                ListSection("Meyve-Sebze", listOf(s("1", "Domates", "1 kg", isaretli = true), s("2", "Salatalık"))),
+            shoppingMode = true,
+            sections = listOf(
+                ListSection("Meyve-Sebze", listOf(s("1", "Domates", "1 kg", checked = true), s("2", "Salatalık"))),
                 ListSection("Fırın-Ekmek", listOf(s("3", "Tam Buğday Ekmek"))),
             ),
         ),
@@ -455,5 +455,5 @@ private fun ShoppingModePreview() = NeydiPreview(padding = Spacing.xs) {
 @PreviewLightDark
 @Composable
 private fun ClipboardChipPreview() = NeydiPreview(padding = Spacing.xs) {
-    ListPreviewHost(SAMPLE, pano = "ekmek\nsüt\nyumurta\nzeytin")
+    ListPreviewHost(SAMPLE, clipboard = "ekmek\nsüt\nyumurta\nzeytin")
 }

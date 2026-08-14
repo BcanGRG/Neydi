@@ -37,12 +37,12 @@ import com.neydi.app.ui.theme.neydiDisplayFamily
  */
 @Composable
 internal fun EstimatedBasket(
-    tutarKurus: Long,
-    fiyatliSayisi: Int,
-    toplamSayisi: Int,
+    amountMinor: Long,
+    pricedCount: Int,
+    totalCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    if (fiyatliSayisi == 0) return
+    if (pricedCount == 0) return
 
     Row(
         modifier = modifier
@@ -63,8 +63,8 @@ internal fun EstimatedBasket(
             Text(
                 // Kacinin fiyatini bildigimiz ACIKCA yaziyor: eksik bilgiyi
                 // gizlemek tahmini guvenilir gosterir, ki degil.
-                text = if (fiyatliSayisi < toplamSayisi) {
-                    "$toplamSayisi üründen $fiyatliSayisi tanesini biliyorum"
+                text = if (pricedCount < totalCount) {
+                    "$totalCount üründen $pricedCount tanesini biliyorum"
                 } else {
                     "hepsinin fiyatını biliyorum"
                 },
@@ -73,10 +73,10 @@ internal fun EstimatedBasket(
             )
         }
         Text(
-            text = if (fiyatliSayisi < toplamSayisi) {
-                "en az ${formatMinor(tutarKurus)}"
+            text = if (pricedCount < totalCount) {
+                "en az ${formatMinor(amountMinor)}"
             } else {
-                formatMinor(tutarKurus)
+                formatMinor(amountMinor)
             },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -96,12 +96,12 @@ internal fun EstimatedBasket(
  */
 @Composable
 internal fun SummaryCard(
-    altBosluk: Dp = 0.dp,
-    alinanSayisi: Int,
-    toplamSayisi: Int,
-    tutarKurus: Long?,
-    sureDakika: Int?,
-    onKapat: () -> Unit,
+    bottomPadding: Dp = 0.dp,
+    takenCount: Int,
+    totalCount: Int,
+    amountMinor: Long?,
+    durationMinutes: Int?,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -111,19 +111,19 @@ internal fun SummaryCard(
             .clip(NeydiExtraShapes.card)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = Spacing.lg)
-            .padding(top = Spacing.xl, bottom = Spacing.xl + altBosluk),
+            .padding(top = Spacing.xl, bottom = Spacing.xl + bottomPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
         Text(
-            text = if (alinanSayisi == toplamSayisi) "Liste tamam." else "Alışveriş bitti.",
+            text = if (takenCount == totalCount) "Liste tamam." else "Alışveriş bitti.",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        if (tutarKurus != null) {
+        if (amountMinor != null) {
             Text(
-                text = formatMinor(tutarKurus),
+                text = formatMinor(amountMinor),
                 // 36sp Fraunces: ekranda bu boyutta baska hicbir sey yok.
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontFamily = neydiDisplayFamily(),
@@ -135,16 +135,16 @@ internal fun SummaryCard(
 
         Text(
             text = buildString {
-                append("$alinanSayisi ürün alındı")
-                if (alinanSayisi < toplamSayisi) append(", ${toplamSayisi - alinanSayisi} tanesi kaldı")
-                if (sureDakika != null) append(" · $sureDakika dakika")
+                append("$takenCount ürün alındı")
+                if (takenCount < totalCount) append(", ${totalCount - takenCount} tanesi kaldı")
+                if (durationMinutes != null) append(" · $durationMinutes dakika")
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
 
-        NeydiButton("Tamam", onKapat, modifier = Modifier.padding(top = Spacing.sm))
+        NeydiButton("Tamam", onDismiss, modifier = Modifier.padding(top = Spacing.sm))
     }
 }
 
@@ -153,24 +153,24 @@ internal fun SummaryCard(
 @PreviewLightDark
 @Composable
 private fun EstimatePartialPreview() = NeydiPreview {
-    EstimatedBasket(tutarKurus = 48750, fiyatliSayisi = 5, toplamSayisi = 8)
+    EstimatedBasket(amountMinor = 48750, pricedCount = 5, totalCount = 8)
 }
 
 @PreviewLightDark
 @Composable
 private fun EstimateCompletePreview() = NeydiPreview {
-    EstimatedBasket(tutarKurus = 128990, fiyatliSayisi = 8, toplamSayisi = 8)
+    EstimatedBasket(amountMinor = 128990, pricedCount = 8, totalCount = 8)
 }
 
 @PreviewLightDark
 @Composable
 private fun SummaryWithTotalPreview() = NeydiPreview {
-    SummaryCard(alinanSayisi = 8, toplamSayisi = 8, tutarKurus = 128990, sureDakika = 24, onKapat = {})
+    SummaryCard(takenCount = 8, totalCount = 8, amountMinor = 128990, durationMinutes = 24, onDismiss = {})
 }
 
 /** Fis okunmadi: tutar yok ama kart yine de bir sey soyluyor. */
 @PreviewLightDark
 @Composable
 private fun SummaryWithoutTotalPreview() = NeydiPreview {
-    SummaryCard(alinanSayisi = 6, toplamSayisi = 8, tutarKurus = null, sureDakika = 31, onKapat = {})
+    SummaryCard(takenCount = 6, totalCount = 8, amountMinor = null, durationMinutes = 31, onDismiss = {})
 }

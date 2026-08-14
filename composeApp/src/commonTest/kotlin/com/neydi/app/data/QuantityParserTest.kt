@@ -6,11 +6,11 @@ import kotlin.test.assertNull
 
 class QuantityParserTest {
 
-    private fun waitFor(girdi: String, adet: Double, birim: String?, ad: String) {
-        val m = parseQuantity(girdi)
-        assertEquals(adet, m.adet, "adet yanlis: '$girdi' -> $m")
-        assertEquals(birim, m.birim, "birim yanlis: '$girdi' -> $m")
-        assertEquals(ad, m.ad, "ad yanlis: '$girdi' -> $m")
+    private fun waitFor(input: String, count: Double, unit: String?, name: String) {
+        val m = parseQuantity(input)
+        assertEquals(count, m.count, "adet yanlis: '$input' -> $m")
+        assertEquals(unit, m.unit, "birim yanlis: '$input' -> $m")
+        assertEquals(name, m.name, "ad yanlis: '$input' -> $m")
     }
 
     @Test
@@ -80,8 +80,8 @@ class QuantityParserTest {
     @Test
     fun emptyInput() {
         val m = parseQuantity("")
-        assertEquals(1.0, m.adet)
-        assertNull(m.birim)
-        assertEquals("", m.ad)
+        assertEquals(1.0, m.count)
+        assertNull(m.unit)
+        assertEquals("", m.name)
     }
 }

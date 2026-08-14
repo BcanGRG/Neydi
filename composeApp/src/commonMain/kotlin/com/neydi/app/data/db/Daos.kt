@@ -36,16 +36,16 @@ interface CatalogSeedDao {
     @Query(
         """
         SELECT * FROM catalog_seed
-        WHERE matchKey LIKE :onEk || '%'
+        WHERE matchKey LIKE :onExtra || '%'
         ORDER BY commonalityRank
         LIMIT :limit
         """,
     )
-    suspend fun search(onEk: String, limit: Int = 20): List<CatalogSeed>
+    suspend fun search(onExtra: String, limit: Int = 20): List<CatalogSeed>
 
     /** Bos durumda bir reyona dokununca: o reyonun EN YAYGIN urunleri. */
-    @Query("SELECT * FROM catalog_seed WHERE categoryId = :kategoriId ORDER BY commonalityRank LIMIT :limit")
-    suspend fun byCategory(kategoriId: String, limit: Int = 8): List<CatalogSeed>
+    @Query("SELECT * FROM catalog_seed WHERE categoryId = :categoryId ORDER BY commonalityRank LIMIT :limit")
+    suspend fun byCategory(categoryId: String, limit: Int = 8): List<CatalogSeed>
 
     @Query("SELECT COUNT(*) FROM catalog_seed")
     suspend fun count(): Int
@@ -127,18 +127,18 @@ interface TripLineDao {
     @Query(
         """
         SELECT
-            tl.id            AS satirId,
-            p.id             AS urunId,
-            p.name           AS ad,
-            tl.quantity      AS adet,
-            tl.unit          AS birim,
-            tl.checked       AS isaretli,
-            p.isStaple       AS sabitMi,
-            c.id             AS kategoriId,
-            c.name           AS kategoriAdi,
-            c.sortOrder      AS kategoriSirasi,
-            tl.addedByMemberId AS ekleyenUyeId,
-            tl.note          AS notu
+            tl.id            AS rowId,
+            p.id             AS productId,
+            p.name           AS name,
+            tl.quantity      AS count,
+            tl.unit          AS unit,
+            tl.checked       AS checked,
+            p.isStaple       AS isStaple,
+            c.id             AS categoryId,
+            c.name           AS categoryName,
+            c.sortOrder      AS categoryOrder,
+            tl.addedByMemberId AS addedByMemberId,
+            tl.note          AS note
         FROM trip_line tl
         JOIN product p  ON p.id = tl.productId
         JOIN category c ON c.id = p.categoryId

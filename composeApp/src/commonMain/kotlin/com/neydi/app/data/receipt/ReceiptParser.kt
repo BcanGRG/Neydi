@@ -25,27 +25,27 @@ const val TOLERANCE_MINOR: Long = 5L
 /**
  * Fisten cikan tek satir.
  *
- * `tutarKurus` HER ZAMAN POZITIF; isareti [indirim] bayragi tasiyor. Negatif
+ * `amountMinor` HER ZAMAN POZITIF; isareti [discount] bayragi tasiyor. Negatif
  * sayi ile bayragi ayni anda kullanmak toplama iki kez eksi soktururdu -
  * aritmetik kapisi da sessizce yanlis calisirdi.
  */
 data class ParsedLine(
     /** Fiste yazan hali. 4.6'da gri alt satir olarak gosteriliyor - yanlis eslemeyi ancak bu geri alabilir. */
-    val hamMetin: String,
-    val ad: String,
-    val miktar: Double = 1.0,
-    val birim: String = "adet",
-    val birimFiyatKurus: Long? = null,
-    val tutarKurus: Long,
-    val indirim: Boolean = false,
+    val rawText: String,
+    val name: String,
+    val quantity: Double = 1.0,
+    val unit: String = "adet",
+    val unitPriceMinor: Long? = null,
+    val amountMinor: Long,
+    val discount: Boolean = false,
 )
 
-/** Bir fisin tamami. [hamSatirlar] hic dokunulmadan saklaniyor. */
+/** Bir fisin tamami. [rawLines] hic dokunulmadan saklaniyor. */
 data class ReceiptReading(
-    val magazaAdi: String?,
-    val satirlar: List<ParsedLine>,
-    val toplamKurus: Long?,
-    val hamSatirlar: List<String>,
+    val storeName: String?,
+    val rows: List<ParsedLine>,
+    val totalMinor: Long?,
+    val rawLines: List<String>,
 )
 
 // --- Anahtar kelimeler ------------------------------------------------------
@@ -104,19 +104,19 @@ private val VAT_MARK_SUFFIX = Regex("""\s*[%*#]\s*\d{1,2}\s*$""")
  * kullanan bir bicimi bilerek DESTEKLEMIYORUZ - Turkiye'de fis oyle basmiyor
  * ve desteklemek "1.234" sayisini 1,234 TL sanmak demek olurdu.
  */
-internal fun parseMinor(metin: String): Long? {
-    val temiz = metin.trim().replace(".", "")
-    val negatif = temiz.startsWith("-")
-    val parcalar = temiz.removePrefix("-").split(",")
-    if (parcalar.size != 2 || parcalar[1].length != 2) return null
-    val lira = parcalar[0].toLongOrNull() ?: return null
-    val kurus = parcalar[1].toLongOrNull() ?: return null
-    val toplam = lira * 100 + kurus
-    return if (negatif) -toplam else toplam
+internal fun parseMinor(text: String): Long? {
+    val cleaned = text.trim().replace(".", "")
+    val negative = cleaned.startsWith("-")
+    val parts = cleaned.removePrefix("-").split(",")
+    if (parts.size != 2 || parts[1].length != 2) return null
+    val major = parts[0].toLongOrNull() ?: return null
+    val minor = parts[1].toLongOrNull() ?: return null
+    val total = major * 100 + minor
+    return if (negative) -total else total
 }
 
-private fun containsKeyword(anahtar: String, kelimeler: List<String>): Boolean =
-    kelimeler.any { anahtar == it || anahtar.startsWith("$it ") || anahtar.contains(" $it") }
+private fun containsKeyword(key: String, kelimeler: List<String>): Boolean =
+    kelimeler.any { key == it || key.startsWith("$it ") || key.contains(" $it") }
 
 /**
  * Ham OCR satirlarini fis okumasina cevirir.
@@ -124,50 +124,50 @@ private fun containsKeyword(anahtar: String, kelimeler: List<String>): Boolean =
  * Satir sirasi ONEMLI: tartili urunun adi bir satirda, agirligi ve tutari bir
  * sonrakinde. Satirlari tek tek bagimsiz islemek tartili her urunu dusururdu.
  */
-fun parseReceipt(hamSatirlar: List<String>): ReceiptReading {
-    val satirlar = hamSatirlar.map { it.trim() }.filter { it.isNotBlank() }
-    val cikan = mutableListOf<ParsedLine>()
-    var toplam: Long? = null
-    var magaza: String? = null
+fun parseReceipt(rawLines: List<String>): ReceiptReading {
+    val rows = rawLines.map { it.trim() }.filter { it.isNotBlank() }
+    val parsed = mutableListOf<ParsedLine>()
+    var total: Long? = null
+    var store: String? = null
 
     var i = 0
-    while (i < satirlar.size) {
-        val ham = satirlar[i]
-        val anahtar = matchKey(ham)
+    while (i < rows.size) {
+        val raw = rows[i]
+        val key = matchKey(raw)
 
         // Magaza adi: ilk anlamli satir. Kunye satirlari zaten eleniyor.
-        if (magaza == null && anahtar.isNotBlank() && !containsKeyword(anahtar, HEADER_WORDS) &&
-            AMOUNT_SUFFIX.matchEntire(ham) == null
+        if (store == null && key.isNotBlank() && !containsKeyword(key, HEADER_WORDS) &&
+            AMOUNT_SUFFIX.matchEntire(raw) == null
         ) {
-            magaza = ham
+            store = raw
             i++
             continue
         }
 
-        val eslesme = AMOUNT_SUFFIX.matchEntire(ham)
+        val match = AMOUNT_SUFFIX.matchEntire(raw)
 
         // KDV dokumunu TOPLAM'dan ONCE eliyoruz: "TOPLAM KDV" ikisini de
         // iceriyor ve once toplam diye bakarsak vergi tutarini fis toplami
         // sanardik - butun aritmetik kapisi bunun uzerine kurulu.
-        if (containsKeyword(anahtar, VAT_WORDS)) { i++; continue }
+        if (containsKeyword(key, VAT_WORDS)) { i++; continue }
 
-        if (containsKeyword(anahtar, TOTAL_WORDS)) {
-            eslesme?.let { toplam = parseMinor(it.groupValues[2]) }
+        if (containsKeyword(key, TOTAL_WORDS)) {
+            match?.let { total = parseMinor(it.groupValues[2]) }
             i++
             continue
         }
 
-        if (containsKeyword(anahtar, PAYMENT_WORDS) || containsKeyword(anahtar, HEADER_WORDS)) { i++; continue }
+        if (containsKeyword(key, PAYMENT_WORDS) || containsKeyword(key, HEADER_WORDS)) { i++; continue }
 
-        if (containsKeyword(anahtar, DISCOUNT_WORDS)) {
-            val tutar = eslesme?.let { parseMinor(it.groupValues[2]) }
-            if (tutar != null) {
-                cikan += ParsedLine(
-                    hamMetin = ham,
-                    ad = eslesme.groupValues[1].trim().ifBlank { "İndirim" },
+        if (containsKeyword(key, DISCOUNT_WORDS)) {
+            val amount = match?.let { parseMinor(it.groupValues[2]) }
+            if (amount != null) {
+                parsed += ParsedLine(
+                    rawText = raw,
+                    name = match.groupValues[1].trim().ifBlank { "İndirim" },
                     // Isareti bayrak tasiyor, sayi degil - mutlak degere aliyoruz.
-                    tutarKurus = if (tutar < 0) -tutar else tutar,
-                    indirim = true,
+                    amountMinor = if (amount < 0) -amount else amount,
+                    discount = true,
                 )
             }
             i++
@@ -175,32 +175,32 @@ fun parseReceipt(hamSatirlar: List<String>): ReceiptReading {
         }
 
         // Ayni satirda ad + tutar: "EKMEK %1 5,00"
-        if (eslesme != null) {
-            val tutar = parseMinor(eslesme.groupValues[2])
-            val ad = eslesme.groupValues[1].replace(VAT_MARK_SUFFIX, "").trim()
-            if (tutar != null && ad.isNotBlank()) {
-                cikan += ParsedLine(hamMetin = ham, ad = ad, tutarKurus = tutar)
+        if (match != null) {
+            val amount = parseMinor(match.groupValues[2])
+            val name = match.groupValues[1].replace(VAT_MARK_SUFFIX, "").trim()
+            if (amount != null && name.isNotBlank()) {
+                parsed += ParsedLine(rawText = raw, name = name, amountMinor = amount)
             }
             i++
             continue
         }
 
         // Tutarsiz satir: TARTILI URUNUN ADI olabilir. Bir sonrakine bak.
-        val sonraki = satirlar.getOrNull(i + 1)
-        val agirlik = sonraki?.let { WEIGHT_LINE.find(it) }
-        if (agirlik != null) {
-            val sonrakiTutar = AMOUNT_SUFFIX.matchEntire(sonraki)?.let { parseMinor(it.groupValues[2]) }
-            val miktar = agirlik.groupValues[1].replace(",", ".").toDoubleOrNull()
-            val birimFiyat = parseMinor(agirlik.groupValues[3])
-            val ad = ham.replace(VAT_MARK_SUFFIX, "").trim()
-            if (sonrakiTutar != null && miktar != null && ad.isNotBlank()) {
-                cikan += ParsedLine(
-                    hamMetin = "$ham / $sonraki",
-                    ad = ad,
-                    miktar = miktar,
-                    birim = agirlik.groupValues[2].lowercase(),
-                    birimFiyatKurus = birimFiyat,
-                    tutarKurus = sonrakiTutar,
+        val next = rows.getOrNull(i + 1)
+        val weight = next?.let { WEIGHT_LINE.find(it) }
+        if (weight != null) {
+            val nextAmount = AMOUNT_SUFFIX.matchEntire(next)?.let { parseMinor(it.groupValues[2]) }
+            val quantity = weight.groupValues[1].replace(",", ".").toDoubleOrNull()
+            val unitPrice = parseMinor(weight.groupValues[3])
+            val name = raw.replace(VAT_MARK_SUFFIX, "").trim()
+            if (nextAmount != null && quantity != null && name.isNotBlank()) {
+                parsed += ParsedLine(
+                    rawText = "$raw / $next",
+                    name = name,
+                    quantity = quantity,
+                    unit = weight.groupValues[2].lowercase(),
+                    unitPriceMinor = unitPrice,
+                    amountMinor = nextAmount,
                 )
                 i += 2
                 continue
@@ -211,10 +211,10 @@ fun parseReceipt(hamSatirlar: List<String>): ReceiptReading {
     }
 
     return ReceiptReading(
-        magazaAdi = magaza,
-        satirlar = cikan,
-        toplamKurus = toplam,
-        hamSatirlar = hamSatirlar,
+        storeName = store,
+        rows = parsed,
+        totalMinor = total,
+        rawLines = rawLines,
     )
 }
 
@@ -232,9 +232,9 @@ fun parseReceipt(hamSatirlar: List<String>): ReceiptReading {
  *
  * @return toplam bilinmiyorsa null - "dogrulanamadi" ile "tutmadi" ayri seyler.
  */
-fun arithmeticHolds(okuma: ReceiptReading): Boolean? {
-    val toplam = okuma.toplamKurus ?: return null
-    val hesaplanan = okuma.satirlar.sumOf { if (it.indirim) -it.tutarKurus else it.tutarKurus }
-    val fark = hesaplanan - toplam
-    return (if (fark < 0) -fark else fark) <= TOLERANCE_MINOR
+fun arithmeticHolds(reading: ReceiptReading): Boolean? {
+    val total = reading.totalMinor ?: return null
+    val computed = reading.rows.sumOf { if (it.discount) -it.amountMinor else it.amountMinor }
+    val diff = computed - total
+    return (if (diff < 0) -diff else diff) <= TOLERANCE_MINOR
 }

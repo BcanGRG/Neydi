@@ -50,14 +50,14 @@ fun App() {
             entryProvider = entryProvider {
                 entry<Liste> {
                     ListScreen(
-                        onAlisveriseCik = { go(MissingItems) },
-                        onGecmis = { go(History) },
-                        onAyarlar = { go(Settings) },
+                        onGoShopping = { go(MissingItems) },
+                        onHistory = { go(History) },
+                        onSettings = { go(Settings) },
                     )
                 }
                 entry<MissingItems> {
                     MissingItemsScreen(
-                        onEkle = { go(FinishShopping()) },
+                        onAdd = { go(FinishShopping()) },
                         onBosver = { back() },
                     )
                 }
@@ -71,9 +71,9 @@ fun App() {
                         },
                     )
                 }
-                entry<History> { HistoryScreen(onGeri = { back() }) }
-                entry<Settings> { SettingsScreen(onGeri = { back() }) }
-                entry<Setup> { SetupScreen(onBitir = { back() }) }
+                entry<History> { HistoryScreen(onBack = { back() }) }
+                entry<Settings> { SettingsScreen(onBack = { back() }) }
+                entry<Setup> { SetupScreen(onFinish = { back() }) }
             },
         )
     }

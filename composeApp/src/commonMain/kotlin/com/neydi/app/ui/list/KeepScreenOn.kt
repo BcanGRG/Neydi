@@ -13,4 +13,4 @@ import androidx.compose.runtime.Composable
  * pil yakar ve karsiliginda hicbir sey vermez.
  */
 @Composable
-expect fun KeepScreenOn(aktif: Boolean)
+expect fun KeepScreenOn(enabled: Boolean)

@@ -20,16 +20,16 @@ import kotlin.coroutines.resumeWithException
  */
 internal class MlKitReceiptReader(private val context: Context) : ReceiptReader {
 
-    private val tanimlayici = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    override suspend fun readLines(gorselYolu: String): Result<List<String>> = runCatching {
-        val gorsel = InputImage.fromFilePath(context, Uri.fromFile(File(gorselYolu)))
-        val metin = suspendCancellableCoroutine { devam ->
-            tanimlayici.process(gorsel)
-                .addOnSuccessListener { devam.resume(it) }
-                .addOnFailureListener { devam.resumeWithException(it) }
+    override suspend fun readLines(imagePath: String): Result<List<String>> = runCatching {
+        val image = InputImage.fromFilePath(context, Uri.fromFile(File(imagePath)))
+        val text = suspendCancellableCoroutine { cont ->
+            recognizer.process(image)
+                .addOnSuccessListener { cont.resume(it) }
+                .addOnFailureListener { cont.resumeWithException(it) }
         }
-        linesInReadingOrder(metin)
+        linesInReadingOrder(text)
     }
 }
 
@@ -42,8 +42,8 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
  * karisabilir, tartili urunun adi ile agirlik satiri ayrilabilirdi - ve
  * ayristirici o ikisinin YAN YANA olmasina dayaniyor.
  */
-internal fun linesInReadingOrder(metin: Text): List<String> =
-    metin.textBlocks
-        .flatMap { blok -> blok.lines }
-        .sortedBy { satir -> satir.boundingBox?.top ?: Int.MAX_VALUE }
-        .map { satir -> satir.text }
+internal fun linesInReadingOrder(text: Text): List<String> =
+    text.textBlocks
+        .flatMap { block -> block.lines }
+        .sortedBy { row -> row.boundingBox?.top ?: Int.MAX_VALUE }
+        .map { row -> row.text }

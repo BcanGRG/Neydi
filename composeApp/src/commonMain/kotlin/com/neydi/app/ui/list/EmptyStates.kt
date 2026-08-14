@@ -32,11 +32,11 @@ import com.neydi.app.ui.theme.SpacingExtra
  */
 @Composable
 internal fun EmptyState(
-    tur: EmptyKind,
-    kategoriler: List<Category>,
-    panoVar: Boolean,
-    onKategori: (Category) -> Unit,
-    onPano: () -> Unit,
+    kind: EmptyKind,
+    categories: List<Category>,
+    hasClipboard: Boolean,
+    onCategory: (Category) -> Unit,
+    onClipboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -45,7 +45,7 @@ internal fun EmptyState(
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         Text(
-            text = when (tur) {
+            text = when (kind) {
                 EmptyKind.ILK_GUN -> "Listeye başlayalım."
                 // "Bos" degil "temiz": ayni gercek, cok farkli his.
                 EmptyKind.DONGU_ORTASI -> "Liste tertemiz."
@@ -54,7 +54,7 @@ internal fun EmptyState(
             color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
-            text = when (tur) {
+            text = when (kind) {
                 EmptyKind.ILK_GUN ->
                     "Aşağıya yazabilirsin — \"2 kg elma\" gibi miktarı da anlıyor.\n" +
                         "Ya da bir reyondan başla."
@@ -69,18 +69,18 @@ internal fun EmptyState(
 
         // Kategori cipleri YALNIZCA ilk gun: dongu ortasinda kullanici zaten
         // ne yapacagini biliyor, 12 cip gostermek gurultu olur.
-        if (tur == EmptyKind.ILK_GUN && kategoriler.isNotEmpty()) {
+        if (kind == EmptyKind.ILK_GUN && categories.isNotEmpty()) {
             LazyRow(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = Spacing.md,
                 ),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                items(kategoriler, key = { it.id }) { kategori ->
+                items(categories, key = { it.id }) { category ->
                     SuggestionChip(
-                        label = kategori.name,
+                        label = category.name,
                         reason = "reyon",
-                        onClick = { onKategori(kategori) },
+                        onClick = { onCategory(category) },
                     )
                 }
             }
@@ -88,25 +88,25 @@ internal fun EmptyState(
 
         // Pano butonu SADECE panoda liste varsa. Her zaman gostermek
         // dokunulmayan bir butona alan ayirmak demek.
-        if (panoVar) {
-            NeydiButton("Panodakileri ekle", onPano)
+        if (hasClipboard) {
+            NeydiButton("Panodakileri ekle", onClipboard)
         }
     }
 }
 
 // --- Preview ---------------------------------------------------------------
 
-private fun fold(id: String, ad: String) = Category(id, ad, 0, 0xFF6E8B3D)
+private fun fold(id: String, name: String) = Category(id, name, 0, 0xFF6E8B3D)
 
 @PreviewLightDark
 @Composable
 private fun EmptyFirstDayPreview() = NeydiPreview {
     EmptyState(
-        tur = EmptyKind.ILK_GUN,
-        kategoriler = listOf(fold("1", "Meyve-Sebze"), fold("2", "Fırın-Ekmek"), fold("3", "Süt-Kahvaltılık")),
-        panoVar = true,
-        onKategori = {},
-        onPano = {},
+        kind = EmptyKind.ILK_GUN,
+        categories = listOf(fold("1", "Meyve-Sebze"), fold("2", "Fırın-Ekmek"), fold("3", "Süt-Kahvaltılık")),
+        hasClipboard = true,
+        onCategory = {},
+        onClipboard = {},
     )
 }
 
@@ -114,10 +114,10 @@ private fun EmptyFirstDayPreview() = NeydiPreview {
 @Composable
 private fun EmptyMidCyclePreview() = NeydiPreview {
     EmptyState(
-        tur = EmptyKind.DONGU_ORTASI,
-        kategoriler = emptyList(),
-        panoVar = false,
-        onKategori = {},
-        onPano = {},
+        kind = EmptyKind.DONGU_ORTASI,
+        categories = emptyList(),
+        hasClipboard = false,
+        onCategory = {},
+        onClipboard = {},
     )
 }

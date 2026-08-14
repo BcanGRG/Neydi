@@ -46,7 +46,7 @@ val dataModule = module {
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
     // App() bunlari kendi uretmek zorunda kalmasin.
-    single { AppBootstrap(db = get(), saat = ::now, yeniId = ::newUuid) }
+    single { AppBootstrap(db = get(), clock = ::now, newId = ::newUuid) }
 
     viewModel {
         ListViewModel(
@@ -63,8 +63,8 @@ val dataModule = module {
             productDao = get(),
             // Saat ve id URETIMI disaridan: repository saf kalsin ve testte
             // deterministik olabilsin.
-            saat = ::now,
-            yeniId = ::newUuid,
+            clock = ::now,
+            newId = ::newUuid,
         )
     }
 }
@@ -78,13 +78,13 @@ internal fun now(): Long = Clock.System.now().toEpochMilliseconds()
 /** Acilis hazirligi. Idempotent - bkz. Bootstrap.kt */
 class AppBootstrap(
     private val db: NeydiDatabase,
-    private val saat: () -> Long,
-    private val yeniId: () -> String,
+    private val clock: () -> Long,
+    private val newId: () -> String,
 ) {
-    suspend operator fun invoke() = db.bootstrap(yeniId = yeniId, saat = saat)
+    suspend operator fun invoke() = db.bootstrap(newId = newId, clock = clock)
 }
 
-fun initKoin(ekstra: KoinApplication.() -> Unit = {}): KoinApplication = startKoin {
+fun initKoin(extra: KoinApplication.() -> Unit = {}): KoinApplication = startKoin {
     modules(platformModule(), dataModule)
-    ekstra()
+    extra()
 }

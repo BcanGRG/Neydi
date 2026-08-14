@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 
 class ListRepositoryTest {
 
-    private val ev = "h1"
+    private val home = "h1"
 
     private fun db() = Room.inMemoryDatabaseBuilder<NeydiDatabase>(
         factory = { NeydiDatabaseConstructor.initialize() },
@@ -27,13 +27,13 @@ class ListRepositoryTest {
             tripDao = db.tripDao(),
             tripLineDao = db.tripLineDao(),
             productDao = db.productDao(),
-            saat = { 1_000L },
-            yeniId = { "id-${++n}" },
+            clock = { 1_000L },
+            newId = { "id-${++n}" },
         )
     }
 
     private suspend fun prepare(db: NeydiDatabase) {
-        db.householdDao().upsert(Household(id = ev, name = "Bizim ev", createdAt = 0))
+        db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
     }
 
     /**
@@ -46,10 +46,10 @@ class ListRepositoryTest {
         val db = db(); prepare(db)
         val r = repo(db)
 
-        val ilk = r.openOrGetActiveTrip(ev)
-        val ikinci = r.openOrGetActiveTrip(ev)
+        val first = r.openOrGetActiveTrip(home)
+        val second = r.openOrGetActiveTrip(home)
 
-        assertEquals(ilk.id, ikinci.id, "ikinci cagri yeni bir alisveris acti")
+        assertEquals(first.id, second.id, "ikinci cagri yeni bir alisveris acti")
     }
 
     @Test
@@ -57,11 +57,11 @@ class ListRepositoryTest {
         val db = db(); prepare(db)
         val r = repo(db)
 
-        val ilk = r.openOrGetActiveTrip(ev)
-        r.finishShopping(ilk.id)
-        val yeni = r.openOrGetActiveTrip(ev)
+        val first = r.openOrGetActiveTrip(home)
+        r.finishShopping(first.id)
+        val fresh = r.openOrGetActiveTrip(home)
 
-        assertTrue(yeni.id != ilk.id, "bitmis alisveris hala aktif goruluyor")
+        assertTrue(fresh.id != first.id, "bitmis alisveris hala aktif goruluyor")
     }
 
     /**
@@ -73,17 +73,17 @@ class ListRepositoryTest {
     fun readdingSameProductIncrementsQuantity() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(ev)
-        val ekmek = r.findOrCreateProduct(ev, "Ekmek", "firin-ekmek", "adet")
+        val trip = r.openOrGetActiveTrip(home)
+        val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
 
-        r.add(ev, trip.id, ekmek, memberId = "m1")
-        r.add(ev, trip.id, ekmek, memberId = "m2")
+        r.add(home, trip.id, bread, memberId = "m1")
+        r.add(home, trip.id, bread, memberId = "m2")
 
-        val satirlar = r.satirlar(ev).first()
-        assertEquals(1, satirlar.size, "ikinci ekleme yeni satir acti")
-        assertEquals(2.0, satirlar.single().quantity)
+        val rows = r.rows(home).first()
+        assertEquals(1, rows.size, "ikinci ekleme yeni satir acti")
+        assertEquals(2.0, rows.single().quantity)
         // Ilk ekleyen korunuyor: "kim ekledi" bilgisi ezilmemeli.
-        assertEquals("m1", satirlar.single().addedByMemberId)
+        assertEquals("m1", rows.single().addedByMemberId)
     }
 
     /** matchKey uzerinden bakiyor: "Ekmek" ile "EKMEK" ayri urun olmamali. */
@@ -92,8 +92,8 @@ class ListRepositoryTest {
         val db = db(); prepare(db)
         val r = repo(db)
 
-        val a = r.findOrCreateProduct(ev, "Ekmek", "firin-ekmek", "adet")
-        val b = r.findOrCreateProduct(ev, "EKMEK", "firin-ekmek", "adet")
+        val a = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
+        val b = r.findOrCreateProduct(home, "EKMEK", "firin-ekmek", "adet")
 
         assertEquals(a.id, b.id)
     }
@@ -102,25 +102,25 @@ class ListRepositoryTest {
     fun checkAndUncheckFlowThrough() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(ev)
-        val sut = r.findOrCreateProduct(ev, "Süt", "sut-kahvalti", "L")
-        val satir = r.add(ev, trip.id, sut, memberId = "m1")
+        val trip = r.openOrGetActiveTrip(home)
+        val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
+        val row = r.add(home, trip.id, milk, memberId = "m1")
 
-        r.toggleChecked(satir.id, true)
-        val isaretli = r.satirlar(ev).first().single()
-        assertTrue(isaretli.checked)
+        r.toggleChecked(row.id, true)
+        val checked = r.rows(home).first().single()
+        assertTrue(checked.checked)
         // checkedAt saklanmali: reyonda mi evde mi isaretlendi sorusu sonra lazim.
-        assertNotNull(isaretli.checkedAt)
+        assertNotNull(checked.checkedAt)
 
-        r.remove(satir.id)
-        assertTrue(r.satirlar(ev).first().isEmpty(), "cikarilan satir hala listede")
+        r.remove(row.id)
+        assertTrue(r.rows(home).first().isEmpty(), "cikarilan satir hala listede")
     }
 
     /** Aktif alisveris yoksa satirlar BOS liste - hata degil. */
     @Test
     fun rowsEmptyWithoutActiveTrip() = runTest {
         val db = db(); prepare(db)
-        assertTrue(repo(db).satirlar(ev).first().isEmpty())
+        assertTrue(repo(db).rows(home).first().isEmpty())
     }
 
     /** Silinen satir tombstone; sorgular onu getirmemeli. */
@@ -128,15 +128,15 @@ class ListRepositoryTest {
     fun deletedRowDoesNotResurrect() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(ev)
-        val urun = r.findOrCreateProduct(ev, "Yumurta", "sut-kahvalti", "adet")
-        val satir = r.add(ev, trip.id, urun, memberId = "m1")
-        r.remove(satir.id)
+        val trip = r.openOrGetActiveTrip(home)
+        val product = r.findOrCreateProduct(home, "Yumurta", "sut-kahvalti", "adet")
+        val row = r.add(home, trip.id, product, memberId = "m1")
+        r.remove(row.id)
 
         // Ayni urun tekrar eklenebilmeli - tombstone yeni eklemeyi engellememeli.
-        val yeni = r.add(ev, trip.id, urun, memberId = "m1")
-        assertTrue(r.satirlar(ev).first().size == 1)
+        val again = r.add(home, trip.id, product, memberId = "m1")
+        assertTrue(r.rows(home).first().size == 1)
         // Mezardan cikan satir adedi SIFIRDAN baslar, eski adedi tasimaz.
-        assertEquals(1.0, yeni.quantity)
+        assertEquals(1.0, again.quantity)
     }
 }

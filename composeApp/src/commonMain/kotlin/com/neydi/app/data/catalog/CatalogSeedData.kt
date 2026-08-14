@@ -14,18 +14,18 @@ package com.neydi.app.data.catalog
  */
 internal data class SeedCategory(
     val id: String,
-    val ad: String,
+    val name: String,
     /** MARKET GEZME sirasi, alfabetik DEGIL. Alfabetik siralamak insani
      *  markette ileri geri yurutur. */
-    val sira: Int,
+    val order: Int,
     val tonArgb: Long,
 )
 
 internal data class SeedProduct(
-    val ad: String,
-    val kategoriId: String,
-    val yayginlik: Int,
-    val birim: String,
+    val name: String,
+    val categoryId: String,
+    val commonality: Int,
+    val unit: String,
 )
 
 /** 12 kategori, market gezme sirasinda. */

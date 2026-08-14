@@ -9,9 +9,9 @@ import platform.UIKit.UIApplication
  * iOS karsiligi idleTimerDisabled.
  */
 @Composable
-actual fun KeepScreenOn(aktif: Boolean) {
-    DisposableEffect(aktif) {
-        UIApplication.sharedApplication.idleTimerDisabled = aktif
+actual fun KeepScreenOn(enabled: Boolean) {
+    DisposableEffect(enabled) {
+        UIApplication.sharedApplication.idleTimerDisabled = enabled
         onDispose { UIApplication.sharedApplication.idleTimerDisabled = false }
     }
 }

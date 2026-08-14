@@ -15,17 +15,17 @@ class MatchKeyTest {
      */
     @Test
     fun naiveLowercaseBreaksTurkish() {
-        val naif = "İNCİR".lowercase()
+        val naive = "İNCİR".lowercase()
 
         assertNotEquals(
             "incir",
-            naif,
+            naive,
             "lowercase() artik Turkce'yi dogru katliyor - matchKey sadelestirilebilir",
         )
         // "İNCİR" bes harf; her İ'nin ardina U+0307 (775) eklendigi icin
         // sonuc YEDI kod noktasi: [105, 775, 110, 99, 105, 775, 114].
-        assertEquals(7, naif.length, "beklenen bozulma bu degil: ${naif.map { it.code }}")
-        assertTrue(naif.contains('̇'), "birlestirici nokta bekleniyordu")
+        assertEquals(7, naive.length, "beklenen bozulma bu degil: ${naive.map { it.code }}")
+        assertTrue(naive.contains('̇'), "birlestirici nokta bekleniyordu")
     }
 
     @Test
@@ -40,10 +40,10 @@ class MatchKeyTest {
     /** Fisin yazdigi ile kullanicinin yazdigi bulusmali - uygulamanin asil derdi. */
     @Test
     fun receiptTextAndUserTextShareKey() {
-        val fis = matchKey("AYCICEK YAGI 5 L")
-        val kullanici = matchKey("Ayçiçek Yağı 5 L")
-        assertEquals(fis, kullanici)
-        assertEquals("aycicek yagi 5 l", fis)
+        val receipt = matchKey("AYCICEK YAGI 5 L")
+        val user = matchKey("Ayçiçek Yağı 5 L")
+        assertEquals(receipt, user)
+        assertEquals("aycicek yagi 5 l", receipt)
     }
 
     @Test
@@ -87,8 +87,8 @@ class MatchKeyTest {
     /** Anahtar deterministik olmali; ayni girdi hep ayni cikti. */
     @Test
     fun deterministic() {
-        val girdi = "Tam Buğday Ekmeği 500 g"
-        assertEquals(matchKey(girdi), matchKey(girdi))
-        assertEquals("tam bugday ekmegi 500 g", matchKey(girdi))
+        val input = "Tam Buğday Ekmeği 500 g"
+        assertEquals(matchKey(input), matchKey(input))
+        assertEquals("tam bugday ekmegi 500 g", matchKey(input))
     }
 }

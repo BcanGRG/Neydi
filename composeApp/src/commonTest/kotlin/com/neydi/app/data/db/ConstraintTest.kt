@@ -26,7 +26,7 @@ class ConstraintTest {
     private suspend fun NeydiDatabase.calistir(sql: String) =
         useWriterConnection { it.usePrepared(sql) { st -> st.step() } }
 
-    private suspend fun NeydiDatabase.sayi(sql: String): Long =
+    private suspend fun NeydiDatabase.number(sql: String): Long =
         useWriterConnection { it.usePrepared(sql) { st -> st.step(); st.getLong(0) } }
 
     // --- TripLine: UNIQUE(tripId, productId) --------------------------------
@@ -52,17 +52,17 @@ class ConstraintTest {
         val db = db()
         db.calistir(tripLine("tl1", "trip1", "ekmek"))
 
-        val hata = runCatching { db.calistir(tripLine("tl2", "trip1", "ekmek")) }.exceptionOrNull()
+        val error = runCatching { db.calistir(tripLine("tl2", "trip1", "ekmek")) }.exceptionOrNull()
             ?: fail("Ikinci satir kabul edildi - UNIQUE(tripId, productId) tetiklenmedi")
 
         // Istisnanin MESAJINA bakmiyoruz: bundled surucu bu yolda mesajsiz bir
         // SQLException atiyor ve metne dayanan bir iddia surucu detayina bagimli
         // olurdu. Onemli olan davranis - yazma reddedildi ve tabloda tek satir kaldi.
         assertTrue(
-            hata::class.simpleName?.contains("SQL") == true,
-            "SQL kaynakli bir hata bekleniyordu, gelen: ${hata::class.simpleName}: ${hata.message}",
+            error::class.simpleName?.contains("SQL") == true,
+            "SQL kaynakli bir hata bekleniyordu, gelen: ${error::class.simpleName}: ${error.message}",
         )
-        assertEquals(1L, db.sayi("SELECT COUNT(*) FROM trip_line"))
+        assertEquals(1L, db.number("SELECT COUNT(*) FROM trip_line"))
     }
 
     /** Kisit gezi basina - AYNI urun BASKA gezide serbest olmali. */
@@ -71,7 +71,7 @@ class ConstraintTest {
         val db = db()
         db.calistir(tripLine("tl1", "trip1", "ekmek"))
         db.calistir(tripLine("tl2", "trip2", "ekmek"))
-        assertEquals(2L, db.sayi("SELECT COUNT(*) FROM trip_line"))
+        assertEquals(2L, db.number("SELECT COUNT(*) FROM trip_line"))
     }
 
     // --- ProductAlias: UNIQUE(householdId, storeChain, rawTextNormalized) ---
@@ -93,7 +93,7 @@ class ConstraintTest {
             .exceptionOrNull()
             ?: fail("Ikinci esleme kabul edildi - fiyat gecmisi iki urune bolunurdu")
 
-        assertEquals(1L, db.sayi("SELECT COUNT(*) FROM product_alias"))
+        assertEquals(1L, db.number("SELECT COUNT(*) FROM product_alias"))
     }
 
     /**
@@ -106,6 +106,6 @@ class ConstraintTest {
         val db = db()
         db.calistir(alias("a1", "A101", "tam bugday ekmek", "ekmek"))
         db.calistir(alias("a2", "MIGROS", "tam bugday ekmek", "ekmek"))
-        assertEquals(2L, db.sayi("SELECT COUNT(*) FROM product_alias"))
+        assertEquals(2L, db.number("SELECT COUNT(*) FROM product_alias"))
     }
 }

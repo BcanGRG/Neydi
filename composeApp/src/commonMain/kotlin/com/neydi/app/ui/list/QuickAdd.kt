@@ -48,11 +48,11 @@ import com.neydi.app.ui.theme.Spacing
  */
 @Composable
 fun QuickAdd(
-    girdi: String,
-    oneriler: List<CatalogSeed>,
-    onGirdiDegisti: (String) -> Unit,
-    onEkle: (String) -> Unit,
-    onOneriSecildi: (CatalogSeed) -> Unit,
+    input: String,
+    suggestions: List<CatalogSeed>,
+    onInputChange: (String) -> Unit,
+    onAdd: (String) -> Unit,
+    onSuggestionSelected: (CatalogSeed) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val extras = LocalNeydiExtraColors.current
@@ -60,7 +60,7 @@ fun QuickAdd(
     Column(modifier = modifier.fillMaxWidth()) {
         // Oneri seridi ALANIN USTUNDE: dokunulacak sey parmagin geldigi
         // yerde olmali, klavyenin arkasinda degil.
-        if (oneriler.isNotEmpty()) {
+        if (suggestions.isNotEmpty()) {
             LazyRow(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = Spacing.md,
@@ -68,11 +68,11 @@ fun QuickAdd(
                 ),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
-                items(oneriler, key = { it.id }) { seed ->
+                items(suggestions, key = { it.id }) { seed ->
                     SuggestionChip(
                         label = seed.name,
                         reason = seed.defaultUnit,
-                        onClick = { onOneriSecildi(seed) },
+                        onClick = { onSuggestionSelected(seed) },
                     )
                 }
             }
@@ -91,8 +91,8 @@ fun QuickAdd(
             contentAlignment = Alignment.CenterStart,
         ) {
             BasicTextField(
-                value = girdi,
-                onValueChange = onGirdiDegisti,
+                value = input,
+                onValueChange = onInputChange,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface,
@@ -105,16 +105,16 @@ fun QuickAdd(
                 // Klavye kapanMIYOR: pes pese ekleme normal davranis.
                 // Her eklemeden sonra klavyeyi kapatmak listeyi doldurmayi
                 // iki kat yavaslatirdi.
-                keyboardActions = KeyboardActions(onDone = { onEkle(girdi) }),
-                decorationBox = { icerik ->
-                    if (girdi.isEmpty()) {
+                keyboardActions = KeyboardActions(onDone = { onAdd(input) }),
+                decorationBox = { content ->
+                    if (input.isEmpty()) {
                         Text(
                             text = "Ne lazım? \"2 kg elma\"",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    icerik()
+                    content()
                 },
             )
         }
@@ -123,8 +123,8 @@ fun QuickAdd(
 
 // --- Preview ---------------------------------------------------------------
 
-private fun seed(id: String, ad: String, birim: String) =
-    CatalogSeed(id = id, name = ad, matchKey = ad.lowercase(), categoryId = "temel-gida", commonalityRank = 1, defaultUnit = birim)
+private fun seed(id: String, name: String, unit: String) =
+    CatalogSeed(id = id, name = name, matchKey = name.lowercase(), categoryId = "temel-gida", commonalityRank = 1, defaultUnit = unit)
 
 @PreviewLightDark
 @Composable
@@ -136,15 +136,15 @@ private fun QuickAddEmptyPreview() = NeydiPreview {
 @Composable
 private fun QuickAddWithSuggestionsPreview() = NeydiPreview {
     QuickAdd(
-        girdi = "ek",
-        oneriler = listOf(
+        input = "ek",
+        suggestions = listOf(
             seed("1", "Ekmek", "adet"),
             seed("2", "Tam Buğday Ekmek", "adet"),
             seed("3", "Ekşi Maya Ekmek", "adet"),
         ),
-        onGirdiDegisti = {},
-        onEkle = {},
-        onOneriSecildi = {},
+        onInputChange = {},
+        onAdd = {},
+        onSuggestionSelected = {},
     )
     Box(Modifier.height(Spacing.sm))
 }

@@ -55,17 +55,17 @@ class ClipboardParserTest {
     /** Kopyalanan bir paragraf liste DEGILDIR. */
     @Test
     fun longLinesAreDropped() {
-        val paragraf = "a".repeat(120)
-        assertTrue(clipboardLines("$paragraf\n$paragraf\n$paragraf").isEmpty())
+        val paragraph = "a".repeat(120)
+        assertTrue(clipboardLines("$paragraph\n$paragraph\n$paragraph").isEmpty())
     }
 
     /** Panodan gelen satirlar da miktar ayristiricidan gecmeli. */
     @Test
     fun clipboardLinesMayCarryQuantity() {
-        val satirlar = clipboardLines(whatsapp)
-        val elma = parseQuantity(satirlar[1])
-        assertEquals(2.0, elma.adet)
-        assertEquals("kg", elma.birim)
-        assertEquals("elma", elma.ad)
+        val rows = clipboardLines(whatsapp)
+        val apple = parseQuantity(rows[1])
+        assertEquals(2.0, apple.count)
+        assertEquals("kg", apple.unit)
+        assertEquals("elma", apple.name)
     }
 }
