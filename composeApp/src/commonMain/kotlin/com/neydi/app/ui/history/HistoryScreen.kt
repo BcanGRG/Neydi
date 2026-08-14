@@ -156,6 +156,11 @@ private fun ReceiptRow(receipt: HistoryReceipt, onClick: () -> Unit) {
                 text = receipt.totalMinor?.let { formatMinor(it, currency = "") } ?: "—",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
+                // Cihazda olculdu: cip yokken (VERIFIED fis) magaza adi butun
+                // genisligi doldurup tutara SIFIR boslukla degiyordu -
+                // "...ANKARA484,58" tek kelime gibi okunuyordu. Ad kirpilmiyor,
+                // sadece araya nefes giriyor.
+                modifier = Modifier.padding(start = Spacing.sm),
             )
         }
     }
