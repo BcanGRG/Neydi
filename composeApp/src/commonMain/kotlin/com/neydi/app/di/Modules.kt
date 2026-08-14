@@ -42,6 +42,7 @@ val dataModule = module {
     single { get<NeydiDatabase>().productDao() }
     single { get<NeydiDatabase>().tripDao() }
     single { get<NeydiDatabase>().tripLineDao() }
+    single { get<NeydiDatabase>().priceObservationDao() }
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
     // App() bunlari kendi uretmek zorunda kalmasin.
@@ -51,6 +52,7 @@ val dataModule = module {
         ListeViewModel(
             repo = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
+            priceObservationDao = get(),
         )
     }
 

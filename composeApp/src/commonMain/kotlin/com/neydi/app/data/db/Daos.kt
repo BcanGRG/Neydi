@@ -188,6 +188,45 @@ interface TripLineDao {
 }
 
 @Dao
+interface PriceObservationDao {
+    /**
+     * Aktif alisverisin TAHMINI tutari, kurus.
+     *
+     * Her urun icin EN SON gozlenen birim fiyat x adet. "En son" olmasi sart:
+     * ortalama almak zamla birlikte gercegin gerisinde kalir ve tahmin surekli
+     * dusuk cikar.
+     *
+     * Fiyati HIC bilinmeyen urunler toplama girmez - bu yuzden tahmin her zaman
+     * eksik yonde yanlis olabilir. Ekran bunu "en az su kadar" diye sunmali,
+     * kesin tutar gibi degil.
+     */
+    @Query(
+        """
+        SELECT COALESCE(SUM(tl.quantity * po.unitPriceMinor), 0)
+        FROM trip_line tl
+        JOIN price_observation po ON po.id = (
+            SELECT id FROM price_observation
+            WHERE productId = tl.productId AND deletedAt IS NULL
+            ORDER BY observedAt DESC LIMIT 1
+        )
+        WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
+        """,
+    )
+    fun observeTahmin(tripId: String): Flow<Long>
+
+    /** Tahmine giren urun sayisi: kacinin fiyatini bildigimizi soylemek icin. */
+    @Query(
+        """
+        SELECT COUNT(*) FROM trip_line tl
+        WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
+          AND EXISTS (SELECT 1 FROM price_observation po
+                      WHERE po.productId = tl.productId AND po.deletedAt IS NULL)
+        """,
+    )
+    fun observeFiyatliSayisi(tripId: String): Flow<Int>
+}
+
+@Dao
 interface MemberDao {
     @Query("SELECT * FROM member WHERE householdId = :householdId AND deletedAt IS NULL ORDER BY displayName")
     fun observeAll(householdId: String): Flow<List<Member>>
