@@ -151,6 +151,11 @@ internal fun EkleSheetIcerik(
  * ucuncu sirasinin etiketleri ve kacis butonu `bounds="[0,0][0,0]"` doniyordu -
  * yani sifir yukseklige kirpilmislardi. Sheet tasan icerigi kaydirmiyor,
  * kirpiyor; o yuzden grid butcesi butona yer BIRAKMAK zorunda.
+ *
+ * TODO(sheet-yuksekligi): Bu bir SIHIRLI SAYI, cozum degil. Baska ekran
+ * oraninda, katlanabilir cihazda, buyutulmus yazi tipi olceginde ya da 12'den
+ * fazla reyon oldugunda yeniden tasar - ve SESSIZCE tasar. Kalici cozum
+ * F10.5'te; F10.2 (Nav3 custom Scene) ile ayni iste bulusuyor.
  */
 private const val GRID_ORANI = 0.24f
 
