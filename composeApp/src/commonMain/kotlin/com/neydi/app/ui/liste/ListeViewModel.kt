@@ -8,6 +8,7 @@ import com.neydi.app.data.db.CatalogSeedDao
 import com.neydi.app.data.db.Category
 import com.neydi.app.data.db.CategoryDao
 import com.neydi.app.data.db.MemberDao
+import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.matchKey
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -40,6 +42,7 @@ class ListeViewModel(
     private val productDao: ProductDao,
     private val catalogSeedDao: CatalogSeedDao,
     private val categoryDao: CategoryDao,
+    private val priceObservationDao: PriceObservationDao,
 ) : ViewModel() {
 
     private val hane = VARSAYILAN_HANE_ID
@@ -100,6 +103,87 @@ class ListeViewModel(
             _girdi.value = ""
         }
     }
+
+    // --- Ekle sheet (F3.7) -----------------------------------------------
+
+    private val _sheetAcik = MutableStateFlow(false)
+    val sheetAcik: StateFlow<Boolean> = _sheetAcik
+
+    private val _sheetKategori = MutableStateFlow<Category?>(null)
+    val sheetKategori: StateFlow<Category?> = _sheetKategori
+
+    private val _sheetUrunler = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val sheetUrunler: StateFlow<List<CatalogSeed>> = _sheetUrunler
+
+    fun sheetAc() { _sheetAcik.value = true }
+
+    fun sheetKapat() {
+        _sheetAcik.value = false
+        _sheetKategori.value = null
+        _sheetUrunler.value = emptyList()
+    }
+
+    fun sheetKategoriSec(kategori: Category) {
+        _sheetKategori.value = kategori
+        viewModelScope.launch {
+            // Sheet'te daha fazla urun: burada yer var, oneri seridinde yok.
+            _sheetUrunler.value = catalogSeedDao.byCategory(kategori.id, limit = 30)
+        }
+    }
+
+    fun sheetGeri() {
+        _sheetKategori.value = null
+        _sheetUrunler.value = emptyList()
+    }
+
+    /** Sheet'ten urun eklemek sheet'i KAPATMAZ: pes pese ekleme normal. */
+    fun sheettenEkle(tohum: CatalogSeed) {
+        ekleIc(tohum.name, tohum.categoryId, tohum.defaultUnit, 1.0)
+    }
+
+    // --- Sepet tahmini + ozet (F3.8) ---------------------------------------
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val tahmin: StateFlow<SepetTahmini> =
+        repo.aktifAlisveris(hane).flatMapLatest { trip ->
+            if (trip == null) {
+                flowOf(SepetTahmini())
+            } else {
+                combine(
+                    priceObservationDao.observeTahmin(trip.id),
+                    priceObservationDao.observeFiyatliSayisi(trip.id),
+                ) { tutar, fiyatli -> SepetTahmini(tutar, fiyatli) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SepetTahmini())
+
+    private val _ozet = MutableStateFlow<AlisverisOzeti?>(null)
+    val ozet: StateFlow<AlisverisOzeti?> = _ozet
+
+    /**
+     * Alisverisi bitirir ve ozet kartini acar.
+     *
+     * Sure alisverisin BASLAMA aninda degil, alisveris moduna GECILDIGINDE
+     * baslamis sayilmali - liste evde bir gun once aciliyor olabilir ve
+     * "26 saat surdu" yazmak sacma olurdu. Trip.startedAt su an liste
+     * acilisini tutuyor; F4'te alisveris modu zamani ayri saklanacak.
+     */
+    fun alisverisiBitir() {
+        viewModelScope.launch {
+            val trip = repo.aktifAlisverisiAcVeyaAl(hane)
+            val satirlar = tripLineDao.observeListe(trip.id).first()
+            _ozet.value = AlisverisOzeti(
+                alinanSayisi = satirlar.count { it.isaretli },
+                toplamSayisi = satirlar.size,
+                // Tutar fisten gelecek (Faz 4); simdilik bilinmiyor.
+                tutarKurus = trip.totalMinor,
+                sureDakika = null,
+            )
+            repo.alisverisiBitir(trip.id)
+            _alisverisModu.value = false
+        }
+    }
+
+    fun ozetiKapat() { _ozet.value = null }
 
     /**
      * PANODAN TOPLU EKLEME (F3.4).
@@ -222,3 +306,16 @@ class ListeViewModel(
         const val VARSAYILAN_KATEGORI = "temel-gida"
     }
 }
+
+/** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */
+data class SepetTahmini(
+    val tutarKurus: Long = 0,
+    val fiyatliSayisi: Int = 0,
+)
+
+data class AlisverisOzeti(
+    val alinanSayisi: Int,
+    val toplamSayisi: Int,
+    val tutarKurus: Long?,
+    val sureDakika: Int?,
+)
