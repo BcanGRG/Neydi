@@ -51,6 +51,10 @@ android {
 dependencies {
     implementation(projects.composeApp)
     implementation(libs.androidx.activity.compose)
+    // composeApp'te `implementation` oldugu icin gecisli gelmiyor; Application
+    // sinifi Koin'i BURADA baslatiyor, o yuzden acikca gerekiyor.
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.android)
 
     // Preview'i CIZEN renderer. Yalnizca debug - release APK'ya girmemeli.
     debugImplementation(libs.compose.ui.tooling)

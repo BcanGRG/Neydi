@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.neydi.app.data.db.rememberDbProbe
 import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.theme.Spacing
 
@@ -98,9 +97,7 @@ fun GecmisScreen(onGeri: () -> Unit) = Iskele(
 @Composable
 fun AyarlarScreen(onGeri: () -> Unit) = Iskele(
     baslik = "Ayarlar",
-    // GECICI: Room sondasi. F2.6'da repository katmani gelince kalkacak.
-    aciklama = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.\n\n" +
-        "Room -> ${rememberDbProbe()}",
+    aciklama = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.",
 ) {
     NeydiButton("Geri", onGeri)
 }

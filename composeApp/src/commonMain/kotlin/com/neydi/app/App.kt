@@ -2,10 +2,13 @@ package com.neydi.app
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.neydi.app.data.bootstrap
+import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.nav.AlisverisiBitir
 import com.neydi.app.nav.Ayarlar
 import com.neydi.app.nav.Bilesenler
@@ -22,9 +25,15 @@ import com.neydi.app.ui.screens.GecmisScreen
 import com.neydi.app.ui.screens.KurulumScreen
 import com.neydi.app.ui.screens.ListeScreen
 import com.neydi.app.ui.theme.NeydiTheme
+import org.koin.compose.koinInject
 
 @Composable
 fun App() {
+    // Katalog tohumlamasi acilista bir kez. Idempotent, ekrani BLOKLAMIYOR -
+    // ilk acilista 257 satir yazilirken kullanici bos ekrana bakmamali.
+    val db = koinInject<NeydiDatabase>()
+    LaunchedEffect(Unit) { db.bootstrap() }
+
     NeydiTheme(darkTheme = isSystemInDarkTheme()) {
         // Surec olumunu ve konfigurasyon degisimini asar. Serializer kaydi
         // Destinations.kt'de; oradaki `when` kaydi unutmayi derleme hatasina cevirir.
