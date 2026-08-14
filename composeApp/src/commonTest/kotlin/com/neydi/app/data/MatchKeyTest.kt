@@ -14,22 +14,22 @@ class MatchKeyTest {
      * bilerek silinir, kazara degil.
      */
     @Test
-    fun naifLowercaseTurkceyiBozuyor() {
-        val naif = "İNCİR".lowercase()
+    fun naiveLowercaseBreaksTurkish() {
+        val naive = "İNCİR".lowercase()
 
         assertNotEquals(
             "incir",
-            naif,
+            naive,
             "lowercase() artik Turkce'yi dogru katliyor - matchKey sadelestirilebilir",
         )
         // "İNCİR" bes harf; her İ'nin ardina U+0307 (775) eklendigi icin
         // sonuc YEDI kod noktasi: [105, 775, 110, 99, 105, 775, 114].
-        assertEquals(7, naif.length, "beklenen bozulma bu degil: ${naif.map { it.code }}")
-        assertTrue(naif.contains('̇'), "birlestirici nokta bekleniyordu")
+        assertEquals(7, naive.length, "beklenen bozulma bu degil: ${naive.map { it.code }}")
+        assertTrue(naive.contains('̇'), "birlestirici nokta bekleniyordu")
     }
 
     @Test
-    fun matchKeyAyniUrunuTekAnahtaraIndirger() {
+    fun matchKeyReducesOneProductToOneKey() {
         assertEquals("incir", matchKey("İNCİR"))
         assertEquals("incir", matchKey("İncir"))
         assertEquals("incir", matchKey("incir"))
@@ -39,15 +39,15 @@ class MatchKeyTest {
 
     /** Fisin yazdigi ile kullanicinin yazdigi bulusmali - uygulamanin asil derdi. */
     @Test
-    fun fisMetniIleKullaniciMetniAyniAnahtar() {
-        val fis = matchKey("AYCICEK YAGI 5 L")
-        val kullanici = matchKey("Ayçiçek Yağı 5 L")
-        assertEquals(fis, kullanici)
-        assertEquals("aycicek yagi 5 l", fis)
+    fun receiptTextAndUserTextShareKey() {
+        val receipt = matchKey("AYCICEK YAGI 5 L")
+        val user = matchKey("Ayçiçek Yağı 5 L")
+        assertEquals(receipt, user)
+        assertEquals("aycicek yagi 5 l", receipt)
     }
 
     @Test
-    fun tumTurkceHarflerKatlanir() {
+    fun allTurkishLettersAreFolded() {
         assertEquals("sgucoi", matchKey("şğüçöı"))
         assertEquals("sgucoi", matchKey("ŞĞÜÇÖI"))
         assertEquals("bugday", matchKey("Buğday"))
@@ -61,7 +61,7 @@ class MatchKeyTest {
      * "tbugday" cikardi ve hicbir kullanici girdisiyle eslesmezdi.
      */
     @Test
-    fun noktalamaBoslugaCevrilir() {
+    fun punctuationBecomesSpace() {
         assertEquals("t bugday ekmek 500g", matchKey("T.BUGDAY EKMEK 500G"))
         // "%1" ve "1 L" iki AYRI sayi; ikisi de anahtarda kalir.
         assertEquals("pinar sut 1 1 l", matchKey("Pınar Süt %1 - 1 L"))
@@ -69,7 +69,7 @@ class MatchKeyTest {
     }
 
     @Test
-    fun bosGirdiBosAnahtar() {
+    fun emptyInputGivesEmptyKey() {
         assertEquals("", matchKey(""))
         assertEquals("", matchKey("   "))
         assertEquals("", matchKey("... --- ..."))
@@ -80,15 +80,15 @@ class MatchKeyTest {
      * ve secimin degistigi gun bu test kirilarak haber verir.
      */
     @Test
-    fun iVeNoktasizIBilerekCarpisir() {
+    fun dottedAndDotlessIcollideDeliberately() {
         assertEquals(matchKey("ısırgan"), matchKey("isirgan"))
     }
 
     /** Anahtar deterministik olmali; ayni girdi hep ayni cikti. */
     @Test
-    fun deterministik() {
-        val girdi = "Tam Buğday Ekmeği 500 g"
-        assertEquals(matchKey(girdi), matchKey(girdi))
-        assertEquals("tam bugday ekmegi 500 g", matchKey(girdi))
+    fun deterministic() {
+        val input = "Tam Buğday Ekmeği 500 g"
+        assertEquals(matchKey(input), matchKey(input))
+        assertEquals("tam bugday ekmegi 500 g", matchKey(input))
     }
 }

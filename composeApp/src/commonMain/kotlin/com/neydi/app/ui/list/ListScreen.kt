@@ -1,0 +1,459 @@
+package com.neydi.app.ui.list
+
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neydi.app.data.db.CatalogSeed
+import com.neydi.app.data.db.Category
+import com.neydi.app.data.looksLikeList
+import com.neydi.app.ui.components.ListItemRow
+import com.neydi.app.ui.components.ListRow
+import com.neydi.app.ui.components.NeydiButton
+import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.SectionHeader
+import com.neydi.app.ui.theme.Motion
+import com.neydi.app.ui.theme.Spacing
+import org.koin.compose.viewmodel.koinViewModel
+
+// ModalBottomSheet hala @ExperimentalMaterial3Api. Sheet'i kendimiz yazmak
+// surukleme, scrim ve geri tusu davranisini yeniden uretmek demekti.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun ListScreen(
+    onGoShopping: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
+    vm: ListViewModel = koinViewModel(),
+) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    val input by vm.input.collectAsStateWithLifecycle()
+    val suggestions by vm.suggestions.collectAsStateWithLifecycle()
+    val categories by vm.categories.collectAsStateWithLifecycle()
+    val estimate by vm.estimate.collectAsStateWithLifecycle()
+    val sheetOpen by vm.sheetOpen.collectAsStateWithLifecycle()
+    val sheetCategory by vm.sheetCategory.collectAsStateWithLifecycle()
+    val sheetProducts by vm.sheetProducts.collectAsStateWithLifecycle()
+    val summary by vm.summary.collectAsStateWithLifecycle()
+
+    // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
+    // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
+    // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+    val clipboard = LocalClipboardManager.current
+    var clipboardText by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        clipboardText = clipboard.getText()?.text?.takeIf { looksLikeList(it) }
+    }
+
+    ListContent(
+        state = state,
+        input = input,
+        suggestions = suggestions,
+        categories = categories,
+        clipboardText = clipboardText,
+        onInputChange = vm::onInputChanged,
+        onAdd = vm::add,
+        onSuggestionSelected = vm::addFromSuggestion,
+        onCategorySelected = vm::onCategorySelected,
+        onToggleChecked = vm::toggleChecked,
+        onClipboard = {
+            clipboardText?.let(vm::addFromClipboard)
+            clipboardText = null
+        },
+        onShoppingMode = vm::setShoppingMode,
+        estimate = estimate,
+        onOpenSheet = vm::openSheet,
+        onFinish = vm::finishShopping,
+        onHistory = onHistory,
+        onSettings = onSettings,
+    )
+
+    // Sheet, EKRAN DEGIL: liste arkada gorunur kaliyor.
+    if (sheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = vm::closeSheet,
+            // ZEMIN RENGI ACIKCA VERILIYOR. M3 varsayilani surfaceContainerLow
+            // istiyor; bu palet o tonal token'lari TANIMLAMIYOR, o yuzden M3
+            // kendi baseline'ina (mor tonlu) dusuyordu ve sheet uygulamanin
+            // geri kalanina ait gorunmuyordu. Cihazda goruldu.
+            containerColor = MaterialTheme.colorScheme.surface,
+            // Inset'i SHEET tasimali, icerik degil: ModalBottomSheet pencere
+            // inset'lerini kendisi tuketiyor, o yuzden icerideki
+            // windowInsetsPadding sifir goruyor ve kacis butonu gezinme
+            // cubugunun altinda kaliyordu. Cihazda goruldu; varsayilan
+            // BottomSheetDefaults.windowInsets alt kenari kapsamiyor.
+        ) {
+            AddSheetContent(
+                // Inset SHEET DISINDA okunup duz bosluk olarak geciliyor.
+                // ModalBottomSheet'in kendi contentWindowInsets'i bu agacta
+                // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);
+                // sheet icerigi ekranin dibine oturup gezinme cubugunun altinda
+                // kaliyordu. Disaridan okunan deger belirsizlik birakmiyor.
+                bottomPadding = bottomInset,
+                categories = categories,
+                selected = sheetCategory,
+                products = sheetProducts,
+                onCategory = vm::selectSheetCategory,
+                onBackToCategories = vm::sheetBack,
+                onProduct = vm::addFromSheet,
+                onFreeText = vm::closeSheet,
+            )
+        }
+    }
+
+    // Ozet karti TEK SEFERLIK: kapatilinca bir daha acilmiyor.
+    summary?.let { o ->
+        ModalBottomSheet(
+            onDismissRequest = vm::dismissSummary,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            SummaryCard(
+                bottomPadding = bottomInset,
+                takenCount = o.takenCount,
+                totalCount = o.totalCount,
+                amountMinor = o.amountMinor,
+                durationMinutes = o.durationMinutes,
+                onDismiss = vm::dismissSummary,
+            )
+        }
+    }
+}
+
+/** Durumsuz govde: preview ve test buradan geciyor, ViewModel'siz. */
+@Composable
+internal fun ListContent(
+    state: ListState,
+    input: String,
+    suggestions: List<CatalogSeed>,
+    categories: List<Category>,
+    clipboardText: String?,
+    onInputChange: (String) -> Unit,
+    onAdd: (String) -> Unit,
+    onSuggestionSelected: (CatalogSeed) -> Unit,
+    onCategorySelected: (Category) -> Unit,
+    onToggleChecked: (String, Boolean) -> Unit,
+    onClipboard: () -> Unit,
+    onShoppingMode: (Boolean) -> Unit,
+    estimate: BasketEstimate,
+    onOpenSheet: () -> Unit,
+    onFinish: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    KeepScreenOn(state.shoppingMode)
+    val haptics = LocalHapticFeedback.current
+
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
+            LazyColumn(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = WindowInsets.safeDrawing
+                    .only(WindowInsetsSides.Top)
+                    .asPaddingValues(),
+            ) {
+                item {
+                    ListHeader(
+                        state = state,
+                        onShoppingMode = onShoppingMode,
+                        onOpenSheet = onOpenSheet,
+                        onHistory = onHistory,
+                        onSettings = onSettings,
+                    )
+                }
+
+                // Tahmin BASLIKTAN sonra, satirlardan once: rakam listeye
+                // bakmadan once gorulmeli, alt tarafta kalirsa hic gorulmez.
+                if (!state.isEmpty) {
+                    item(key = "tahmin") {
+                        EstimatedBasket(
+                            amountMinor = estimate.amountMinor,
+                            pricedCount = estimate.pricedCount,
+                            totalCount = state.totalRows,
+                        )
+                    }
+                }
+
+                if (state.isEmpty) {
+                    item {
+                        EmptyState(
+                            kind = state.emptyKind,
+                            categories = categories,
+                            hasClipboard = clipboardText != null,
+                            onCategory = onCategorySelected,
+                            onClipboard = onClipboard,
+                        )
+                    }
+                } else if (clipboardText != null && !state.shoppingMode) {
+                    // Liste doluyken de yapistirilabilir - ama alisveris
+                    // modunda ASLA: reyonda toplu ekleme yapilmaz.
+                    item {
+                        ClipboardChip(
+                            count = com.neydi.app.data.clipboardLines(clipboardText).size,
+                            onClipboard = onClipboard,
+                        )
+                    }
+                }
+
+                state.sections.forEach { section ->
+                    item(key = "b-${section.title}") {
+                        // Baslik da animasyonlu: satir kayarken baslik ziplasaydi
+                        // hareket iki parcaya bolunur ve daha rahatsiz olurdu.
+                        SectionHeader(
+                            title = section.title,
+                            count = section.rows.size,
+                            modifier = Modifier.animateItem(
+                                placementSpec = tween(Motion.REORDER_MS),
+                            ),
+                        )
+                    }
+                    items(section.rows, key = { it.id }) { row ->
+                        ListItemRow(
+                            // ISARETLENEN SATIR "Alindi"ya KAYARAK iner.
+                            // Anahtar iki bolumde de ayni (TripLine id), o yuzden
+                            // LazyColumn bunu yeni bir oge degil YER DEGISIMI
+                            // goruyor ve animateItem araligi enterpole ediyor.
+                            // Isinlanmamali: goz satiri takip edebilmeli, yoksa
+                            // "ne oldu, nereye gitti" hissi kaliyor.
+                            modifier = Modifier.animateItem(
+                                placementSpec = tween(Motion.REORDER_MS),
+                            ),
+                            row = row.row,
+                            shoppingMode = state.shoppingMode,
+                            onToggle = {
+                                // Haptik onay: reyonda goz listede degil rafta.
+                                // Dokunusun islendigini parmak soyluyor.
+                                // SNACKBAR YOK - bir gezide 20 isaretleme var,
+                                // her birine snackbar ekrani felce ugratirdi.
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onToggleChecked(row.id, !row.row.checked)
+                            },
+                        )
+                    }
+                }
+
+                if (state.taken.isNotEmpty()) {
+                    item(key = "b-alindi") {
+                        SectionHeader(
+                            title = "Alındı",
+                            count = state.taken.size,
+                            modifier = Modifier.animateItem(
+                                placementSpec = tween(Motion.REORDER_MS),
+                            ),
+                        )
+                    }
+                    items(state.taken, key = { it.id }) { row ->
+                        ListItemRow(
+                            modifier = Modifier.animateItem(
+                                placementSpec = tween(Motion.REORDER_MS),
+                            ),
+                            row = row.row,
+                            onToggle = {
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onToggleChecked(row.id, false)
+                            },
+                        )
+                    }
+                }
+            }
+
+            // Alisveris modunda hizli ekleme YOK: reyonda liste yazilmaz,
+            // okunur. Klavye ekranin yarisini yerdi.
+            if (!state.shoppingMode) {
+                QuickAdd(
+                    modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
+                    ),
+                    input = input,
+                    suggestions = suggestions,
+                    onInputChange = onInputChange,
+                    onAdd = onAdd,
+                    onSuggestionSelected = onSuggestionSelected,
+                )
+            } else {
+                ShoppingBottomBar(
+                    remaining = state.remainingRow,
+                    onFinish = onFinish,
+                    modifier = Modifier.windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
+                    ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ListHeader(
+    state: ListState,
+    onShoppingMode: (Boolean) -> Unit,
+    onOpenSheet: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
+        Text(
+            text = if (state.shoppingMode) "Alışveriş" else "Liste",
+            style = MaterialTheme.typography.headlineMedium,
+        )
+        Text(
+            text = when {
+                state.shoppingMode -> "${state.remainingRow} kaldı"
+                state.totalRows == 0 -> "Henüz bir şey yok"
+                else -> "${state.totalRows} ürün"
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        // Alisveris modunda gezinme butonlari GIZLI: reyonda yanlislikla
+        // Ayarlar'a dusmek listeyi kaybetmek gibi hissettirir.
+        if (!state.shoppingMode) {
+            Row(
+                modifier = Modifier.padding(top = Spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                NeydiButton("Alışveriş modu", { onShoppingMode(true) })
+                NeydiButton(
+                    text = "Reyonlardan ekle",
+                    onClick = onOpenSheet,
+                    container = MaterialTheme.colorScheme.surfaceVariant,
+                    content = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                NeydiButton(
+                    text = "Ayarlar",
+                    onClick = onSettings,
+                    container = MaterialTheme.colorScheme.surfaceVariant,
+                    content = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Panoda liste varsa tek dokunusluk cip.
+ *
+ * Ucuncu satir esigi PanoAyristirici'da: iki satirlik pano cogu zaman
+ * kopyalanmis bir cumle, liste degil.
+ */
+@Composable
+private fun ClipboardChip(count: Int, onClipboard: () -> Unit) {
+    Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs)) {
+        NeydiButton(
+            text = "Panodaki $count satırı ekle",
+            onClick = onClipboard,
+            container = MaterialTheme.colorScheme.surfaceVariant,
+            content = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * Alisveris modu alt cubugu.
+ *
+ * Alt %40'ta: bas parmak orada. Ustte olsaydi eli dolu bir insan telefonu
+ * elinde cevirmek zorunda kalirdi.
+ */
+@Composable
+private fun ShoppingBottomBar(remaining: Int, onFinish: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        NeydiButton(
+            text = if (remaining == 0) "Hepsi tamam — bitir" else "Alışverişi bitir",
+            onClick = onFinish,
+        )
+    }
+}
+
+// --- Preview ---------------------------------------------------------------
+
+private fun s(id: String, name: String, count: String? = null, checked: Boolean = false) =
+    UiRow(id, ListRow(name, quantity = count, checked = checked))
+
+private val SAMPLE = ListState(
+    sections = listOf(
+        ListSection("Meyve-Sebze", listOf(s("1", "Domates", "1 kg"), s("2", "Salatalık"))),
+        ListSection("Fırın-Ekmek", listOf(s("3", "Tam Buğday Ekmek"))),
+    ),
+    loading = false,
+)
+
+@Composable
+private fun ListPreviewHost(
+    state: ListState,
+    clipboard: String? = null,
+    estimate: BasketEstimate = BasketEstimate(),
+) = ListContent(
+    state = state, input = "", suggestions = emptyList(), categories = emptyList(),
+    clipboardText = clipboard,
+    onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
+    onToggleChecked = { _, _ -> }, onClipboard = {}, onShoppingMode = {},
+    estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},
+)
+
+/** Tahmin satiri: fiyat verisi geldiginde boyle gorunecek. */
+@PreviewLightDark
+@Composable
+private fun WithEstimatePreview() = NeydiPreview(padding = Spacing.xs) {
+    ListPreviewHost(SAMPLE, estimate = BasketEstimate(amountMinor = 48750, pricedCount = 2))
+}
+
+@PreviewLightDark
+@Composable
+private fun PlanningPreview() = NeydiPreview(padding = Spacing.xs) { ListPreviewHost(SAMPLE) }
+
+/** Alisveris modu: 72dp satir, gezinme gizli, alt cubuk gorunur. */
+@PreviewLightDark
+@Composable
+private fun ShoppingModePreview() = NeydiPreview(padding = Spacing.xs) {
+    ListPreviewHost(
+        SAMPLE.copy(
+            shoppingMode = true,
+            sections = listOf(
+                ListSection("Meyve-Sebze", listOf(s("1", "Domates", "1 kg", checked = true), s("2", "Salatalık"))),
+                ListSection("Fırın-Ekmek", listOf(s("3", "Tam Buğday Ekmek"))),
+            ),
+        ),
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun ClipboardChipPreview() = NeydiPreview(padding = Spacing.xs) {
+    ListPreviewHost(SAMPLE, clipboard = "ekmek\nsüt\nyumurta\nzeytin")
+}

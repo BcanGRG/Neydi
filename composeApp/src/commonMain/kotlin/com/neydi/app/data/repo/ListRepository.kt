@@ -1,0 +1,151 @@
+package com.neydi.app.data.repo
+
+import com.neydi.app.data.db.Product
+import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.Trip
+import com.neydi.app.data.db.TripDao
+import com.neydi.app.data.db.TripLine
+import com.neydi.app.data.db.TripLineDao
+import com.neydi.app.data.matchKey
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+
+/**
+ * Liste ekraninin tek veri kapisi. OFFLINE-FIRST: her yazma once yerel
+ * veritabanina gider, okuma her zaman yerelden. Senkron (Faz 7) bunun
+ * uzerine PendingOp kuyruguyla gelecek; ekran katmani degismeyecek.
+ *
+ * Zaman ve id URETIMI disaridan veriliyor (saat/uuid). Boylece repository
+ * saf kalir ve testte deterministik olur - `Clock.System.now()` cagiran bir
+ * repository "gecen sefer ne zaman aldik" mantigini test edilemez yapar.
+ */
+class ListRepository(
+    private val tripDao: TripDao,
+    private val tripLineDao: TripLineDao,
+    private val productDao: ProductDao,
+    private val clock: () -> Long,
+    private val newId: () -> String,
+) {
+
+    fun activeTrip(householdId: String): Flow<Trip?> = tripDao.observeActive(householdId)
+
+    /**
+     * Aktif alisverisin satirlari. Aktif alisveris yoksa BOS liste - hata degil:
+     * planlama modunda henuz gezi baslamamis olabilir.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun rows(householdId: String): Flow<List<TripLine>> =
+        tripDao.observeActive(householdId).flatMapLatest { trip ->
+            if (trip == null) flowOf(emptyList()) else tripLineDao.observeLines(trip.id)
+        }
+
+    /**
+     * Aktif alisverisi dondurur, yoksa acar.
+     *
+     * "Ayni anda tek aktif alisveris" kuralinin uygulandigi TEK yer burasi:
+     * kisit kismi index gerektirdigi icin semada ifade EDILEMIYOR (F2.3).
+     * Yeni gezi acmadan once mutlaka buradan gecilmeli.
+     */
+    suspend fun openOrGetActiveTrip(householdId: String): Trip {
+        tripDao.activeOrNull(householdId)?.let { return it }
+        val trip = Trip(
+            id = newId(),
+            householdId = householdId,
+            startedAt = clock(),
+            createdAt = clock(),
+        )
+        tripDao.insert(trip)
+        return trip
+    }
+
+    suspend fun finishShopping(tripId: String) = tripDao.complete(tripId, clock())
+
+    /**
+     * Urunu listeye ekler. ZATEN VARSA adet artirir, ikinci satir ACMAZ.
+     *
+     * UNIQUE(tripId, productId) bunu zaten engelliyor ama kisita carpip hata
+     * almak kullaniciya "ekleyemedim" demek olurdu. Dogru davranis: es zaten
+     * eklemisse adedi artir - iki kisi ayni ekmegi istedi, iki ekmek degil.
+     */
+    suspend fun add(
+        householdId: String,
+        tripId: String,
+        product: Product,
+        memberId: String,
+        count: Double = 1.0,
+        isFromSuggestion: Boolean = false,
+    ): TripLine {
+        // SILINMISLERE DE bakiyoruz: tombstone satiri tabloda kaliyor ve
+        // UNIQUE(tripId, productId) deletedAt'i bilmiyor. Yalnizca canli
+        // satirlara baksaydik "cikardim, geri ekledim" akisi kisita carpip
+        // uygulamayi cokertirdi - kullanicinin yapacagi en dogal ikinci hareket.
+        val existing = tripLineDao.findIncludingDeleted(tripId, product.id)
+        if (existing != null) {
+            val current = if (existing.deletedAt != null) {
+                // Mezardan cikar: yeni satir gibi davran ama AYNI id'yi koru.
+                // Yeni id uretmek senkronda "silindi" ve "eklendi" olaylarini
+                // birbirinden kopuk iki satira baglardi.
+                existing.copy(
+                    deletedAt = null,
+                    quantity = count,
+                    checked = false,
+                    checkedAt = null,
+                    addedByMemberId = memberId,
+                    fromSuggestion = isFromSuggestion,
+                    createdAt = clock(),
+                )
+            } else {
+                // Es zaten eklemis: adedi artir, "kim ekledi"yi EZME.
+                existing.copy(quantity = existing.quantity + count)
+            }
+            tripLineDao.update(current)
+            return current
+        }
+        val row = TripLine(
+            id = newId(),
+            householdId = householdId,
+            tripId = tripId,
+            productId = product.id,
+            quantity = count,
+            unit = product.defaultUnit,
+            addedByMemberId = memberId,
+            fromSuggestion = isFromSuggestion,
+            createdAt = clock(),
+        )
+        tripLineDao.insert(row)
+        return row
+    }
+
+    /** checkedAt SAKLANIYOR: reyonda mi evde mi isaretlendi sorusu sonra lazim olacak. */
+    suspend fun toggleChecked(rowId: String, checked: Boolean) =
+        tripLineDao.setChecked(rowId, checked, if (checked) clock() else null)
+
+    suspend fun remove(rowId: String) = tripLineDao.softDelete(rowId, clock())
+
+    /**
+     * Adiyla urun bulur, yoksa olusturur. matchKey uzerinden bakiyor ki
+     * "Ekmek" ile "EKMEK" ayri urun olmasin (F2.4).
+     */
+    suspend fun findOrCreateProduct(
+        householdId: String,
+        name: String,
+        categoryId: String,
+        unit: String,
+    ): Product {
+        val key = matchKey(name)
+        productDao.findByMatchKey(householdId, key)?.let { return it }
+        val product = Product(
+            id = newId(),
+            householdId = householdId,
+            name = name,
+            matchKey = key,
+            categoryId = categoryId,
+            defaultUnit = unit,
+            createdAt = clock(),
+        )
+        productDao.insert(product)
+        return product
+    }
+}

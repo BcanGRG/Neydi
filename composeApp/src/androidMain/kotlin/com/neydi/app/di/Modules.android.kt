@@ -5,8 +5,8 @@ import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import com.neydi.app.data.db.NEYDI_DB_FILE
 import com.neydi.app.data.db.NeydiDatabase
-import com.neydi.app.data.fis.FisOkuyucu
-import com.neydi.app.data.fis.MlKitFisOkuyucu
+import com.neydi.app.data.receipt.ReceiptReader
+import com.neydi.app.data.receipt.MlKitReceiptReader
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -17,7 +17,7 @@ import org.koin.dsl.module
  * ve unutulursa hata veritabanina ILK erisimde, cok sonra patliyordu.
  */
 actual fun platformModule(): Module = module {
-    single<FisOkuyucu> { MlKitFisOkuyucu(androidContext()) }
+    single<ReceiptReader> { MlKitReceiptReader(androidContext()) }
 
     single<RoomDatabase.Builder<NeydiDatabase>> {
         val context: Context = androidContext()

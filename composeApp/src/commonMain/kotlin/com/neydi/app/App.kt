@@ -8,19 +8,19 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.di.AppBootstrap
-import com.neydi.app.nav.AlisverisiBitir
-import com.neydi.app.nav.Ayarlar
-import com.neydi.app.nav.EksikOlabilir
-import com.neydi.app.nav.Gecmis
-import com.neydi.app.nav.Kurulum
+import com.neydi.app.nav.FinishShopping
+import com.neydi.app.nav.Settings
+import com.neydi.app.nav.MissingItems
+import com.neydi.app.nav.History
+import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
-import com.neydi.app.ui.screens.AlisverisiBitirScreen
-import com.neydi.app.ui.screens.AyarlarScreen
-import com.neydi.app.ui.screens.EksikOlabilirScreen
-import com.neydi.app.ui.screens.GecmisScreen
-import com.neydi.app.ui.screens.KurulumScreen
-import com.neydi.app.ui.liste.ListeEkrani
+import com.neydi.app.ui.screens.FinishShoppingScreen
+import com.neydi.app.ui.screens.SettingsScreen
+import com.neydi.app.ui.screens.MissingItemsScreen
+import com.neydi.app.ui.screens.HistoryScreen
+import com.neydi.app.ui.screens.SetupScreen
+import com.neydi.app.ui.list.ListScreen
 import com.neydi.app.ui.theme.NeydiTheme
 import org.koin.compose.koinInject
 
@@ -36,33 +36,33 @@ fun App() {
         // Destinations.kt'de; oradaki `when` kaydi unutmayi derleme hatasina cevirir.
         val backStack = rememberNavBackStack(NeydiSavedStateConfig, Liste)
 
-        fun git(key: NavKey) {
+        fun go(key: NavKey) {
             backStack.add(key)
         }
 
-        fun geri() {
+        fun back() {
             if (backStack.size > 1) backStack.removeLastOrNull()
         }
 
         NavDisplay(
             backStack = backStack,
-            onBack = { geri() },
+            onBack = { back() },
             entryProvider = entryProvider {
                 entry<Liste> {
-                    ListeEkrani(
-                        onAlisveriseCik = { git(EksikOlabilir) },
-                        onGecmis = { git(Gecmis) },
-                        onAyarlar = { git(Ayarlar) },
+                    ListScreen(
+                        onGoShopping = { go(MissingItems) },
+                        onHistory = { go(History) },
+                        onSettings = { go(Settings) },
                     )
                 }
-                entry<EksikOlabilir> {
-                    EksikOlabilirScreen(
-                        onEkle = { git(AlisverisiBitir()) },
-                        onBosver = { geri() },
+                entry<MissingItems> {
+                    MissingItemsScreen(
+                        onAdd = { go(FinishShopping()) },
+                        onBosver = { back() },
                     )
                 }
-                entry<AlisverisiBitir> { key ->
-                    AlisverisiBitirScreen(
+                entry<FinishShopping> { key ->
+                    FinishShoppingScreen(
                         tripId = key.tripId,
                         onOnayla = {
                             // Alisveris kapandi -> Liste'ye don, ara ekranlari birak
@@ -71,9 +71,9 @@ fun App() {
                         },
                     )
                 }
-                entry<Gecmis> { GecmisScreen(onGeri = { geri() }) }
-                entry<Ayarlar> { AyarlarScreen(onGeri = { geri() }) }
-                entry<Kurulum> { KurulumScreen(onBitir = { geri() }) }
+                entry<History> { HistoryScreen(onBack = { back() }) }
+                entry<Settings> { SettingsScreen(onBack = { back() }) }
+                entry<Setup> { SetupScreen(onFinish = { back() }) }
             },
         )
     }

@@ -6,7 +6,7 @@ import com.neydi.app.data.db.Member
 import com.neydi.app.data.db.NeydiDatabase
 
 /** Tek hane oldugu icin id sabit. Kurulum ekrani (Faz 8) adini degistirebilecek. */
-const val VARSAYILAN_HANE_ID: String = "0198f2a1-0000-7000-8000-000000000001"
+const val DEFAULT_HOUSEHOLD_ID: String = "0198f2a1-0000-7000-8000-000000000001"
 
 /**
  * Uygulama acilisinda bir kez calisan hazirlik.
@@ -17,24 +17,24 @@ const val VARSAYILAN_HANE_ID: String = "0198f2a1-0000-7000-8000-000000000001"
  *
  * Tamami idempotent; tekrar cagrilmasi zararsiz.
  */
-suspend fun NeydiDatabase.bootstrap(yeniId: () -> String, saat: () -> Long) {
+suspend fun NeydiDatabase.bootstrap(newId: () -> String, clock: () -> Long) {
     tohumlaKatalog()
 
     // Hane ve "ben" uyesi. Kurulum ekrani gelene kadar varsayilan isimlerle
     // duruyor - liste ekraninin calismasi icin bir hane ve bir uye SART.
     if (householdDao().getActive() == null) {
         householdDao().upsert(
-            Household(id = VARSAYILAN_HANE_ID, name = "Bizim ev", createdAt = saat()),
+            Household(id = DEFAULT_HOUSEHOLD_ID, name = "Bizim ev", createdAt = clock()),
         )
     }
-    if (memberDao().self(VARSAYILAN_HANE_ID) == null) {
+    if (memberDao().self(DEFAULT_HOUSEHOLD_ID) == null) {
         memberDao().upsert(
             Member(
-                id = yeniId(),
-                householdId = VARSAYILAN_HANE_ID,
+                id = newId(),
+                householdId = DEFAULT_HOUSEHOLD_ID,
                 displayName = "Ben",
                 isSelf = true,
-                createdAt = saat(),
+                createdAt = clock(),
             ),
         )
     }
