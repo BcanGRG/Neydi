@@ -124,6 +124,17 @@ interface TripDao {
     suspend fun setStatus(id: String, status: TripStatus): Int
 
     /**
+     * Gezinin odenen tutari - fislerden devrediliyor (F4.11).
+     *
+     * `completedAt IS NULL` KOSULU YOK, bilerek: fis ancak gezi kapandiktan
+     * sonra ozet kartindan eklenebiliyor, yani bu yazma her zaman kapanmis bir
+     * geziye gidiyor. Diger UPDATE'lerdeki kosulu buraya kopyalamak yazmayi
+     * sessizce hicbir seye cevirirdi.
+     */
+    @Query("UPDATE trip SET totalMinor = :total WHERE id = :id")
+    suspend fun setTotal(id: String, total: Long?)
+
+    /**
      * KARSILASTIR-VE-YAZ ile kapatir. "TEK CIHAZ KAPATIR" kuralini ZORLAYAN yer.
      *
      * completedAt IS NULL sayesinde ikinci kapatma denemesi SIFIR satir
@@ -337,6 +348,26 @@ interface ReceiptDao {
 
     @Query("UPDATE receipt SET totalMinor = :total, storeNameRaw = :store, extractedAt = :at WHERE id = :id")
     suspend fun setTotal(id: String, total: Long?, store: String?, at: Long)
+
+    /**
+     * Bir gezinin fislerinde OKUNABILMIS toplamlarin toplami.
+     *
+     * TOPLAM, TEK FISIN KOPYASI DEGIL: uzun fis parca parca cekilebiliyor ve
+     * ayni geziye birden fazla fis baglanabiliyor (F4.4 olcumu: ~60 kalem tek
+     * kareye sigmiyor). Tek fisi geziye yazmak iki parcali alisverisin yarisini
+     * gostermek olurdu.
+     *
+     * @return kurus, ya da hicbir fisin toplami okunamadiysa null. SUM() bos
+     *   kumede zaten NULL doner - 0 DONMEZ, ve bu tam istedigimiz: "bilmiyoruz"
+     *   ile "bedava" ayri seyler.
+     */
+    @Query(
+        """
+        SELECT SUM(totalMinor) FROM receipt
+        WHERE tripId = :tripId AND deletedAt IS NULL AND totalMinor IS NOT NULL
+        """,
+    )
+    suspend fun sumTotalsForTrip(tripId: String): Long?
 
     /**
      * Gecmis ekraninin besledigi sorgu (F4.9).

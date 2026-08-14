@@ -4,14 +4,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -73,9 +82,14 @@ fun ReceiptCheckScreen(
     onReread: () -> Unit,
     onBack: () -> Unit,
 ) {
-    // safeDrawingPadding SART: cihazda baslik durum cubugunun ALTINA girdi -
+    // SURFACE ZORUNLU: ciplak Column karanlik modda themes.xml'deki sabit
+    // acik zemini gosteriyordu (bkz. HistoryScreen'deki ayni not). Onizleme
+    // bunu maskeliyor cunku NeydiPreview kendi Surface'ini sariyor.
+    //
+    // safeDrawingPadding da SART: cihazda baslik durum cubugunun ALTINA girdi -
     // saat ve pil gostergesi magaza adinin uzerine bindi. iOS'ta notch ile
     // daha kotu olurdu.
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(Spacing.md)) {
         Text(
             text = state.storeName ?: "Fiş",
@@ -118,6 +132,8 @@ fun ReceiptCheckScreen(
         }
     }
 
+    }
+
     if (editing != null) {
         CorrectionSheet(
             row = editing,
@@ -137,8 +153,12 @@ private fun LoadingBlock() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CircularProgressIndicator()
-        Spacer(Modifier.height(Spacing.sm))
-        Text("  Fiş okunuyor…", style = MaterialTheme.typography.bodyMedium)
+        // Row icinde `height` YATAYDA SIFIR yer kaplar. Ilk hali
+        // `Modifier.height(...)` idi ve bosluk metnin basina konan iki
+        // gorunmez bosluk karakteriyle "yaklasik dogru" gorunuyordu - bu
+        // yuzden kimse fark etmedi. Dogrusu `width`.
+        Spacer(Modifier.width(Spacing.sm))
+        Text("Fiş okunuyor…", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -201,7 +221,6 @@ private fun CheckRowItem(row: CheckRow, onClick: () -> Unit) {
                         modifier = Modifier.weight(1f, fill = false),
                     )
                     if (row.needsReview) {
-                        Spacer(Modifier.height(0.dp))
                         AccentChip(
                             text = if (row.productName == null) "yeni" else "emin değil",
                             modifier = Modifier.padding(start = Spacing.xs),
@@ -281,8 +300,33 @@ private fun CorrectionSheet(
     onConfirm: (CheckRow, String) -> Unit,
     onFixAmount: (CheckRow, Long) -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().padding(Spacing.md)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        // ZEMIN RENGI ACIKCA VERILIYOR: bu palet `surfaceContainer*` tonal
+        // token'larini tanimlamiyor ve M3 kendi mor baseline'ina dusuyor.
+        // Ekle sheet'i ile ozet karti bunun icin duzeltilmisti, bu sheet
+        // atlanmisti (bkz. ListScreen).
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                // KAYDIRMA + YUKSEKLIK BUTCESI ZORUNLU.
+                //
+                // Kismi acik ModalBottomSheet icerigi SINIRSIZ yukseklikle
+                // olcuyor ve tasan icerigi kaydirmiyor, KIRPIYOR (F3.7'de bes
+                // denemeyle ogrenildi, F10.5 acik). Bu sheet en kotu halde 8
+                // oneri + 2 metin alani + buton tasiyor (~520dp) ve en altta
+                // duran "Kaydet" - yani F4.7 alias ogrenmesini yazan TEK
+                // dugme - ilk kirpilan sey olur.
+                .heightIn(max = SHEET_MAX_HEIGHT)
+                .verticalScroll(rememberScrollState())
+                // Uygulamanin TEK sayisal klavyesi burada; imePadding olmadan
+                // klavye tutar alanini kapatiyor.
+                .imePadding()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                .padding(Spacing.md),
+        ) {
             Text(
                 text = row.rawText,
                 style = MaterialTheme.typography.bodyMedium,
@@ -374,6 +418,15 @@ fun ReceiptCheckRoute(receiptId: String, onBack: () -> Unit) {
     )
 }
 
+/**
+ * Duzeltme sheet'inin yukseklik tavani.
+ *
+ * F10.5 ile ayni sinifta bir SIHIRLI SAYI, ama kirpilmaya tercih edilir:
+ * kaydirma da eklendigi icin tavana carpan icerik kayboluyor degil,
+ * kaydiriliyor. Kalici cozum F10.2'deki Nav3 Scene gecisi.
+ */
+private val SHEET_MAX_HEIGHT = 520.dp
+
 // --- Onizlemeler ------------------------------------------------------------
 
 private val sampleRows = listOf(
@@ -427,6 +480,68 @@ private fun ReceiptCheckUnreadablePreview() = NeydiPreview {
         state = CheckState(loading = false, failedMessage = UNREADABLE_MESSAGE),
         editing = null,
         suggestions = emptyList(),
+        onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
+        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+    )
+}
+
+/**
+ * ONIZLEMESI OLMAYAN HALLER BU OTURUMDA UC HATA SAKLADI, o yuzden ucu de
+ * burada: yukleme satirinda `height` ile yatay bosluk verilmisti (Row icinde
+ * hicbir sey yapmaz), duzeltme sheet'i M3'un mor zeminine dusuyordu ve
+ * kirpilma riski tasiyordu, kapinin ucuncu hali (toplam okunamadi) hic
+ * cizilmemisti.
+ */
+@PreviewLightDark
+@Composable
+private fun ReceiptCheckLoadingPreview() = NeydiPreview {
+    ReceiptCheckScreen(
+        state = CheckState(loading = true, storeName = "BIM BIRLESIK MAGAZALAR A.S."),
+        editing = null,
+        suggestions = emptyList(),
+        onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
+        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+    )
+}
+
+/** Kapinin UCUNCU hali: toplam okunamadi - "tutmadi" ile ayni sey DEGIL. */
+@PreviewLightDark
+@Composable
+private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
+    ReceiptCheckScreen(
+        state = CheckState(
+            loading = false,
+            storeName = "AKYURT",
+            totalMinor = null,
+            sumMinor = 19150,
+            gateHolds = null,
+            rows = sampleRows,
+        ),
+        editing = null,
+        suggestions = emptyList(),
+        onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
+        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+    )
+}
+
+/**
+ * Duzeltme sheet'i EN KOTU HALIYLE: 8 oneri + iki alan + buton.
+ *
+ * Kirpilma riskini gorunur kilan tek sey bu - onizleme olmadigi icin sheet
+ * cihazda hic bu doluluktta gorulmedi.
+ */
+@PreviewLightDark
+@Composable
+private fun ReceiptCheckCorrectionPreview() = NeydiPreview {
+    ReceiptCheckScreen(
+        state = CheckState(loading = false, storeName = "FiLE MARKET", rows = sampleRows),
+        editing = sampleRows[1],
+        suggestions = List(8) { i ->
+            CatalogSeed(
+                id = "seed-$i", name = "Turşu ${i + 1}", matchKey = "tursu$i",
+                categoryId = "konserve-salca", commonalityRank = i + 1, defaultUnit = "adet",
+            )
+        },
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
         onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
     )

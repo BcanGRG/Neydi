@@ -195,7 +195,7 @@ class ReceiptCheckViewModel(
      */
     fun rereadNextRotation() {
         viewModelScope.launch {
-            val degrees = SIRALI_ACILAR[rotationIndex % SIRALI_ACILAR.size]
+            val degrees = ROTATION_ORDER[rotationIndex % ROTATION_ORDER.size]
             rotationIndex++
             _state.value = _state.value.copy(loading = true, notice = null)
             val outcome = processor.process(receiptId, forceRotation = degrees)
@@ -216,6 +216,6 @@ class ReceiptCheckViewModel(
 
     private companion object {
         /** Denenecek aci sirasi. 0 EN SONDA: otomatik secim onu zaten denedi. */
-        val SIRALI_ACILAR = listOf(90, 270, 180, 0)
+        val ROTATION_ORDER = listOf(90, 270, 180, 0)
     }
 }

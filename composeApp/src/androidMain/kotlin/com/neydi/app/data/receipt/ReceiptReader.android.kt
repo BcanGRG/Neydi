@@ -125,11 +125,11 @@ internal fun visualRows(text: Text): List<String> {
  * dusuyor. Toplam satir sayisini ya da karakter sayisini olcmek AYIRT ETMEZDI -
  * yanlis yonde de ayni metin okunuyor, yalnizca yanlis eslesiyor.
  */
-private val TUTARLI_SATIR = Regex("""\S.*[*]?\d+[.,]\d{2}\s*$""")
+private val AMOUNT_ROW = Regex("""\S.*[*]?\d+[.,]\d{2}\s*$""")
 
 internal fun score(rows: List<String>): Int =
     rows.count { satir ->
         // Yalnizca tutar tasiyan satir sayilmaz: solunda metin de olmali,
         // cunku olculen sey ESLESTIRME basarisi.
-        TUTARLI_SATIR.containsMatchIn(satir) && satir.trimStart().first().isDigit().not()
+        AMOUNT_ROW.containsMatchIn(satir) && satir.trimStart().first().isDigit().not()
     }

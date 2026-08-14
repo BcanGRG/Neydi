@@ -9,9 +9,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.neydi.app.ui.components.NeydiButton
+import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.Spacing
 
 /**
@@ -71,4 +73,28 @@ fun SetupScreen(onFinish: () -> Unit) = AppScaffold(
     description = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
 ) {
     NeydiButton("Bitir", onFinish)
+}
+
+// --- Onizlemeler ------------------------------------------------------------
+//
+// Iskelet olsalar da onizlemeleri VAR: sozlesme her bilesene @PreviewLightDark
+// istiyor ve bu dosya tek istisnaydi. Gercek ekranlar geldiginde (F6.4 / F6.6 /
+// F6.7) bu onizlemeler de onlarla birlikte degisecek.
+
+@PreviewLightDark
+@Composable
+private fun MissingItemsPreview() = NeydiPreview {
+    MissingItemsScreen(onAdd = {}, onCancel = {})
+}
+
+@PreviewLightDark
+@Composable
+private fun SettingsPreview() = NeydiPreview {
+    SettingsScreen(onBack = {})
+}
+
+@PreviewLightDark
+@Composable
+private fun SetupPreview() = NeydiPreview {
+    SetupScreen(onFinish = {})
 }

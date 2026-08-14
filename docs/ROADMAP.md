@@ -1,8 +1,10 @@
 # Neydi — Yol Haritası
 
-Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
+Tek gerçek kaynak. 11 faz, **91 adım**. Her adım bir PR.
 
-**İlerleme:** 30 / 67 — *Faz 4 bitti. Fiş okuma uçtan uca cihazda çalışıyor: gerçek fiş → OCR → ayrıştırma → aritmetik kapı → düzeltme → alias öğrenmesi. Sırada Faz 6 (öneri motoru).*
+*Sayı bu oturumda mekanik olarak yeniden sayıldı. Eskiden 67 yazıyordu; fark 0.0, 1.3b ve 4.10 gibi numaralandırma şemasının öngörmediği ama meşru adımlardan ve bu oturumda eklenen yeni maddelerden geliyor.*
+
+**İlerleme:** 34 / 91 — *34 kapandı · 4 kod tamam, cihaz doğrulaması bekliyor · 53 açık.* **Sırada Faz 6 (öneri motoru)** — Faz 5 değil; bağımlılıkların bir kısmı ters yönde akıyor. Faz 6'nın ilk adımı **F6.8**, ve ondan önce **tek bir v2→v3 şema bump'ı** (bkz. Şema sürüm planı).
 
 ---
 
@@ -54,17 +56,26 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 | 4 | **F1.3 · F1.4 · F1.5 · F1.2** | Temel borç temizliği — deprecation, Nav3 saveable, pressable, kontrast testi |
 | 5 | **F2.1 → F2.6** | Room + katalog. Listenin kalıcı olması için gerekli |
 | 6 | **F3.2 → F3.8** | Gerçek Liste ekranı: bölümler, hızlı ekleme, alışveriş modu, boş durumlar |
-| 7 | **Faz 4** → **Faz 6** → **Faz 5** → **Faz 7** → **Faz 8** → **Faz 9** → **Faz 10** | Fiş yakalama, öneri motoru, fiyat hafızası, senkron, marka, iOS, refactor |
+| 7 | **Faz 4** ✅ | Fiş yakalama — bitti, uçtan uca cihazda doğrulandı |
+| 8 | **Şema v2 → v3** *(tek bump)* | Faz 5, 6 ve 7'nin dokuz şema değişikliği. **Buradan önce Faz 5/6 veri yazmamalı** — bkz. Şema sürüm planı |
+| 9 | **F2.7 · F3.9** | Katalog yeniden tohumlanabilir olsun + "Diğer" kategorisi. İkisi birbirine bağlı ve **F0.4 ile F6.x onları bekliyor** |
+| 10 | **Faz 6** (6.8 önce) | Öneri motoru. `isStaple` yazma yolu (**F6.8**) en başta: onsuz Ekran 3 hiç açılamaz |
+| 11 | **Faz 5** | Fiyat hafızası. F0.5 kararı verildi (**fiyat takipçisi**), 5.4/5.5 F0.4'e bağlı ve en sonda |
+| 12 | **Faz 7** → **Faz 8** → **Faz 9** → **Faz 10** | Senkron, marka, iOS, refactor |
 
-**Faz 5 (fiyat hafızası) bilinçli olarak Faz 6'dan sonraya kaydı** — kapsamı F0.5'in kararına bağlı ve o karar paralel izden gelecek.
+**Faz 5 hâlâ Faz 6'dan sonra** — ama sebebi değişti. Eskiden "kapsamı F0.5'e bağlı, o karar beklenecek" diyordu; **F0.5 kararı artık verildi**. Yeni sebep: bağımlılıkların bir kısmı **ters yönde akıyor**. Ekran 3'ün satırları son ödenen fiyatı gösteriyor (F5.1'e bağlı) ama Ekran 3'ün var olabilmesi `isStaple` yazma yoluna bağlı (F6.8); ve satırın ikinci satırında **fiyat ipucu gerekçeyi bastırıyor** (`secondLine()` önceliği: fiyat > gerekçe), yani ikisi aynı satırda yarışıyor ve hangisinin kazandığı **Faz 6'nın tasarım kararı**. O yüzden öneri motoru önce.
+
+**Yeni ve sert bir sıra kuralı:** üç tablo (`price_observation`, `suggestion_event`, `pending_op`) bugün **boş**. Tablo boşken şemasındaki hata bedava; ilk satır yazıldıktan sonra onu yeniden şekillendirecek `execSQL` **yok**. Bu yüzden **şema bump'ı Faz 5/6'nın ilk yazmasından önce** gelmek zorunda — adım 8, adım 10'dan önce.
 
 ### Paralel iz — fiş ölçümü
 
 Ana hattı bloklamaz. Sen fiş biriktirdikçe ve kimlik doğrulama hazır olunca ilerler.
 
-**F0.2** → **F0.3** → **F0.4** → **F0.5**
+**F0.2** ✅ → **F0.3** ✅ → **F0.5** ✅ → **F0.4** *(tek kalan)*
 
-Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2, 3, 4, 6 bu izden tamamen bağımsız — hiçbiri fiş ölçümünü beklemiyor.
+**İz büyük ölçüde kapandı ve beklenenden farklı bitti.** F0.2 ölçümü API ile değil **cihazda ML Kit'in ham çıktısıyla** yapıldı; F0.3 zaten F4.5 ile yazılmıştı; F0.5 kararı **iki gerçek fişin 10 satırının 10'unun doğru okunmasıyla** verildi: **fiyat takipçisi**.
+
+Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fiş okumayı değil **yalnızca F5.4/F5.5'i** kapılıyor. Ayrıca **F2.7'ye bağlı**: katalog yeniden tohumlanamadığı sürece marketfiyati tohumlaması ilk açılışını yapmış bir telefona **hiç ulaşamaz**.
 
 ---
 
@@ -78,9 +89,19 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 - [x] **0.1 — Fiş test koşumu** *(cihazsız)*. ✅ `tools/receipt-eval/` — TypeScript (Node 24, derleme adımı yok; üretimdeki Cloudflare Worker de TS olacağı için istek şekli birebir aynı). Türkçe fiş prompt'u + structured output şeması + ad/fiyat **ayrı** skorlama + aritmetik kapısı. API şekli `claude-api` skill'inden doğrulandı ve **üç varsayımım yanlış çıktı**: (a) Claude Opus 5'te thinking **varsayılan açık**, ve `disabled` yalnızca `effort` ≤ `high` ile kabul ediliyor — `xhigh`/`max` ile 400; (b) structured output `output_config.format` ile veriliyor, `output_format` kullanımdan kalkmış; (c) şema `minimum`/`minLength` kabul etmiyor ve nullable alanlar `anyOf` ile yazılmak zorunda.
 - [x] **0.2 — Fiş ayrıştırma ölçümü** ✅ **Sorusu değişti ve başka yolla cevaplandı.** `ANTHROPIC_API_KEY` gerekmedi, `tools/receipt-eval/` hiç kullanılmadı: ölçüm cihazda ML Kit'in ürettiği **ham metin satırları** üzerinden yapıldı ve o satırlar `ReceiptParserTest`'e OCR hataları dahil aynen taşındı. **Ölçüt aritmetik kapısı ve iki fişin ikisi de tutuyor** (225,50 ve 484,58). Ölçümün asıl bulgusu şuydu: ilk parser baştan sona yanlıştı ve **17 sentetik testi geçiyordu** — örnek fişleri de kuralları da ben yazdığım için kendi varsayımlarımı kendime onaylatıyordum. Gerçek fiş üç varsayımı birden çürüttü. **Üçüncü fiş (~60 kalem) ise fiziksel sınırı ölçtü:** tek karede satır başına **4,7 piksel**, ML Kit 60 satırın 2'sini okudu — yazılımla çözülemez, `UNREADABLE_MESSAGE` bu ölçümden doğdu.
 
-- [ ] **0.3 — Aritmetik değişmez** *(cihazsız)*. `Σ(satır) − İNDİRİM = TOPLAM`, ±0,05 TL tolerans (tartılı ürün yuvarlaması). Araştırmanın ilk yazdığı `+KDV` formülü **yanlıştı** — Türkiye'de perakende fiyatları kanunen KDV dahil, TOPKDV toplamın içindeki verginin dökümü. O formül %100 fişi manuel düzeltmeye yollardı.
-- [ ] **0.4 — Kanonik ürün kimliği** *(cihazsız)*. Çıkan satır adlarını marketfiyati `/api/v2/search` ile bulanık eşleştir. `User-Agent` header'ı zorunlu — yoksa endpoint 404 döner. Barkod yolu **yok**: `searchByIdentity` gerçek EAN-13'lerde 6/6 boş döndü, katalogda barkod alanı hiç bulunmuyor.
-- [ ] **0.5 — Kapsam kararı** *(cihazsız)*. Fiyat takipçisi mi, harcama defteri mi? Sonucu `docs/03-arastirma-bulgulari.md`'ye ek olarak yaz ve **Faz 5'in kapsamını buna göre daralt veya genişlet.**
+- [x] **0.3 — Aritmetik değişmez** *(cihazsız)*. ✅ **F4.5 ile birlikte yapıldı, bu kutu işaretlenmeyi bekliyordu.** `arithmeticHolds` (`ReceiptParser.kt`) tam olarak `Σ(satır) − İNDİRİM = TOPLAM`, tolerans `TOLERANCE_MINOR = 5` kuruş. Araştırmanın ilk yazdığı `+KDV` formülü **yanlıştı** — Türkiye'de perakende fiyatları kanunen KDV dahil, "TOPLAM KDV" o tutarın *içindeki* verginin dökümü. O formül %100 fişi manuel düzeltmeye yollardı. **Gerçek fişte doğrulandı:** iki fişin ikisinde de satır toplamı "Ödenecek KDV Dahil Tutar" ile birebir tutuyor (225,50 ve 484,58).
+  **Kalan iki açık uç, ikisi de ölçülmemiş:** (a) **±5 kuruş toleransı hiç sınanmadı** — iki gerçek fişte fark tam **0**, yani tolerans hiç devreye girmedi; onu doğrulayacak şey tartılı ürün yuvarlaması olan bir fiş ve elimizde yok. Testlerdeki tolerans sınaması (`allowsFiveMinorTolerance`) toplamı **elle** oynatıyor, gerçek yuvarlamayı değil. (b) **İki ayrı kapı birbirinden habersiz:** `arithmeticHolds` indirimleri **çıkarıyor**, Fiş Kontrol ekranı ise ekrandaki kapıyı `lines.sumOf { it.lineTotalMinor }` ile hepsi pozitif toplayarak yeniden hesaplıyor. İndirim satırı içeren bir fişte **ikisi farklı karar verir**. Hiçbir gerçek fişimizde indirim satırı yok, o yüzden hiçbir test bunu görmüyor. → **F5.6**
+
+- [ ] **0.4 — Kanonik ürün kimliği** *(cihazsız)*. **Öncülü değişti, adım duruyor.** Artık "fiş okuma için gerekli" değil — F4.7 alias öğrenmesi cihazda çalışıyor ve eşleştirmeyi kullanıcının kendi kararı besliyor. Bu adım şimdi **yalnızca F5.4/F5.5'in önkoşulu**: fiyat karşılaştırması için harici bir kanonik katalog gerekiyor.
+  Kalan iş: çıkan satır adlarını marketfiyati `/api/v2/search` ile bulanık eşleştir. `User-Agent` header'ı **zorunlu** — yoksa endpoint 404 döner. Barkod yolu **yok**: `searchByIdentity` gerçek EAN-13'lerde 6/6 boş döndü (o metot marketfiyati'nın kendi 4 karakterlik iç token'ını alıyor, EAN almıyor) ve katalogda barkod alanı hiç bulunmuyor.
+  **Repoda tek satır ağ kodu yok** ve bu ölçülmedi: `io.ktor`/`HttpClient` aramaları boş dönüyor. ktor **3.5.2** katalogda beş artifact'la hazır bekliyor (`client-core`, `client-okhttp`, `client-darwin`, `content-negotiation`, `serialization-kotlinx-json`) ama `composeApp/build.gradle.kts` hiçbirini bağımlılık olarak almıyor. Pinler 13 Ağu 2026'da kondu; Faz 5 başladığında **yeniden doğrulanmalı, güvenilmemeli**.
+  **Bir yan kazanç:** marketfiyati'nın döndürdüğü `gramaj` alanı, `packSize` için elimizdeki **tek** dış kaynak — fiş metninden ambalaj boyu çıkarmak F5.7'nin işi ve orada bir tuzak var (bkz. F5.7).
+
+- [x] **0.5 — Kapsam kararı** *(cihazsız)*. ✅ **KARAR: fiyat takipçisi.** Gerekçe ölçümden geliyor, tahminden değil.
+  F0.1'de yazılan skorlama eşiği (`tools/receipt-eval/score.ts:193`) satır **adı** doğruluğunu ölçüt alıyordu: ≥0,80 → "fiyat takipçisi uygulanabilir". İki gerçek fişte **10 ürün satırının 10'u da doğru ad ve doğru fiyatla okundu** (BİM 4, File 6; `ReceiptParserTest` bunları cihaz çıktısı olarak sabitliyor). Aritmetik kapısı ikisinde de tuttu. Yani ölçüt karşılandı.
+  **Ama iki uyarıyı kayda geçirerek:** (1) İki fiş bir **izlenim**, ölçüm değil — `score.ts:202` bunu kendisi söylüyor. (2) Okunan ad **fişin yazdığı ad** (`"TURŞU KORNI ŞON 670G"`), kanonik ürün adı değil; onu ürüne bağlayan şey F4.7 alias'ı, yani **kullanıcının emeği**. Karar bu yüzden şartlı: fiyat takipçisi, **ama alias öğrenmesi ve (tercihen) F0.4 katalog tohumlaması ile birlikte**. Alias'sız saf otomatik eşleştirme ölçülmedi ve hedef de değil.
+  **Faz 5'in kapsamına etkisi:** 5.1 (fiyat yazımı) ve 5.2 (satır ipucu) **kesin kapsamda** — harcama defteri seçeneğinde de gerekliydiler. 5.3 (Ürün Detayı grafiği) **kapsamda**. 5.4/5.5 (marketfiyati + "başka markette ucuz") **F0.4'e bağlı ve son sıraya** alınıyor: dokümante edilmemiş bir endpoint'e bağlı, her an kapanabilir, ve uygulamanın çalışması için gerekli değil.
+  **Değer eğrisi hâlâ ölçülmemiş:** araştırmanın "~100 ürün, 6 ayda yalnızca 10-20 trend edilebilir SKU" aritmetiği doğrulanmadı ve doğrulanması için altı ay veri gerekiyor. Bu, F9.5'teki 4. ay riskinin ta kendisi (bkz. **Riskler**).
 
 ## Faz 1 — Temel borçlar
 
@@ -105,6 +126,10 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 
   **34 test, 0 hata.** Cihazda: 12 kategori, 245 ürün, yaygınlık sırası doğru, `matchKey` türetilmiş, sıfır çökme.
 
+- [ ] **2.7 — Katalog yeniden tohumlanabilir olmalı** *(F0.4 ve "Diğer" kategorisi buna bağlı)*. **Ölçülmüş sorun:** `seedCatalog` `SELECT COUNT(*) FROM category > 0` ile kapıda duruyor, yani **ilk açılıştan sonra** `CatalogSeedData`'daki herhangi bir değişiklik o telefonda **kalıcı olarak görünmez**. Dosyanın kendi KDoc'u tam tersini vaat ediyor: *"Kural değişirse **katalog yeniden tohumlanır**, iki ayrı gerçek kaynağı oluşmaz"* — ve yeniden tohumlama mekanizması **yok**, yani o vaat tutulamıyor.
+  **Neyi bloklar:** F0.4'ün marketfiyati tohumlaması, `Diğer` kategorisinin eklenmesi (F3.9), herhangi bir kategori düzeltmesi, ve `matchKey` kuralının değişmesi.
+  **⚠️ Sıra kuralı:** tohum id'leri **sıradan türetiliyor** (`"seed-${u.commonality}"`). Bugün zararsız çünkü `Product.seedId` hiç doldurulmuyor — ama F6.2 onu doldurduğu an sıralar **sonsuza kadar donuyor**, ya da bir yeniden tohumlama hane ürünlerini **sessizce yanlış katalog kaydına** yönlendiriyor. Yani: **ya id'ler `seedId` doldurulmadan ÖNCE addan türetilir, ya sıralar değişmez ilan edilir** — ikincisi otomatik tamamlama sırasını, Ekle sheet'i çip sırasını ve Kurulum grid'ini iyileştirme imkânını sonsuza kadar kapatır.
+
 ## Faz 3 — Liste ekranı (uygulamanın kalbi)
 
 > Uygulamada geçirilen sürenin %90'ı burada. Tek mükemmel olması gereken ekran.
@@ -120,6 +145,10 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 - [x] **3.7 — Ekle sheet (Ekran 2).** ✅ İki katmanlı: reyon grid'i → reyonun ürün çipleri (yaygınlığa göre, alfabetik değil). Serbest metin kaçış yolu altta — katalog 245 ürün, Türkiye'deki her ürün değil; katalogda olmayanı isteyen kullanıcı tıkanırsa sheet bir duvara dönüşür. **Liste arkada görünür kalıyor** — bu şartı korumak yerleşimin en zor kısmı oldu. **Beş deneme, hepsi cihazda görüldü:** (1) sabit 340dp grid → kaçış butonu çubuğun altında; (2) `weight(1f)` → kısmi açık sheet içeriği **sınırsız** yükseklikle ölçüyor, grid tüm alanı alıyor, buton kayboluyor; (3) `skipPartiallyExpanded` → buton görünüyor ama sheet **ekranı kaplıyor**, "liste arkada kalsın" kuralı bozuluyor; (4) `contentWindowInsets` → sheet içinde `safeDrawing` sıfır dönüyor, etkisiz; (5) dışarıdan geçilen alt boşluk → buton zaten taşmış, altına boşluk eklemek onu yukarı çekmiyor. **Doğrusu ölçümle bulundu:** `uiautomator dump` üçüncü sıranın etiketlerini ve butonu `bounds="[0,0][0,0]"` gösterdi — sıfır yüksekliğe kırpılmışlardı; sheet taşan içeriği kaydırmıyor, **kırpıyor**. Grid bütçesi ekran yüksekliğinin %24'ü, buton `y 1993→2047` ile çubuğun üstünde. **Sheet zemini açıkça veriliyor:** palet `surfaceContainer*` tonal token'larını tanımlamıyor, M3 kendi mor baseline'ına düşüyordu.
 - [~] **3.8 — Sepet tahmini + özet kartı.** Yapı kuruldu, **veri Faz 4/5'ten gelecek.** Tahmin her ürünün **en son** gözlenen fiyatından hesaplanıyor (ortalama değil — zamla birlikte gerçeğin gerisinde kalır). **Dürüst olmak zorunda:** fiyatı bilinmeyen ürünler toplama girmiyor, o yüzden "en az X TL" diyor ve kaçının fiyatını bildiğini yazıyor; hiç fiyat yoksa satır **hiç çizilmiyor** — "0,00 TL" yalan olurdu. Özet kartı tutar bilinmese de anlamlı: "6 ürün alındı, 2 tanesi kaldı". Tutar 36sp Fraunces. `kurusFormatla` Türkçe yazım (ondalık virgül, binlik nokta), 5 test. **`[~]` çünkü hiçbiri gerçek veriyle görülmedi:** `price_observation` boş (Faz 5) ve `Trip.totalMinor` fişten gelecek (Faz 4). Preview'lerde ve testlerde doğru, cihazda henüz gösterecek veri yok.
 
+- [ ] **3.9 — "Diğer" kategorisi** *(F2.7'ye bağlı; birlikte yapılmalı)*. `DEFAULT_CATEGORY = "temel-gida"` — katalogda eşleşmeyen **her** serbest ürün ve **her** fiş düzeltmesi oraya düşüyor. Tasarımın reyon sırası sonda bir **`Diğer`** ile bitiyor; tohumlanan 12 kategoride öyle bir şey **yok**.
+  **Neden sessizce bozuyor:** `temel-gida` 245 tohumun **40**'ını zaten tutuyor (en kalabalık ikinci). Katalog *"Türkiye'deki her ürün değil"* ve araştırma 6 ayda ~100 farklı ürün öngörüyor, çoğu **kullanıcının yazdığı**. Hepsi + fiş düzeltmelerinden doğan her ürün **market yürüyüşünün ortasındaki** 6. sıraya dosyalanıyor. Bölümlerin var olma sebebi tek: alfabetik sıra *"insanı markette ileri geri yürütür"*. 6. sırada alakasız ürün biriktiren bir bölüm **tam olarak o sorunu geri getiriyor** — ve hata vermeden, test kırmadan, görünür bir kırılma anı olmadan.
+  **İki iş, biri değil:** (1) `Diğer` kategorisi sıra 12'de + `DEFAULT_CATEGORY` onu göstersin; (2) **ürünün kategorisini değiştirme yolu** — bugün hiçbir yerde yok (`ProductDao.update` var, `categoryId`'yi değiştiren çağıran yok). Doğal yeri Ekran 5, tasarımın iki anahtarı koyduğu yerin yanı.
+
 ## Faz 4 — Alışveriş kapatma ve fiş
 
 > Verinin dürüst kalmasını sağlayan faz. Ekmek problemini asıl çözen katman burası: fiş, listeye yazılmasa bile ekmeği içeriyor.
@@ -129,7 +158,7 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
   **Üç hata cihazda çıktı ve hiçbiri testle görünmezdi.** (1) Kamera doğrudan hedef dosyaya yazıyor, yani küçültmenin kaynağı ile hedefi **aynı dosya** oluyordu — sessizce işe yaramadı, görsel 2576 yerine 2944 kaldı; bunu ancak **çıktının gerçek çözünürlüğünü ölçmek** yakaladı. (2) Hedef yolu `remember` içinde tutuyordum; kamera ön plandayken Android Activity'yi yeniden oluşturuyor, durum sıfırlanıyor ve fiş **hiç kaydedilmiyordu**. Durumu tamamen kaldırdım — hedef kaynak adından türüyor, kurtarılacak bir şey yok. (3) `PlatformFile.absolutePath()` bir `content://` URI dönüyor (FileProvider), `BitmapFactory.decodeFile` onu okuyamıyor. **İki kez tahmin ettim, ikisi de yanlış çıktı; bir kez günlükleyip ölçtüm ve cevap tek seferde geldi.** Sözleşme artık yol değil **bayt** alıyor, böylece URI/dosya ayrımı sınırın dışında kalıyor.
   **Düzeltemediğim bir yer:** arka kamera `FileKitCameraFacing.Back` ile isteniyor ama sistem kamerası bunu yoksayabiliyor — test cihazı (Samsung) yoksayıyor ve ön kamerayla açılıyor; kullanıcı tek dokunuşla çeviriyor.
 
-- [ ] **4.3 — ~~Cloudflare Worker proxy~~ → GEREKMİYOR.** ML Kit cihazda çalıştığı için ortada API anahtarı, proxy, secret yönetimi **yok**. Faz 7'de Supabase keep-alive'ı için Worker yine gerekebilir — o iş **7.6**'da zaten var. Bu madde kapandı; mimari bir bağımlılık eksildi.
+- [x] **4.3 — ~~Cloudflare Worker proxy~~ → GEREKMİYOR.** ML Kit cihazda çalıştığı için ortada API anahtarı, proxy, secret yönetimi **yok**. Faz 7'de Supabase keep-alive'ı için Worker yine gerekebilir — o iş **7.6**'da zaten var. Bu madde kapandı; mimari bir bağımlılık eksildi.
 - [x] **4.4 — Cihazda OCR + Türkçe fiş ayrıştırıcı.** ✅ ML Kit Text Recognition v2 (Android) / Vision (iOS, Faz 8) — **fotoğraf telefondan çıkmıyor**, API anahtarı yok, ağ yok, ücret yok. **İki gerçek fişte (BİM ve File Market) doğrulandı**, sentetik örnekte değil.
   **İlk sürüm baştan sona yanlıştı ve 17 testi geçiyordu.** Örnek fişleri de kuralları da ben yazmıştım, yani kendi varsayımlarımı kendime onaylatıyordum. İki gerçek fiş üç varsayımı birden çürüttü: (1) **ondalık ayırıcı nokta** — noktayı açıkça reddetmiş ve gerekçe olarak *"Türkiye'de fiş öyle basmıyor"* yazmıştım; iki zincirin ikisi de nokta basıyor ve tek başına bu, hiçbir tutarın okunmaması demekti. (2) **toplam satırı "Ödenecek KDV Dahil Tutar" ve içinde KDV geçiyor** — ben KDV'yi TOPLAM'dan önce eliyordum, hem de bir tuzağı önlemek için bilinçli olarak, ve bu gerçek toplam satırını eliyordu. (3) **miktar satırı ayrı ve üründen önce** geliyor; ben adın ardından bekliyordum, yani hiçbir tartılı ürünü yakalayamazdım.
   **Satır sırası güvenilir değil, bu yüzden GÖRSEL SATIR gruplaması yapılıyor.** Fiş iki kolon (solda açıklama, sağda tutar) ve ikisi aynı görsel satırda; ML Kit onları ayrı "line" döndürüyor ve dikey konumları eşit olduğu için diziliş rastgele bozuluyor — ölçüldü: `*47.00` kendi ürün adından **önce** geliyordu. Çözüm eşleştirmeyi dikey örtüşmeden yapmak: aynı satıra düşen parçalar birleşiyor, grup içinde X'e göre sıralanıyor. Satır sayısı 47'den 25'e düştü ve ayrıştırıcının beklediği biçim çıktı.
@@ -155,54 +184,231 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 
 - [x] **4.10 — iOS derlemesi düzeltildi** *(Faz 4 kapsamı dışı ama Faz 4'ü bloklıyordu)*. `:composeApp:compileKotlinIosSimulatorArm64` **HEAD'de kırıktı** (`git stash` ile doğrulandı, benim değişikliklerimden önce): `Dispatchers.IO` commonMain'den erişilemiyor, native hedeflerde `internal`. Yani commonMain'de `Dispatchers.IO` yazan kod Android'de derleniyor, iOS'ta derlenmiyor ve hata yalnızca iOS hedefi ilk kez derlenince çıkıyor. `expect/actual ioDispatcher` eklendi (JVM'de IO, native'de Default). Bu `allTests`'i de bloklıyordu, yani ortak test paketi hiç koşmuyordu.
 
+- [x] **4.11 — Fiş toplamını geziye devret.** ✅ *(bu oturumda yapıldı ve cihazda doğrulandı: Geçmiş'te gezi başlığı "—" yerine **484,58 TL** gösteriyor.)* Hiçbir şey `Trip.totalMinor`'ı yazmıyordu; özet kartının 36sp'lik tutarı ve Geçmiş'teki gezi toplamı ikisi de onu okuyor, fiş hattı ise `Receipt.totalMinor` yazıyordu — **arada bağı kuran kod hiç yazılmamıştı**, yani ikisi de kalıcı olarak "—" gösteriyordu. Ne derleyici ne testler görebilirdi: iki alan da geçerli, sadece biri hiç dolmuyordu.
+  **Fişlerin toplamı alınıyor, tek fiş kopyalanmıyor** — uzun fiş parça parça çekiliyor ve bir geziye birden fazla fiş bağlanabiliyor. `SUM()` boş kümede `NULL` dönüyor, **0 değil**, ve bu tam istenen: "bilmiyoruz" ile "bedava" ayrı şeyler.
+  **Fişte yazan toplam esas, satırların toplamı değil:** kullanıcı bir satırı düzeltince ödenen para değişmiyor, yalnızca bizim OCR hatamız düzeliyor. Toplam okunamadıysa alan **null kalıyor** — doğrulanmamış bir sayıyı 36sp'de manşet yapmak, kullanıcının sorgulayamayacağı bir yerde tahmini gerçek gibi sunmaktı.
+
+- [ ] **4.12 — Ekran 4'ün spec'inden karşılanmayanlar** *(Faz 4 "bitti" işaretli olduğu için hiçbir madde sahiplenmiyordu)*. F4.8 Bitir ekranını **ikili bir onay kutusuna** indirdi; tasarım satır başına **üç düğme** istiyor: `[Aldım] [Gerekmedi] [Unuttum]`. Bu yalnızca bir UI eksiği değil — **F6.2'nin skor formülü o ayrımı bekliyor** ve "gerekmedi" ile "unuttum" aynı puanı alamaz. Yani F6.2 bir Faz 4 ekranını yeniden açmak zorunda.
+  Aynı spec'ten karşılanmayan diğerleri: özet kartının tam metni ve *"kart, ekran değil"* kuralı; `[Elle sadece toplam gir]` yolu (**yeni bir sayısal klavye olamaz** — uygulamanın tek klavyesi fiş tutarı alanı, bu mutlak kısıt); ve süre satırı (`· N dakika`) — `durationMinutes` bugün **sabit null** çünkü alışveriş modunun başlangıç zamanı hiç saklanmıyor.
+
+
 ## Faz 5 — Fiyat hafızası
 
-> Kapsam **Faz 0.5**'in kararına bağlı. Ölçüm kötü çıkarsa bu faz daralır.
+> **F0.5 kararı verildi: fiyat takipçisi.** 5.1–5.3 kesin kapsamda; 5.4/5.5 F0.4'e bağlı ve son sırada. Sıra: **5.1 → 5.6 → 5.8 → 5.10 → 5.11 → 5.2 → 5.9 → 5.7 → 5.3 → 5.4 → 5.5.** (Maddeler bu dosyada da o sırada duruyor, numara sırasında değil — *numaralar kimliktir, sıra değildir*.)
+>
+> **Fazın tek cümlelik durumu:** tablo, entity, iki okuma sorgusu, dört durumlu `PriceHint` tipi ve onu çizen bileşenlerin **tamamı hazır ve şu an tek satır veri yok** — `PriceObservationDao` içinde `@Insert` bile bulunmuyor. Yani bu faz ağırlıkla "yazma yolunu kur", "yeni ekran yaz" değil.
 
-- [ ] **5.1 — `PriceObservation` yazımı.** Fişten, her satırda `packSize` ile. `TripLine`'dan ayrı tutulur ki katalog fiyatları (marketfiyati) ile gerçekten ödenen fiyatlar tek karşılaştırılabilir seride yaşasın, karışmadan.
-- [ ] **5.2 — Satır fiyat ipucu.** Üç veri durumu: 0 gözlem → **hiçbir şey** (asla "fiyat yok" yazma) · 1 gözlem → son ödenen · 2+ → trend + delta + sparkline. **Shrinkflation koruması:** ambalaj boyu değiştiyse trend bastırılır, `900g → 800g · aynı fiyat` yazılır. Ambalaj küçülmesi asla fiyat düşüşü gibi görünmemeli.
-- [ ] **5.3 — Ürün Detayı sheet (Ekran 5).** 24sp Fraunces manşet cümlesi (okunacak ve ekran görüntüsü alınacak şey grafik değil bu cümle), Canvas çizgi grafik, min/ortalama referans çizgileri, aralık seçici 1 ay / 6 ay / 1 yıl — **"1 hafta" yok**, 10 günlük tempo haftalık çözünürlük taşımaz.
-- [ ] **5.4 — marketfiyati entegrasyonu.** `/api/v2/search`, User-Agent zorunlu, agresif cache. Endpoint dokümante değil — **her an kapanabilir kabul et**. "Nerede ucuz" bloğu çevrimdışıyken **sessizce yok olur**, market reyonunda hata mesajı göstermez.
-- [ ] **5.5 — "Başka markette ucuz" çipi.** Liste başına **en fazla 3**, mutlak TL tasarrufuna göre sıralı. Üstü listeyi reklam yüzeyine çevirir ve özellik kesilir.
+- [ ] **5.1 — `PriceObservation` yazımı.** *Fazın kilit taşı; her şey buna bakıyor.*
+  **Hazır olan:** entity `Receipt.kt:91` (11 alan, `(productId, observedAt)` ve `storeId` index'leri, şema **sürüm 2**'de yayında). **Eksik olan:** `PriceObservationDao` (`Daos.kt:254`) **yalnızca iki okuma sorgusu içeriyor — `@Insert`, `@Upsert`, `@Update`, `@Delete` hiçbiri yok**. Repo genelinde `PriceObservation(` yapıcısı **sıfır** yerde çağrılıyor.
+  **ReceiptLine → PriceObservation eşlemesi, alan alan:**
+  - `householdId` / `receiptLineId` → doğrudan.
+  - `productId` **NOT NULL** ← `matchedProductId` **nullable**. Süzgeç zorunlu ve kuralı zaten yazılı (`Product.kt:49`): *"Onaylanmamış eşlemeler fiyat geçmişine yazılmamalı — yanlış eşleme fiyat trendini bozar ve bozuk trend, hiç trend olmamasından kötüdür."* Pratik süzgeç: `matchedProductId != null && !needsReview`. **Karar gerekiyor:** `confidence` 1,0 (alias) ile 0,9 (çıplak `matchKey`) arasında ayrım yapılacak mı — bugün 0,9 da `needsReview = false` ile otomatik kabul ediliyor.
+  - `observedAt` ← **`ReceiptLine.createdAt` DEĞİL.** O alan OCR yazma zamanı ve **her yeniden okumada değişiyor**. Doğrusu satın alma zamanı; en yakını `Receipt.capturedAt`. Fişin **bastığı tarih** ise hiç ayrıştırılmıyor → **F5.8**.
+  - `unitPriceMinor` **NOT NULL** ← `ReceiptLine.unitPriceMinor` varsa o, yoksa `lineTotalMinor / quantity`. **Ölçüldü: bölme yolu istisna değil, ASIL yol** — iki gerçek fişin 10 ürün satırından yalnızca **4'ünde** birim fiyat var (yalnızca ürün satırından hemen önce bir `QUANTITY_LINE` geldiğinde doluyor). Tartılı üründe `quantity` kesirli (0,182) — bölme **tam sayıya kırpılmamalı**.
+  - `storeId` → **bugün dürüst tek değer null** (bkz. F5.9).
+  - `packSize` / `packUnit` → **bugün null** (bkz. F5.7).
+  **Nereye bağlanacak:** F6.1 ile aynı yere — gezi kapanışı. Bu varsayım şemada zaten yazılı: `TripStatus.CLOSED` KDoc'u *"kapanış mutabakatı fiyat gözlemleri ve satın alma sayaçları yazıyor; yeniden açmak onları ikinci kez yazma riski demek"* diyor — yani tasarım bunu **çoktan varsayıyor, kod hiçbir yerde yapmıyor**.
+  **Kabul ölçütü (cihazda görülebilir, UI değişikliği gerektirmeden):** `EstimatedBasket` satırı ilk kez çizilir. Bugün `pricedCount == 0` olduğu için o satır **hiç** çizilmiyor (`BasketAndSummary.kt:47` erken dönüyor: *"Hiç fiyat bilinmiyorsa satır HİÇ ÇİZİLMEZ; 0,00 TL yazmak yalan olurdu"*). İlk `PriceObservation` satırı yazıldığı an görünür — F3.8'in `[~]` işareti tam bu yüzden duruyor.
+  **Karar gerekiyor — senkron:** `PriceObservation` `householdId` + `deletedAt` taşıyor, yani Conventions kuralı 2'ye göre **senkron edilecek kullanıcı verisi**. `PendingOp` outbox entity'si var (`Sync.kt:17`) ama **DAO'su yok ve hiçbir yazma kuyruk kaydı üretmiyor**. Ya yalnızca yerel yazıp Faz 7'ye bir geri-doldurma borcu bırakılacak, ya da "yerele yaz + kuyruğa ekle" deseni **burada** kurulacak.
+
+- [ ] **5.6 — İki aritmetik kapısını tek yere indir** *(cihazsız, F5.1'den ÖNCE)*. **Bugün iki ayrı hesap var ve indirimli fişte farklı karar veriyorlar:** `arithmeticHolds` (`ReceiptParser.kt`) indirimleri **çıkarıyor**, `ReceiptCheckViewModel.reload` ise ekrandaki çipi `lines.sumOf { it.lineTotalMinor }` ile **hepsi pozitif** toplayarak yeniden hesaplıyor. Yani işlemcinin veritabanına yazdığı durum (VERIFIED/MISMATCHED) ile kullanıcının ekranda gördüğü çip çelişebilir.
+  **Kök sebep bir şema boşluğu:** `ParsedLine.discount` bayrağı (`ReceiptParser.kt:42`) kalıcılaştırmada **atılıyor** — `ReceiptLine`'da `discount` kolonu yok. Ayrıştırıcı indirim satırını tutarı **pozitife çevirerek** üretiyor (*"İşareti bayrak taşıyor, sayı değil"*) ve adı `İndirim` koyuyor; yazıldıktan sonra onu indirim yapan hiçbir şey kalmıyor.
+  **F5.1 için neden bloklayıcı:** naif bir "her fiş satırına bir gözlem" yazıcısı **indirimi ürün fiyatı olarak kaydeder**. Bugün bunu tesadüfen `needsReview` süzgeci engelliyor (indirim satırı bir ürüne eşleşmiyor) — ama kullanıcı Fiş Kontrol'de o satırı bir ürüne bağlarsa engel kalkıyor.
+  **İş:** `ReceiptLine`'a `discount: Boolean` kolonu (şema **2 → 3**, bkz. **Şema sürüm planı**), ekran kapısını `arithmeticHolds`'ı çağıracak biçimde birleştir, ve **indirim satırı içeren bir kurgu fişle test yaz** — gerçek fişlerimizin hiçbirinde indirim satırı yok, o yüzden bu tek yer sentetik veriyle test edilmek zorunda ve gerekçesi yazılmalı.
+
+- [ ] **5.8 — Fişin bastığı tarihi ayrıştır** *(cihazsız, F5.1'den ÖNCE)*. **Bugün hiç okunmuyor.** `ReceiptReading` (`ReceiptParser.kt:46`) yalnızca `storeName` / `lines` / `totalMinor` / `rawLines` taşıyor; `Receipt` entity'sinde de tarih kolonu yok. Oysa tarih **OCR çıktısında duruyor**: `13.08.2026 18:49 Sira No : 218` — test kurgusunun içinde, kullanılmayan bir satır olarak.
+  **Neden F5.1'den önce:** `observedAt` bunu bekliyor. Onsuz fiyat geçmişi **fotoğrafın çekildiği ana** damgalanır, alışverişin yapıldığı ana değil. Aynı alışverişin fişi bir hafta sonra çekilirse trend bir hafta kayar; kullanıcı bunu asla göremez. Araştırma tarihi "neredeyse kusursuz okunan" alanlar arasında sayıyordu ve `score.ts:189` onu skorluyor — yani ölçüm koşumu, uygulamanın hiç çıkarmadığı bir alanı puanlıyor.
+  **İş:** `Regex` ile `gg.aa.yyyy [ss:dd]`, `ReceiptReading.receiptDate`, `Receipt.receiptDate` kolonu (şema **2 → 3**, F5.6 ile aynı bump'ta), ve `observedAt = receiptDate ?: capturedAt`. **Gerçek iki fişin kurgusuyla test** — ikisi de tarih taşıyor, yani bu sentetik veri gerektirmeyen nadir maddelerden biri.
+
+- [ ] **5.10 — Mükerrer gözlem koruması** *(cihazsız, F5.1 ile birlikte)*. **Bugün hiçbir şey iki kez yazılmasını engellemiyor.** `price_observation` tablosunda **tek bir UNIQUE kısıt yok** (yalnızca iki tekil-olmayan index) ve şemada **hiç foreign key yok**, yani cascade de yok.
+  **Somut senaryo, kullanıcı erişimindeki bir düğmeyle tetiklenir:** Fiş Kontrol'deki *"Başka yönde oku"* `processor.process()`'i yeniden çağırıyor; o da `clearForReceipt` ile satırları **sert siliyor** ve **yeni id'lerle** yeniden yazıyor. Eski satırlara bağlı gözlemler **yetim** kalır, yeni satırlar için **ikinci** bir gözlem kümesi yazılır. Gözlemin ikiye katlanması hem trendi hem sepet tahminini bozar.
+  **Üç seçenek, biri seçilmeli:** (a) `UNIQUE(receiptLineId)`; (b) gözlem yazımını `receiptId` kapsamında sil-ve-yeniden-yaz (idempotent); (c) gözlemleri yalnızca **tekrarlanamayan** tek bir anda yazmak (gezi kapanışı) ve yeniden okumanın onları yeniden yazmasını yasaklamak.
+  **Test deseni hazır ve taklit edilmeli:** `ConstraintTest` kısıtları **DAO üzerinden değil ham SQL ile** sınıyor — çünkü DAO `OnConflictStrategy.REPLACE` ile yazsaydı ikinci satır sessizce üstüne biner ve test yeşil kalırdı, koruma da olmazdı.
+
+- [ ] **5.2 — Satır fiyat ipucu.** *Çizim tarafı **bitmiş**; eksik olan veri kaynağı ve bir eşleyici.*
+  **Hazır olan — dokunulmayacak:** `PriceHint` (`RowModel.kt:18`) dört varyantlı **sealed interface**: `None` (0 gözlem — *hiçbir şey* çizilmez, "fiyat yok" **asla** yazılmaz) · `Single(price, store, daysAgo)` · `Trend(from, to, deltaPercent, rising, history)` · `PackChanged(fromPack, toPack, note)`. Sealed olmasının gerekçesi dosyanın kendi KDoc'unda: *"1 gözlem + trend" temsil edilebilir olmamalı*. `ListItemRow.SecondLineContent` dördünü de **exhaustive** çiziyor, `DeltaChip`, `Sparkline` (2 gözlemin altında kendini çizmiyor) ve ikinci satır önceliği (`secondLine()`: fiyat > gerekçe > not) hepsi yerinde. Alışveriş modunda metadata **otomatik gizleniyor** — reyonda fiyat ipucu çıkmıyor.
+  **Eksik olan — üretici taraf:** tek üretim eşleyicisi `ListRowProjection.toUiRow` (`ListState.kt:64`) ve `priceHint`'i **hiç set etmiyor**; varsayılan `None` kalıyor. `ListRowProjection` da hiç fiyat kolonu taşımıyor. Yani üç şey gerekiyor: (1) SQL projeksiyonunu genişletmek **ya da** tek anahtarlı bir harita, (2) `formatMinor` ile **biçimlenmiş metin** üretmek (varyantlar `Long` kuruş değil `String` taşıyor), (3) `daysAgo` için bir **saat** — bugünkü eşleyici saf ve saat taşımıyor; proje kuralı saati enjekte etmek (`clock: () -> Long`).
+  **Mimari kısıt, ihlal edilmemeli:** liste satırları bilerek **TEK** SQL ifadesinde çekiliyor (`observeList`) ve gerekçesi yazılı: *üç Flow'u `combine` etmek her değişimde üç yeniden yayın üretir ve satırlar bir kare boşluklu görünür*. Yani **satır başına fiyat Flow'u yasak**; ipucu ya sorguya JOIN edilecek ya da tek seferde anahtarlı harita olarak gelip bir kez birleştirilecek.
+  **Eksik sorgular** (hepsi `PriceObservationDao`'da yok): son ödenen tek satır; ürün başına son N gözlem serisi ("Son 8 gözlem"); pencere içi min/ortalama; mağaza bazlı karşılaştırma; aralık kapsamlı okuma; **liste için tek seferde toplu okuma**.
+  **Dormant kırpılma hatası burada uyanıyor:** `PriceChip` sabit **92dp** genişlikte ve `maxLines`/`overflow` **taşımıyor** — dört haneli bir fiyat (repo'nun kendi önizlemesi `PriceChip("1.289,90 TL")` ile *"92dp bütçesini zorlayan gerçek senaryo"* diye işaretliyor) ikinci satıra **sarar** ve satır yüksekliği 56/68/72dp merdiveninin dışına çıkar. Bu faz başlarken `maxLines = 1` + `Ellipsis` eklenmeli.
+  **Kabul ölçütü:** cihazda, gerçek bir fişten sonra, bir listede tek gözlemli ürün "son X TL · mağaza · N gün önce" gösterir; ikinci alışverişten sonra aynı satır trend + delta çipi + sparkline gösterir.
+
+- [ ] **5.9 — Mağaza çözümlemesi (`Store` yazımı).** **Entity var, geri kalan hiçbir şey yok:** `Store` (`Shopping.kt:12`) kayıtlı ve tablo cihazda duruyor, ama **StoreDao yok**, `NeydiDatabase`'de accessor yok, Koin'de binding yok ve **tek satır hiç yazılmıyor**. `Trip.storeId` da her satırda null — tek `Trip` yazıcısı (`openOrGetActiveTrip`) onu hiç doldurmuyor ve `TripDao`'da onu yazan bir UPDATE yok.
+  **Yarısı hazır:** `chainKey()` (`ReceiptProcessor.kt:180`) ham mağaza adını **zincire** indiriyor ve testli (`"BIM BIRLESIK MAGAZALAR A.S." → "bim"`, `"BIM BADEMLIK SUBESI" → "bim"`). Ama yalnızca **alias anahtarı** olarak kullanılıyor.
+  **⚠️ Ölçülmüş hata — bu adımın ilk işi:** mağaza adı yakalaması (`ReceiptParser.kt:191`) "6 karakterden uzun, sonunda tutar yok, içinde arşiv/fatura yok" ilk satırı alıyor. Gerçek File fişinde bu **`FiLE OVACIK / KEÇİÖREN/ ANKARA`** — yani **adres satırı**, bir alt satırdaki `FiLE MARKET MAĞAZACILIK ANONİM ŞİRKETİ` değil. Cihazda Fiş Kontrol başlığında aynen böyle görünüyor. `chainKey` ikisinden de "file" ürettiği için alias etkilenmiyor, ama `Store.name` adres olur. **Ve bunu hiçbir test tutmuyor:** `ReceiptParserTest` içinde `storeName` üzerine **tek assertion yok**.
+  **Karar gerekiyor:** `chainKey` şubeyi bilerek atıyor, ama `Store` KDoc'u `name`'in şube, `chain`'in zincir olduğunu söylüyor. Görünen adı ne besleyecek? Ayrıca `chainKey(null) == "bilinmiyor"` için: sentinel bir Store satırı mı, `storeId = null` mı?
+  **İş:** `StoreDao` (`insert` + `findByChain` + `observeAll`) + accessor + Koin; `findOrCreateStore` — deseni `findOrCreateProduct`'tan **birebir kopyala**; çağrı yeri `ReceiptProcessor.process` içinde `setTotal`'ın yanı (orada hem `reading.storeName` hem `chain` zaten elde); `TripDao.setStoreId`.
+
+- [ ] **5.7 — Ambalaj boyu çıkarımı (`packSize` / `packUnit`).** *Shrinkflation korumasının tek besleyicisi.*
+  **Bugün hiç çıkarılmıyor** ve bu yüzden `PriceHint.PackChanged` **asla tetiklenemez**. `ParsedLine`'da ambalaj kavramı yok; oradaki `unit` alanı **kaç alındığını** tutuyor (2 ad, 0,182 kg), bir paketin **ne kadar** olduğunu değil — ve o alan bile kalıcılaştırmada atılıyor (`ReceiptLine`'da `unit` kolonu yok).
+  **Veri aslında orada, ürün adının içinde serbest metin olarak:** `TURŞU KORNI ŞON 670G`, `SRIRACHA S0S 230 GR`, `İNCEYULAF350G`, `KREMA 18YAĞLI 200ML`.
+  **⚠️ Somut tuzak, sırası kritik:** `VAT_MARK_SUFFIX` (`ReceiptParser.kt:122`) bozuk KDV işaretlerini temizlemek için addaki **sondaki üç haneye kadar sayısal artığı** siliyor — ölçülmüş örnek: `ALIŞVERIŞ POŞETi BiM 220` → `ALIŞVERIŞ POŞETi BiM`. Yani çıplak sayıyla yazılmış bir ambalaj boyu (`PEYNIR 600`) **ad temizlenmeden önce yok ediliyor**. Çıkarım `match.groupValues[1]` üzerinde ya da `rawText` üzerinde **temizlikten ÖNCE** koşmak zorunda. Temizleyicinin bugünkü davranışını tutan bir test var, yani onu zayıflatmak yakalanır.
+  **Yeniden kullanılacak:** `QuantityParser.UNITS` haritası ambalaj biriminin ihtiyaç duyduğu sözlüğü **zaten** kanonikleştiriyor (kg/kilo→kg, gr/gram→g, lt/litre→L, ml, adet). Ama `parseQuantity`'nin kendisi kullanılamaz: deseni sayıyı `^` ile başa sabitliyor, yani **baştaki** miktarı ayrıştırıyor, sondakini değil.
+  **Alternatif/ek kaynak:** marketfiyati'nın `gramaj` alanı (F0.4) — fiş metnine hiç güvenmeyen bir yol.
+  **Kabul ölçütü:** aynı ürünün 1 L ve 900 ml gözlemi varken satır **trend göstermez**, `900 ml → 800 g · aynı fiyat` biçiminde `PackChanged` gösterir. Ambalaj küçülmesi **asla** fiyat düşüşü gibi görünmemeli.
+
+- [ ] **5.3 — Ürün Detayı sheet (Ekran 5).** *Hiçbir biçimde yok: composable yok, ViewModel yok, NavKey yok, iskelet bile yok.*
+  **Hedef DEĞİL, sheet:** `Destinations.kt` KDoc'u kararı yazıyor — *"EKLE ve ÜRÜN DETAYI de hedef değil, Liste üzerinde açılan bottom sheet'lerdir"*. Yani Ekle sheet'iyle aynı desen: `ListViewModel` state'i (`_sheetOpen`/`_sheetCategory` örneği).
+  **Giriş noktası hazır ve bağlanmamış:** `ListItemRow.onPriceClick` parametresi var, `PriceChip`'e geçiyor, **ama hiçbir çağıran onu vermiyor** — yani çip bugün tıklanamaz. `PriceChip` kendi 44dp hedefine sahip; bileşenin belgelenmiş sözleşmesi *"fiyat çipi fiyat geçmişini açar"* ve o vaat karşılanmamış.
+  **Ekranın asıl unsuru grafik değil, cümle:** **24sp Fraunces manşet cümlesi** — okunacak ve ekran görüntüsü alınacak şey o. 36sp Fraunces öncülü `BasketAndSummary.kt:141`'de var, yazı tipi erişimi `neydiDisplayFamily()`.
+  **Grafik elle çizilecek:** `Sparkline`'ın KDoc'u bunu açıkça söylüyor — büyük fiyat grafiği de Canvas, **grafik kütüphanesi yok**. Her gözlem bir nokta + **minimum** ve **ortalama** referans çizgileri.
+  **Aralık seçici tam olarak 1 ay / 6 ay / 1 yıl; "1 hafta" YASAK** — 10 günlük tempo haftalık çözünürlük taşımaz, haftalık grafik gürültüden başka bir şey göstermez.
+  **İki alt anahtar buraya ait:** *"Her zamankilere ekle"* (`isStaple` yazan **ilk ve tek** yer olacak — bkz. F6.8) ve *"Bunu önerme"* (engelleme listesinin giriş noktası — bkz. F6.5).
+  **⚠️ Bilinen kırpılma riski baştan hesaba katılmalı:** kısmi açık `ModalBottomSheet` içeriği **sınırsız** yükseklikle ölçüyor ve taşanı kaydırmıyor, **kırpıyor** (F3.7'de beş denemeyle öğrenildi, F10.5 açık). Uzun bir grafik sheet'i aynı duvara çarpar — yükseklik tavanı + kaydırma **baştan** konmalı.
+  **Eksik veri sorguları:** min/ortalama ve aralık kapsamlı okuma (bkz. F5.2 listesi), artı nokta başına ambalaj etiketi (F5.7) ve birim seçici (paket fiyatı / kg-lt fiyatı).
+  **İki boş durum:** hiç gözlem yok · tek gözlem var (→ trend **yok**, yalnızca o nokta).
+
+- [ ] **5.4 — marketfiyati entegrasyonu** *(F0.4'e bağlı; fazın sonunda)*. `/api/v2/search`, `User-Agent` **zorunlu** (yoksa 404), **agresif cache**. Endpoint dokümante değil — **her an kapanabilir kabul et**. Dönen alanlar: başlık, marka, gramaj, kategori ve BİM/A101/ŞOK/Migros/CarrefourSA/Tarım Kredi/Hakmar için mağaza bazlı fiyatlar, lat-lon süzgeci ve ~saatlik tazelik.
+  **"Nerede ucuz" bloğu çevrimdışıyken SESSİZCE yok olur** — market reyonunda hata mesajı göstermez. Bu bir tercih değil kural: reyonda elleri dolu bir insana ağ hatası göstermek özelliği zararlı yapar.
+  **Sıfırdan başlıyor:** repoda `HttpClient` yok. ktor 3.5.2 katalogda hazır ama bağımlılık değil. **Pinler eski**, Faz 5 başında yeniden doğrulanmalı.
+  **Araştırmanın önerdiği ama yapılmayan iş buraya ait:** kanonik ürün kataloğunu marketfiyati'ndan **önden tohumlamak**. Onun yerine 245 ürünlük **elle yazılmış** katalog (`tools/catalog/gen_catalog.py`) konuldu — çalışıyor ama araştırmanın "değer eğrisinin en ucuz düzeltmesi" dediği şey **yapılmadı**, sessizce ikame edildi. Bu adımda geri gelmeli.
+
+- [ ] **5.5 — "Başka markette ucuz" çipi** *(F5.4'e bağlı; en son)*.   **Çip hazır:** `ListRow.cheaperElsewhere` + `AccentChip` ile çiziliyor, alışveriş modunda **bastırılıyor**, ve ürün adını kırpmaması için **bilerek ikinci satıra** taşınmış (F3.1'de birinci satırda yatay bütçe çalıp adı kırpmıştı). Amber dolgunun 1,5dp kontur kuralı `AccentChip`'in içinde tek noktada zorunlu — **kendi çipini yazma**.
+  **Eksik olan kural:** **liste başına en fazla 3**, mutlak TL tasarrufuna göre sıralı. Üstü listeyi reklam yüzeyine çevirir ve özellik kesilir. **Bunu uygulayacak yer bugün yok:** `toSections` satır satır eşliyor ve **satırlar arası state taşımıyor**, `toUiRow` tek projeksiyon görüyor. Ya eşlemeden önce tüm listeyi gezen bir ön geçiş top-3'ü seçecek, ya da bölümler kurulduktan sonra bir süsleme adımı gelecek.
+
+- [ ] **5.11 — İki küçük biçimlendirici** *(F5.2, F5.3, F6.4 ve Ekran 1 başlığı buna bağlı)*.
+  **(a) Tam TL biçimlendirici yok.** `formatMinor` **her zaman iki ondalık** basıyor. Dört yüzey tam lira istiyor: `Tahmini sepet: ~640 TL`, başlıktaki `Son alışveriş: 8 gün önce · 642 TL`, Ekran 5 manşeti, ve "Nerede ucuz" bloğu. Bugün sepet satırı *"en az 640,00 TL"* basıyor.
+  **Beraberinde gelmesi gereken kural:** **tahminler ve manşetler yuvarlar, gerçekten ÖDENEN tutarlar asla yuvarlamaz.** Özet kartında `642,50 TL` gerçek bir sayı ve onu `642` basmak, veri modelinin bütün etiğinin karşı durduğu türden **sessiz bir yalan** olur. Fonksiyonun KDoc'u nerede kullanılabileceğini **ve nerede kullanılamayacağını** yazmalı.
+  **(b) Göreli gün biçimlendirici yok ve naif hali burada YANLIŞ.** Gereken metinler: "12 gün önce" (`PriceHint.Single.daysAgo` zaten hesaplanmış bir sayı bekliyor ve **onu hesaplayan hiçbir çağıran yok**), "bugün"/"dün", Ekran 5'in tempo satırı, ve F6.4'ün dört gerekçe şablonu. **Tuzak Riskler bölümünde:** `(now - then) / 86_400_000` 24 saatlik blok sayar, takvim günü saymaz. Aynı aritmetik **hem gösterimde hem `medianIntervalDays` hesabında** kullanılmak zorunda.
 
 ## Faz 6 — Öneri motoru
 
-- [ ] **6.1 — `ProductStats` hesabı.** Trip close'da tek Room transaction'ında **tam** yeniden kurulum (~5ms, 80 ürün × 60 gezi). Asla incremental — türetilmiş cache.
-- [ ] **6.2 — Skor formülü.** Sıklık + gecikmişlik + geçen sefer unutuldu mu. `muAdjust` ayrı kolonda tutulur ki denetlenebilir ve sıfırlanabilir olsun.
-- [ ] **6.3 — Öneri şeridi.** En fazla 5 çip, **her çip düz Türkçe gerekçe taşır** ("Yumurta · 14 gün oldu"). Gerekçesiz çip reklam gibi okunur. Animasyon yok, badge yok, nokta yok.
-- [ ] **6.4 — Eksik Olabilir (Ekran 3).** 3 bölüm; "geçen sefer unuttun" ve "her zamankiler" varsayılan **açık**, tahmin bölümü varsayılan **kapalı** (uygulamanın tahmin yürüttüğü tek yer, varsayılan-açık muamelesi görmez). **Hiçbir şey uygun değilse ekran açılmaz** — boş kontrol listesi kullanıcıya butonun değersiz olduğunu öğretir.
-- [ ] **6.5 — Sabit terfisi + bastırma.** Staple promotion kartı, üç-vuruş sessiz otomatik bastırma (hiç "önerme" demeyen kullanıcı için kendi kendini iyileştirir), kalıcı engelleme listesi Ayarlar'da **görünür** — kara delik olmamalı.
+> **Sıra: 6.8 → 6.1 → 6.2 → 6.3 → 6.4 → 6.5 → 6.6 → 6.7.** 6.8 en başta çünkü onsuz 6.4'ün ikinci bölümü **kalıcı olarak boş** kalır ve "boş ise ekran hiç açılmaz" kuralıyla birleşince **Ekran 3 hiç açılamaz**.
+>
+> **Fazın durumu tek cümlede:** iki tablo (`product_stats`, `suggestion_event`) cihazda **var ama Kotlin'den erişilemiyor** — DAO'ları, accessor'ları ve Koin binding'leri yok. Öneri çipi bileşeni hazır ama **gerekçe yerine birim** gösteriyor. Üç ekran iskelet ve **ikisine hiçbir yerden gidilemiyor**.
+
+- [ ] **6.8 — `isStaple` yazma yolu** *(fazın ilk adımı; onsuz 6.4/6.5/6.7 ölü doğar)*.   **Ölçülmüş durum: `isStaple` beş yerde OKUNUYOR, sıfır yerde YAZILIYOR.** Okunduğu yerler: `ProductDao.observeStaples` (sorgu var, **çağıranı yok** — ölü kod), `observeList` projeksiyonu, `ListRowProjection`, `toUiRow`, ve `ListItemRow`'da %70 opaklık dalı + `StaplePin()`. Yazan: **hiçbir şey**. `findOrCreateProduct` onu hiç set etmiyor (varsayılan `false`), `ProductDao.update` tanımlı ama **hiç çağrılmıyor**, ve marklamak için tek bir UI yolu yok.
+  **Sonuç:** %70 opaklık dalı ve raptiye **çalışan uygulamada erişilemez**, yalnızca önizlemelerde görünüyor. Zincirleme etkisi: F6.4 Bölüm 2 *"Her zamankiler"* daima boş → "boş ise ekran açılmaz" kuralıyla **Ekran 3 hiç açılmaz**; F6.5 sabit terfi kartının terfi edecek bir şeyi yok; F6.7 *"Her zamankiler (9/12)"* listesi boş; tasarımın **Bölüm 0**'ı (listeye otomatik eklenen sabitler) hiç doğmaz.
+  **Kurala uyulmalı:** `Product.isStaple` KDoc'u nettir — bunu **kullanıcı elle** işaretler, *"öneri motoru kendi başına set ETMEZ"*. Yani bu adım bir UI affordance'ı, bir çıkarım değil.
+  **İş:** `ListRepository.setStaple(productId, Boolean)`; giriş noktası F5.3'teki Ürün Detayı sheet'indeki *"Her zamankilere ekle"* anahtarı (tasarımın öngördüğü yer) **veya** geçici olarak Ayarlar; `openOrGetActiveTrip`'e sabitleri yeni listeye ekleme adımı (bugün çıplak bir `Trip` yazıp dönüyor); `ListState`'e *"Her zamankiler"* bölümü — `toSections` yalnızca kategoriye göre gruplandığı için bu bölüm **açıkça başa** eklenmeli, en fazla 12 satır.
+
+- [ ] **6.1 — `ProductStats` hesabı.** Trip close'da tek Room transaction'ında **tam** yeniden kurulum. Asla incremental — türetilmiş cache.
+  **Hazır olan:** entity `Product.kt:86` (`productId` PK, `purchaseCount`, `lastPurchasedAt`, `medianIntervalDays`, `updatedAt`), *"türetilmiş cache, senkron edilmez, tombstone taşımaz, bozulursa silinip yeniden üretilir"* muafiyeti KDoc'ta yazılı. **Eksik olan:** `ProductStatsDao` **yok**, `productStatsDao()` accessor **yok**, Koin binding **yok**. Tablo cihazda duruyor, daima boş, Kotlin'den erişilemez.
+  **Bağlanacağı tek yer:** `ListViewModel.finishShopping` içindeki `if (closed)` dalı ve **`reconcileOptimistically`'den SONRA**. Sırası önemli: önce çağrılırsa yeni kapanan gezinin iyimser mutabakatla alındı yazılan satırları, o kapanışın tetiklediği yeniden kurulumun **dışında** kalır. `closed == true` dalına bağlamak **çift kapanış korumasını da miras alır** (iki cihaz aynı geziyi kapatırsa satın almalar çift sayılır, `medianIntervalDays` yarıya düşer ve uygulama her şeyi iki kat sık önermeye başlar — sessiz, yavaş ve geri alınması zor).
+  **Transaction deseni kanıtlanmış, kopyalanmalı:** `CatalogSeeder` `useWriterConnection` + `withTransaction(IMMEDIATE)` + `usePrepared` ile 257 satırı tek transaction'da yazıyor. **`connection.execSQL` commonMain'de YOK**, yani ham SQL `usePrepared`'den geçer. `@Transaction` anotasyonu projede hiç kullanılmadı — yeni zemin.
+  **⚠️ ZAMAN DAMGASI TUZAĞI, ölçüldü:** `TripLine.checkedAt` satın alma anı olarak **kullanılamaz**. `markAllTaken` (F4.8) kapanışta işaretlenmemiş **her** satıra `clock()` yazıyor, yani tembel kullanımda — F4.8'in **beklediği yaygın durum** — bütün gezinin `checkedAt`'i aynı. Entity KDoc'unun *"reyonda mı evde mi işaretlendi"* ayrımı tam olarak o satırlar için kayboluyor. **Doğrusu `Trip.completedAt`** — kapalılığın otoritesi o, tek yazıcısı `closeIfOpen`'un karşılaştır-ve-yaz'ı, ve index'i (`householdId, completedAt`) zaten var.
+  **Eksik sorgu:** **hiçbir sorgu gezi-ötesi okuyamıyor** — `trip_line` sorgularının **dördü de** tek `tripId` kapsamında. Gereken şekil: `SELECT tl.productId, t.completedAt FROM trip_line tl JOIN trip t ON t.id = tl.tripId WHERE t.householdId = :hh AND t.completedAt IS NOT NULL AND tl.checked = 1 ...`. Index desteği var; `checked` index'siz ama bu ölçekte (80 ürün × 60 gezi) sorun değil. `observeHistory`'nin varsayılan `LIMIT 50`'si naif yeniden kullanımda geçmişi kırpar — dikkat.
+  **⚠️ KARAR GEREKİYOR, fazın en önemli kararı:** **fişten gelen satın almalar `trip_line`'a hiç ulaşmıyor.** Fiş Kontrol bir satırı ürüne bağladığında yalnızca `receipt_line.matchedProductId` yazılıyor; `TripLine` veya `PriceObservation` yazılmıyor. Yani **listeye yazılmadan alınan ekmek** bir `receipt_line` üretir, `trip_line` üretmez. `ProductStats`'i yalnızca `trip_line`'dan kurmak, tam olarak kullanıcının **unuttuğu** ürünleri sayamaz — yani F4'ün var olma sebebini (*"fiş, listeye yazılmasa bile ekmeği içeriyor"*) es geçer. Üç seçenek: (a) yalnızca `trip_line`; (b) `trip_line` ∪ eşleşmiş `receipt_line` (fiş → gezi → `completedAt` üzerinden); (c) F5.1 önce `trip_line`'a geri-doldurma yapsın.
+
+- [ ] **6.2 — Skor formülü.** Sıklık + gecikmişlik + geçen sefer unutuldu mu.
+  **⚠️ `muAdjust` kolonu ŞEMADA YOK.** Roadmap onu *"ayrı kolonda tutulur ki denetlenebilir ve sıfırlanabilir olsun"* diye şart koşuyor; entity'de ve dışa aktarılmış şemada (`product_stats` createSql) böyle bir alan yok. Eklemek **şema 2 → 3** demek (bkz. **Şema sürüm planı**). Nullable ya da `defaultValue`'lu eklenirse migration tamamen otomatik kalır; `NOT NULL` + varsayılansız olursa **kalmaz**.
+  **⚠️ Soğuk başlangıç bağı kopuk:** `Product.seedId` alanı var ve **hiç doldurulmuyor** — `resolveProduct` eşleşen `CatalogSeed`'i buluyor, adını, kategorisini ve birimini kullanıyor, ama `seed.id`'yi yere bırakıyor. Tohum id'leri deterministik (`seed-<yayginlik>`), yani `seedId` dolu olsaydı `commonalityRank` doğrudan string'den okunabilirdi. Şimdi gözlem sayısı az olan bir ürün için "bu katalogda 7. sırada" bilgisini geri almak `matchKey`'i yeniden türetip katalogu yeniden sorgulamayı gerektiriyor. Yazmayı düzeltmek tek satır ama **mevcut satırları geri doldurmuyor**.
+  **⚠️ "Geçen sefer unuttun" sinyali kayıplı, ve tasarım üç sonuç istiyor:** kapanışta `markAllTaken` işaretlenmemiş **her** satırı alındı yazdığı için, normal bir kapanıştan sonra kapalı gezide **hiç** işaretsiz satır kalmıyor. `checked = 0`'ın hayatta kalmasının tek yolu kullanıcının Bitir ekranından geri alması. Yani kullanılabilir sinyal: *kapalı gezi + `checked = 0`* = **kullanıcı açıkça "bunu almadım" dedi**. Ama tasarım satır başına **üç düğme** istiyor — `[Aldım] [Gerekmedi] [Unuttum]` — ve şemada tek bir `checked: Boolean` var, gerekçe kolonu yok. *"Gerekmedi"* öneriyi **bastırmalı**, *"unuttum"* **yükseltmeli**; ikisi aynı puanı alamaz. **Karar:** `trip_line`'a nullable bir sonuç kolonu mu, `SuggestionEvent` olarak mı, yoksa çakışma kabul mü?
+
+- [ ] **6.3 — Öneri şeridi.** En fazla **5 çip**, **her çip düz Türkçe gerekçe taşır** ("Yumurta · 14 gün oldu"). Gerekçesiz çip reklam gibi okunur. **Animasyon yok, badge yok, nokta yok.**
+  **Bileşen hazır ve sözleşmeyi zaten taşıyor:** `SuggestionChip(label, reason)` KDoc'unda *"GEREKÇE ÇİPİN İÇİNDE … Gerekçesiz bir çip reklam gibi okunur"* yazıyor, 40dp yükseklikte, `Modifier.pressable` üzerinde.
+  **⚠️ Ama üç çağrı yerinin üçü de gerekçe yerine başka şey veriyor:** otomatik tamamlamada `reason = seed.defaultUnit` (yani "adet"/"kg"), boş durumda `reason = "reyon"` sabiti, Ekle sheet'inde ürün çipleri. Yani bileşenin sözleşmesi **yapısal olarak karşılanıyor, anlamsal olarak hiç karşılanmıyor** — şu an uygulamada hiçbir çip kullanıcıya anlamlı bir gerekçe göstermiyor.
+  **⚠️ Boştaki şerit yok:** girdinin üstündeki tek yatay şerit **otomatik tamamlama** ile dolu ve her eklemeden sonra temizleniyor; yani F6.3'ün hedeflediği **dinlenme halinde şerit boş ve görünmez**. Aynı akışa öneri motorunu bağlamak otomatik tamamlamayı **yok eder**. Tasarım ikisini de girdinin üstüne koyuyor. **Karar:** ikinci bir şerit mi, yoksa girdinin boş olup olmamasına göre mod değiştiren tek şerit mi?
+  **Tip değişikliği gerekiyor:** boru hattı uçtan uca `CatalogSeed` tipli (`onSuggestionSelected: (CatalogSeed) -> Unit`); bir motor önerisi `productId` + **gerekçe metni** taşımak zorunda, yani yeni bir model tipi.
+  **Eksik bileşen:** liste 6'yı geçerse *"+3 öneri"* katlama pili — yok. Bugünkü sınırlar 6 (arama) ve 8 (kategori), tasarımın istediği **5**.
+  **⚠️ İsabet ölçülemiyor:** `ListRow.suggestionReason` alanı var, çizimi doğru, **hiç doldurulmuyor** (`ListRowProjection` gerekçe alanı taşımıyor ve SQL projeksiyonu `tl.fromSuggestion`'ı seçmiyor). `TripLine.fromSuggestion` kolonu var, `ListRepository.add(isFromSuggestion = ...)` parametresi var, ve **tek üretim çağıranı onu hiç vermiyor** — yani bugün öneri isabeti ölçülemez durumda.
+
+- [ ] **6.4 — Eksik Olabilir (Ekran 3).**
+  **⚠️ EKRAN ŞU AN AÇILAMIYOR ve sebebi F4.9'daki hatanın aynısı:** `ListScreen` `onGoShopping` parametresini alıyor, `App.kt` ona `go(MissingItems)` veriyor, ve **gövdede hiçbir yerde çağrılmıyor** — `ListContent`'in 17 parametresi arasında bile yok. Başlıkta *"Alışverişe çıkıyorum"* diye bir düğme **hiç yok**. Kotlin kullanılmayan fonksiyon parametresi için uyarı vermediği için sessiz. (`onHistory` da tam böyleydi; F4.9'da yakalandı.)
+  **⚠️ İkinci tel hatası:** `onAdd = { go(FinishShopping()) }` — yani Ekran 3'ün birincil eylemi kullanıcıyı **Ekran 4'e** yolluyor. Tasarım *"[Ekle (4)]"* diyor: seçilenleri listeye ekle ve **alışveriş moduna gir**. Üstelik `FinishShopping(null)` `FinishShoppingViewModel`'de `flowOf(emptyList())`'e düşüyor, yani o ekran **kalıcı olarak boş** çiziliyor. Bir de iki spec çelişiyor: `Destinations` KDoc'u *"tripId null ise aktif alışveriş kapatılıyor"* diyor, `App.kt` yorumu *"gezi ZATEN KAPALI, bu ekran kapatmıyor"* diyor. **Karar:** `tripId` non-null olsun ve null dalı silinsin, ya da "aktif geziyi kapat" anlamı gerçekten yazılsın.
+  **Üç bölüm ve asimetrik varsayılanlar** — asimetri bilinçli: *"geçen sefer unuttun"* ve *"her zamankiler"* varsayılan **açık**, tahmin bölümü varsayılan **kapalı**. Tahmin uygulamanın **kendi başına akıl yürüttüğü tek yer** ve varsayılan-açık muamelesi görmez.
+  **Bölüm bölüm eksikler:**
+  1. *Geçen sefer unuttun* — gezi-ötesi sorgu yok (F6.1) **ve sinyal kayıplı** (F6.2). Turuncu sol şerit için hiçbir bileşende şerit parametresi yok.
+  2. *Her zamankiler* — `isStaple` hiç yazılmıyor (**F6.8**), yani bölüm daima boş.
+  3. *Bitmiş olabilir* — `ProductStats` + skor formülü gerekiyor; ikisi de yok.
+  4. **Satır başına düz Türkçe gerekçe** (13sp, solgun): *"son 12 alışverişin 11'inde aldın"*, *"12 gündür almadın, normalde 10 günde bir"*, *"genelde 4 alışverişte bir alıyorsun"*, *"geçen sefer unutmuştun"*. **Biçimlendirici yok:** `DateText.kt` yalnızca mutlak tarih veriyor (`formatDayMonthTime`/`formatDayMonthYear`); "N gün önce" üreten hiçbir yardımcı yok ve `PriceHint.Single.daysAgo` zaten hesaplanmış bir sayı bekliyor. Bu yardımcı F5.2 ile paylaşılacak.
+  5. Sağa hizalı son ödenen fiyat — **F5.1'e bağlı**.
+  6. **Boş durum = EKRAN HİÇ AÇILMAZ** + 2 saniyelik *"Liste hazır, eksik görünmüyor."* bildirimi. Tasarım bunu uygulamanın **en önemli boş-durum kararı** sayıyor. İki sonucu var: skor **çağıran tarafta** (yani `ListViewModel`'de) koşmak zorunda, hedefin içinde değil; ve bir bildirim yüzeyi gerekiyor — `ListScreen`'de `SnackbarHost` **yok**, çünkü F3.5'te işaretlemenin snackbar'ı olmaması bilinçli olarak kararlaştırılmıştı.
+  7. **En fazla 8 satır**, başlıkta canlı sayı (`Eksik olabilir (4)`), altta `[Ekle (4)]` birincil + `[Boşver]` metin düğmesi. Bugün iki eşit ağırlıklı düğme var.
+  8. Seçim onay kutusu — **bileşen yok**, ve `ListItemRow`'un `CheckTarget`'ini yeniden kullanmak **anlamsal olarak yanlış** olur: orada işaretli "alındı" demek.
+  9. ViewModel ve Koin kaydı yok. Parametreli kayıt deseni için `FinishShoppingViewModel` örnek alınmalı.
+
+- [ ] **6.5 — Sabit terfisi + bastırma.**
+  **⚠️ Şemada bastırma/engelleme kavramı HİÇ YOK.** Engelleme tablosu yok, hiçbir entity'de "önermeyi bırak" kolonu yok.
+  **Tek ilgili yapı:** `SuggestionEvent` + `SuggestionOutcome` (`GOSTERILDI/EKLENDI/REDDEDILDI/YOKSAYILDI`). KDoc'u gerekçeyi tam söylüyor: *"Bu tablo olmadan öneri motoru KENDİ İSABETİNİ ÖLÇEMEZ. Sürekli reddedilen bir öneriyi susturmanın tek yolu reddedildiğini kaydetmiş olmak."* `reason` kolonu kullanıcıya **gösterilen** gerekçeyi saklıyor — F6.3'ün ihtiyaç duyduğu denetim izi.
+  **Eksikler:** (1) **DAO yok**, accessor yok, Koin binding yok — tablo boş ve erişilemez. (2) **Index yok**: üç-vuruş kuralı `productId` başına `COUNT(*) WHERE outcome IN (REDDEDILDI, YOKSAYILDI)` istiyor; bu, her gösterimle büyüyen append-only bir günlükte **tam tarama**. En az `(householdId, productId, outcome)` gerekiyor. (3) **Geri alınabilir engelleme kaydı yok**: tasarım kalıcı engelleme listesinin **Ayarlar'da görünür** ve her satırın **tek dokunuşla geri alınabilir** olmasını şart koşuyor (*"kara delik olmamalı"*). Append-only bir günlükte temiz bir "engeli kaldır" yazması yok — karşı-olay eklemek ve her okumayı onu katlamayı öğretmek gerekir. **Karar:** olaylardan türetme mi, ayrı `suggestion_block` tablosu mu (`productId, blockedAt, source=AUTO|MANUAL, unblockedAt`)?
+  **⚠️ Faz 7'den ÖNCE çözülmesi gereken sözleşme çelişkisi:** `SuggestionEvent` `householdId` taşıyor — Conventions kuralı 2'ye göre senkron edilen kullanıcı verisi — ama `deletedAt` **taşımıyor** ve `ProductStats` gibi yazılı bir muafiyeti de yok. Üstelik `Daos.kt` başlığı *"`deletedAt IS NULL` HER SORGUDA"* diye katı bir kural koyuyor ve bu tabloda o süzgeç **yazılamaz**. Ya yerel-yalnız append-only günlük olduğunu (ProductStats gibi) **yazacak**, ya da tombstone alacak. Sonradan kolon eklemek bir şema bump'ı daha demek.
+  **Giriş noktaları yok:** tasarım *"Bunu önerme"* anahtarını **Ekran 5**'e koyuyor (F5.3, henüz yok) ve oraya giden tek kanca `onPriceClick` — o da bağlanmamış.
+  **Üç-vuruş sessiz otomatik bastırma** hiç "önerme" demeyen kullanıcı için kendi kendini iyileştirir; bu, listenin görünür olmasının **yerine** geçmez, ikisi birlikte gerekir.
+
 - [ ] **6.6 — Kurulum (Ekran 8).** 3 adım, ~40 ürünlük grid, tempo çipi. Var olma sebebi tek: 15. gezide değil **3. gezide** akıllı hissetmek.
-- [ ] **6.7 — Ayarlar (Ekran 7).** Hane + katılma kodu, her zamankiler, önerilmeyenler, mağazalar, gizlilik (KVKK — düz dil + "Verilerimi sil").
+  **⚠️ Hedefe HİÇBİR YERDEN gidilmiyor.** `Setup` serializer'a kayıtlı, exhaustive `when` bekçisinde var, `App.kt`'de girdisi var — ve repo genelinde **tek bir `go(Setup)` yok**. `MissingItems`'in en azından ölü bir çağıran lambda'sı vardı; Setup'ın hiç yok. Bu, exhaustive-`when` bekçisinin **göremediği** delik: kaydı olan ama ulaşılamayan hedef.
+  **⚠️ Ek tuzak:** back stack kökü daima `Liste` ve `back()` boyut 1'in altına inmiyor. Setup ileride **ilk açılış kökü** yapılırsa, bugünkü `onFinish = back()` **sessiz bir no-op** olur ve kullanıcı ekranda mahsur kalır.
+  **⚠️ Şemada "kurulum koştu mu" sorusunu cevaplayacak hiçbir şey yok.** `Household` yalnızca id/ad/tarih taşıyor; `Member` yalnızca ad/isSelf; **ayar/tercih entity'si yok**, DataStore/Preferences bağımlılığı da yok. Dahası `bootstrap` **her açılışta** koşuyor ve haneyi sabit `DEFAULT_HOUSEHOLD_ID` ile **koşulsuz** yaratıyor — yani "hane yoksa Kurulum'u göster" **hiçbir zaman doğru olamaz**.
+  **En kritik eksik kolon: tempo çipi.** *"Haftada 1 / 10 günde bir / 2 haftada bir / Belirsiz"* — `medianIntervalDays` için **gerçek veri gelmeden önceki tek öncül**, ve `muAdjust` dışında şemanın eksik olan en önemli soğuk-başlangıç girdisi. **Karar:** `Household.tempoDays: Int?` + `setupCompletedAt: Long?` mı, ayrı bir tercihler tablosu mu? (Şema **2 → 3**.)
+  **Üçüncü boş durum buraya bağlı:** `EmptyKind` yalnızca `ILK_GUN` ve `DONGU_ORTASI` taşıyor, oysa hem kendi KDoc'u hem `EmptyStates` *"ÜÇ boş durum"* diyor. Üçüncüsü *"kurulum atlandı"* ve F3.6 onu açıkça bu adıma erteledi. Tasarım ilk-gün için **iki** varyant istiyor: kurulum yapıldı → liste zaten dolu + kapatılabilir kart; kurulum atlandı → 12 tek-dokunuş çipi. Bugün yalnızca ikincisinin bir varyantı var ve o da **12 REYON kategorisini** gösteriyor, tasarımın saydığı 12 **ürünü** değil (ekmek, süt, yumurta, peynir, zeytin, domates, salatalık, soğan, çay, yoğurt, makarna, deterjan).
+  **Adım 2'nin verisi hazır:** ~40 ürünlük grid için `CatalogSeedDao.byCategory` ve `commonalityRank` sıralaması var; eksik olan **seçim durumu** ve seçilenleri `isStaple` olarak yazmak (F6.8).
+
+- [ ] **6.7 — Ayarlar (Ekran 7).** *"Sıfır tasarım yatırımı, düz liste"* — ama beş bölümün üçünün **hiç veri kaynağı yok**.
+  Ekran **erişilebilir** (F4.9'da yatay kaydırma eklenene kadar "Ayarlar" düğmesi ekranın sağında kesiliyordu), ama içerik iskelet.
+  1. **Hane** — `HouseholdDao.observeActive/upsert` ve `MemberDao.observeAll` var. **6 karakterlik katılma kodu: kolon yok, üretici yok** (F7.2'ye ait ama satır burada görünecek).
+  2. **Her zamankiler (9/12, sıralanabilir, silinebilir)** — `observeStaples` sorgusu var ama **beslenmiyor ve çağıranı yok** (F6.8). *"Sıralanabilir"* için `Product`'ta `sortOrder` kolonu **yok**. *"Silinebilir"* = `isStaple = false` yazmak, yani yine F6.8.
+  3. **Önerilmeyenler** — **hiçbir şey yok** (F6.5). Tasarım bu listeyi görünür kılmanın, kalıcı reddin kara delik gibi hissedilmesini engelleyen şey olduğunu söylüyor.
+  4. **Mağazalar** — `Store` entity var, DAO/accessor/binding **yok**, satır **yok** (F5.9).
+  5. **Gizlilik (KVKK — düz dil + "Verilerimi sil")** — `HouseholdDao.softDelete` var ama **cascade veya silme rutini yok**; Conventions kuralı 3 gereği haneyi tombstone'lamak alt satırların **hiçbirini** silmez. Ayrıca fiş JPEG'leri diskte ayrı duruyor ve onları da silmek gerekir — *"Verilerimi sil"* bunları kapsamazsa yazdığı şeyi yapmıyor demektir. (İlgili: manifest'teki `allowBackup` varsayılanı bu oturumda kapatıldı, çünkü fiş fotoğraflarını ve veritabanını sessizce Google Drive'a yedekliyordu.)
+
+- [ ] **6.9 — Kategori tonlarını bağla** *(veri zaten geliyor; hiçbir adım sahiplenmiyordu)*. `Category.tintArgb` **12 gerçek ton ile tohumlanıyor** ve **hiçbir yerde okunmuyor** — `CategoryTile`'ın `tint`'i her çağrı yerinde varsayılanda kalıyor, yani **12 kategori kutucuğunun hepsi aynı gri** çiziliyor. Tasarımın *"56dp sıcak tonlu squircle"*'ı uygulanmamış, halbuki palet **veritabanında yayında**. `TODO(kategori-tonlari)` *"ton paleti tasarımdan gelecek"* diyor — **çoktan geldi**.
+  **İçinde iki gerçek karar saklı, tıkanmasının sebebi de bu:** (1) Bunlar orta-koyu doygun dolgular ve `contentColor` varsayılanı **koyu** — koyu zemin üstünde koyu harf. Tonu bağlamak **açık bir içerik rengini de** bağlamak demek, yani iki çağrı yerinde ikinci bir parametre. (2) **İki tema için tek ton kümesi var**: krem `#FBF7F2` üstünde sıcak aksan gibi okunuyorlar, koyu `#13100E` üstünde bazıları zeminden **neredeyse ayrışmıyor**. Referans tablosu ancak katalog yeniden tohumlamasıyla değişebildiği (F2.7) için doğru cevap büyük olasılıkla **UI'da türetmek** — ve bu yazılı olmalı.
+  **Test ucuz:** F1.2'nin kontrast koşumu sRGB bağıl parlaklığı zaten hesaplıyor; iki-harf baş harfler kutucukların ~%80'inin **birincil içeriği** ve bugün **hiçbir test** onları kategori tonuna karşı ölçmüyor.
 
 ## Faz 7 — Senkron
 
-- [ ] **7.1 — Supabase projesi + şema + RLS** *(cihazsız)*. `householdId` üzerinden satır düzeyi güvenlik.
+> **Fazın hiç başlamamış olduğunun kanıtı şemada duruyor:** outbox altyapısı (`PendingOp` — `entityTable`, `entityId`, `opType`, `payloadJson`, `attempts`, `lastError`) ve `SyncMeta` **entity olarak kayıtlı ve tablo cihazda var**, ama **DAO'ları yok, accessor'ları yok, ve hiçbir yazma kuyruk kaydı üretmiyor** — bugün her yazma doğrudan Room'a gidiyor.
+
+- [ ] **7.1 — Supabase projesi + şema + RLS** *(cihazsız)*. `householdId` üzerinden satır düzeyi güvenlik. **Ön koşul zaten hazır:** her kullanıcı tablosu `householdId` taşıyor (Conventions kuralı 2); bilinçli istisnalar `Category` ve `CatalogSeed` — referans verisi, kimseye ait değil. Supabase bağımlılıkları katalogda pinli (3.7.0) ama **hiçbiri build script'te değil**; pinler 13 Ağu 2026 tarihli, Faz 7 başında yeniden doğrulanmalı.
+  **Şemayı taşımadan önce çözülmesi gereken iki tutarsızlık:** (a) `SuggestionEvent` `householdId` taşıyor ama `deletedAt` taşımıyor ve muafiyeti yazılı değil (bkz. F6.5); (b) `ProductStats` bilinçli olarak senkron edilmiyor ve tombstone **taşımıyor** — bu **doğru** ve Supabase şemasına hiç girmemeli, ama yazılı olmalı ki karşı taraf onu unutulmuş sanmasın.
+
 - [ ] **7.2 — Auth.** E-posta OTP (6 haneli kod) — magic link **değil**: universal link / App Links yapılandırmasından ve Apple Guideline 4.8'den kaçınır. + 6 karakterlik hane katılma kodu.
-- [ ] **7.3 — v1 senkron: Realtime `postgres_changes` + yerel cache, outbox YOK.** ~50 satır. Çevrimdışı düzenleme kaybı bilinçli olarak kabul edilir. İki kişilik, sinyalli bir markette kullanılan liste için yeterli.
-- [ ] **7.4 — `updated_at` trigger'ı** *(cihazsız)*. Postgres UPDATE trigger'ı ile, **asla istemciden**. Tek bir istemci timestamp'i LWW'yi kalıcı ve izsiz biçimde bozar.
-- [ ] **7.5 — Outbox + tombstone + add-beats-remove.** **Yalnızca gerçekten bir düzenleme kaybı gözlemlenirse.** Erken yapmak 300–500 satırlık tahmini ikiye katlayan fotoğraf-yükleme kuplajını getirir.
-- [ ] **7.6 — Keep-alive** *(cihazsız)*. `pg_cron` veya Cloudflare Worker cron. **GitHub Actions ile değil**: 60 gün sessiz repoda zamanlanmış workflow devre dışı kalır → önce keep-alive sessizce ölür, sonra veritabanı duraklar. İki sessiz hata üst üste.
+  **Şema eksiği:** `Member`'da e-posta kolonu **yok**, `Household`'da katılma kodu kolonu **yok**. İkisi de şema bump'ı gerektiriyor ve F6.7'nin Hane bölümü bunlara bakıyor.
+
+- [ ] **7.3 — v1 senkron: Realtime `postgres_changes` + yerel cache, outbox YOK.** ~50 satır. Çevrimdışı düzenleme kaybı **bilinçli olarak** kabul edilir. İki kişilik, sinyalli bir markette kullanılan liste için yeterli.
+  **Bu kararın kod tarafındaki karşılığı zaten kurulu:** `PendingOp` tablosu var ama kullanılmıyor — yani "outbox yok" bir eksiklik değil, **uygulanmış bir karar**. F7.5 onu yalnızca gerçek bir kayıp gözlenirse açacak.
+  **⚠️ Bir yazma yolu bu karara aykırı davranabilir:** `closeIfOpen` karşılaştır-ve-yaz ile "tek cihaz kapatır" kuralını **veritabanı düzeyinde** zorluyor ve 0/1 dönüyor. Realtime ile iki cihaz aynı geziyi görürken bu garanti korunmalı; yoksa mutabakat iki kez koşar ve `medianIntervalDays` yarıya düşer.
+
+- [ ] **7.4 — `updated_at`** *("(cihazsız)" işareti KALDIRILDI — bu adım 11 tablolu bir istemci migration'ı içeriyor)*. Postgres UPDATE trigger'ı ile, **asla istemciden**. Tek bir istemci timestamp'i LWW'yi kalıcı ve izsiz biçimde bozar (cihaz saatleri kayar; kaybeden yazma hiçbir iz bırakmaz).
+  **⚠️ Ama LWW'nin karşılaştıracağı YEREL kolon yok.** `updatedAt` bütün kod tabanında **tek bir yerde** var — `ProductStats`'ta, yani **senkron edilmeyen tek tabloda**. Gerçekten senkron edilen 11 tablonun hepsinde yalnızca `createdAt` ve `deletedAt` var. `Conventions.kt`'nin beş numaralı kuralı arasında `updatedAt` **hiç geçmiyor** — yani eksiklik bir entity'de gözden kaçmış değil, **sözleşmede yok**.
+  **Sonuçları:** bu adım server-only değil; 11 tablolu bir migration + Conventions'a yeni bir kural + her DAO UPDATE'inin `updatedAt` yazması demek (bugün `setChecked`, `setStatus`, `setTotal`, `closeIfOpen`, `confirmMatch`, `setAmount` hiçbiri zaman damgasına dokunmuyor). Kolon **`Long?`** olmak zorunda (ifade varsayılanı ve geri-doldurma yok) ve her okuyucu null'ı `createdAt` saymalı — `defaultValue = "0"` migration'dan önceki her satırın **her ilk çatışmayı kaybetmesi** demek. **Ve v3 bump'ına girmeli, Faz 7'nin içine değil**: Faz 7 canlıya geçtikten sonra iki telefon ayrışmış veri tutuyor ve null-updatedAt penceresi teorik değil **gerçek bir çatışma penceresi** olur.
+
+- [ ] **7.5 — Outbox + tombstone + add-beats-remove.** **Yalnızca gerçekten bir düzenleme kaybı gözlemlenirse.** Erken yapmak 300–500 satırlık tahmini ikiye katlayan fotoğraf-yükleme kuplajını getirir. Tombstone tarafı hazır: gerçek silme yok, `deletedAt` var, ve `findIncludingDeleted` ile "mezardan çıkarma" deseni F2.6'da kuruldu.
+
+- [ ] **7.6 — Keep-alive** *(cihazsız)*. `pg_cron` veya Cloudflare Worker cron. **GitHub Actions ile değil**: 60 gün sessiz repoda zamanlanmış workflow devre dışı kalır → önce keep-alive sessizce ölür, sonra veritabanı duraklar. **İki sessiz hata üst üste** ve ikisi de fark edilmeyecek türden. Supabase ücretsiz katmanı 7 gün hareketsizlikte duraklatıyor — bu, iki kişilik bir uygulamanın **tatilde** yaşayacağı şey.
 
 ## Faz 8 — Marka varlıkları
 
-- [ ] **8.1 — Logo üretimi.** Recraft ile, `docs/02-logo-splash-prompt.md`'deki 4 konsept. **Tek renkli siluet önce**, renk sonra — Android monochrome ve iOS tinted zaten siluet istiyor.
+- [ ] **8.1 — Logo üretimi.** Recraft ile, `docs/02-logo-splash-prompt.md`'deki 4 konsept. **Tek renkli siluet önce**, renk sonra — Android monochrome ve iOS tinted zaten siluet istiyor, yani renkle başlamak iki kez çalışmak demek.
+
 - [ ] **8.2 — 66dp monochrome testi.** Basitleştirme merdiveni (66dp ve 24dp varyantları). Burada okunmuyorsa konsept ölü, Figma'da ne kadar iyi durduğunun önemi yok.
-- [ ] **8.3 — Android app icon.** Adaptive icon (108/72/**66dp garanti daire**) + **monochrome katmanı** (Android 13+ temalı ikonlar için zorunlu) + legacy mipmap'ler + 512×512 Play PNG.
-- [ ] **8.4 — Android splash.** `values-v31/themes.xml`: tek düz opak renk (`#FBF7F2`, ilk Compose karesiyle **birebir aynı** olmalı yoksa flaş olur), 288dp canvas / 192dp görünür daire, metin yok, branding image yok. → `themes.xml` TODO(splash) kapanır.
+
+- [ ] **8.3 — Android app icon.** Adaptive icon (108/72/**66dp garanti daire**) + **monochrome katmanı** (Android 13+ temalı ikonlar için zorunlu) + legacy mipmap'ler + 512×512 Play PNG. **Bugünkü hal:** manifest `@android:drawable/sym_def_app_icon` — framework yer tutucusu.
+
+- [ ] **8.4 — Android splash.** `values-v31/themes.xml`: tek düz opak renk, 288dp canvas / 192dp görünür daire, metin yok, branding image yok.
+  **⚠️ SPEC'İN KENDİSİ DÜZELTİLMELİ — yazıldığı gibi uygulanırsa önlemeye çalıştığı flaşı karanlık modda ÜRETİR.** Bugün `androidApp/src/main/res/` **tek konfigürasyonlu**: yalnızca `values/themes.xml` var ve `windowBackground` sabit `#FBF7F2` — o **açık** mod yüzeyi. Karanlık paletin yüzeyi `#13100E`. `values-night/` olmadığı için karanlık modda soğuk açılış **krem** boyayıp ilk Compose karesinde **neredeyse siyaha** kesiyor. TODO metni ve bu adım *"#FBF7F2, ilk Compose karesiyle birebir aynı olmalı"* diyor ve bu **yalnızca açık modda** doğru. Sadık bir uygulama karanlık modda flaş bırakır ve **adım yeşil görünür**, çünkü açık mod kontrolü geçer.
+  **Doğrusu iki konfigürasyon:** `values/` → `#FBF7F2`, `values-night/` → `#13100E`, ve splash öznitelikleri API 31+ olduğu için `values-v31/` + `values-night-v31/`. Test cihazı API 31, yani **iki yol da onda doğrulanabilir**; F1.6 zaten bu cihazda karanlık mod geçişlerinin hataya en açık durum olduğunu gösterdi. → `themes.xml` TODO(splash) kapanır.
+
 - [ ] **8.5 — iOS ikon varlıkları.** 1024 PNG, **alpha kanalı yok** (otomatik App Store reddi), light/dark/tinted varyantlar. Xcode entegrasyonu Faz 9'da.
+
+- [ ] **8.6 — Yayın yapılandırması** *(yeni; hiçbir adım sahiplenmiyordu)*. Bugün `release { isMinifyEnabled = false }` — **R8 yok, proguard kuralı yok, signingConfig yok, shrinkResources yok**, `versionCode = 1`. Geliştirmeyi engellemiyor ama **F9.5 (TestFlight) ve herhangi bir Play yüklemesi bunların hepsini istiyor** ve 11 fazın hiçbirinde bir kutusu yoktu. Bir derlemenin yüklenmesi gerektiği gün keşfedilecek şey olmasın diye buraya yazıldı. Keystore **repoya girmez**.
 
 ## Faz 9 — iOS (Mac gerektirir)
 
 > Windows'ta yapılamaz. Kod baştan doğru yazılıyor; bu faz yalnızca derleme ve doğrulama bekliyor. **Kapı 2 burada iPhone'a dönüşür.**
+>
+> **İyi haber, bu oturumda kazanıldı:** `:composeApp:compileKotlinIosSimulatorArm64` **artık yeşil.** HEAD'de kırıktı (F4.10) ve o aynı zamanda ortak test paketini de bloklıyordu.
+>
+> **⚠️ Araştırmanın "TEK native dikiş bekle (kamera)" tahmini yanlış çıktı: bugün `expect/actual` dikişi **sekiz** ve kamera onlardan biri DEĞİL** (FileKit ortak API veriyor). Mevcut dikişler: `platformModule`, `ioDispatcher`, `ApplySystemBarAppearance`, `KeepScreenOn`, `ReceiptReader`, `downscaleForOcr`, `writeBytesTo`/`deleteFileAt`, ve veritabanı yolu. Faz 9'un bütçesi buna göre okunmalı.
 
-- [ ] **9.1 — İlk iOS derlemesi.** Simülatörde çalıştırma, Xcode/SwiftPM export ayarı.
-- [ ] **9.2 — Kamera native dikişi.** Alan raporları tutarlı biçimde burada SwiftUI'a inildiğini söylüyor — sürpriz olmasın diye bütçelendi.
-- [ ] **9.3 — Status bar + safe area.** `preferredStatusBarStyle` common koddan **set edilemez**, barındıran view controller'da ayarlanır. → `MainViewController.kt` TODO(ios) kapanır.
-- [ ] **9.4 — Gerçek iPhone doğrulaması.** `tnum` gerçekten uygulanıyor mu (Skia desteklemediği OpenType özelliklerini **sessizce** yok sayabiliyor), variable font eksenleri varsayılana düşüyor mu. → `Type.kt` TODO(tnum) kapanır.
-- [ ] **9.5 — TestFlight internal.** ~85 günde bir yeniden yükleme gerekiyor — takvime al. Araştırmanın "projenin durma noktası" dediği yer: 4. ayda ilk TestFlight süresi dolarken grafikler hâlâ boşsa uygulama yeniden yüklemeye değmez hale gelir.
+- [ ] **9.1 — iOS kabuğunu SIFIRDAN kur.** *(Adı "ilk derleme"ydi ve bu ciddi biçimde eksik anlatıyordu.)* **Doğrulandı: `iosApp` dizini YOK, Xcode projesi YOK** — ne `.xcodeproj`, ne `Info.plist`, ne Swift giriş noktası, ne asset katalog. (`.gitignore` var olmayan bir dizin için satırlar taşıyor.) `composeApp` framework'ü üretiyor ve **Kotlin tarafı derleniyor**; eksik olan **kabuğun tamamı**: Xcode projesi, bundle id, deployment target, framework entegrasyon seçimi (doğrudan embed / SwiftPM / CocoaPods — bu seçim F9.5'in TestFlight derlemelerinin nasıl üretildiğini belirliyor), `MainViewController`'ı çağıran host, ve F8.5'in 1024 PNG'sinin gireceği asset katalog yuvaları.
+  **⚠️ Android deneyiminden sonra şaşırtıcı olan izin maddesi:** F4.2'nin manşet bulgusu *"CAMERA izni gerekmiyor, cihazda doğrulandı"* — sistem kamera intent'i kullanıldığı için. iOS'ta aynı yol **`NSCameraUsageDescription`** istiyor, FileKit'in galeri yolu da **`NSPhotoLibraryUsageDescription`**. Onlar olmadan uygulama **sormaz, SONLANIR** — yani uygulamanın en önemli ikinci akışında sert çökme, ve **yalnızca Mac'te** keşfedilebilir. F9.2 SwiftUI yüzeyiyle ilgili; **plist bundan önce gelir**.
+  Ayrıca launch screen storyboard yok ve F8.4'ün splash işi **yalnızca Android** için yazılmış (`values-v31/themes.xml`) — iOS'un splash adımı hiç yok.
+  Derleme zaten geçiyor; kalan iş **kabuğu kurmak ve çalıştırmak**. Mac'e geçişte `kotlin.native.ignoreDisabledTargets=true` bayrağı da silinmeli — yalnızca Windows'ta iosX64Test uyarılarını susturuyor.
+
+- [ ] **9.2 — Kamera native dikişi.** Alan raporları tutarlı biçimde burada SwiftUI'a inildiğini söylüyordu; **FileKit bunu çürüttü** — kamera ortak API'den çalışıyor. Bu adım artık kamera değil, **iOS fiş hattı**: bugün `downscaleForOcr`, `writeBytesTo`, `deleteFileAt` hepsi `false` dönüyor ve `IosReceiptReader` açık bir `NotImplementedError` veriyor.
+  **⚠️ Bu arada iOS'ta gerçekleşen sessiz zarar:** `SummaryCard.onTakeReceipt` *"null ise fiş butonu HİÇ çizilmez"* diye belgelenmiş, **ama tek çağrı yeri her zaman non-null veriyor ve ağaçta hiçbir platform kontrolü yok**. Yani iOS'ta *"Fiş çek"* çizilir ve tıklanır; ardından küçültme başarısız olur, ham baytları yazma da sessizce başarısız olur (dönüş değeri yoksayılıyor), silme no-op olur, ve `enqueueReceipt` **dosyası olmayan bir yola** işaret eden satır yazar. Sonuç: diskte yetim bir kamera dosyası + Geçmiş'te kalıcı `okunamadı` fişi, ve *"iOS'ta henüz yok"* diyen hiçbir mesaj yok — okuyucunun açık hata döndürme niyetinin tam tersi. **Ya butonu platformda gizle, ya da hatayı yüzeye çıkar.**
+
+- [ ] **9.3 — Status bar + safe area.** `preferredStatusBarStyle` common koddan **set edilemez**, barındıran view controller'da ayarlanır — F1.6 bu yüzden baştan platform-ayrık kurgulandı ve iOS `actual`'ı **kasıtlı boş**.   **⚠️ `MainViewController.kt`'deki TODO'nun ikinci maddesi ARTIK GEÇERSİZ:** Nav3 saveable back stack işini F1.4 yaptı ve TODO'nun gerekçesi ("iOS'ta sessizce tezahür eder") o adımda **çürütüldü** — hata her platformda gürültülü. TODO metni güncellenmeli, yoksa gelecekte yapılmış bir işi tekrar yaptırır. Ayrıca `SystemBars.ios.kt`'deki `TODO(ios-statusbar)` bu adıma ait ve TODO tablosunda hiç görünmüyor. → `MainViewController.kt` TODO(ios) kapanır.
+
+- [ ] **9.4 — Gerçek iPhone doğrulaması.** `tnum` gerçekten uygulanıyor mu (Skia desteklemediği OpenType özelliklerini **sessizce** yok sayabiliyor — yani yanlış hizalanmış bir fiyat kolonu hiçbir hata vermeden çıkar), variable font eksenleri varsayılana düşüyor mu. **F1.1 bu riski baştan azalttı:** Plus Jakarta Sans da variable değil **statik** bundle edildi, çünkü `FontVariation.Settings` iOS'ta güvenilir değil ve Mac olmadan doğrulanamıyordu. → `Type.kt` TODO(tnum) kapanır.
+
+- [ ] **9.5 — TestFlight internal.** ~85 günde bir yeniden yükleme gerekiyor — **takvime al**. Araştırmanın *"projenin durma noktası"* dediği yer: 4. ayda ilk TestFlight süresi dolarken grafikler hâlâ boşsa uygulama yeniden yüklemeye değmez hale gelir. **Bu riski azaltan hiçbir adım yok** — bkz. **Riskler**. Araştırma dağıtım planında *"Play internal testing"*'i de sayıyor ve hiçbir fazda karşılığı yoktu; F8.6 ile birlikte düşünülmeli.
 
 ## Faz 10 — Sürekli / refactor
+
+> **Sıra numara sırasında değil ve bu kasıtlı:** 10.5 (sheet yüksekliği) 10.2'den (Nav3 Scene) önce duruyor, çünkü 10.5'in kendi metni *"ikisi aynı işte buluşuyor"* diyor — yükseklik bütçesini çözecek kapsayıcı Scene geçişiyle birlikte yazılacak. Yani **10.5, 10.2'yi kapılıyor**, tersi değil.
 
 - [x] **10.1 — AGP 9'a geçiş.** ✅ *("cihazsız" işareti kaldırıldı — fazlasıyla cihaz gerektirdi.)* AGP **9.3.1**, compileSdk/targetSdk **37**, lifecycle **2.11.0**. **Engel hâlâ duruyor:** `com.android.application` + `org.jetbrains.kotlin.multiplatform` aynı modülde 9.3.1'de de reddediliyor, birebir aynı hatayla. Bypass flag'leri (`android.builtInKotlin=false` + `android.newDsl=false`) çalışıyor ve ölçüldü — ama AGP 10.0'da kaldırılıyorlar ve `newDsl=false` AGP 9'un yeni DSL'ini kapatıyor, yani sürüm 9 DSL 8 olurdu. **Modül ikiye ayrıldı:** `:composeApp` artık `com.android.kotlin.multiplatform.library` ile kütüphane, APK'yı ince `:androidApp` üretiyor (yalnızca `MainActivity` + manifest + tema). JetBrains Mayıs 2026'dan beri KMP sihirbazında zaten bunu üretiyor.
 
@@ -215,24 +421,226 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
   **Bonus bulgu:** bölünme gizli bir sürüm kaymasını açığa çıkardı — `activity-compose` derlemede 1.12.0, çalışma zamanında 1.12.4'tü. Tek modüldeyken ikisi aynı classpath olduğu için görünmüyordu. 1.12.4'e hizalandı. (Çökmenin sebebi bu değildi — sebep 1. maddeydi — ama gerçek bir kaymaydı.)
 
   **Ölçüldü:** 8 birim test geçiyor, 79 iOS task'ı hâlâ tanımlı, Room şeması ve KSP üretimi sağlam, cihazda galeri + Room sondası + süreç ölümünden back stack geri dönüşü çalışıyor, çökme yok.
-- [ ] **10.5 — Sheet yüksekliği: sihirli sayıyı kaldır** *(cihazsız değil — cihazda ölçülmeli)*. `EkleSheet.GRID_ORANI = 0.24f` **ayarlanmış bir sabit, çözüm değil.** Bu telefonda ölçüldü (`uiautomator`, buton `y 1993→2047`); başka bir ekran oranında, katlanabilir cihazda, yazı tipi ölçeği büyütülmüş bir kullanıcıda ya da 12'den fazla reyon olduğunda **yeniden taşabilir** — ve taştığında sessizce taşar, çünkü sheet kırpıyor, hata vermiyor. **Kök sebep:** kısmi açık `ModalBottomSheet` içeriği sınırsız yükseklikle ölçüyor, o yüzden `weight` çalışmıyor; taşan içeriği de kaydırmıyor, kırpıyor. **Doğru çözüm adayları:** (a) F10.2'deki Nav3 custom Scene'e geçerken yüksekliği kendimiz sınırlayan bir kapsayıcı yazmak — ikisi aynı işte buluşuyor; (b) grid'i kendi `verticalScroll`'una alıp butonu `Box` içinde alta sabitlemek; (c) `SubcomposeLayout` ile önce butonu ölçüp kalanı grid'e vermek. **Regresyon nöbetçisi gerekiyor:** hangi çözüm seçilirse seçilsin, butonun sıfır olmayan sınırlara sahip olduğunu doğrulayan bir kontrol olmalı — `bounds="[0,0][0,0]"` derlemede görünmüyor.
+- [ ] **10.5 — Sheet yüksekliği: sihirli sayıyı kaldır** *(cihazda ölçülmeli)*. `AddSheet.GRID_RATIO = 0.24f` **ayarlanmış bir sabit, çözüm değil.** Bu telefonda ölçüldü (`uiautomator`, buton `y 1993→2047`); başka bir ekran oranında, katlanabilir cihazda, yazı tipi ölçeği büyütülmüş bir kullanıcıda ya da 12'den fazla reyon olduğunda **yeniden taşabilir** — ve taştığında **sessizce** taşar, çünkü sheet kırpıyor, hata vermiyor.
+  **Kök sebep:** kısmi açık `ModalBottomSheet` içeriği **sınırsız** yükseklikle ölçüyor, o yüzden `weight` çalışmıyor; taşan içeriği de kaydırmıyor, **kırpıyor**.
+  **Çözüm adayları:** (a) F10.2'deki Nav3 custom Scene'e geçerken yüksekliği kendimiz sınırlayan bir kapsayıcı yazmak — ikisi aynı işte buluşuyor; (b) grid'i kendi `verticalScroll`'una alıp butonu `Box` içinde alta sabitlemek; (c) `SubcomposeLayout` ile önce butonu ölçüp kalanı grid'e vermek.
+  **Regresyon nöbetçisi gerekiyor:** hangi çözüm seçilirse seçilsin, butonun sıfır olmayan sınırlara sahip olduğunu doğrulayan bir kontrol olmalı — `bounds="[0,0][0,0]"` derlemede görünmüyor.
+  **Aynı sınıftan kalan iki aday, ikisi de bütçesiz:** (1) **Özet kartı** — en dolu halinde altı çocuk (başlık, 36sp tutar, iki satıra sarabilen gövde, "Fiş çek", "Hepsini almadım", "Tamam") + 32dp üst/alt dolgu + çubuk inset'i, ve **hiç yükseklik tavanı yok**. Sıralama sonucu keskinleştiriyor: "Tamam" bilerek **en sonda** ve silik, yani taşma olursa kırpılan şeyler **F4.8'in zorunlu geri alma yolu** ile tek kapatma kontrolü oluyor. Önizlemeleri `onTakeReceipt`/`onFixTaken` vermediği için **en uzun hali hiç çizilmedi**. (2) **Ekle sheet'inin başlık satırı** — `SpaceBetween` ile iki `Text`, ikisinde de `weight`/`maxLines`/`Ellipsis` yok; uzun bir reyon adı (*"Süt-Kahvaltılık"*, *"Konserve-Salça"*) + büyük yazı ölçeği ile *"← Reyonlar"* kesilir — kategori grid'ine dönmenin sheet'i kapatmadan tek yolu o.
+  *(Fiş Kontrol'ün düzeltme sheet'i aynı sınıftaydı ve bu oturumda düzeltildi: yükseklik tavanı + kaydırma + `imePadding` eklendi. En kötü hali ~520dp'ydi ve en altta duran "Kaydet" — F4.7 alias öğrenmesini yazan tek düğme — ilk kırpılacak şeydi.)*
+
 - [ ] **10.2 — Bottom sheet'leri Nav3 Scene'e taşı.** Şu an ekran state'i; Nav3'ün custom Scene API'si doğru yer.
+  **Üç sheet, üç ayrı el yapımı host, paylaşılan sözleşme yok:** Ekle sheet'i (`vm.sheetOpen`), özet kartı (`vm.summary`), düzeltme sheet'i (`vm.editing`). **Hiçbiri süreç ölümünden sağ çıkmıyor** — sheet görünürlüğü `SavedStateHandle` desteklemeyen ViewModel akışlarında yaşıyor, yani süreç ölümünde açık bir sheet kapalı olarak geri geliyor. Scene geçişi state geri yüklemesini, yükseklik bütçesini (F10.5) ve kapsayıcı rengi tutarlılığını **tek geçişte** çözüyor.
+
+- [ ] **10.6 — Material3 tıklanabilir bileşen sözleşmesini iki yeni ekranda geri getir** *(bu oturumda tespit edildi)*. Çalışma sözleşmesi *"Tıklanabilir Material3 `Surface`/`Button`/`Card` kullanılmaz"* diyor ve gerekçesi ölçülmüş: material3'ün `Surface`'ı indication'ı **sabit kodluyor** (üç ayrı yerde), yani temadaki `LocalIndication` override'ı onlara **hiç ulaşmıyor**.
+  **F4.6 ve F4.9'da yazılan iki ekran bu kurala uymuyor:** `HistoryScreen`'de `TextButton` ve satır başına `Surface(onClick)`; `ReceiptCheckScreen`'de `Button`, `OutlinedButton`, `Surface(onClick)` ve **iki `OutlinedTextField`** — sonuncusu ayrıca `QuickAdd`'in *"M3 TextField değil `BasicTextField`"* öncülüne de aykırı. Sonuç: Geçmiş ve Fiş Kontrol'de kullanıcı Android ripple'ı görüyor, uygulamanın geri kalanında %6 tonal karartma + 0,97 ölçek görüyor.
+  **Düğmeler mekanik (`NeydiButton` / `Modifier.pressable`), metin alanları değil:** sayısal klavye + etiket + kenarlık taşıyan bir `NeydiTextField` bileşeni gerekiyor, yani bu iş **F3.1 bileşen kütüphanesine bir ekleme**. O yüzden ayrı madde.
+
+- [ ] **10.7 — Odak halkasını bağla** *(erişilebilirlik)*. `Modifier.focusRing` yazılmış ve **hiçbir yerde uygulanmamış** — repo genelinde tek referans kendi tanımı. Kendi KDoc'u neden var olduğunu söylüyor: *"Ripple olmadığı için klavye ve erişilebilirlik gezinmesinde görünür tek işaret bu."* Ripple **global olarak** kaldırıldığı ve `NeydiIndication` yalnızca `PressInteraction`'a tepki verdiği için bugün **hiçbir kontrolde** klavye/D-pad/switch-access odağı görsel değişiklik üretmiyor — her düğme, her çip, her kategori kutucuğu, her satır dahil.
+  **Doğru yer tek nokta:** `Modifier.pressable` zaten `MutableInteractionSource`'u sahipleniyor; `collectIsFocusedAsState()` ile halkayı orada bağlamak sözleşmeyi her çağrı yerinde değil **bir yerde** onurlandırır. Aynı geçişte `Role.Button` semantiği ve `onClickLabel` de eklenmeli — `pressable` ikisini de geçirmiyor.
+
+- [ ] **10.8 — 44dp dokunma hedefi tabanının altındaki üç kontrol** *(cihazsız ölçüm, cihazda doğrulama)*. `Sizes.minTapTarget = 44.dp` projenin kendi tabanı. Üç ihlal: (1) *"← Reyonlar"* ≈ **28dp** — kategori grid'ine dönmenin tek yolu; (2) *"Hepsini almadım"* ≈ **28dp** — F4.8'in zorunlu geri alma girişi; (3) token düzeyinde çelişki: `SizesExtra.suggestionChip = 40.dp` tabanın **4dp altında** ve `SuggestionChip` uygulamanın en çok dokunulan kontrolü (boş durum, Ekle sheet'i, otomatik tamamlama şeridi). Ya token yükseltilecek ya da istisna **yazılı** olacak.
+
+- [ ] **10.9 — Satır silme yolu yok** *(kullanıcıya dokunan boşluk)*. `ListViewModel.remove` ve `ListRepository.remove` (yumuşak silme) **hazır ve hiçbir composable onları çağırmıyor** — kaydırma, uzun basma, çöp ikonu, bağlam menüsü: hiçbiri yok. Yani yanlış yazılmış ya da yanlışlıkla yapıştırılmış bir satır **yalnızca işaretlenerek** listeden çıkabiliyor, ve işaretlemek onu **alındı** kaydeder, yani öneri motoruna bir satın alma olarak girer. Pano ile toplu yapıştırma (F3.4) tek dokunuşla N satır ekleyebildiği ve **önizleme/onay adımı olmadığı** için bu, o özelliğin en keskin kenarı. Veri katmanı ve ViewModel hazır; eksik olan **yalnızca hareket**.
+
+- [ ] **10.10 — Pano okumasını güncel API'ye taşı** *(F3.4'ün kapanması buna bağlı)*. `LocalClipboardManager` ve `ClipboardManager` **kullanımdan kalktı** (CMP 1.11.1 kaynağından doğrulandı); yerine gelen `Clipboard.getClipEntry()` **suspend**. Çağrı yeri zaten `LaunchedEffect` içinde olduğu için geçiş mekanik.
+  **İki ek kusur, ROADMAP'te kayıtlı değildi:** (a) `clipboardText` `rememberSaveable` değil `remember` ile tutuluyor ve "tüketildi" bilgisi yalnızca o değerde yaşıyor — konfigürasyon değişimi ya da süreç ölümünde çip **aynı pano içeriğiyle geri geliyor** ve kullanıcı aynı listeyi ikinci kez ekleyebiliyor. Çökme yok, ama **adetler sessizce ikiye katlanıyor**. Geçmiş/Ayarlar'dan Liste'ye her dönüşte de aynı şey oluyor. (b) Okuma `LaunchedEffect(Unit)`'ten geldiği için Liste'ye **her girişte** koşuyor; iOS'ta bu sistem yapıştırma izni uyarısını tetikliyor. Yeni API iOS tarafında önce `hasPlainText`'e bakıyor — yani **kullanımdan kalkmayan API aynı zamanda uyarı dostu olan**.
+
+- [ ] **10.11 — Ölü kod ve ölü token temizliği** *(cihazsız)*. Hepsi doğrulandı:
+  - `ProductDao.observeStaples` — sorgu var, **çağıranı yok** (F6.8 ile canlanacak).
+  - `AccentStrip` — belgelenmiş tüketicisi *"fiş kontrolünde yeni ürün / emin değil satırları"*, ama o ekran `AccentChip` + tonlu kapsayıcı kullanıyor. Ya silinecek ya benimsenecek; bugünkü hali gelecek okuyucuyu yanıltıyor.
+  - `SafeArea` objesi (44/34dp) — sıfır referans; inset'ler `WindowInsets` ile yönetiliyor ki **daha doğrusu o**. Obje bayat.
+  - `Elevation` objesi, `Sizes.toolbarAction` — tanımladıkları bileşenler yok.
+  - `Sizes.hairline` — **sıfır referans**, iki kenarlık çağrısı da `1.dp`'yi elle yazıyor. Yani *"0.5dp ASLA — iOS 3x'te alt-piksele düşüp kaybolur"* garantisi **zorlanmıyor**.
+  - `NeydiExtraShapes.checkRest`/`checkChecked` — sıfır referans; `CheckTarget` aynı değerleri satır içinde yeniden yazıyor.
+  - `TODO(kategori-tonlari)` — 12 kategori tonu gelmediği için **12 kategori kutucuğunun hepsi aynı gri** çiziliyor. Hiçbir adım sahiplenmiyordu; tasarım devriyle birlikte gelmeli.
+  - Dört ölü import ve bir yanlış yerleştirilmiş KDoc.
+  - Kotlin 2.4.10'da artık gereksiz olan dört `@OptIn(ExperimentalTime)` + bir `@OptIn(ExperimentalUuidApi)` *(ikincisi `generateV7` deneysel olduğu için **kalmalı**)*.
+
+- [ ] **10.12 — Derleyici uyarılarını sıfıra indir** *(cihazsız)*. Üçü de gerçek borç:
+  - `ReceiptReader.android.kt` *"Condition is always true"* — kozmetik ama gerçek.
+  - `ReceiptParser.kt` iki *"Unnecessary non-null assertion"* — `!!` taşıyıcı görünüyor ama kanıtlanabilir şekilde gereksiz.
+  - `ListScreen.kt` `LocalClipboardManager` deprecation → **F10.10**.
+
+- [ ] **10.13 — `androidHostTest` kaynak kümesi ve ölçümle kazanılmış iki fonksiyonu teste bağla** *(cihazsız)*. `composeApp/src` altında **androidHostTest dizini yok** — `commonTest`, `androidMain`, `commonMain`, `iosMain` var. Sonuç: `visualRows` ve `score` **test edilmiyor ve commonTest'ten edilemez** (ML Kit `Text` ve `android.graphics.Rect` bağımlı). Oysa bunlar projenin **en zor kazanılmış iki fonksiyonu**: görsel satır gruplaması satır sayısını 47'den 25'e indirdi ve kolon karışmasını çözdü; yön puanlayıcı 8 puan / 0 puan farkıyla ölçüldü. Bugün o bilgiyi koruyan tek şey **elle cihaz koşumu**.
+  **Ucuz yarısı:** `score(rows: List<String>)` imzasında **hiç Android tipi yok** — commonMain'e taşınırsa mevcut `commonTest`'ten, elimizde zaten olan gerçek fiş satır listeleriyle test edilebilir ve 8-vs-0 ölçümü **regresyon testine** dönüşür. `visualRows` gerçekten androidHostTest + sahte bir ML Kit `Text` istiyor; asıl korunmaya değer kısmı `Rect` geometrisi (medyan yükseklik, 0,6 tolerans, `centerY` gruplaması).
+  *Not: `androidHostTest` build modelinde **var** ve taşıyıcı — `commonTest` onun derlemesine giriyor ve JVM SQLite'ı oradan alıyor (F2.3). Eksik olan yalnızca kendi test dosyaları.*
+
 - [ ] **10.3 — `graph.json` takip kararı** *(cihazsız)*. Mac'e geçişte yeniden değerlendir — merge driver kurulu ama graph.json gitignore'da olduğu için şu an atıl.
-- [ ] **10.4 — Araştırma güncellemesi** *(cihazsız)*. Faz 0 sonucunu `docs/03-arastirma-bulgulari.md`'ye işle; çürütülen varsayımları güncelle.
+
+- [ ] **10.4 — Araştırma güncellemesi** *(cihazsız)*. Faz 0 sonucunu `docs/03-arastirma-bulgulari.md`'ye işle; çürütülen varsayımları güncelle. **Bu adım koştuğu ana kadar o doküman aktif olarak yanlış bilgi veriyor** — en az on bir iddiası çürütüldü ve doküman hâlâ ilk hallerini yazıyor (görsel LLM'in birincil mimari olduğu, çevrimdışı OCR'ın kapsam dışı olduğu, TOPLAM'ın neredeyse kusursuz okunduğu, mağaza adının neredeyse kusursuz okunduğu, fiş başına ~20 kalem, tek native dikiş, barkod yolunun çalıştığı…). Tam liste bu dosyanın **Öğrenilenler** bölümünde.
+
+## Şema sürüm planı — tek bir v2 → v3 bump
+
+> **Bu bölüm bir adım değil, kalan üç fazı bağlayan bir kural.** Faz 5, 6 ve 7'nin **dokuz ayrı** şema değişikliğine ihtiyacı var. Dokuzunu tek bir bump'ta toplamak bir tercih değil, ölçülmüş bir zorunluluk.
+
+**Neden toplamak zorunlu:** her bump bir **elle cihaz dansı** demek (v2 kur → veri ekle → v3 kur, `pm clear` yapmadan) ve **F4.1'in sessiz kazası her seferinde tekrarlanabilir**. O kazada, sürüm hata ayıklamak için geçici olarak 1'e çekilince Room **`1.json` temelini yeni kolonlarla üzerine yazdı**, diff boş çıktı ve **hiçbir şey yapmayan bir migration** üretildi — derleme ve testler yeşil kaldı. Dokuz değişiklik üç faza dağılırsa **dokuz korumasız bump** olur.
+
+**Neden erken olmak zorunlu:** üç tablo bugün **boş** ve Faz 5/6 sırasında dolmaya başlıyor — `price_observation`, `suggestion_event`, `pending_op`. **Tablo boşken şemasındaki hata bedavadır.** F5.1 kullanıcının telefonunda bir kez koştuktan sonra `price_observation` hanenin **tek fiyat geçmişini** tutuyor — uygulamanın ikinci varlık sebebi — ve onu yeniden şekillendirecek `execSQL` **yok**.
+
+### Kural: her yeni kolon nullable ya da varsayılanlı olmak ZORUNDA
+
+`AutoMigration(1,2)`'nin tamamen otomatik olmasının sebebi tek: eklenen tek NOT NULL kolon bir varsayılan taşıyor (`Trip.status @ColumnInfo(defaultValue = "PLANNING")`), diğeri (`ownerMemberId`) nullable.
+
+`connection.execSQL` commonMain'de **yok** (androidx.sqlite bilerek dışarıda bıraktı: web varyantı suspend, nonWeb değil). Bunun **iki yarısı var ve tehlikeli olan ikinci yarı şimdiye kadar yazılmamıştı:**
+
+1. Yasak olan **yalnızca VERİ GERİ-DOLDURMA**. Anotasyonla yapılan yapısal değişiklikler — `@DeleteTable`, `@DeleteColumn`, `@RenameTable`, `@RenameColumn` — `execSQL` istemiyor ve **kullanılabilir**. Yani silmek/yeniden adlandırmak serbest; **mevcut satırlar için bir değer hesaplamak** değil.
+2. Dolayısıyla **sert kural:** yeni kolon ya nullable olacak ya `@ColumnInfo(defaultValue = ...)` taşıyacak. Anlamlı bir sabit varsayılanı olmayan bir NOT NULL kolon **hiç eklenemez** — ya nullable bir ara kolon + çalışma zamanında tembel doldurma, ya tabloyu yıkıp yeniden kurmak gerekir.
+
+**Bu kural üç geleceği hemen belirliyor:** F7.4'ün `updatedAt`'i `createdAt`'e **varsayılan olamaz** (ifade varsayılanı yok, geri-doldurma yok) → `Long?` olacak ve her okuyucu null'ı `createdAt` sayacak. F6.2'nin `muAdjust`'ı zararsız (`defaultValue = "0"`) çünkü `product_stats` saf türetilmiş cache ve bugün sıfır satır — `@DeleteTable` + yeniden kurmak da yasal. F6.2'nin "unuttum / gerekmedi" kolonu geçmiş geziler için **gerçekten bilinmiyor** → nullable olacak ve kolondan önce kapanmış her gezi **sonsuza kadar gerekçesiz** kalacak.
+
+### v3 bump'ına girecekler
+
+| Ne | Kime ait | Biçim |
+|---|---|---|
+| `ReceiptLine.unit` (fiyat tabanı) | F5.1 | `defaultValue = "adet"` |
+| `ReceiptLine.isDiscount` | F5.6 | `Boolean, defaultValue = "0"` |
+| `Receipt.receiptDate` | F5.8 | `Long?` |
+| `price_observation.source` ya da ayrı `external_price` tablosu | F5.4 | `RECEIPT/MANUAL/CATALOG` — ayrı tablo daha iyi oturuyor (tazelik damgası gerekiyor) |
+| `product_stats.muAdjust` | F6.2 | `defaultValue = "0"` |
+| `trip_line` "neden alınmadı" | F6.2 | nullable enum |
+| Bastırma/engelleme tablosu ya da `product.dontSuggest` | F6.5 | yeni tablo |
+| `app_settings`: kurulum bayrağı + tempo + gizlilik anahtarları | F6.6/F6.7 | hane başına tek satır |
+| `Household.joinCode`, `Member.email` | F6.7/F7.2 | nullable |
+| `updatedAt` — **senkron edilen 11 tablonun hepsinde** | F7.4 | `Long?` |
+
+**Tek bir `app_settings` tablosu** (hane başına bir satır) F6.5'in engelleme görünürlüğüne, F6.6'nın kurulum bayrağı + tempo'suna ve F6.7'nin gizlilik anahtarlarına birlikte hizmet ediyor — üç bump yerine bir bump için en güçlü argüman bu.
+
+### Aynı bump'ta kapanması gereken pencere: Türkçe enum girdileri
+
+F4 yeniden adlandırma kaydı enum girdilerini yeniden adlandırmanın *"yalnızca iki koşul önce doğrulandığı için güvenli"* olduğunu söylüyordu: şema **sürüm 1**'de ve o kolonu **hiçbir şey yazmıyor**. **İki enum için o koşulların ikisi de artık geçersiz ve kimse fark etmedi:** `OpType { EKLE, GUNCELLE, SIL }` ve `SuggestionOutcome { GOSTERILDI, EKLENDI, REDDEDILDI, YOKSAYILDI }` — ikisi de yayınlanmış v2 şemasında **TEXT** olarak duruyor.
+
+İki tablo da şu an **boş** (DAO yok, yazıcı yok), yeniden adlandırma **hâlâ bedava**. F6.3/F6.5 ilk `SuggestionEvent`'i ya da F7.5 ilk `PendingOp`'u yazdığı an bir girdiyi yeniden adlandırmak mevcut satırları **sessizce yetim** bırakır — Room'un enum dönüştürücüsü bilinmeyen adı **okurken atar**, yani uygulama kendi geçmişini okurken çöker. **Şimdi iki düzenleme, sonra geri-doldurulamayan bir migration + veri kaybı kararı.** (`EmptyKind { ILK_GUN, DONGU_ORTASI }` yalnızca UI'da, hiç kalıcılaşmıyor — her zaman güvenli.)
+
+### Bu bump'ı korumak için gereken şey henüz yok
+
+**Migration'ı regresyon testine sokmanın hiçbir yolu yok**, üçü de doğrulandı: (1) katalogda `room3-testing` yok, yani `MigrationTestHelper` yok; (2) her test `Room.inMemoryDatabaseBuilder` kullanıyor ve o **daima güncel sürümde** kurup hiçbir migration yolunu koşmuyor; (3) **CI yok** — `.github` dizini yok, tek otomasyon sürüm kontrolüne girmeyen graphify hook'ları.
+
+**Somut nöbetçi (F10.5'in "regresyon nöbetçisi" ile aynı sınıf):** yayınlanmış her şema JSON'unun `identityHash`'ini bir teste bağla. Bugünkü değerler — `1.json`: `79a4b5c5f6f322a4419646c47e027adb`, 16 entity; `2.json`: `a80e7052abd5ae6f2761d37beb58041a`, 16 entity. İkisinden biri değişirse test kırılır. F4.1'in kazasını **sessiz ve yıkıcı** olmaktan **gürültülü** olmaya çevirir; bugün onu hiçbir şey fark etmez. → **F10.15**
 
 ---
 
+## Öğrenilenler — ne yanlış çıktı, ne doğru çıktı
+
+> Bu bölüm sonradan eklendi ve **fazlar bittiğinde silinmeyecek**. Sebebi tek: bu projede yanlış çıkan şeylerin **çoğu sessizce** yanlış çıktı — derleme yeşil, testler yeşil, ekran doğru görünüyor. O yüzden hangi sınıf hataların bu kod tabanında **tekrar ettiği** yazılı olmak zorunda.
+
+### Tekrar eden altı sessiz hata sınıfı
+
+**1. Kendi yazdığım örnek kendi varsayımımı onaylar.** En pahalı örnek: fiş ayrıştırıcının **tamamı yanlıştı ve 17 testi geçiyordu** — örnek fişleri de kuralları da ben yazmıştım. İki gerçek fiş **üç varsayımı birden** çürüttü (nokta ondalık, toplam satırında KDV geçmesi, miktar satırının üründen önce gelmesi). Aynı sınıftan: aynı oturumda **dört test boş liste üzerinde geçiyordu** (`all {}` / `none {}` boş kümede daima true) ve katalog testleri veritabanını **veri dosyasıyla** karşılaştırdığı için 245 ürün 50'ye düşseydi hepsi geçerdi. **Yerleşen kural:** kurgu gerçek cihaz çıktısından gelir, ve negatif iddianın altına bir **boyut tabanı** konur.
+
+**2. Testin ısırabildiği kanıtlanmadıkça test yoktur.** F1.2 kontrast testi ilk koşumunda **gerçek bir erişilebilirlik hatası** buldu (çifte soluklaştırılmış metadata, 3,98:1). F2.3 kısıt testleri **DAO üzerinden değil ham SQL** ile yazıldı, çünkü DAO `REPLACE` ile yazsaydı ikinci satır sessizce üstüne biner ve test yeşil kalırdı. Bu oturumda UUID testi `random()`'a geri alınarak **kırıldığı gösterildi**. Yerleşen pratik: yeni bir değişmez yazarken **onu bilerek boz ve testin bağırdığını gör**.
+
+**3. Önek/alt-dizgi eşleşmesi kelime sınırı olmadan.** Aynı oturumda **üç kez**: `import androidx.room3.RoomDatabase` `RoomDatabaseConstructor`'ı önek olarak eşleyip böldü (Room KSP'nin kafa karıştırıcı hatasına yol açtı); `" pos"` `poseti`'nin içinde bulundu ve **alışveriş poşeti ödeme satırı sanıldı** (1,00 TL toplamdan düştü, aritmetik kapısı **haksız yere** tutmadı); ve yeniden adlandırmada `\b` alt çizgiyi kelime karakteri saydığı için `_girdi` atlandı.
+
+**4. Kolon adı / bağ değişkeni / SQL takma adı, Kotlin ile sözleşmedir.** Yeniden adlandırma `WHERE matchKey LIKE :onEk` bağ değişkenini ve `p.name AS ad` takma adını bozdu — ikisini de Room derleyicisi yakaladı. Ders: *"string'lere dokunma"* kuralının **ters yüzü var** — SQL string'i ve Kotlin şablonu (`${...}` içi) **gerçek kod** taşır.
+
+**5. Yerel-duyarsız harf dönüşümü Türkçe'yi bozar, hata vermeden.** `"İNCİR".lowercase()` beş harf yerine **yedi kod noktası** üretiyor (her İ'nin ardına U+0307) ve `== "incir"` **false** — kullanıcı "İncir" yazıp fiş "INCIR" yazdığında uygulama iki ayrı ürün sanır ve **fiyat geçmişini ikiye böler**. Aynısı `uppercase()` ile iki-harf avatarında: `"incir" → "IN"` yanlış, `"İN"` doğru.
+
+**6. Ekranda görünmeyen şey yoktur — ve önizleme onu maskeleyebilir.** Bu oturumda: `onHistory` ve `onGoShopping` aşağıya geçiliyor ama **hiç çağrılmıyor** (Kotlin kullanılmayan parametre için uyarı vermiyor) → iki ekran **hiçbir yerden açılamıyor**. Üç başlık düğmesi taşıyordu ve *"Ayarlar"* **kesiliyordu** — `Row` taşan içeriği kırpıyor, kaydırmıyor. Ve en öğreticisi: iki yeni ekran karanlık modda **açık zemin** gösteriyordu, **önizlemeler bunu göremezdi** çünkü `NeydiPreview` içeriği kendi `Surface`'ına sarıyor — yani koşum tam olarak gerçek ekranın **eksik olduğu şeyi** sağlıyordu.
+
+### Çürütülen varsayımlar
+
+| Varsayım | Gerçek | Nasıl anlaşıldı |
+|---|---|---|
+| Görsel LLM tek yol, cihazda OCR bir "fallback" | **Cihazda ML Kit tek yol oldu**; API anahtarı, proxy, ağ ve ücret hiç gerekmedi | Kullanıcı ücret sordu, alternatif ölçüldü |
+| Çevrimdışı OCR **kapsam dışı** | Kapsamın **tamamı** | Aynı karar |
+| Aritmetik `Σ(satır) + KDV = TOPLAM` | **KDV tamamen dışarıda**; raf fiyatı kanunen KDV dahil | İki gerçek fiş, birebir 225,50 ve 484,58 |
+| TOPLAM "neredeyse kusursuz" okunuyor | Toplam satırı **"Ödenecek KDV Dahil Tutar"** ve içinde KDV geçiyor; KDV'yi eleyen kural **gerçek toplamı eliyordu** | Gerçek fiş |
+| Mağaza adı "neredeyse kusursuz" | İki fişten birinde **adres satırı** yakalanıyor (`FiLE OVACIK / KEÇİÖREN/ ANKARA`) ve **hiçbir test bunu tutmuyor** | Cihazda Fiş Kontrol başlığı |
+| Fiş başına ~20 kalem | ~60 kalemlik fiş tek karede **4,7 piksel/satır** — ML Kit 60 satırın **2**'sini okudu. Yazılımla çözülemez | Uzun fiş ölçüldü |
+| Fiş QR kodu satır kalemleri taşır | **Taşımıyor** — yapısal | Araştırma |
+| Barkod ile kanonik eşleşme çalışır | `searchByIdentity` gerçek EAN-13'lerde **6/6 boş**; o metot marketfiyati'nın kendi iç token'ını alıyor | İlk araştırma ajanı **test ettiğini iddia etmişti**, doğru değildi |
+| CMP iOS'ta **tek** native dikiş (kamera) | Dikiş **sekiz** ve **kamera onlardan biri değil** (FileKit ortak API veriyor) | Kod sayıldı |
+| Nav3 saveable back stack "iOS'ta sessizce bozulur" | **Her platformda gürültülü**: `rememberNavBackStack` varsayılan modülü **koşulsuz** `require` ile reddediyor | navigation3-runtime 1.1.1 kaynağı |
+| Ripple teemada kaldırıldı | **Hiç yürürlükte değildi**: material3'ün `Surface`'ı indication'ı **üç ayrı yerde sabit kodluyor**, tema override'ı ona hiç ulaşmıyor | material3 1.9.0 kaynağı + cihazda piksel ölçümü |
+| `compose.material3` = CMP sürümü (1.11.1) | **1.9.0** — material3 CMP'de **ayrı** sürümleniyor ve 1.11.1 diye bir sürümü **yok** | compose-gradle-plugin kaynağı |
+| Room 2 örnekleri geçerli | Gradle eklentisi kendini **`room3`** adıyla kaydediyor; `room { }` yazan her örnek patlıyor | Eklenti kaynağı |
+| AGP 9 ile tek modül çalışır, bypass bayrakları çözüm | Bayraklar **AGP 10'da kalkıyor** ve `newDsl=false` sürüm 9'u DSL 8'e düşürüyor → **modül ikiye ayrıldı** | Ölçüldü |
+| id'ler UUID **v7** | **v4**'tü — `Uuid.random()` = `generateV4()`. Sözleşme yorumda doğru, kodda tam tersi | stdlib kaynağı |
+| iOS hedefi derleniyor | **HEAD'de kırıktı** ve bu ortak test paketini de bloklıyordu, yani `allTests` **hiç koşmuyordu** | `git stash` ile doğrulandı |
+| `(1)` ve `(2)` bitmeden tek satır Kotlin yazma | 30 adım **F0.3/0.4/0.5 açıkken** yazıldı — ve bu **doğru karar** oldu: görünür ilerleme fiş ölçümünden bağımsızdı | Kayıt |
+
+### Ölçümle doğrulanan doğru kararlar
+
+- **Cihazda ML Kit** — daha az bağımlılık, sıfır ücret, fotoğraf telefondan çıkmıyor, ve güvenlik ağı (Fiş Kontrol ekranı) zaten şart koşulmuştu.
+- **`closeIfOpen` tek karşılaştır-ve-yaz + kapalılığın otoritesi `completedAt`** — ikinci kapatma **sıfır satır** günceller, yani "ben kapattım" ile "zaten kapalıydı" ayırt edilebiliyor. Bu, mutabakatın çift koşmasını **veritabanı düzeyinde** engelliyor.
+- **Zincir bazlı `ProductAlias`** — cihazda kanıtlandı: düzeltme, fişin **sıfırdan yeniden okunmasından** sonra da uygulanıyor ve tekrar sorulmuyor.
+- **Görsel satır gruplaması + yön puanlaması** — satır sayısı 47→25, ve **aynı fiş iki yönde de aynı 25 satırı** veriyor. EXIF'e güvenilmedi; küçültmede yeniden kodlanan JPEG yön bilgisini taşımıyor.
+- **Aritmetik kapısının üç durumu** — "doğrulanamadı" ile "tutmadı" ayrı; toplamı okuyamamak **bizim** hatamız ve kullanıcıya onun hatası gibi gösterilmiyor.
+- **Tek SQL JOIN, üç `combine` edilmiş Flow değil** — üç Flow her değişimde üç yeniden yayın üretir ve satırlar bir kare boşluklu görünürdü.
+- **Reyon sırası alışverişte donuyor** — piksel diff: bir satır işaretlendi, altındaki üç satırın farkı **0/60000**.
+- **`NeydiButton` + `Modifier.pressable`** — cihazda ölçüldü: **%5,6 karartma**, belgelenen %6 tonal overlay. Material3 ripple'ı rengi **açıyordu**.
+- **Para = `Long` kuruş, `Double` değil** — bu uygulamanın işi fiyat toplamak.
+- **`packSize`/`packUnit` ayrı alanlar** — ambalajı görmeyen bir fiyat hafızası shrinkflation'ı "fiyat sabit" diye raporlar, yani **yalan söyler**.
+- **`medianIntervalDays` medyan, ortalama değil** — bir kez 40 gün unutmak ortalamayı kaydırıp "10 günde bir alıyoruz" gerçeğini gizler.
+- **UI'da dürüstlük kuralları** — uydurma sayı yok (`null` = bilmiyoruz, `0` = bedava değil), iyi durum **sessiz** (VERIFIED'a çip konmuyor), geri alma yolu **görünür** ("Hepsini almadım").
+- **Kontrast kuralı iddia değil TÜRETME ile kilitli** — amber'ın kontur gerektirmesi ölçümden çıkıyor, bağımsız bir iddia olarak yazılmıyor; ikisi birlikte yanlış olamaz.
+
+---
+
+## Açık kararlar — iş başlamadan verilmesi gerekenler
+
+> Her biri **kod yazmayı bloklamıyor** ama **yanlış verilirse geri alınması pahalı**. Sırası kabaca ihtiyaç sırası.
+
+1. **Şema: tek v3 bump mı, faz başına bump mı?** → Yukarıdaki bölüm **tek bump** öneriyor. Kararı geciktirmenin maliyeti: her geciken hafta boş kalması gereken bir tabloya veri yazma riskini artırıyor.
+2. **`ProductStats` neyi sayacak?** Yalnızca `trip_line` mı, yoksa `trip_line` ∪ eşleşmiş `receipt_line` mi? İlk seçenek **listeye yazılmadan alınan ürünleri sayamaz** — yani Faz 4'ün var olma sebebini es geçer.
+3. **"Unuttum" ile "gerekmedi" ayrılacak mı?** Tasarım üç düğme istiyor, şemada tek boolean var. Ayrılmazsa öneri motoru iki zıt sinyali aynı sayar.
+4. **Fiyat gözleminin birimi ne?** `PriceObservation` fiyatın **hangi birim başına** olduğunu kaydedemiyor, ve `observeEstimate` `quantity × unitPriceMinor` çarpıyor — kg başına bir fiyatı adet sayısıyla çarpmak sessiz bir yanlış sonuç üretir.
+5. **Katalog fiyatı ile ödenen fiyat aynı tabloda mı?** Ayırt edici bir alan yok. Karışırsa uygulama kullanıcıya **ödemediği bir fiyatı ödedin** der — hem de reyonda.
+6. **Engelleme listesi olaylardan mı türetilecek, ayrı tablo mu?** Tasarım listenin **görünür ve tek dokunuşla geri alınabilir** olmasını şart koşuyor; append-only günlükte temiz bir "geri al" yazması yok.
+7. **`SuggestionEvent` senkron ediliyor mu?** `householdId` taşıyor ama `deletedAt` taşımıyor ve yazılı muafiyeti yok. Faz 7'den **önce** karara bağlanmalı.
+8. **Fiş fotoğrafları senkron edilecek mi?** `supabase-storage` katalogda hazır. Cevap **hayır** olmalı ve **yazılı** olmalı — yoksa gizlilik özelliği ilk depolama bağlamasında sessizce tersine döner.
+9. **Katalog nasıl güncellenecek?** Tohumlayıcı `COUNT(*) FROM category > 0` ile kapıda duruyor, yani **ilk açılıştan sonra katalog o telefonda kalıcı olarak dondu**. Bu, `Diğer` kategorisini eklemeyi, kategori düzeltmeyi ve marketfiyati tohumlamasını **imkânsız** kılıyor. Ayrıca tohum id'leri **sıradan türetiliyor** (`seed-<rank>`) — `Product.seedId` doldurulduğu an sıralar **sonsuza kadar donuyor**.
+10. **Katılma akışı hane kimliğini nasıl değiştirecek?** `DEFAULT_HOUSEHOLD_ID` **her kurulumda aynı sabit**, yani ikinci telefon aynı kimlikle başlıyor. Bir haneye katılmak, ilk push'tan önce **her yerel satırın yeniden anahtarlanmasını** gerektiriyor.
+
+---
+
+## Riskler
+
+**1. 4. ay çarpışması — araştırmanın "projenin durma sebebi" dediği yer.** İlk TestFlight süresi (~85 gün) dolarken grafikler hâlâ boşsa uygulama yeniden yüklemeye değmez hale gelir. **Bu riski azaltan hiçbir adım yok.** Değer eğrisi aritmetiği de ölçülmedi: ~360 satır, ~100 ürün, ve 6 ayda **yalnızca 10-20 trend edilebilir SKU**. Azaltıcı adaylar: F0.4 katalog tohumlaması (soğuk başlangıcı kısaltır), F6.6 Kurulum (3. gezide akıllı hissettirmek — var olma sebebi tam bu), ve tek gözlemle bile anlamlı olan `PriceHint.Single`.
+
+**2. İki sessiz hata üst üste: Supabase duraklaması + GitHub Actions.** Ücretsiz katman 7 gün hareketsizlikte duruyor; 60 gün sessiz repoda zamanlanmış workflow **devre dışı kalıyor**. Yani keep-alive'ı Actions ile kurmak **önce keep-alive'ın sessizce ölmesi, sonra veritabanının durması** demek. F7.6 bunu doğru taşıyor ama **hiç doğrulanmadı** (Faz 7 başlamadı). İki kişilik bir uygulamanın **tatilde** yaşayacağı şey bu.
+
+**3. Çevrimdışı düzenleme kaybı, iki kişilik bir hanede soyut değildir.** F7.3 bilinçli olarak kaybı kabul ediyor. Ama kaybedilen düzenleme *"eşimin eklediği ürün kayboldu"* cümlesine dönüşüyor — tombstone kuralının **tam olarak engellemek için var olduğu** cümle. **Yazılması gereken:** F7.3 hangi kaybı kabul ediyor (çevrimdışı işaretleme) ve hangisini kabul etmiyor (**EKLEME**)? Add-beats-remove F7.5'e ertelendi.
+
+**4. Ölçek riski YOK ve bu bir karar.** ~60 satır/ay, 6 ayda ~360 satır. `receipt` tablosunun **hiç index'i yok** (DAO üçüne göre sorguluyor) ve bu **yıllarca sorun olmayacak**. Faz 5-7'de performans için index eklenmeyecek, F6.1'in tek transaction'da tam yeniden kurulumu **incremental yapılmayacak**. Taşıyıcı olan tek index zaten var: `(productId, observedAt)`.
+
+**5. Türkçe bir yerelleştirme tercihi değil, doğruluk kısıtı.** Yerel-duyarsız harf dönüşümü bu projeyi **iki kez** ısırdı. Kalan her metin üreten adım bunu miras alıyor: F6.3 gerekçe metinleri, F6.4'ün dört şablonu, F5.3 manşeti, F6.6 tempo çipleri. **İki kural:** kullanıcıdan/fişten gelen metne asla `lowercase()`/`uppercase()` uygulanmaz (`matchKey` / `turkishInitials` kullanılır), ve **%25 metin genişlemesi** payı hesaba katılır.
+
+**6. Gün sınırı tuzağı — öneri motorunun çalışıp çalışmamasını belirliyor.** Bütün zaman damgaları UTC epoch millis, kullanıcının "gün" kavramı ise Europe/Istanbul. `(now - then) / 86_400_000` **24 saatlik blok sayısı**, takvim günü sayısı değil — yerel saatle dün 22:00'deki bir alışveriş bugün 22:00'ye kadar "0 gün önce" okunuyor. Temposu ~10 gün olan bir uygulamada bir günlük kayma, *"12 gündür almadın, normalde 10 günde bir"* önerisinin **tetiklenmesi ile tetiklenmemesi** arasındaki fark. Hem gösterim katmanı hem `medianIntervalDays` hesabı **aynı** takvim-günü aritmetiğini kullanmak zorunda, yoksa ekran ile skor birbirinden farklı konuşur.
+
 ## Kod TODO eşlemesi
+
+*Tablo bu oturumda koddan yeniden üretildi — dört satırı bayattı (kapanmış üç TODO hâlâ listedeydi, bir yol yeniden adlandırmadan sonra güncellenmemişti) ve iki gerçek marker hiç görünmüyordu.*
 
 | TODO | Dosya | Kapatan adım |
 |---|---|---|
-| `TODO(font)` | `ui/theme/Type.kt` | F1.1 |
-| `TODO(saveable)` | `App.kt` | F1.4 |
-| `TODO(ios-serialization)` | `nav/Destinations.kt` | F1.4 |
-| `TODO(sheet-yuksekligi)` | `ui/liste/EkleSheet.kt` | F10.5 |
-| `TODO(splash)` | `androidApp/src/main/res/values/themes.xml` | F8.4 |
-| `TODO(ios)` | `iosMain/MainViewController.kt` | F9.3 |
-| `TODO(tnum)` | `ui/theme/Type.kt` | F9.4 |
+| `TODO(sheet-yuksekligi)` | `ui/list/AddSheet.kt:155` | F10.5 |
+| `TODO(kategori-tonlari)` | `ui/components/CategoryTile.kt:34` | **F6.9** *(yeni: hiçbir adım sahiplenmiyordu)* |
+| `TODO(splash)` | `androidApp/src/main/res/values/themes.xml:4` | F8.4 |
+| `TODO(ios-statusbar)` | `iosMain/ui/theme/SystemBars.ios.kt:16` | **F9.3** *(yeni: tabloda yoktu)* |
+| `TODO(ios)` | `iosMain/MainViewController.kt:11` | F9.3 — **metni güncellenmeli:** ikinci maddesi F1.4'ün **yaptığı** işi istiyor ve gerekçesi o adımda **çürütüldü** |
+| `TODO(tnum)` | `ui/theme/Type.kt:166` | F9.4 |
+
+**Kapanmış ve tablodan silindi:** `TODO(font)` (F1.1), `TODO(saveable)` (F1.4), `TODO(ios-serialization)` (F1.4) — üçü de koddan gitmişti, tabloda kalmıştı.
+
+## Bayat adlar — ROADMAP'in yazdığı ≠ kodun içindeki
+
+*Kod Türkçe'den İngilizce tanımlayıcılara geçti, bu doküman geçmedi. Aşağıdaki adları grep'leyen biri hiçbir şey bulamaz. Metin içinde düzeltildi; tablo kayıt için duruyor.*
+
+| ROADMAP'te yazan | Gerçek sembol |
+|---|---|
+| `ListeEkrani` | `ListScreen` |
+| `ListeRepository` | `ListRepository` |
+| `UiSatir` | `UiRow` |
+| `EkleSheet` / `ui/liste/` | `AddSheetContent` / `ui/list/AddSheet.kt` |
+| `GRID_ORANI` | `GRID_RATIO` |
+| `miktarAyristir` | `parseQuantity` |
+| `kurusFormatla` | `formatMinor` |
+| `AyarlarScreen` | `SettingsScreen` |
+| `KisitTest` | `ConstraintTest` |
+| `Sozlesme.kt` *(kod yorumlarında)* | `Conventions.kt` — madde numaraları aynı kaldı |
+
+**Bilerek Türkçe kalanlar, "düzeltilmemeli":** `EmptyKind.ILK_GUN` / `DONGU_ORTASI` (UI'da, hiç kalıcılaşmıyor) ve `SuggestionOutcome.GOSTERILDI/EKLENDI/REDDEDILDI/YOKSAYILDI` + `OpType.EKLE/GUNCELLE/SIL` — **ama son ikisi yayınlanmış şemada TEXT olarak duruyor ve yeniden adlandırma penceresi ilk yazmada kapanıyor** (bkz. **Şema sürüm planı**).
 
 ## İlgili dokümanlar
 

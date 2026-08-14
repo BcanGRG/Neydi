@@ -35,9 +35,13 @@ androidxActivityCompose = "1.12.4"
 # navigation3-runtime AndroidX'ten gelir ve zaten KMP.
 # navigation3-ui'nin iOS hedefi YOK -> JetBrains portu kullanilir.
 navigation3Ui = "1.1.1"
-# lifecycle 2.11.0 DEGIL: AGP 9.1.0+ ve compileSdk 37 dayatiyor, AGP 8'de kalma
-# kararimizla cakisiyor. 2.10.0 zaten JetBrains'in CMP+Nav3 dokumaninda yazan surum.
-# Kural: CMP tarafinda "Maven'daki en son" degil, "JetBrains'in dokumanda yazdigi" alinir.
+# lifecycle 2.11.0 ZORUNLU: AGP 9.1.0+ ve compileSdk 37 dayatiyor.
+# (Bu yorum eskiden tam tersini soyluyordu - "2.11.0 DEGIL" diyip bir satir
+# altta 2.11.0 pinliyordu. Dayandigi "AGP 8'de kalma" karari F10.1'de tersine
+# cevrildi; yorum o kararin fosiliydi ve okuyani lifecycle'i dusurmeye, yani
+# compileSdk 37 sartini kirmaya yollardi.)
+# Kural DEGISMEDI: CMP tarafinda "Maven'daki en son" degil, "JetBrains'in
+# dokumanda yazdigi" surum alinir.
 lifecycle = "2.11.0"
 
 # --- DI / async / serialization ---

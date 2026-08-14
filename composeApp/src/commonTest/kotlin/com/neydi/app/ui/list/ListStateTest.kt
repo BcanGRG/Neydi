@@ -72,6 +72,10 @@ class ListStateTest {
 
         assertEquals(1, state.taken.size)
         assertEquals("Elma", state.taken.single().row.name)
+        // Alinanlar tarafi yukarida pinli ama bolumler tarafi pinsizdi: iki
+        // isaretsiz satir tamamen kaybolsa `none {}` bos bolumler uzerinde
+        // yine true donerdi.
+        assertEquals(2, state.sections.sumOf { it.rows.size })
         assertTrue(state.sections.none { b -> b.rows.any { it.row.name == "Elma" } })
     }
 
