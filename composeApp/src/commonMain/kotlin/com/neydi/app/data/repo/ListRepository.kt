@@ -2,6 +2,9 @@ package com.neydi.app.data.repo
 
 import com.neydi.app.data.db.Product
 import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.Receipt
+import com.neydi.app.data.db.ReceiptDao
+import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.db.TripDao
@@ -25,6 +28,7 @@ import kotlinx.coroutines.flow.flowOf
 class ListRepository(
     private val tripDao: TripDao,
     private val tripLineDao: TripLineDao,
+    private val receiptDao: ReceiptDao,
     private val productDao: ProductDao,
     private val clock: () -> Long,
     private val newId: () -> String,
@@ -70,6 +74,35 @@ class ListRepository(
      */
     suspend fun setShoppingMode(tripId: String, enabled: Boolean) {
         tripDao.setStatus(tripId, if (enabled) TripStatus.SHOPPING else TripStatus.PLANNING)
+    }
+
+    /**
+     * Cekilen fisi KUYRUGA ALIR. OCR burada KOSMUYOR.
+     *
+     * Bu, F4.2'nin butun kurali: fotograf asla bloklamaz. Kullanici kasa
+     * kuyrugunda telefonun basinda spinner beklemez - satir PENDING olarak
+     * yaziliyor, gezi zaten kapanmis durumda, ve okuma sonra olur.
+     *
+     * Kucultme BASARISIZ OLURSA orijinal yol saklaniyor. Fotograf
+     * kullanicinin tek kaniti; bicimlendirme takildi diye onu atmak kabul
+     * edilemez, buyuk gorsel her zaman gorselsizden iyi.
+     */
+    suspend fun enqueueReceipt(
+        householdId: String,
+        tripId: String,
+        imagePath: String,
+    ): Receipt {
+        val receipt = Receipt(
+            id = newId(),
+            householdId = householdId,
+            tripId = tripId,
+            imagePath = imagePath,
+            capturedAt = clock(),
+            status = ReceiptStatus.PENDING,
+            createdAt = clock(),
+        )
+        receiptDao.insert(receipt)
+        return receipt
     }
 
     /**

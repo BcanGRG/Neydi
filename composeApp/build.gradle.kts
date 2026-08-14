@@ -80,6 +80,8 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
 
             implementation(libs.room.runtime)
             implementation(libs.sqlite.bundled)

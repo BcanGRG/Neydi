@@ -280,3 +280,29 @@ interface MemberDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(member: Member)
 }
+
+/**
+ * Fis DAO'su. Sema DEGISMIYOR - Receipt zaten kayitli, yalnizca erisim eklendi.
+ */
+@Dao
+interface ReceiptDao {
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insert(receipt: Receipt)
+
+    @Query("SELECT * FROM receipt WHERE tripId = :tripId AND deletedAt IS NULL ORDER BY capturedAt DESC")
+    fun observeForTrip(tripId: String): Flow<List<Receipt>>
+
+    /**
+     * OKUNMAYI BEKLEYENLER. Fotograf cekildiginde satir PENDING olarak
+     * yaziliyor ve OCR SONRA kosuyor - kullanici kasa kuyrugunda spinner
+     * beklemesin diye. Bu sorgu o kuyrugu okuyor.
+     */
+    @Query("SELECT * FROM receipt WHERE status = 'PENDING' AND deletedAt IS NULL ORDER BY capturedAt")
+    suspend fun pending(): List<Receipt>
+
+    @Query("SELECT * FROM receipt WHERE id = :id")
+    suspend fun byId(id: String): Receipt?
+
+    @Query("UPDATE receipt SET status = :status, errorMessage = :error WHERE id = :id")
+    suspend fun setStatus(id: String, status: ReceiptStatus, error: String? = null)
+}

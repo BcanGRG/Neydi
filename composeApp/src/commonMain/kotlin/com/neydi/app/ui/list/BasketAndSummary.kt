@@ -102,6 +102,8 @@ internal fun SummaryCard(
     amountMinor: Long?,
     durationMinutes: Int?,
     onDismiss: () -> Unit,
+    /** null ise fis butonu HIC cizilmez - iOS kucultmesi Faz 8'e kadar yok. */
+    onTakeReceipt: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -144,7 +146,26 @@ internal fun SummaryCard(
             textAlign = TextAlign.Center,
         )
 
-        NeydiButton("Tamam", onDismiss, modifier = Modifier.padding(top = Spacing.sm))
+        if (onTakeReceipt != null) {
+            NeydiButton(
+                text = "Fiş çek",
+                onClick = onTakeReceipt,
+                modifier = Modifier
+                    .padding(top = Spacing.sm)
+                    .fillMaxWidth(),
+            )
+        }
+
+        // "Tamam" fisten SONRA ve daha SILIK. Fis cekmek kartin asil isi;
+        // ustte ve vurgulu bir "Tamam" olsaydi cogu kullanici once ona basar,
+        // fis hic cekilmez ve fiyat hafizasi hic dolmazdi.
+        NeydiButton(
+            text = "Tamam",
+            onClick = onDismiss,
+            container = MaterialTheme.colorScheme.surfaceVariant,
+            content = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = Spacing.xs),
+        )
     }
 }
 

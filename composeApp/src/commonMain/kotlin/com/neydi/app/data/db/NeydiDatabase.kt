@@ -59,6 +59,7 @@ abstract class NeydiDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun tripDao(): TripDao
     abstract fun tripLineDao(): TripLineDao
+    abstract fun receiptDao(): ReceiptDao
     abstract fun priceObservationDao(): PriceObservationDao
 }
 

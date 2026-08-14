@@ -38,6 +38,7 @@ class TripLifecycleTest {
         return ListRepository(
             tripDao = db.tripDao(),
             tripLineDao = db.tripLineDao(),
+            receiptDao = db.receiptDao(),
             productDao = db.productDao(),
             clock = clock,
             newId = { "id-${++n}" },

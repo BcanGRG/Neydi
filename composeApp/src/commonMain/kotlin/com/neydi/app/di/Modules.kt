@@ -42,6 +42,7 @@ val dataModule = module {
     single { get<NeydiDatabase>().productDao() }
     single { get<NeydiDatabase>().tripDao() }
     single { get<NeydiDatabase>().tripLineDao() }
+    single { get<NeydiDatabase>().receiptDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
@@ -60,6 +61,7 @@ val dataModule = module {
         ListRepository(
             tripDao = get(),
             tripLineDao = get(),
+            receiptDao = get(),
             productDao = get(),
             // Saat ve id URETIMI disaridan: repository saf kalsin ve testte
             // deterministik olabilsin.
