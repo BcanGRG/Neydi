@@ -11,12 +11,30 @@ import com.neydi.app.ui.components.turkishInitials
  */
 data class ListeDurumu(
     val bolumler: List<ListeBolumu> = emptyList(),
-    /** "Alindi" bolumu ayri: reyon gruplamasinin disinda, en altta. */
+    /**
+     * "Alindi" bolumu ayri: reyon gruplamasinin disinda, en altta.
+     * ALISVERIS MODUNDA HEP BOS - orada isaretli satirlar yerinde kalir.
+     */
     val alinanlar: List<UiSatir> = emptyList(),
     val yukleniyor: Boolean = true,
+    val alisverisModu: Boolean = false,
+    /** Bos durumu hangi metinle cizecegimizi belirler. */
+    val bosTur: BosTur = BosTur.ILK_GUN,
 ) {
     val bosMu: Boolean get() = !yukleniyor && bolumler.isEmpty() && alinanlar.isEmpty()
     val toplamSatir: Int get() = bolumler.sumOf { it.satirlar.size } + alinanlar.size
+    val kalanSatir: Int get() = bolumler.sumOf { b -> b.satirlar.count { !it.row.checked } }
+}
+
+/**
+ * Uc bos durum. Ayni metni ucune de gostermek en kotu secenek: ilk gun
+ * "ne yapacagimi bilmiyorum", dongu ortasi ise "uygulama olmus mu" hissi verir.
+ */
+enum class BosTur {
+    /** Hic urun gecmisi yok - ne yapilacagini GOSTERMEK gerekiyor. */
+    ILK_GUN,
+    /** Gecmiste urun var ama liste su an bos - olu hissettirmemeli. */
+    DONGU_ORTASI,
 }
 
 data class ListeBolumu(
@@ -81,8 +99,18 @@ internal fun adetEtiketi(adet: Double, birim: String): String? {
  * Girdi ZATEN kategori sirasinda geliyor (SQL ORDER BY), o yuzden burada
  * yeniden siralama yok - sadece gruplama.
  */
-internal fun List<ListeSatiri>.bolumlere(benimUyeId: String?): ListeDurumu {
-    val (alinan, kalan) = partition { it.isaretli }
+internal fun List<ListeSatiri>.bolumlere(
+    benimUyeId: String?,
+    alisverisModu: Boolean = false,
+    bosTur: BosTur = BosTur.ILK_GUN,
+): ListeDurumu {
+    // ALISVERIS MODUNDA REYON SIRASI DONAR. Isaretlenen satir YERINDE kalir,
+    // "Alindi"ya inmez. Hareket eden basparmagin altinda yeniden siralama bu
+    // ekranin yapabilecegi en kotu hata: kullanici bir sonrakine dokunacakken
+    // liste kayar ve yanlis urunu isaretler. Planlamada tasima dogru, reyonda
+    // felaket.
+    val (alinan, kalan) = if (alisverisModu) emptyList<ListeSatiri>() to this else partition { it.isaretli }
+
     val bolumler = kalan
         .groupBy { it.kategoriAdi }
         .map { (baslik, satirlar) -> ListeBolumu(baslik, satirlar.map { it.uiSatiri(benimUyeId) }) }
@@ -91,5 +119,7 @@ internal fun List<ListeSatiri>.bolumlere(benimUyeId: String?): ListeDurumu {
         bolumler = bolumler,
         alinanlar = alinan.map { it.uiSatiri(benimUyeId) },
         yukleniyor = false,
+        alisverisModu = alisverisModu,
+        bosTur = bosTur,
     )
 }

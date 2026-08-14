@@ -124,6 +124,57 @@ class ListeDurumuTest {
         assertEquals(kaynak.satirId, durum.bolumler.single().satirlar.single().id)
     }
 
+    // --- Alisveris modu -----------------------------------------------------
+
+    /**
+     * REYON SIRASI DONAR. Isaretlenen satir YERINDE kalir, "Alindi"ya inmez.
+     * Hareket eden basparmagin altinda yeniden siralama bu ekranin
+     * yapabilecegi en kotu hata: kullanici bir sonrakine dokunacakken liste
+     * kayar ve yanlis urunu isaretler.
+     */
+    @Test
+    fun alisverisModundaIsaretliSatirYERINDEKalir() {
+        val girdi = listOf(
+            satir("Domates"),
+            satir("Elma", isaretli = true),
+            satir("Salatalik"),
+        )
+
+        val planlama = girdi.bolumlere("ben", alisverisModu = false)
+        val alisveris = girdi.bolumlere("ben", alisverisModu = true)
+
+        // Planlamada tasiniyor...
+        assertEquals(1, planlama.alinanlar.size)
+        assertEquals(2, planlama.bolumler.single().satirlar.size)
+
+        // ...alisveriste tasinmiyor: uc satir da reyonda, SIRASI BOZULMADAN.
+        assertTrue(alisveris.alinanlar.isEmpty(), "alisveris modunda satir Alindi'ya tasindi")
+        assertEquals(
+            listOf("Domates", "Elma", "Salatalik"),
+            alisveris.bolumler.single().satirlar.map { it.row.name },
+        )
+    }
+
+    /** Alt cubuktaki "kac kaldi" yalnizca isaretsizleri sayar. */
+    @Test
+    fun kalanSatirIsaretsizleriSayar() {
+        val durum = listOf(
+            satir("Domates"),
+            satir("Elma", isaretli = true),
+            satir("Salatalik"),
+        ).bolumlere("ben", alisverisModu = true)
+
+        assertEquals(3, durum.toplamSatir)
+        assertEquals(2, durum.kalanSatir)
+    }
+
+    @Test
+    fun bosTurTasinir() {
+        val durum = emptyList<ListeSatiri>().bolumlere("ben", bosTur = BosTur.DONGU_ORTASI)
+        assertEquals(BosTur.DONGU_ORTASI, durum.bosTur)
+        assertTrue(durum.bosMu)
+    }
+
     @Test
     fun bosListe() {
         val durum = emptyList<ListeSatiri>().bolumlere(benimUyeId = "ben")

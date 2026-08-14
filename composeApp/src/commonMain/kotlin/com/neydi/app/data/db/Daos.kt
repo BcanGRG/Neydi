@@ -43,6 +43,10 @@ interface CatalogSeedDao {
     )
     suspend fun search(onEk: String, limit: Int = 20): List<CatalogSeed>
 
+    /** Bos durumda bir reyona dokununca: o reyonun EN YAYGIN urunleri. */
+    @Query("SELECT * FROM catalog_seed WHERE categoryId = :kategoriId ORDER BY commonalityRank LIMIT :limit")
+    suspend fun byCategory(kategoriId: String, limit: Int = 8): List<CatalogSeed>
+
     @Query("SELECT COUNT(*) FROM catalog_seed")
     suspend fun count(): Int
 }
