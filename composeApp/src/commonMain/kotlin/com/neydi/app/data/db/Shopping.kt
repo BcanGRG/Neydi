@@ -1,5 +1,6 @@
 package com.neydi.app.data.db
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
@@ -43,6 +44,32 @@ data class Trip(
     val householdId: String,
     val storeId: String? = null,
     val startedAt: Long,
+    /**
+     * Gezinin asamasi.
+     *
+     * KAPALILIGIN OTORITESI BU DEGIL, `completedAt`. Sorgular "acik mi" diye
+     * `completedAt IS NULL` soruyor; `status` yalnizca acik bir gezinin
+     * PLANNING mi SHOPPING mi oldugunu ayirir. Boyle kurulmasinin iki sebebi
+     * var: (1) surum 1 satirlari geri-doldurma GEREKTIRMIYOR, cunku
+     * completedAt onlarda zaten dogru; (2) tek bir alan kapaliligi tanimladigi
+     * icin iki alanin birbirine dusme ihtimali yok.
+     *
+     * Degismez kural yine gecerli - `status == CLOSED` <=> `completedAt != null`
+     * - ve onu tek bir yer koruyor: [TripDao.closeIfOpen] ikisini AYNI
+     * ifadede yaziyor.
+     */
+    @ColumnInfo(defaultValue = "PLANNING")
+    val status: TripStatus = TripStatus.PLANNING,
+    /**
+     * Geziyi KAPATAN uye. Kapanana kadar null.
+     *
+     * NEDEN VAR: mutabakati tek cihaz yapmali. Iki cihaz ayni geziyi
+     * kapatirsa satin almalar CIFT sayilir - ve o sayi oneri motorunun
+     * `medianIntervalDays` hesabina giriyor, yani her aralik tahmini yariya
+     * duser ve uygulama her seyi iki kat sik onermeye baslar. Sessiz, yavas
+     * ve geri alinmasi zor bir bozulma.
+     */
+    val ownerMemberId: String? = null,
     val completedAt: Long? = null,
     /** Kurus. Fis okunmadiysa null - 0 DEGIL, "bilmiyorum" ile "bedava" ayri seyler. */
     val totalMinor: Long? = null,
@@ -93,3 +120,22 @@ data class TripLine(
     val createdAt: Long,
     val deletedAt: Long? = null,
 )
+
+/**
+ * Gezinin yasam dongusu: PLANNING -> SHOPPING -> CLOSED.
+ *
+ * PLANNING ve SHOPPING arasinda ILERI GERI gidilebilir - kullanici alisveris
+ * modundan cikabilir. CLOSED ise TERMINAL: kapanmis gezi yeniden acilmaz,
+ * cunku kapanis mutabakati fiyat gozlemleri ve satin alma sayaclari yaziyor;
+ * yeniden acmak onlari ikinci kez yazma riski demek.
+ */
+enum class TripStatus {
+    /** Liste yapiliyor, henuz markete gidilmedi. */
+    PLANNING,
+
+    /** Marketteyiz; satirlar isaretleniyor. */
+    SHOPPING,
+
+    /** Mutabakat yapildi, gezi kapandi. Terminal. */
+    CLOSED,
+}

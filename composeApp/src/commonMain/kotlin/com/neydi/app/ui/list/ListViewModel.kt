@@ -11,6 +11,7 @@ import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripLineDao
+import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
@@ -56,8 +57,16 @@ class ListViewModel(
             .map { it?.id }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private val _shoppingMode = MutableStateFlow(false)
-    val shoppingMode: StateFlow<Boolean> = _shoppingMode
+    /**
+     * Alisveris modu GEZININ DURUMUNDAN turuyor, yerel bir bayraktan degil.
+     *
+     * Boylece mod uygulama yeniden baslayinca kayboluyor DEGIL, ve Faz 7'de
+     * senkron gelince esler ayni modu gorecek - "ben marketteyim" bilgisi
+     * dogal olarak paylasilan bir sey.
+     */
+    val shoppingMode: StateFlow<Boolean> = repo.activeTrip(household)
+        .map { it?.status == TripStatus.SHOPPING }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /**
      * Bos durumu ILK GUN mu DONGU ORTASI mi ayirt eder.
@@ -73,7 +82,7 @@ class ListViewModel(
                 if (trip == null) flowOf(emptyList()) else tripLineDao.observeList(trip.id)
             },
             myMemberId,
-            _shoppingMode,
+            shoppingMode,
             emptyKind,
         ) { rows, memberId, mod, kind -> rows.toSections(memberId, mod, kind) }
             .stateIn(
@@ -89,7 +98,10 @@ class ListViewModel(
     }
 
     fun setShoppingMode(enabled: Boolean) {
-        _shoppingMode.value = enabled
+        viewModelScope.launch {
+            val trip = repo.openOrGetActiveTrip(household)
+            repo.setShoppingMode(trip.id, enabled)
+        }
     }
 
     /** Bos durumdaki reyon cipleri. */
@@ -178,8 +190,16 @@ class ListViewModel(
                 amountMinor = trip.totalMinor,
                 durationMinutes = null,
             )
-            repo.finishShopping(trip.id)
-            _shoppingMode.value = false
+            // TEK CIHAZ KAPATIR. Donen deger onemli: false ise gezi baska bir
+            // cihazda zaten kapanmis ve BU cagri hicbir sey yazmadi. Ozet
+            // kartini yine gosteriyoruz - kullanici bitirdigini gormeli - ama
+            // mutabakat ikinci kez CALISMIYOR; calissaydi satin almalar cift
+            // sayilir ve oneri araliklari yariya duserdi.
+            val kapatan = repo.closeTrip(trip.id, memberId = myMemberId.value ?: return@launch)
+            if (!kapatan) {
+                // Simdilik yalnizca not: Faz 7'de senkron gelince kullaniciya
+                // "esin zaten kapatti" demek gerekecek.
+            }
         }
     }
 
