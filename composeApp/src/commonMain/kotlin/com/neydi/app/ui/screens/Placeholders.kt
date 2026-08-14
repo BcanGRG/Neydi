@@ -49,23 +49,6 @@ private fun Iskele(
 }
 
 @Composable
-fun ListeScreen(
-    onAlisveriseCik: () -> Unit,
-    onGecmis: () -> Unit,
-    onAyarlar: () -> Unit,
-    onBilesenler: () -> Unit = {},
-) = Iskele(
-    baslik = "Liste",
-    aciklama = "Uygulamanin kalbi. Uc modu var: planlama, alisveris, alisveris sonrasi.",
-) {
-    // GECICI: F3.2'de bu ekranin yerini gercek Liste alacak, buton da gidecek.
-    NeydiButton("Bileşenler", onBilesenler)
-    NeydiButton("Alisverise cikiyorum", onAlisveriseCik)
-    NeydiButton("Gecmis", onGecmis)
-    NeydiButton("Ayarlar", onAyarlar)
-}
-
-@Composable
 fun EksikOlabilirScreen(onEkle: () -> Unit, onBosver: () -> Unit) = Iskele(
     baslik = "Eksik olabilir",
     aciklama = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",

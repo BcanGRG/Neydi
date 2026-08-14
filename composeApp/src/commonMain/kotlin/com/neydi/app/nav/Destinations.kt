@@ -44,14 +44,6 @@ data object Ayarlar : NeydiKey
 data object Kurulum : NeydiKey
 
 /**
- * GECICI GELISTIRICI HEDEFI. F3.2'de gercek Liste ekrani gelince bu hedef ve
- * ComponentGallery.kt SILINECEK. IA'ya ait bir ekran degil - bilesenleri sahte
- * veriyle cihazda gormek icin var.
- */
-@Serializable
-data object Bilesenler : NeydiKey
-
-/**
  * Back stack'in surec olumunden sonra geri yuklenmesi icin gereken serializer kaydi.
  *
  * `rememberNavBackStack`in Android'e ozel bir asiri yuklemesi daha var; o reflection
@@ -78,8 +70,6 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
             subclass(Gecmis::class)
             subclass(Ayarlar::class)
             subclass(Kurulum::class)
-            // GECICI: F3.2'de Bilesenler hedefiyle birlikte bu satir da silinecek.
-            subclass(Bilesenler::class)
         }
     }
 }
@@ -105,5 +95,4 @@ private fun NeydiKey.serializerKaydiVarMi(): Unit = when (this) {
     is Gecmis -> Unit
     is Ayarlar -> Unit
     is Kurulum -> Unit
-    is Bilesenler -> Unit
 }
