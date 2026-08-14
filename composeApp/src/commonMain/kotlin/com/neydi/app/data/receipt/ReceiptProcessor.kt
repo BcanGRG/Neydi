@@ -6,6 +6,7 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.db.ReceiptLine
 import com.neydi.app.data.db.ReceiptLineDao
 import com.neydi.app.data.db.ReceiptStatus
+import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.matchKey
 
 /**
@@ -66,6 +67,7 @@ class ReceiptProcessor(
     private val receiptLineDao: ReceiptLineDao,
     private val productDao: ProductDao,
     private val aliasDao: ProductAliasDao,
+    private val tripDao: TripDao,
     private val clock: () -> Long,
     private val newId: () -> String,
 ) {
@@ -126,7 +128,29 @@ class ReceiptProcessor(
         }
         receiptDao.setStatus(receiptId, durum)
         receiptDao.setTotal(receiptId, reading.totalMinor, reading.storeName, clock())
+        rollUpTripTotal(receipt.tripId)
         return ReceiptReadOutcome.PARSED
+    }
+
+    /**
+     * Fis toplamlarini geziye devreder (F4.11).
+     *
+     * BU DEVIR OLMADAN 36sp'LIK TUTAR HIC GORUNMUYORDU. Ozet karti ve Gecmis
+     * ekrani `Trip.totalMinor` okuyor, fis ise `Receipt.totalMinor` yaziyordu;
+     * arada bagi kuran kod hic yazilmamisti, yani ikisi de kalici olarak "-"
+     * gosteriyordu. Derleme ve testler bunu goremezdi - iki alan da gecerli,
+     * sadece biri hic dolmuyordu.
+     *
+     * FISTE YAZAN TOPLAM ESAS ALINIYOR, satirlarin toplami DEGIL. Kullanici bir
+     * satirin tutarini duzeltince odenen para degismiyor, yalnizca bizim OCR
+     * hatamiz duzeliyor; satir toplamini yazmak "ne odedik" sorusuna bizim
+     * okumamizi cevap vermek olurdu. Toplam hic okunamadiysa alan null kaliyor:
+     * dogrulanmamis bir sayiyi 36sp'de manset yapmak, kullanicinin
+     * sorgulayamayacagi bir yerde tahmini gercek gibi sunmak demek. O durumda
+     * satirlarin toplami Fis Kontrol ekraninda zaten gorunuyor.
+     */
+    private suspend fun rollUpTripTotal(tripId: String) {
+        tripDao.setTotal(tripId, receiptDao.sumTotalsForTrip(tripId))
     }
 
     /**

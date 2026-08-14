@@ -92,6 +92,7 @@ val dataModule = module {
             receiptLineDao = get(),
             productDao = get(),
             aliasDao = get(),
+            tripDao = get(),
             clock = ::now,
             newId = ::newUuid,
         )

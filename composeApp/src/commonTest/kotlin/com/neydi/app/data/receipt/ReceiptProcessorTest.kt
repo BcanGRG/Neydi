@@ -83,6 +83,7 @@ class ReceiptProcessorTest {
             receiptLineDao = db.receiptLineDao(),
             productDao = db.productDao(),
             aliasDao = db.productAliasDao(),
+            tripDao = db.tripDao(),
             clock = { 500L },
             newId = { "line-${++n}" },
         )
@@ -268,6 +269,74 @@ class ReceiptProcessorTest {
             ReceiptReadOutcome.UNREADABLE,
             processor(db, FakeReader(listOf("AKYURT", "*12.50"))).process("r1"),
         )
+    }
+
+    // --- Gezi toplamina devir (F4.11) --------------------------------------
+
+    /**
+     * FIS TOPLAMI GEZIYE DEVREDILIYOR.
+     *
+     * Bu devir hic yazilmamisti: ozet karti ve Gecmis `Trip.totalMinor` okuyor,
+     * fis ise `Receipt.totalMinor` yaziyordu ve arada bag yoktu - ikisi de
+     * kalici olarak "-" gosteriyordu. Derleme ve testler goremezdi, cunku iki
+     * alan da gecerli; sadece biri hic dolmuyordu.
+     */
+    @Test
+    fun receiptTotalRollsUpToTrip() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        assertEquals(22550, db.tripDao().byId(trip)?.totalMinor)
+    }
+
+    /**
+     * IKI FISLI GEZIDE TOPLANIYOR, ustune YAZILMIYOR.
+     *
+     * Uzun fis parca parca cekilebiliyor (F4.4: ~60 kalem tek kareye sigmiyor)
+     * ve ayni geziye birden fazla fis baglanabiliyor. Tek fisi geziye yazmak iki
+     * parcali alisverisin yarisini gostermek olurdu.
+     */
+    @Test
+    fun twoReceiptsOnOneTripAreSummed() = runTest {
+        val db = db(); prepare(db)
+        db.receiptDao().insert(
+            Receipt(
+                id = "r2", householdId = home, tripId = trip,
+                imagePath = "/tmp/r2.jpg", capturedAt = 200, createdAt = 200,
+            ),
+        )
+        val p = processor(db, FakeReader(bimLines))
+        p.process("r1")
+        p.process("r2")
+
+        assertEquals(45100, db.tripDao().byId(trip)?.totalMinor)
+    }
+
+    /**
+     * TOPLAM OKUNAMADIYSA GEZI TUTARI NULL KALIR.
+     *
+     * Dogrulanmamis bir sayiyi 36sp'de manset yapmak, kullanicinin
+     * sorgulayamayacagi bir yerde tahmini gercek gibi sunmaktir. Satirlarin
+     * toplami Fis Kontrol ekraninda zaten gorunuyor.
+     */
+    @Test
+    fun unreadableTotalLeavesTripAmountNull() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines.filter { !it.contains("Odenecek") })).process("r1")
+
+        assertEquals(null, db.tripDao().byId(trip)?.totalMinor)
+    }
+
+    /** Satir tutari duzeltmesi gezi tutarini DEGISTIRMEZ: odenen para degismedi. */
+    @Test
+    fun lineCorrectionDoesNotChangeTripTotal() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+        val line = db.receiptLineDao().forReceipt("r1").first()
+
+        db.receiptLineDao().setAmount(line.id, 999_99)
+
+        assertEquals(22550, db.tripDao().byId(trip)?.totalMinor)
     }
 
     @Test
