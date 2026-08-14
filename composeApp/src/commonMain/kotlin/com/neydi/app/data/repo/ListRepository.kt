@@ -3,6 +3,7 @@ package com.neydi.app.data.repo
 import com.neydi.app.data.db.Product
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.Trip
+import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLine
 import com.neydi.app.data.db.TripLineDao
@@ -60,7 +61,27 @@ class ListRepository(
         return trip
     }
 
-    suspend fun finishShopping(tripId: String) = tripDao.complete(tripId, clock())
+    /**
+     * Alisveris moduna girer ya da cikar. KALICI - ekran durumu degil.
+     *
+     * Surum 1'de bu yalnizca ViewModel'de bir bayrakti; uygulama kapaninca
+     * kayboluyordu ve (Faz 7'de) eslerden biri markete girdiginde otekinin
+     * ekrani bunu hic gormeyecekti. Gezinin durumuna yazmak ikisini de cozuyor.
+     */
+    suspend fun setShoppingMode(tripId: String, enabled: Boolean) {
+        tripDao.setStatus(tripId, if (enabled) TripStatus.SHOPPING else TripStatus.PLANNING)
+    }
+
+    /**
+     * Geziyi kapatir. TEK CIHAZ KAPATIR.
+     *
+     * @return true = bu cagri kapatti; false = gezi zaten kapaliydi ve
+     *   HICBIR SEY yazilmadi. Cagiran taraf bu ayrimi gormek zorunda: ikinci
+     *   kapanis mutabakati yeniden yaparsa satin almalar cift sayilir
+     *   (bkz. [Trip.ownerMemberId]).
+     */
+    suspend fun closeTrip(tripId: String, memberId: String): Boolean =
+        tripDao.closeIfOpen(tripId, memberId, clock()) == 1
 
     /**
      * Urunu listeye ekler. ZATEN VARSA adet artirir, ikinci satir ACMAZ.

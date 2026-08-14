@@ -107,8 +107,43 @@ interface TripDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(trip: Trip)
 
-    @Query("UPDATE trip SET completedAt = :at WHERE id = :id")
-    suspend fun complete(id: String, at: Long)
+    @Query("SELECT * FROM trip WHERE id = :id")
+    suspend fun byId(id: String): Trip?
+
+    /**
+     * PLANNING <-> SHOPPING. Kapanmis geziye DOKUNMUYOR.
+     *
+     * completedAt IS NULL kosulu sart: kullanici ozet kartini kapatirken alisveris
+     * modu anahtari da sifirlaniyor ve o yazma kapanmis geziyi SHOPPING'e geri
+     * cekebilirdi - gezi yeniden "acik" gorunur, gecmisten kaybolur, ve bir
+     * sonraki eklemede yeni gezi acilmaz.
+     *
+     * @return guncellenen satir sayisi; 0 = gezi kapanmis, gecis yapilmadi.
+     */
+    @Query("UPDATE trip SET status = :status WHERE id = :id AND completedAt IS NULL")
+    suspend fun setStatus(id: String, status: TripStatus): Int
+
+    /**
+     * KARSILASTIR-VE-YAZ ile kapatir. "TEK CIHAZ KAPATIR" kuralini ZORLAYAN yer.
+     *
+     * completedAt IS NULL sayesinde ikinci kapatma denemesi SIFIR satir
+     * gunceller: `ownerMemberId` ilk kapatanda kalir, `completedAt` ilerlemez,
+     * ve cagiran taraf donen sayidan "ben kapattim" ile "zaten kapanmis"
+     * arasindaki farki gorur. Bunu iki adima (once oku, sonra yaz) bolmek
+     * aradaki yaris penceresini geri getirirdi.
+     *
+     * status ve completedAt AYNI ifadede yaziliyor - Trip'teki degismez kural
+     * (CLOSED <=> completedAt != null) ancak boyle korunur.
+     *
+     * @return 1 = bu cagri kapatti, 0 = zaten kapaliydi.
+     */
+    @Query(
+        """
+        UPDATE trip SET status = 'CLOSED', ownerMemberId = :memberId, completedAt = :at
+        WHERE id = :id AND completedAt IS NULL
+        """,
+    )
+    suspend fun closeIfOpen(id: String, memberId: String, at: Long): Int
 }
 
 @Dao

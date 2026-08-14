@@ -2,7 +2,7 @@
 
 Tek gerçek kaynak. 11 faz, 67 adım. Her adım bir PR.
 
-**İlerleme:** 20 / 66 — *Faz 4 başladı: OCR + ayrıştırıcı kuruldu. 4.3 (Worker) ML Kit sayesinde tamamen düştü.*
+**İlerleme:** 21 / 66 — *Faz 4 sürüyor. Sırada 4.2 (kamera) — o gelince ayrıştırıcıyı gerçek fişle görüp 4.4/4.5 işaretleri kapanabilir.*
 
 ---
 
@@ -124,7 +124,7 @@ Tek bağımlılık: **F0.5'in kararı Faz 5'in kapsamını belirler.** Faz 1, 2,
 
 > Verinin dürüst kalmasını sağlayan faz. Ekmek problemini asıl çözen katman burası: fiş, listeye yazılmasa bile ekmeği içeriyor.
 
-- [ ] **4.1 — Trip yaşam döngüsü.** `PLANNING → SHOPPING → CLOSED` + `ownerMemberId`. **Tek cihaz kapatır** — iki cihaz aynı gezinin mutabakatını yaparsa satın almalar çift sayılır ve her aralık tahmini yarıya iner.
+- [x] **4.1 — Trip yaşam döngüsü.** ✅ `PLANNING → SHOPPING → CLOSED` + `ownerMemberId`. **Tek cihaz kapatır** — `closeIfOpen` bir **karşılaştır-ve-yaz**: `WHERE id = :id AND completedAt IS NULL`. İkinci kapatma **sıfır satır** günceller, `ownerMemberId` ilk kapatanda kalır, `completedAt` ilerlemez, ve dönen sayı çağırana "ben kapattım" ile "zaten kapanmış" farkını söyler. Önce-oku-sonra-yaz iki adıma bölünse yarış penceresi geri gelirdi. **Kapalılığın otoritesi `completedAt`**, `status` değil: böylece sürüm 1 satırları geri-doldurma gerektirmiyor ve migration tamamen otomatik. **Alışveriş modu artık kalıcı** — ekran durumu değil gezinin durumu; uygulama öldürülüp açılınca korunuyor (cihazda doğrulandı) ve Faz 7'de eşler aynı modu görecek. **Migration eski veriyle cihazda sınandı**: v1 kurulup veri eklendi, üstüne v2 `pm clear` yapılmadan kuruldu. İlk denemede patladı — hata ayıklarken sürümü 1'e çekmiştim ve Room `1.json` şema temelini yeni kolonlarla üzerine yazmıştı, fark boş çıkıp boş migration üretmişti. Yeşil test koşumu bunu **hiç** yakalamazdı.
 - [ ] **4.2 — Kamera.** FileKit 0.14.2 (Peekaboo 28 aydır ölü, CameraK Maven'da 0 artifact). Fotoğraf **asla bloklamaz**: yerel kaydet, kuyruğa al, alışveriş anında kapansın — kullanıcı kasa kuyruğunda spinner beklemez. Görsel **platform tarafında** küçültülür (long edge ≤ 2576px); CMP iOS'ta UIImage/kamera frame bellek baskısı bilinen sorun.
 - [ ] **4.3 — ~~Cloudflare Worker proxy~~ → GEREKMİYOR.** ML Kit cihazda çalıştığı için ortada API anahtarı, proxy, secret yönetimi **yok**. Faz 7'de Supabase keep-alive'ı için Worker yine gerekebilir — o iş **7.6**'da zaten var. Bu madde kapandı; mimari bir bağımlılık eksildi.
 - [~] **4.4 — Cihazda OCR + Türkçe fiş ayrıştırıcı.** ML Kit Text Recognition v2 (Android) / Vision (iOS) `expect/actual` arkasında; **fotoğraf telefondan hiç çıkmıyor**, API anahtarı yok, ağ yok, ücret yok. Markette internet olmadan da çalışıyor. Ayrıştırma kuralları: virgüllü ondalık, **KDV/TOPKDV ürün değil**, İNDİRİM satırları, `x,xxx KG × yy,yy TL/KG` ağırlık formu (ürün adı bir satırda, ağırlık/tutar bir sonrakinde), ödeme ve künye satırları elenmeli. **Parser saf Kotlin, yani `commonTest`'te cihazsız test ediliyor** — ödemeli yolda ancak canlı API'ye karşı test edilebilirdi. Karşılığında: zincire göre değişen düzenleri model kadar iyi soğurmuyor, buruşuk/solmuş termal fişte daha çok hata yapıyor. **Bu bilinerek seçildi** — 4.5 aritmetik kapısı hatalı ayrıştırmayı yakalıyor, 4.6 düzeltiyor, 4.8 tamamen atlatıyor; emniyet ağı zaten kurulu. Ayda birkaç kuruşluk API maliyeti sorun değildi, **ihtiyaç olup olmadığını ölçmeden ödemek** sorundu.

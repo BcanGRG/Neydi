@@ -1,5 +1,6 @@
 package com.neydi.app.data.db
 
+import androidx.room3.AutoMigration
 import androidx.room3.ConstructedBy
 import androidx.room3.Database
 import androidx.room3.RoomDatabase
@@ -37,8 +38,17 @@ import androidx.room3.RoomDatabaseConstructor
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
+    //
+    // Ilk tasarimda gerekiyordu: "kapali mi" sorusunu status = 'CLOSED'
+    // cevapliyordu, dolayisiyla surum 1'in bitmis gezileri elle CLOSED'a
+    // cekilmeliydi. Onu yazacak `connection.execSQL` ise commonMain'de yok
+    // (androidx.sqlite onu ortak API'den bilerek cikarmis: web varyanti
+    // suspend, nonWeb degil). Kapaliligi `completedAt`e baglayinca sorun
+    // ortadan kalkti - eski satirlarda o alan zaten dogru.
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)
 abstract class NeydiDatabase : RoomDatabase() {

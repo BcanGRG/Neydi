@@ -58,7 +58,7 @@ class ListRepositoryTest {
         val r = repo(db)
 
         val first = r.openOrGetActiveTrip(home)
-        r.finishShopping(first.id)
+        r.closeTrip(first.id, memberId = "m1")
         val fresh = r.openOrGetActiveTrip(home)
 
         assertTrue(fresh.id != first.id, "bitmis alisveris hala aktif goruluyor")
