@@ -3,20 +3,23 @@ package com.neydi.app.data.receipt
 import com.neydi.app.data.matchKey
 
 /**
- * Ham OCR metninden Turkce market fisi ayristirici.
+ * Turkce market fisi ayristirici. GERCEK fis cikitisina gore yazildi.
  *
- * NEDEN CIHAZDA VE ELDE YAZILMIS:
- * Bir dil modeline fis okutmak zincire gore degisen duzenleri daha iyi
- * soguruyor - ama fotografi cihazdan cikarmayi, API anahtari tasimayi ve
- * her cagriyi odemeyi gerektiriyordu. Fis KISISEL VERI; telefondan hic
- * cikmamasi bir tercih degil, mimari bir kazanc. Ustelik bu ayristirici saf
- * Kotlin oldugu icin cihazsiz, ucretsiz ve hizli test edilebiliyor.
+ * ONCEKI HALI SENTETIKTI VE HEPSI YANLISTI. Kendi yazdigim ornek fislere gore
+ * kurmustum ve 17 test gecmisti; iki gercek fis (BIM ve File Market) uc
+ * varsayimi birden curuttu:
  *
- * TAVIZ ACIK: elde yazilmis kurallar BIM/A101/SOK/Migros'un farkli duzenlerini
- * bir modelin sogurdugu kadar soguramaz. Bunu bilerek kabul ediyoruz cunku
- * yanlis ayristirma SESSIZCE gecmiyor: F4.5 aritmetik kapisi satirlarin
- * toplami fis toplamini tutmuyorsa fisi TUTARSIZ isaretliyor ve kullanici
- * onayina dusuruyor. Kotu okuma, sessiz veri bozulmasi degil, gorunur bir is.
+ *   - ondalik ayirici olarak NOKTA kullaniliyor. Ben noktayi acikca reddetmis
+ *     ve gerekce olarak "Turkiye'de fis oyle basmiyor" yazmistim. Iki zincirin
+ *     ikisi de nokta basiyor; o tek varsayim butun tutarlarin okunmamasi demekti.
+ *   - toplam satiri "Odenecek KDV Dahil Tutar" ve icinde KDV GECIYOR. Ben
+ *     KDV'yi TOPLAM'dan once eliyordum - hem de bir tuzagi onlemek icin
+ *     bilincli olarak - ve bu, gercek toplam satirini eliyordu.
+ *   - miktar satiri ayri bir satir ve ait oldugu urunden ONCE geliyor.
+ *
+ * Alinan ders yontemle ilgili: sentetik ornek yazmak, kendi kurallarimi kendime
+ * onaylatmakti. Bu dosyanin testleri artik gercek fislerin OCR CIKTISINDAN
+ * geliyor (bkz. ReceiptParserTest).
  */
 
 /** Aritmetik kapinin toleransi. Tartili urun yuvarlamasi bu kadar oynatabilir. */
@@ -25,15 +28,14 @@ const val TOLERANCE_MINOR: Long = 5L
 /**
  * Fisten cikan tek satir.
  *
- * `amountMinor` HER ZAMAN POZITIF; isareti [discount] bayragi tasiyor. Negatif
- * sayi ile bayragi ayni anda kullanmak toplama iki kez eksi soktururdu -
- * aritmetik kapisi da sessizce yanlis calisirdi.
+ * `amountMinor` HER ZAMAN POZITIF; isareti [discount] tasiyor. Negatif sayi ile
+ * bayragi ayni anda kullanmak toplama iki kez eksi soktururdu.
  */
 data class ParsedLine(
-    /** Fiste yazan hali. 4.6'da gri alt satir olarak gosteriliyor - yanlis eslemeyi ancak bu geri alabilir. */
+    /** Fiste yazan hali. 4.6'da gri alt satir olarak gosteriliyor. */
     val rawText: String,
     val name: String,
-    val quantity: Double = 1.0,
+    val count: Double = 1.0,
     val unit: String = "adet",
     val unitPriceMinor: Long? = null,
     val amountMinor: Long,
@@ -43,33 +45,41 @@ data class ParsedLine(
 /** Bir fisin tamami. [rawLines] hic dokunulmadan saklaniyor. */
 data class ReceiptReading(
     val storeName: String?,
-    val rows: List<ParsedLine>,
+    val lines: List<ParsedLine>,
     val totalMinor: Long?,
     val rawLines: List<String>,
 )
 
 // --- Anahtar kelimeler ------------------------------------------------------
-// Hepsi matchKey'den geciyor: OCR "İNDİRİM" de "INDIRIM" de basabilir ve
+// Hepsi matchKey'den geciyor: OCR "İNDİRİM" de "INDIRIM" de basiyor ve
 // locale'siz lowercase() Turkce'de bunlari ayirir (bkz. MatchKey.kt).
 
-/** KDV dokumu URUN DEGIL. Turk perakendesinde raf fiyati zaten KDV dahil. */
-private val VAT_WORDS = listOf("kdv", "topkdv")
+/**
+ * TOPLAM SATIRI. Gercek fiste "Odenecek KDV Dahil Tutar" yaziyor.
+ *
+ * KDV kelimelerinden ONCE bakilmasi ZORUNLU: bu satir "KDV" iceriyor ve once
+ * vergi satiri diye elenirse fisin toplami HIC bulunamaz - butun aritmetik
+ * kapisi o sayinin uzerine kurulu. Onceki surum tam bu hatayi yapiyordu.
+ */
+private val TOTAL_WORDS = listOf("odenecek", "dahil tutar", "genel toplam")
 
-private val TOTAL_WORDS = listOf("toplam", "genel toplam", "tutar")
+/** KDV dokumu URUN DEGIL. Turk perakendesinde raf fiyati zaten KDV dahil. */
+private val VAT_WORDS = listOf("toplam kdv", "kdv matrah", "kdv tutar", "kdv dahil")
 
 private val DISCOUNT_WORDS = listOf("indirim", "iskonto", "kampanya")
 
 /** Odeme satirlari: para hareketi, satin alinan urun degil. */
 private val PAYMENT_WORDS = listOf(
-    "nakit", "kredi karti", "banka karti", "para ustu", "visa", "master",
-    "odenen", "kart", "pos",
+    "kredi karti", "banka karti", "nakit", "para ustu", "pos", "bankasi",
+    "visa", "master", "odenen",
 )
 
 /** Fis kunyesi. Hicbiri urun degil. */
 private val HEADER_WORDS = listOf(
-    "fis no", "tarih", "saat", "eku", "z no", "mersis", "vergi dairesi",
-    "vno", "tesekkur", "musteri", "kasiyer", "kasa", "belge", "sube",
-    "tel", "adres", "www", "mah", "cad", "sok",
+    "fatura", "sira no", "tckn", "vkn", "ettn", "vdm", "onay no", "ref no",
+    "tesekkur", "musteri", "kasiyer", "kasa", "mah", "cad", "sok", "bulvari",
+    "mahallesi", "tuketici", "magazalar", "magazacilik", "market", "sirket",
+    "mukellefler", "arsiv",
 )
 
 // --- Bicim tanimlari --------------------------------------------------------
@@ -77,142 +87,171 @@ private val HEADER_WORDS = listOf(
 /**
  * Satirin SONUNDAKI para tutari.
  *
- * Binlik nokta OPSIYONEL cunku fisler ikisini de basiyor: "1.234,56" ve
- * "1234,56". Kurus HANESI ZORUNLU (`,\d{2}`) - bu sayede "%1" ya da "0,850 KG"
- * gibi paradan baska sayilar tutar sanilmiyor.
+ * ONEK TEK KARAKTER VE SERBEST: gercek fiste `*106.00`, `x484.58` ve cift
+ * onekli olmayan `4.80` uc hali de goruldu - OCR yildizi bazen `x` okuyor,
+ * bazen hic okumuyor. Oneki zorunlu tutmak ya da yalnizca `*` kabul etmek
+ * satirlarin bir kismini dusururdu.
+ *
+ * Ondalik hane ZORUNLU (iki basamak): bu sayede `%1.` ya da `2 ad` gibi
+ * paradan baska sayilar tutar sanilmiyor.
  */
-private val AMOUNT_SUFFIX = Regex("""^(.*?)\s+(-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+,\d{2})\s*[A-Za-z*#]?$""")
+private val AMOUNT_SUFFIX =
+    Regex("""^(.*?)[\s*xX×]*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*$""")
 
 /**
- * Tartili urunun IKINCI satiri: "0,850 KG x 24,90 TL/KG".
+ * MIKTAR SATIRI: "2 ad X 53.00", "0.182 kg X 690.00", "2 ad % 25.50".
  *
- * Carpim isareti dort ayri sekilde cikiyor (x, X, *, ×) cunku OCR termal
- * yazicinin ince carpisini bazen yildiz okuyor.
+ * Ait oldugu urunden ONCE geliyor - gercek fiste olculdu, ve iki zincirde de
+ * boyle. Onceki surum bunu tersine kurmustu (adin ARDINDAN agirlik satiri
+ * bekliyordu) ve hicbir tartili urunu yakalayamazdi.
+ *
+ * Carpim isareti `%` de olabiliyor: OCR ince carpiyi boyle okuyor.
  */
-private val WEIGHT_LINE = Regex(
-    """^\s*(\d+(?:[.,]\d+)?)\s*(KG|GR|G|LT|L|ML|ADET|AD)\s*[xX*×]\s*(\d+(?:[.,]\d+)?)\s*(?:TL)?\s*/?\s*(KG|GR|G|LT|L|ML|ADET|AD)?""",
+private val QUANTITY_LINE = Regex(
+    """^\s*(\d+(?:[.,]\d+)?)\s*(ad|adet|kg|gr|g|lt|l|ml)\s*[xX*%×]\s*[*xX×]?\s*(\d+(?:[.,]\d+)?)\s*$""",
     RegexOption.IGNORE_CASE,
 )
 
-/** Urun adinin sonundaki KDV orani isareti: "EKMEK %1" -> "EKMEK". */
-private val VAT_MARK_SUFFIX = Regex("""\s*[%*#]\s*\d{1,2}\s*$""")
+/**
+ * Urun adinin sonundaki KDV orani cop'u: "%1.", "21.", "220".
+ *
+ * OCR yuzde isaretini guvenilmez okuyor - gercek fiste `%1.`, `21.`, `Z1.` ve
+ * `%20` yerine `220` goruldu. O yuzden isareti ARAMIYORUZ, adin sonundaki
+ * kisa sayisal copu atiyoruz. Uc haneye kadar: `220` da gecmeli.
+ */
+private val VAT_MARK_SUFFIX = Regex("""[\s%*#]*[%A-Z]?\d{1,3}\s*[.,]?\s*$""")
 
 /**
- * Kurusa cevirir. "1.234,56" -> 123456, "12,50" -> 1250.
+ * Kurusa cevirir. Hem NOKTA hem VIRGUL ondalik kabul ediyor.
  *
- * Binlik NOKTA silinip ondalik VIRGUL ayrilıyor; ondalik olarak nokta
- * kullanan bir bicimi bilerek DESTEKLEMIYORUZ - Turkiye'de fis oyle basmiyor
- * ve desteklemek "1.234" sayisini 1,234 TL sanmak demek olurdu.
+ * Ayrimi son ayiricinin ARDINDAN KAC BASAMAK geldigine bakarak yapiyor: iki
+ * basamak varsa o ayirici ondalik, digerleri binlik. Boylece `106.00`, `12,50`,
+ * `1.234,56` ve `1,234.56` dordu de dogru cozuluyor.
+ *
+ * Ilk surum yalnizca virgul kabul ediyordu ve gerekce olarak "Turkiye'de fis
+ * nokta basmiyor" yazilmisti. Yanlisti; BIM ve File Market nokta basiyor.
  */
 internal fun parseMinor(text: String): Long? {
-    val cleaned = text.trim().replace(".", "")
-    val negative = cleaned.startsWith("-")
-    val parts = cleaned.removePrefix("-").split(",")
-    if (parts.size != 2 || parts[1].length != 2) return null
-    val major = parts[0].toLongOrNull() ?: return null
-    val minor = parts[1].toLongOrNull() ?: return null
+    val clean = text.trim().trimStart('*', 'x', 'X', '×', ' ')
+    val negative = clean.startsWith("-")
+    val body = clean.removePrefix("-")
+    val lastDot = body.lastIndexOf('.')
+    val lastComma = body.lastIndexOf(',')
+    val sep = maxOf(lastDot, lastComma)
+    if (sep < 0) return null
+    val fraction = body.substring(sep + 1)
+    if (fraction.length != 2 || fraction.any { !it.isDigit() }) return null
+    val whole = body.substring(0, sep).filter { it.isDigit() }
+    if (whole.isEmpty()) return null
+    val major = whole.toLongOrNull() ?: return null
+    val minor = fraction.toLongOrNull() ?: return null
     val total = major * 100 + minor
     return if (negative) -total else total
 }
 
-private fun containsKeyword(key: String, kelimeler: List<String>): Boolean =
-    kelimeler.any { key == it || key.startsWith("$it ") || key.contains(" $it") }
+/**
+ * Anahtar kelimeyi TAM KELIME olarak arar, alt dizgi olarak DEGIL.
+ *
+ * Onek eslesmesi gercek fiste bir urunu yok etti: "ALISVERIS POSETI BIM"
+ * matchKey'den "alisveris poseti bim" olarak cikiyor ve " pos" alt dizgisi
+ * " poseti" icinde bulundugu icin satir ODEME satiri sanilip eleniyordu -
+ * poset (1,00 TL) toplamdan dusuyor ve aritmetik kapisi haksiz yere tutmuyordu.
+ *
+ * Iki yandan bosluklu arama bunu keser: " pos " artik " poseti " ile
+ * eslesmiyor. Cok kelimeli kaliplar ("kredi karti") ayni bicimde calisiyor.
+ */
+private fun contains(key: String, words: List<String>): Boolean {
+    val padded = " $key "
+    return words.any { padded.contains(" $it ") }
+}
 
 /**
- * Ham OCR satirlarini fis okumasina cevirir.
+ * Gruplanmis OCR satirlarini fis okumasina cevirir.
  *
- * Satir sirasi ONEMLI: tartili urunun adi bir satirda, agirligi ve tutari bir
- * sonrakinde. Satirlari tek tek bagimsiz islemek tartili her urunu dusururdu.
+ * Girdinin GORSEL SATIRLARA gruplanmis olmasi sart - aciklama ve tutar ayni
+ * satirda. Ham ML Kit ciktisi bunu vermiyor; gruplama platform tarafinda
+ * yapiliyor (bkz. ReceiptReader.android.kt), cunku Y/X geometrisi orada.
  */
 fun parseReceipt(rawLines: List<String>): ReceiptReading {
-    val rows = rawLines.map { it.trim() }.filter { it.isNotBlank() }
-    val parsed = mutableListOf<ParsedLine>()
+    val lines = rawLines.map { it.trim() }.filter { it.isNotBlank() }
+    val out = mutableListOf<ParsedLine>()
     var total: Long? = null
     var store: String? = null
+    // Miktar satiri urunden ONCE geldigi icin bekletiliyor.
+    var pendingCount: Double? = null
+    var pendingUnit: String? = null
+    var pendingUnitPrice: Long? = null
 
-    var i = 0
-    while (i < rows.size) {
-        val raw = rows[i]
+    for (raw in lines) {
         val key = matchKey(raw)
 
-        // Magaza adi: ilk anlamli satir. Kunye satirlari zaten eleniyor.
-        if (store == null && key.isNotBlank() && !containsKeyword(key, HEADER_WORDS) &&
-            AMOUNT_SUFFIX.matchEntire(raw) == null
+        // Magaza adi: ilk kunye-olmayan, tutar tasimayan anlamli satir.
+        // "magazalar"/"market" kunye kelimesi ama magaza adinin da parcasi -
+        // o yuzden magaza adi ONCE aliniyor, kunye elemesinden once.
+        if (store == null && key.isNotBlank() && raw.length > 6 &&
+            AMOUNT_SUFFIX.matchEntire(raw) == null &&
+            !contains(key, listOf("arsiv", "fatura"))
         ) {
             store = raw
-            i++
             continue
         }
+
+        QUANTITY_LINE.matchEntire(raw)?.let { m ->
+            pendingCount = m.groupValues[1].replace(",", ".").toDoubleOrNull()
+            pendingUnit = m.groupValues[2].lowercase()
+            pendingUnitPrice = parseMinor(m.groupValues[3])
+            return@let
+        }
+        if (QUANTITY_LINE.matchEntire(raw) != null) continue
 
         val match = AMOUNT_SUFFIX.matchEntire(raw)
+        val amount = match?.let { parseMinor(it.groupValues[2]) }
 
-        // KDV dokumunu TOPLAM'dan ONCE eliyoruz: "TOPLAM KDV" ikisini de
-        // iceriyor ve once toplam diye bakarsak vergi tutarini fis toplami
-        // sanardik - butun aritmetik kapisi bunun uzerine kurulu.
-        if (containsKeyword(key, VAT_WORDS)) { i++; continue }
-
-        if (containsKeyword(key, TOTAL_WORDS)) {
-            match?.let { total = parseMinor(it.groupValues[2]) }
-            i++
+        // TOPLAM, KDV'DEN ONCE. Toplam satiri "Odenecek KDV Dahil Tutar" ve
+        // icinde KDV geciyor; ters sirada elenip toplam hic bulunamiyordu.
+        if (contains(key, TOTAL_WORDS)) {
+            if (amount != null) total = amount
             continue
         }
+        if (contains(key, VAT_WORDS)) continue
+        if (contains(key, PAYMENT_WORDS) || contains(key, HEADER_WORDS)) continue
 
-        if (containsKeyword(key, PAYMENT_WORDS) || containsKeyword(key, HEADER_WORDS)) { i++; continue }
-
-        if (containsKeyword(key, DISCOUNT_WORDS)) {
-            val amount = match?.let { parseMinor(it.groupValues[2]) }
+        if (contains(key, DISCOUNT_WORDS)) {
             if (amount != null) {
-                parsed += ParsedLine(
+                out += ParsedLine(
                     rawText = raw,
-                    name = match.groupValues[1].trim().ifBlank { "İndirim" },
-                    // Isareti bayrak tasiyor, sayi degil - mutlak degere aliyoruz.
+                    name = match!!.groupValues[1].trim().ifBlank { "İndirim" },
+                    // Isareti bayrak tasiyor, sayi degil.
                     amountMinor = if (amount < 0) -amount else amount,
                     discount = true,
                 )
             }
-            i++
             continue
         }
 
-        // Ayni satirda ad + tutar: "EKMEK %1 5,00"
-        if (match != null) {
-            val amount = parseMinor(match.groupValues[2])
-            val name = match.groupValues[1].replace(VAT_MARK_SUFFIX, "").trim()
-            if (amount != null && name.isNotBlank()) {
-                parsed += ParsedLine(rawText = raw, name = name, amountMinor = amount)
-            }
-            i++
-            continue
-        }
-
-        // Tutarsiz satir: TARTILI URUNUN ADI olabilir. Bir sonrakine bak.
-        val next = rows.getOrNull(i + 1)
-        val weight = next?.let { WEIGHT_LINE.find(it) }
-        if (weight != null) {
-            val nextAmount = AMOUNT_SUFFIX.matchEntire(next)?.let { parseMinor(it.groupValues[2]) }
-            val quantity = weight.groupValues[1].replace(",", ".").toDoubleOrNull()
-            val unitPrice = parseMinor(weight.groupValues[3])
-            val name = raw.replace(VAT_MARK_SUFFIX, "").trim()
-            if (nextAmount != null && quantity != null && name.isNotBlank()) {
-                parsed += ParsedLine(
-                    rawText = "$raw / $next",
+        if (amount != null) {
+            val name = match!!.groupValues[1]
+                .replace(VAT_MARK_SUFFIX, "")
+                .trim()
+            if (name.isNotBlank()) {
+                out += ParsedLine(
+                    rawText = raw,
                     name = name,
-                    quantity = quantity,
-                    unit = weight.groupValues[2].lowercase(),
-                    unitPriceMinor = unitPrice,
-                    amountMinor = nextAmount,
+                    count = pendingCount ?: 1.0,
+                    unit = pendingUnit ?: "adet",
+                    unitPriceMinor = pendingUnitPrice,
+                    amountMinor = amount,
                 )
-                i += 2
-                continue
             }
+            pendingCount = null
+            pendingUnit = null
+            pendingUnitPrice = null
         }
-
-        i++
     }
 
     return ReceiptReading(
         storeName = store,
-        rows = parsed,
+        lines = out,
         totalMinor = total,
         rawLines = rawLines,
     )
@@ -221,20 +260,16 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
 /**
  * F4.5 ARITMETIK KAPISI: Sigma(urun) - Sigma(indirim) = TOPLAM, +/- 5 kurus.
  *
- * KDV EKLENMEZ VE CIKARILMAZ. Arastirmanin ilk yazdigi `+KDV` formulu
- * yanlisti: Turkiye'de perakende fiyatlari kanunen KDV DAHIL, TOPKDV ise
- * toplamin icindeki verginin dokumu. O formul her fisi manuel duzeltmeye
- * yollardi.
+ * KDV EKLENMEZ VE CIKARILMAZ - ve bu GERCEK FISLE DOGRULANDI. Iki fisin ikisinde
+ * de satirlarin toplami "Odenecek KDV Dahil Tutar" ile birebir tutuyor (225,50
+ * ve 484,58), "TOPLAM KDV" ise o tutarin ICINDEKI verginin dokumu. Arastirmanin
+ * ilk yazdigi `+KDV` formulu her fisi manuel duzeltmeye yollardi.
  *
- * Bu kapi ML Kit yolunun emniyet supabi: elde yazilmis ayristirici bir
- * satiri kacirdiginda ya da yanlis okudugunda toplam TUTMAZ ve fis
- * kullanici onayina duser. Sessiz veri bozulmasi olmuyor.
- *
- * @return toplam bilinmiyorsa null - "dogrulanamadi" ile "tutmadi" ayri seyler.
+ * @return toplam okunamadiysa null - "dogrulanamadi" ile "tutmadi" ayri seyler.
  */
 fun arithmeticHolds(reading: ReceiptReading): Boolean? {
     val total = reading.totalMinor ?: return null
-    val computed = reading.rows.sumOf { if (it.discount) -it.amountMinor else it.amountMinor }
+    val computed = reading.lines.sumOf { if (it.discount) -it.amountMinor else it.amountMinor }
     val diff = computed - total
     return (if (diff < 0) -diff else diff) <= TOLERANCE_MINOR
 }

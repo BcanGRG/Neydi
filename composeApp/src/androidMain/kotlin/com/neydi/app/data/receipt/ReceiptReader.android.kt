@@ -1,49 +1,130 @@
 package com.neydi.app.data.receipt
 
 import android.content.Context
-import android.net.Uri
+import android.graphics.BitmapFactory
+import android.graphics.Rect
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.io.File
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
  * ML Kit Text Recognition v2, Latin betigi - Turkce'yi kapsiyor.
  *
- * Model uygulamaya GOMULU geliyor (~4MB). Play Services uzerinden indirilen
- * varyanti ~260KB ama ilk kullanimda indirme bekliyor; kasa kuyrugunda
- * "model indiriliyor" gormek istemiyoruz.
+ * Model uygulamaya GOMULU (~4MB). Play Services uzerinden inen varyanti daha
+ * kucuk ama ilk kullanimda indirme bekletiyor; kasa kuyrugunda "model
+ * indiriliyor" gormek istemiyoruz.
  */
 internal class MlKitReceiptReader(private val context: Context) : ReceiptReader {
 
-    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val tanimlayici = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    override suspend fun readLines(imagePath: String): Result<List<String>> = runCatching {
-        val image = InputImage.fromFilePath(context, Uri.fromFile(File(imagePath)))
-        val text = suspendCancellableCoroutine { cont ->
-            recognizer.process(image)
-                .addOnSuccessListener { cont.resume(it) }
-                .addOnFailureListener { cont.resumeWithException(it) }
+    override suspend fun readLines(imagePath: String): Result<List<String>> =
+        withContext(Dispatchers.Default) {
+            runCatching {
+                val bitmap = BitmapFactory.decodeFile(imagePath)
+                    ?: error("gorsel cozulemedi: $imagePath")
+                // EN IYI YONU SECIYORUZ, tahmin ETMIYORUZ. Gerekcesi olculdu:
+                // yatay cekilmis fiste tutarlar urun adlarindan tamamen kopuyor
+                // (*225.50 dorduncu satirda, urun adlari yirmi sekizinci
+                // satirda), dik cevrilmis ayni goruntude siralama neredeyse
+                // kusursuz. EXIF'e guvenemiyoruz - kucultme sirasinda yeniden
+                // kodlanan JPEG yon bilgisini tasimıyor.
+                //
+                // Ucu de deneniyor: kullanici uzun fisi yatay cekiyor ama
+                // telefonu hangi yone cevirdigi belli degil (90 ya da 270).
+                listOf(0, 90, 270)
+                    .map { derece -> gorselSatirlar(tani(bitmap, derece)) }
+                    .maxByOrNull { puan(it) }
+                    ?: emptyList()
+            }
         }
-        linesInReadingOrder(text)
+
+    private suspend fun tani(
+        bitmap: android.graphics.Bitmap,
+        rotationDegrees: Int,
+    ): Text = suspendCancellableCoroutine { devam ->
+        // rotationDegrees ML Kit'e veriliyor, bitmap DONDURULMUYOR: donmus kopya
+        // ayirmak bellekte ikinci bir tam boy bitmap demek olurdu ve kacinmaya
+        // calistigimiz sey tam olarak o.
+        val gorsel = InputImage.fromBitmap(bitmap, rotationDegrees)
+        tanimlayici.process(gorsel)
+            .addOnSuccessListener { devam.resume(it) }
+            .addOnFailureListener { devam.resumeWithException(it) }
     }
 }
 
 /**
- * SATIRLARI Y KOORDINATINA GORE SIRALIYOR, blok sirasina gore DEGIL.
- *
- * ML Kit metni once bloklara ayiriyor ve blok sirasi sayfadaki okuma sirasini
- * garanti etmiyor. Fis tek sutun oldugu icin dikey konum dogru siralamayi
- * veriyor. Blok sirasina guvenseydik TOPLAM satiri urunlerin arasina
- * karisabilir, tartili urunun adi ile agirlik satiri ayrilabilirdi - ve
- * ayristirici o ikisinin YAN YANA olmasina dayaniyor.
+ * Fisin bir gorsel satirinda okunan parca.
  */
-internal fun linesInReadingOrder(text: Text): List<String> =
-    text.textBlocks
-        .flatMap { block -> block.lines }
-        .sortedBy { row -> row.boundingBox?.top ?: Int.MAX_VALUE }
-        .map { row -> row.text }
+private data class Parca(val metin: String, val kutu: Rect)
+
+/**
+ * OCR satirlarini GORSEL SATIRLARA gruplar; her grubu soldan saga birlestirir.
+ *
+ * NEDEN SIRAYA GUVENILMIYOR: fis iki kolon - solda aciklama, sagda tutar - ve
+ * ikisi AYNI gorsel satirda. ML Kit onlari ayri "line" olarak donduruyor,
+ * dikey konumlari da neredeyse ayni. Dolayisiyla dizilis rastgele bozuluyor;
+ * gercek fiste olculdu:
+ *
+ *     *125.58
+ *     *47.00                     <- tutar, adindan ONCE
+ *     HARRAS SUTLU CIK.80G %1.   <- adi, tutarindan SONRA
+ *
+ * Yani sirayi duzeltmeye calisan hicbir sezgi ise yaramaz, cunku SIRANIN KENDISI
+ * guvenilir degil. Dogru islem eslestirmeyi dikey ORTUSMEDEN yapmak: ayni satira
+ * dusen parcalar birlesir, grup icinde X'e gore sıralanır. Sonuc ayristiricinin
+ * bekledigi bicim:
+ *
+ *     KREMA 18YAGLI 200ML %1.      *106.00
+ *     Odenecek KDV Dahil Tutar     *225.50
+ *
+ * Geometri platforma ozgu veri oldugu icin bu is BURADA yapiliyor; ayristirici
+ * dizgi uzerinde calismaya devam ediyor ve cihazsiz test edilebilir kaliyor.
+ */
+internal fun gorselSatirlar(metin: Text): List<String> {
+    val parcalar = metin.textBlocks
+        .flatMap { blok -> blok.lines }
+        .mapNotNull { satir -> satir.boundingBox?.let { Parca(satir.text, it) } }
+    if (parcalar.isEmpty()) return emptyList()
+
+    // Tolerans satir yuksekliginin ORANI: sabit piksel degeri farkli
+    // cozunurluklerde ya da cok kucuk ya da cok buyuk olurdu.
+    val ortaYukseklik = parcalar.map { it.kutu.height() }.sorted()[parcalar.size / 2]
+    val tolerans = (ortaYukseklik * 0.6f).toInt().coerceAtLeast(1)
+
+    val siralı = parcalar.sortedBy { it.kutu.centerY() }
+    val gruplar = mutableListOf<MutableList<Parca>>()
+    for (p in siralı) {
+        val grup = gruplar.lastOrNull()
+        val ayniSatir = grup != null &&
+            kotlin.math.abs(p.kutu.centerY() - grup.last().kutu.centerY()) <= tolerans
+        if (ayniSatir && grup != null) grup.add(p) else gruplar.add(mutableListOf(p))
+    }
+
+    return gruplar.map { grup ->
+        grup.sortedBy { it.kutu.left }.joinToString(" ") { it.metin.trim() }
+    }
+}
+
+/**
+ * Bir yonun ne kadar "fis gibi" okundugunu puanlar.
+ *
+ * Olcut: ACIKLAMA ile TUTARI ayni satirda birlestirebilmis satir sayisi. Dogru
+ * yonde bu sayi yuksek; yanlis yonde tutarlar yalniz kaliyor ve neredeyse sifira
+ * dusuyor. Toplam satir sayisini ya da karakter sayisini olcmek AYIRT ETMEZDI -
+ * yanlis yonde de ayni metin okunuyor, yalnizca yanlis eslesiyor.
+ */
+private val TUTARLI_SATIR = Regex("""\S.*[*]?\d+[.,]\d{2}\s*$""")
+
+internal fun puan(satirlar: List<String>): Int =
+    satirlar.count { satir ->
+        // Yalnizca tutar tasiyan satir sayilmaz: solunda metin de olmali,
+        // cunku olculen sey ESLESTIRME basarisi.
+        TUTARLI_SATIR.containsMatchIn(satir) && satir.trimStart().first().isDigit().not()
+    }
