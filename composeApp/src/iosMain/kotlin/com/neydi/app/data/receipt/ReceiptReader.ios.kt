@@ -9,6 +9,6 @@ package com.neydi.app.data.receipt
  * destegi Faz 8'de DOGRULANMALI - simdiden soz verilmiyor.
  */
 internal class IosReceiptReader : ReceiptReader {
-    override suspend fun readLines(imagePath: String): Result<List<String>> =
+    override suspend fun readLines(imagePath: String, forceRotation: Int?): Result<List<String>> =
         Result.failure(NotImplementedError("Fis okuma iOS'ta henuz yok (Faz 8)."))
 }

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,7 @@ import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.Spacing
+import com.neydi.app.ui.theme.pressable
 import com.neydi.app.ui.theme.neydiDisplayFamily
 
 /**
@@ -104,6 +106,15 @@ internal fun SummaryCard(
     onDismiss: () -> Unit,
     /** null ise fis butonu HIC cizilmez - iOS kucultmesi Faz 8'e kadar yok. */
     onTakeReceipt: (() -> Unit)? = null,
+    /**
+     * Fissiz mutabakati duzeltme yolu (F4.8).
+     *
+     * GORUNUR OLMASI SART: kapanista planlananlar alindi yazildi ve kullanici
+     * bunu bilmiyor. Duzeltme yolu olmadan iyimser varsayim bir tuzak olurdu -
+     * alinmamis urun satin alma gecmisine girer, kullanici gormez, oneri
+     * motoru o urunu duzenli aliniyor sanar.
+     */
+    onFixTaken: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -153,6 +164,19 @@ internal fun SummaryCard(
                 modifier = Modifier
                     .padding(top = Spacing.sm)
                     .fillMaxWidth(),
+            )
+        }
+
+        if (onFixTaken != null) {
+            Text(
+                text = "Hepsini almadım",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .padding(top = Spacing.xs)
+                    .pressable(onTap = onFixTaken)
+                    .padding(Spacing.xs),
             )
         }
 

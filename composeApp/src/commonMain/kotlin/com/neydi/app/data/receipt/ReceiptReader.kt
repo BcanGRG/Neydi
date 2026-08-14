@@ -20,5 +20,5 @@ interface ReceiptReader {
      *   durum (buruşuk fis, solmus termal kagit) ve cagiran taraf bunu
      *   kullaniciya gostermeli - cokmemeli.
      */
-    suspend fun readLines(imagePath: String): Result<List<String>>
+    suspend fun readLines(imagePath: String, forceRotation: Int? = null): Result<List<String>>
 }

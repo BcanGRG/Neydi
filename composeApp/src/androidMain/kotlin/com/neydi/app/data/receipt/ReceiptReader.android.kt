@@ -24,7 +24,7 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
 
     private val tanimlayici = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-    override suspend fun readLines(imagePath: String): Result<List<String>> =
+    override suspend fun readLines(imagePath: String, forceRotation: Int?): Result<List<String>> =
         withContext(Dispatchers.Default) {
             runCatching {
                 val bitmap = BitmapFactory.decodeFile(imagePath)
@@ -38,14 +38,19 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
                 //
                 // Ucu de deneniyor: kullanici uzun fisi yatay cekiyor ama
                 // telefonu hangi yone cevirdigi belli degil (90 ya da 270).
-                listOf(0, 90, 270)
-                    .map { derece -> gorselSatirlar(tani(bitmap, derece)) }
-                    .maxByOrNull { puan(it) }
+                // forceRotation verildiyse OTOMATIK SECIM ATLANIR. Kullanici
+                // Fis Kontrol ekranindan yonu elle cevirdiginde bu yol
+                // kullaniliyor: otomatik secim iki fiste dogru bildi ama yanlis
+                // bilirse kullanici tikanmasin.
+                val denenecek = forceRotation?.let { listOf(it) } ?: listOf(0, 90, 270)
+                denenecek
+                    .map { derece -> visualRows(recognize(bitmap, derece)) }
+                    .maxByOrNull { score(it) }
                     ?: emptyList()
             }
         }
 
-    private suspend fun tani(
+    private suspend fun recognize(
         bitmap: android.graphics.Bitmap,
         rotationDegrees: Int,
     ): Text = suspendCancellableCoroutine { devam ->
@@ -62,7 +67,7 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
 /**
  * Fisin bir gorsel satirinda okunan parca.
  */
-private data class Parca(val metin: String, val kutu: Rect)
+private data class Parca(val text: String, val kutu: Rect)
 
 /**
  * OCR satirlarini GORSEL SATIRLARA gruplar; her grubu soldan saga birlestirir.
@@ -87,8 +92,8 @@ private data class Parca(val metin: String, val kutu: Rect)
  * Geometri platforma ozgu veri oldugu icin bu is BURADA yapiliyor; ayristirici
  * dizgi uzerinde calismaya devam ediyor ve cihazsiz test edilebilir kaliyor.
  */
-internal fun gorselSatirlar(metin: Text): List<String> {
-    val parcalar = metin.textBlocks
+internal fun visualRows(text: Text): List<String> {
+    val parcalar = text.textBlocks
         .flatMap { blok -> blok.lines }
         .mapNotNull { satir -> satir.boundingBox?.let { Parca(satir.text, it) } }
     if (parcalar.isEmpty()) return emptyList()
@@ -108,7 +113,7 @@ internal fun gorselSatirlar(metin: Text): List<String> {
     }
 
     return gruplar.map { grup ->
-        grup.sortedBy { it.kutu.left }.joinToString(" ") { it.metin.trim() }
+        grup.sortedBy { it.kutu.left }.joinToString(" ") { it.text.trim() }
     }
 }
 
@@ -122,8 +127,8 @@ internal fun gorselSatirlar(metin: Text): List<String> {
  */
 private val TUTARLI_SATIR = Regex("""\S.*[*]?\d+[.,]\d{2}\s*$""")
 
-internal fun puan(satirlar: List<String>): Int =
-    satirlar.count { satir ->
+internal fun score(rows: List<String>): Int =
+    rows.count { satir ->
         // Yalnizca tutar tasiyan satir sayilmaz: solunda metin de olmali,
         // cunku olculen sey ESLESTIRME basarisi.
         TUTARLI_SATIR.containsMatchIn(satir) && satir.trimStart().first().isDigit().not()

@@ -34,6 +34,17 @@ data object MissingItems : NeydiKey
 @Serializable
 data class FinishShopping(val tripId: String? = null) : NeydiKey
 
+/**
+ * Fis Kontrol (F4.6). Fotograf cekildikten HEMEN SONRA aciliyor.
+ *
+ * Kendi hedefi olmasi sart: fis okuma sonucu bir bottom sheet'te gosterilecek
+ * kadar kucuk degil (satir sayisi ondalarca olabilir) ve kullanicinin buradan
+ * cikip geri donmesi gerekiyor - Gecmis ekrani yanlis okunmus bir fise donen
+ * TEK yol (F4.9).
+ */
+@Serializable
+data class ReceiptCheck(val receiptId: String) : NeydiKey
+
 @Serializable
 data object History : NeydiKey
 
@@ -67,6 +78,7 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
             subclass(Liste::class)
             subclass(MissingItems::class)
             subclass(FinishShopping::class)
+            subclass(ReceiptCheck::class)
             subclass(History::class)
             subclass(Settings::class)
             subclass(Setup::class)
@@ -88,10 +100,11 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
  * Yeni hedef eklerken: once yukariya `subclass(...)`, sonra buraya bir dal.
  */
 @Suppress("unused")
-private fun NeydiKey.serializerKaydiVarMi(): Unit = when (this) {
+private fun NeydiKey.hasSerializerRegistration(): Unit = when (this) {
     is Liste -> Unit
     is MissingItems -> Unit
     is FinishShopping -> Unit
+    is ReceiptCheck -> Unit
     is History -> Unit
     is Settings -> Unit
     is Setup -> Unit

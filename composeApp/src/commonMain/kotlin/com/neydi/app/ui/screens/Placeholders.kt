@@ -26,7 +26,7 @@ private fun AppScaffold(
     title: String,
     description: String,
     modifier: Modifier = Modifier,
-    aksiyonlar: @Composable () -> Unit = {},
+    actions: @Composable () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
@@ -43,38 +43,18 @@ private fun AppScaffold(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            aksiyonlar()
+            actions()
         }
     }
 }
 
 @Composable
-fun MissingItemsScreen(onAdd: () -> Unit, onBosver: () -> Unit) = AppScaffold(
+fun MissingItemsScreen(onAdd: () -> Unit, onCancel: () -> Unit) = AppScaffold(
     title = "Eksik olabilir",
     description = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",
 ) {
     NeydiButton("Ekle", onAdd)
-    NeydiButton("Bosver", onBosver)
-}
-
-@Composable
-fun FinishShoppingScreen(tripId: String?, onOnayla: () -> Unit) = AppScaffold(
-    title = "Alisverisi bitir",
-    description = if (tripId == null) {
-        "Fis cek / fissiz bitir. Fotograf ASLA bloklamaz - alisveris aninda kapanir."
-    } else {
-        "Gecmisten okuma modu: $tripId"
-    },
-) {
-    NeydiButton("Onayla ve bitir", onOnayla)
-}
-
-@Composable
-fun HistoryScreen(onBack: () -> Unit) = AppScaffold(
-    title = "Gecmis",
-    description = "Yanlis okunmus bir fise geri donmenin tek yolu. Uygulamanin en ucuz ekrani.",
-) {
-    NeydiButton("Geri", onBack)
+    NeydiButton("Bosver", onCancel)
 }
 
 @Composable

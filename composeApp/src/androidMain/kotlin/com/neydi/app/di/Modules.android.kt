@@ -1,5 +1,7 @@
 package com.neydi.app.di
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import android.content.Context
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
@@ -27,3 +29,6 @@ actual fun platformModule(): Module = module {
         )
     }
 }
+
+/** Disk beklemesi icin dogru havuz: JVM'de IO. */
+actual val ioDispatcher: CoroutineDispatcher = Dispatchers.IO

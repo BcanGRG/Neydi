@@ -117,6 +117,23 @@ class ListRepository(
         tripDao.closeIfOpen(tripId, memberId, clock()) == 1
 
     /**
+     * Fissiz mutabakat (F4.8): planlananlar alindi sayilir.
+     *
+     * YALNIZCA [closeTrip] true dondurunce cagirilmali - bkz.
+     * [TripLineDao.markAllTaken]. Ikinci kez calisirsa satin almalar cift
+     * sayilir.
+     *
+     * @return alindi yazilan satir sayisi.
+     */
+    suspend fun reconcileOptimistically(tripId: String): Int =
+        tripLineDao.markAllTaken(tripId, clock())
+
+    /** Bitir ekranindan geri alma: bu satir aslinda alinmadi. */
+    suspend fun setTaken(lineId: String, taken: Boolean) {
+        tripLineDao.setChecked(lineId, taken, if (taken) clock() else null)
+    }
+
+    /**
      * Urunu listeye ekler. ZATEN VARSA adet artirir, ikinci satir ACMAZ.
      *
      * UNIQUE(tripId, productId) bunu zaten engelliyor ama kisita carpip hata

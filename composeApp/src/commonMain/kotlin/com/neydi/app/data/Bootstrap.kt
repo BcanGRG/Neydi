@@ -1,6 +1,6 @@
 package com.neydi.app.data
 
-import com.neydi.app.data.catalog.tohumlaKatalog
+import com.neydi.app.data.catalog.seedCatalog
 import com.neydi.app.data.db.Household
 import com.neydi.app.data.db.Member
 import com.neydi.app.data.db.NeydiDatabase
@@ -18,7 +18,7 @@ const val DEFAULT_HOUSEHOLD_ID: String = "0198f2a1-0000-7000-8000-000000000001"
  * Tamami idempotent; tekrar cagrilmasi zararsiz.
  */
 suspend fun NeydiDatabase.bootstrap(newId: () -> String, clock: () -> Long) {
-    tohumlaKatalog()
+    seedCatalog()
 
     // Hane ve "ben" uyesi. Kurulum ekrani gelene kadar varsayilan isimlerle
     // duruyor - liste ekraninin calismasi icin bir hane ve bir uye SART.

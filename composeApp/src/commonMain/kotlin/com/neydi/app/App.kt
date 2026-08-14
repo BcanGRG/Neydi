@@ -12,15 +12,17 @@ import com.neydi.app.nav.FinishShopping
 import com.neydi.app.nav.Settings
 import com.neydi.app.nav.MissingItems
 import com.neydi.app.nav.History
+import com.neydi.app.nav.ReceiptCheck
 import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
-import com.neydi.app.ui.screens.FinishShoppingScreen
+import com.neydi.app.ui.finish.FinishShoppingRoute
 import com.neydi.app.ui.screens.SettingsScreen
 import com.neydi.app.ui.screens.MissingItemsScreen
-import com.neydi.app.ui.screens.HistoryScreen
+import com.neydi.app.ui.history.HistoryRoute
 import com.neydi.app.ui.screens.SetupScreen
 import com.neydi.app.ui.list.ListScreen
+import com.neydi.app.ui.receipt.ReceiptCheckRoute
 import com.neydi.app.ui.theme.NeydiTheme
 import org.koin.compose.koinInject
 
@@ -53,25 +55,34 @@ fun App() {
                         onGoShopping = { go(MissingItems) },
                         onHistory = { go(History) },
                         onSettings = { go(Settings) },
+                        onOpenReceipt = { go(ReceiptCheck(it)) },
+                        onFixTaken = { go(FinishShopping(it)) },
                     )
                 }
                 entry<MissingItems> {
                     MissingItemsScreen(
                         onAdd = { go(FinishShopping()) },
-                        onBosver = { back() },
+                        onCancel = { back() },
                     )
                 }
                 entry<FinishShopping> { key ->
-                    FinishShoppingScreen(
+                    FinishShoppingRoute(
                         tripId = key.tripId,
-                        onOnayla = {
-                            // Alisveris kapandi -> Liste'ye don, ara ekranlari birak
-                            backStack.clear()
-                            backStack.add(Liste)
-                        },
+                        // Gezi ZATEN KAPALI - bu ekran yalnizca iyimser
+                        // mutabakati duzeltiyor, kapatmiyor. O yuzden back
+                        // stack temizlenmiyor, sadece geri donuluyor.
+                        onDone = { back() },
                     )
                 }
-                entry<History> { HistoryScreen(onBack = { back() }) }
+                entry<ReceiptCheck> { key ->
+                    ReceiptCheckRoute(receiptId = key.receiptId, onBack = { back() })
+                }
+                entry<History> {
+                    HistoryRoute(
+                        onBack = { back() },
+                        onOpenReceipt = { go(ReceiptCheck(it)) },
+                    )
+                }
                 entry<Settings> { SettingsScreen(onBack = { back() }) }
                 entry<Setup> { SetupScreen(onFinish = { back() }) }
             },
