@@ -24,13 +24,13 @@ class CatalogSeederTest {
         useWriterConnection { it.usePrepared(sql) { st -> st.step(); st.getText(0) } }
 
     @Test
-    fun katalogYazilir() = runTest {
+    fun catalogIsSeeded() = runTest {
         val db = db()
         val sonuc = db.tohumlaKatalog()
 
         assertEquals(false, sonuc.atlandi)
-        assertEquals(SEED_KATEGORILER.size.toLong(), db.sayi("SELECT COUNT(*) FROM category"))
-        assertEquals(SEED_URUNLER.size.toLong(), db.sayi("SELECT COUNT(*) FROM catalog_seed"))
+        assertEquals(SEED_CATEGORIES.size.toLong(), db.sayi("SELECT COUNT(*) FROM category"))
+        assertEquals(SEED_PRODUCTS.size.toLong(), db.sayi("SELECT COUNT(*) FROM catalog_seed"))
     }
 
     /**
@@ -38,18 +38,18 @@ class CatalogSeederTest {
      * uygulama her acildiginda 245 satiri yeniden yazar.
      */
     @Test
-    fun ikinciCagriHicbirSeyYazmaz() = runTest {
+    fun secondCallWritesNothing() = runTest {
         val db = db()
         db.tohumlaKatalog()
         val ikinci = db.tohumlaKatalog()
 
         assertTrue(ikinci.atlandi, "ikinci tohumlama atlanmadi")
-        assertEquals(SEED_URUNLER.size.toLong(), db.sayi("SELECT COUNT(*) FROM catalog_seed"))
+        assertEquals(SEED_PRODUCTS.size.toLong(), db.sayi("SELECT COUNT(*) FROM catalog_seed"))
     }
 
     /** matchKey veri dosyasinda degil, ekleme aninda F2.4 kuraliyla turetiliyor. */
     @Test
-    fun matchKeyTuretilerekYazilir() = runTest {
+    fun matchKeyIsDerivedOnWrite() = runTest {
         val db = db()
         db.tohumlaKatalog()
 
@@ -65,17 +65,17 @@ class CatalogSeederTest {
 
     /** Yayginlik 1'den baslar ve boslugu olmamali - siralama buna dayaniyor. */
     @Test
-    fun yayginlikSiralamasiKesintisiz() {
-        val siralar = SEED_URUNLER.map { it.yayginlik }.sorted()
-        assertEquals((1..SEED_URUNLER.size).toList(), siralar)
-        assertEquals("Ekmek", SEED_URUNLER.first { it.yayginlik == 1 }.ad)
+    fun commonalityRankHasNoGaps() {
+        val siralar = SEED_PRODUCTS.map { it.yayginlik }.sorted()
+        assertEquals((1..SEED_PRODUCTS.size).toList(), siralar)
+        assertEquals("Ekmek", SEED_PRODUCTS.first { it.yayginlik == 1 }.ad)
     }
 
     /** Her urunun kategorisi gercekten var olmali; yoksa liste bolumsuz kalir. */
     @Test
-    fun tumUrunlerinKategorisiTanimli() {
-        val idler = SEED_KATEGORILER.map { it.id }.toSet()
-        val eksik = SEED_URUNLER.filter { it.kategoriId !in idler }
+    fun everyProductHasAKnownCategory() {
+        val idler = SEED_CATEGORIES.map { it.id }.toSet()
+        val eksik = SEED_PRODUCTS.filter { it.kategoriId !in idler }
         assertTrue(eksik.isEmpty(), "kategorisi tanimsiz urun: ${eksik.map { it.ad }}")
     }
 
@@ -84,8 +84,8 @@ class CatalogSeederTest {
      * arama hangisini gosterecegini bilemez.
      */
     @Test
-    fun matchKeyCakismasiYok() {
-        val gruplar = SEED_URUNLER.groupBy { matchKey(it.ad) }.filter { it.value.size > 1 }
+    fun noMatchKeyCollisions() {
+        val gruplar = SEED_PRODUCTS.groupBy { matchKey(it.ad) }.filter { it.value.size > 1 }
         assertTrue(
             gruplar.isEmpty(),
             "ayni matchKey'e dusen urunler: ${gruplar.map { (k, v) -> "$k -> ${v.map { u -> u.ad }}" }}",
@@ -94,11 +94,11 @@ class CatalogSeederTest {
 
     /** Kategori sirasi market gezme sirasi; bosluksuz 0..n olmali. */
     @Test
-    fun kategoriSirasiKesintisiz() {
+    fun categoryOrderHasNoGaps() {
         assertEquals(
-            SEED_KATEGORILER.indices.toList(),
-            SEED_KATEGORILER.map { it.sira }.sorted(),
+            SEED_CATEGORIES.indices.toList(),
+            SEED_CATEGORIES.map { it.sira }.sorted(),
         )
-        assertEquals("meyve-sebze", SEED_KATEGORILER.first { it.sira == 0 }.id)
+        assertEquals("meyve-sebze", SEED_CATEGORIES.first { it.sira == 0 }.id)
     }
 }

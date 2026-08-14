@@ -26,7 +26,7 @@ package com.neydi.app.data
  * ayirmakta israr etmek her urunu buyuk/kucuk harf varyantlarina bolerdi.
  * Carpisma nadir; bolunme her aliverişte olurdu.
  */
-private val TURKCE_KATLAMA: Map<Char, Char> = mapOf(
+private val TURKISH_FOLDING: Map<Char, Char> = mapOf(
     'İ' to 'i', 'I' to 'i', 'ı' to 'i',
     'Ş' to 's', 'ş' to 's',
     'Ğ' to 'g', 'ğ' to 'g',
@@ -46,7 +46,7 @@ fun matchKey(raw: String): String {
     var oncekiBosluk = true // bastaki bosluklari yut
 
     for (ch in raw) {
-        val katlanmis = TURKCE_KATLAMA[ch] ?: ch
+        val katlanmis = TURKISH_FOLDING[ch] ?: ch
         when {
             katlanmis.isLetterOrDigit() -> {
                 // Kalan harfler icin lowercase() guvenli: Turkce'ye ozel olanlari

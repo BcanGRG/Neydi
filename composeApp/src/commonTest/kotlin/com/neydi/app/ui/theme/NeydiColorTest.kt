@@ -44,11 +44,11 @@ class NeydiColorTest {
         val actual = contrast(a, b)
         assertTrue(
             actual >= expected,
-            "$label kontrasti ${fmt(actual)}:1 - en az ${fmt(expected)}:1 olmali",
+            "$label kontrasti ${format(actual)}:1 - en az ${format(expected)}:1 olmali",
         )
     }
 
-    private fun fmt(d: Double): String {
+    private fun format(d: Double): String {
         val r = (d * 100).toInt() / 100.0
         return r.toString()
     }
@@ -56,7 +56,7 @@ class NeydiColorTest {
     // --- Govde metni: AA (4.5:1) --------------------------------------------
 
     @Test
-    fun isikModundaGovdeMetniAAGecer() {
+    fun bodyTextPassesAAInLightMode() {
         val s = NeydiLightColors
         assertAtLeast(4.5, s.onSurface, s.surface, "isik onSurface/surface")
         assertAtLeast(4.5, s.onSurfaceVariant, s.surface, "isik onSurfaceVariant/surface")
@@ -66,7 +66,7 @@ class NeydiColorTest {
     }
 
     @Test
-    fun karanlikModdaGovdeMetniAAGecer() {
+    fun bodyTextPassesAAInDarkMode() {
         val s = NeydiDarkColors
         assertAtLeast(4.5, s.onSurface, s.surface, "karanlik onSurface/surface")
         assertAtLeast(4.5, s.onSurfaceVariant, s.surface, "karanlik onSurfaceVariant/surface")
@@ -81,7 +81,7 @@ class NeydiColorTest {
      * UI sinirini gecmeli.
      */
     @Test
-    fun fiyatRenkleriMetinDisiEsigiGecer() {
+    fun priceColoursPassNonTextThreshold() {
         assertAtLeast(3.0, LightExtraColors.priceUp, NeydiLightColors.surface, "isik priceUp/surface")
         assertAtLeast(3.0, LightExtraColors.priceDown, NeydiLightColors.surface, "isik priceDown/surface")
         assertAtLeast(3.0, DarkExtraColors.priceUp, NeydiDarkColors.surface, "karanlik priceUp/surface")
@@ -99,12 +99,12 @@ class NeydiColorTest {
      * etseydik ikisi birlikte yanlis olabilirdi.
      */
     @Test
-    fun accentKenarlikBayragiOlcumeUyar() {
+    fun accentOutlineFlagMatchesMeasurement() {
         val isikOrani = contrast(LightExtraColors.accent, NeydiLightColors.surface)
         assertEquals(
             isikOrani < 3.0,
             LightExtraColors.accentNeedsOutline,
-            "isik accent/surface ${fmt(isikOrani)}:1 ama accentNeedsOutline=" +
+            "isik accent/surface ${format(isikOrani)}:1 ama accentNeedsOutline=" +
                 "${LightExtraColors.accentNeedsOutline}. Bayrak olcumu takip etmeli.",
         )
 
@@ -112,14 +112,14 @@ class NeydiColorTest {
         assertEquals(
             karanlikOrani < 3.0,
             DarkExtraColors.accentNeedsOutline,
-            "karanlik accent/surface ${fmt(karanlikOrani)}:1 ama accentNeedsOutline=" +
+            "karanlik accent/surface ${format(karanlikOrani)}:1 ama accentNeedsOutline=" +
                 "${DarkExtraColors.accentNeedsOutline}. Bayrak olcumu takip etmeli.",
         )
     }
 
     /** Kenarlik zorunluysa kenarligin KENDISI gorunur olmali, yoksa kural bos. */
     @Test
-    fun accentKenarligiSiniriCizecekKadarKoyu() {
+    fun accentOutlineIsDarkEnoughToDrawABorder() {
         assertAtLeast(
             3.0,
             LightExtraColors.accentOutline,
@@ -133,7 +133,7 @@ class NeydiColorTest {
      * curumesine izin vermez.
      */
     @Test
-    fun belgelenenOranlarHalaDogru() {
+    fun documentedRatiosStillHold() {
         val beklenen = listOf(
             Triple("accent/surface (isik)", contrast(LightExtraColors.accent, NeydiLightColors.surface), 2.08),
             Triple("accentOutline/surface (isik)", contrast(LightExtraColors.accentOutline, NeydiLightColors.surface), 5.56),
@@ -142,7 +142,7 @@ class NeydiColorTest {
         beklenen.forEach { (ad, olculen, yazan) ->
             assertTrue(
                 abs(olculen - yazan) < 0.01,
-                "$ad: Color.kt $yazan:1 diyor, olculen ${fmt(olculen)}:1",
+                "$ad: Color.kt $yazan:1 diyor, olculen ${format(olculen)}:1",
             )
         }
     }
@@ -155,7 +155,7 @@ class NeydiColorTest {
      * Token testleri bu satirlari kacirir; bu yuzden ayrica olculuyor.
      */
     @Test
-    fun sabitSatirlarHalaAAGecer() {
+    fun fixedRowsStillPassAA() {
         listOf(
             "isik" to (NeydiLightColors.onSurface to NeydiLightColors.surface),
             "karanlik" to (NeydiDarkColors.onSurface to NeydiDarkColors.surface),
@@ -175,7 +175,7 @@ class NeydiColorTest {
      * sorusu cevapsiz kalir. Isik modunda su an 3.80:1 - taban bilincli secildi.
      */
     @Test
-    fun isaretliSatirlarKaybolmaz() {
+    fun checkedRowsDoNotDisappear() {
         listOf(
             "isik" to (NeydiLightColors.onSurface to NeydiLightColors.surface),
             "karanlik" to (NeydiDarkColors.onSurface to NeydiDarkColors.surface),

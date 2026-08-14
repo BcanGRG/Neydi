@@ -26,7 +26,7 @@ data class Receipt(
     /** Fisin TOPLAM'i, kurus. Aritmetik kontrolun referansi. */
     val totalMinor: Long? = null,
     val extractedAt: Long? = null,
-    val status: ReceiptStatus = ReceiptStatus.BEKLIYOR,
+    val status: ReceiptStatus = ReceiptStatus.PENDING,
     /** Basarisiz okuma sessizce kaybolmasin; Gecmis ekraninda gorunur. */
     val errorMessage: String? = null,
     val createdAt: Long,
@@ -34,13 +34,13 @@ data class Receipt(
 )
 
 enum class ReceiptStatus {
-    BEKLIYOR,
-    OKUNUYOR,
+    PENDING,
+    READING,
     /** Okundu ve Sigma(satirlar) - indirimler = TOPLAM tutuyor. */
-    DOGRULANDI,
+    VERIFIED,
     /** Okundu ama toplam tutmadi - satirlar kullanici onayina dusuyor. */
-    TUTARSIZ,
-    BASARISIZ,
+    MISMATCHED,
+    FAILED,
 }
 
 /**

@@ -146,7 +146,7 @@ interface TripLineDao {
         ORDER BY c.sortOrder, tl.createdAt
         """,
     )
-    fun observeListe(tripId: String): Flow<List<ListeSatiri>>
+    fun observeList(tripId: String): Flow<List<ListRowProjection>>
 
     @Query("SELECT * FROM trip_line WHERE tripId = :tripId AND productId = :productId AND deletedAt IS NULL LIMIT 1")
     suspend fun find(tripId: String, productId: String): TripLine?
@@ -212,7 +212,7 @@ interface PriceObservationDao {
         WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
         """,
     )
-    fun observeTahmin(tripId: String): Flow<Long>
+    fun observeEstimate(tripId: String): Flow<Long>
 
     /** Tahmine giren urun sayisi: kacinin fiyatini bildigimizi soylemek icin. */
     @Query(
@@ -223,7 +223,7 @@ interface PriceObservationDao {
                       WHERE po.productId = tl.productId AND po.deletedAt IS NULL)
         """,
     )
-    fun observeFiyatliSayisi(tripId: String): Flow<Int>
+    fun observePricedCount(tripId: String): Flow<Int>
 }
 
 @Dao

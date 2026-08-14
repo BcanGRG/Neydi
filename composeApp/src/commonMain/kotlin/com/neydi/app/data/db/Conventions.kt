@@ -32,4 +32,4 @@ package com.neydi.app.data.db
  *    cagrilirsa noktali/noktasiz I urunu ikiye boler ve fiyat gecmisini yok
  *    eder - bu yuzden alan var ama doldurma kurali ayri adimda kilitleniyor.
  */
-internal object Sozlesme
+internal object Contract

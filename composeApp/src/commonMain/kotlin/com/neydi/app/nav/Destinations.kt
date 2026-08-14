@@ -28,20 +28,20 @@ sealed interface NeydiKey : NavKey
 data object Liste : NeydiKey
 
 @Serializable
-data object EksikOlabilir : NeydiKey
+data object MissingItems : NeydiKey
 
 /** tripId null ise aktif alisveris kapatiliyor; dolu ise Gecmis'ten okuma/duzenleme modu. */
 @Serializable
-data class AlisverisiBitir(val tripId: String? = null) : NeydiKey
+data class FinishShopping(val tripId: String? = null) : NeydiKey
 
 @Serializable
-data object Gecmis : NeydiKey
+data object History : NeydiKey
 
 @Serializable
-data object Ayarlar : NeydiKey
+data object Settings : NeydiKey
 
 @Serializable
-data object Kurulum : NeydiKey
+data object Setup : NeydiKey
 
 /**
  * Back stack'in surec olumunden sonra geri yuklenmesi icin gereken serializer kaydi.
@@ -65,11 +65,11 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(Liste::class)
-            subclass(EksikOlabilir::class)
-            subclass(AlisverisiBitir::class)
-            subclass(Gecmis::class)
-            subclass(Ayarlar::class)
-            subclass(Kurulum::class)
+            subclass(MissingItems::class)
+            subclass(FinishShopping::class)
+            subclass(History::class)
+            subclass(Settings::class)
+            subclass(Setup::class)
         }
     }
 }
@@ -90,9 +90,9 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
 @Suppress("unused")
 private fun NeydiKey.serializerKaydiVarMi(): Unit = when (this) {
     is Liste -> Unit
-    is EksikOlabilir -> Unit
-    is AlisverisiBitir -> Unit
-    is Gecmis -> Unit
-    is Ayarlar -> Unit
-    is Kurulum -> Unit
+    is MissingItems -> Unit
+    is FinishShopping -> Unit
+    is History -> Unit
+    is Settings -> Unit
+    is Setup -> Unit
 }

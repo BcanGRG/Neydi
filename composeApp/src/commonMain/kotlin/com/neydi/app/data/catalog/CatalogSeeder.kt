@@ -20,18 +20,18 @@ import com.neydi.app.data.matchKey
  * kurali (F2.4) tek yerde kalsin. Kural degisirse katalog yeniden tohumlanir,
  * iki ayri gercek kaynagi olusmaz.
  */
-suspend fun NeydiDatabase.tohumlaKatalog(): CatalogTohumSonucu {
+suspend fun NeydiDatabase.tohumlaKatalog(): CatalogSeedResult {
     val mevcut = useWriterConnection { t ->
         t.usePrepared("SELECT COUNT(*) FROM category") { it.step(); it.getLong(0) }
     }
-    if (mevcut > 0) return CatalogTohumSonucu(atlandi = true, kategori = 0, urun = 0)
+    if (mevcut > 0) return CatalogSeedResult(atlandi = true, kategori = 0, urun = 0)
 
     useWriterConnection { transactor ->
         transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
             usePrepared(
                 "INSERT INTO category (id, name, sortOrder, tintArgb) VALUES (?, ?, ?, ?)",
             ) { st ->
-                SEED_KATEGORILER.forEach { k ->
+                SEED_CATEGORIES.forEach { k ->
                     st.bindText(1, k.id)
                     st.bindText(2, k.ad)
                     st.bindInt(3, k.sira)
@@ -46,7 +46,7 @@ suspend fun NeydiDatabase.tohumlaKatalog(): CatalogTohumSonucu {
                 VALUES (?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
             ) { st ->
-                SEED_URUNLER.forEach { u ->
+                SEED_PRODUCTS.forEach { u ->
                     // id yayginliktan turetiliyor: deterministik, yani ayni katalog
                     // her cihazda ayni id'leri uretir. Senkron acilinca iki telefon
                     // ayni tohum urununu ayri urun sanmaz.
@@ -62,14 +62,14 @@ suspend fun NeydiDatabase.tohumlaKatalog(): CatalogTohumSonucu {
             }
         }
     }
-    return CatalogTohumSonucu(
+    return CatalogSeedResult(
         atlandi = false,
-        kategori = SEED_KATEGORILER.size,
-        urun = SEED_URUNLER.size,
+        kategori = SEED_CATEGORIES.size,
+        urun = SEED_PRODUCTS.size,
     )
 }
 
-data class CatalogTohumSonucu(
+data class CatalogSeedResult(
     val atlandi: Boolean,
     val kategori: Int,
     val urun: Int,

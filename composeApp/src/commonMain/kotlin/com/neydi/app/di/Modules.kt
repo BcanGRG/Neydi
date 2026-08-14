@@ -4,8 +4,8 @@ import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
-import com.neydi.app.data.repo.ListeRepository
-import com.neydi.app.ui.liste.ListeViewModel
+import com.neydi.app.data.repo.ListRepository
+import com.neydi.app.ui.list.ListViewModel
 import kotlinx.coroutines.Dispatchers
 // kotlinx.datetime.Clock artik kotlin.time.Clock'a deprecate typealias.
 import kotlin.time.Clock
@@ -46,10 +46,10 @@ val dataModule = module {
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
     // App() bunlari kendi uretmek zorunda kalmasin.
-    single { AppBootstrap(db = get(), saat = ::simdi, yeniId = ::yeniUuid) }
+    single { AppBootstrap(db = get(), saat = ::now, yeniId = ::newUuid) }
 
     viewModel {
-        ListeViewModel(
+        ListViewModel(
             repo = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
@@ -57,23 +57,23 @@ val dataModule = module {
     }
 
     single {
-        ListeRepository(
+        ListRepository(
             tripDao = get(),
             tripLineDao = get(),
             productDao = get(),
             // Saat ve id URETIMI disaridan: repository saf kalsin ve testte
             // deterministik olabilsin.
-            saat = ::simdi,
-            yeniId = ::yeniUuid,
+            saat = ::now,
+            yeniId = ::newUuid,
         )
     }
 }
 
 @OptIn(ExperimentalUuidApi::class)
-internal fun yeniUuid(): String = Uuid.random().toString()
+internal fun newUuid(): String = Uuid.random().toString()
 
 @OptIn(ExperimentalTime::class)
-internal fun simdi(): Long = Clock.System.now().toEpochMilliseconds()
+internal fun now(): Long = Clock.System.now().toEpochMilliseconds()
 
 /** Acilis hazirligi. Idempotent - bkz. Bootstrap.kt */
 class AppBootstrap(

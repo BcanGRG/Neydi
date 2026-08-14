@@ -22,7 +22,7 @@ import com.neydi.app.ui.theme.Spacing
  * ve temanin uygulandigini kanitlamak.
  */
 @Composable
-private fun Iskele(
+private fun AppScaffold(
     baslik: String,
     aciklama: String,
     modifier: Modifier = Modifier,
@@ -49,7 +49,7 @@ private fun Iskele(
 }
 
 @Composable
-fun EksikOlabilirScreen(onEkle: () -> Unit, onBosver: () -> Unit) = Iskele(
+fun MissingItemsScreen(onEkle: () -> Unit, onBosver: () -> Unit) = AppScaffold(
     baslik = "Eksik olabilir",
     aciklama = "Evden cikmadan onceki son kontrol. Hicbir sey uygun degilse bu ekran ACILMAZ.",
 ) {
@@ -58,7 +58,7 @@ fun EksikOlabilirScreen(onEkle: () -> Unit, onBosver: () -> Unit) = Iskele(
 }
 
 @Composable
-fun AlisverisiBitirScreen(tripId: String?, onOnayla: () -> Unit) = Iskele(
+fun FinishShoppingScreen(tripId: String?, onOnayla: () -> Unit) = AppScaffold(
     baslik = "Alisverisi bitir",
     aciklama = if (tripId == null) {
         "Fis cek / fissiz bitir. Fotograf ASLA bloklamaz - alisveris aninda kapanir."
@@ -70,7 +70,7 @@ fun AlisverisiBitirScreen(tripId: String?, onOnayla: () -> Unit) = Iskele(
 }
 
 @Composable
-fun GecmisScreen(onGeri: () -> Unit) = Iskele(
+fun HistoryScreen(onGeri: () -> Unit) = AppScaffold(
     baslik = "Gecmis",
     aciklama = "Yanlis okunmus bir fise geri donmenin tek yolu. Uygulamanin en ucuz ekrani.",
 ) {
@@ -78,7 +78,7 @@ fun GecmisScreen(onGeri: () -> Unit) = Iskele(
 }
 
 @Composable
-fun AyarlarScreen(onGeri: () -> Unit) = Iskele(
+fun SettingsScreen(onGeri: () -> Unit) = AppScaffold(
     baslik = "Ayarlar",
     aciklama = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.",
 ) {
@@ -86,7 +86,7 @@ fun AyarlarScreen(onGeri: () -> Unit) = Iskele(
 }
 
 @Composable
-fun KurulumScreen(onBitir: () -> Unit) = Iskele(
+fun SetupScreen(onBitir: () -> Unit) = AppScaffold(
     baslik = "Kurulum",
     aciklama = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
 ) {
