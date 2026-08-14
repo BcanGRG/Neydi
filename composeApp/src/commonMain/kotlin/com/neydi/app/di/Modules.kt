@@ -112,8 +112,26 @@ val dataModule = module {
     }
 }
 
+/**
+ * Satir kimligi - UUID **v7**.
+ *
+ * Ilk hali `Uuid.generateV7()` cagiriyordu ve o **v4** uretiyor (kotlin-stdlib
+ * 2.4.10, `Uuid.kt:581`: `random() = generateV4()`), yani Conventions.kt madde
+ * 1'in "v7, v4 DEGIL" kurali kodda tam tersine calisiyordu. Uygulamada
+ * yazilmis her satir rastgele onekli bir id aldi.
+ *
+ * NEDEN ONEMLI: Room id'leri TEXT saklıyor, yani siralama sozluk sirasi -
+ * v7'nin onundeki zaman damgasi gercekten siralaniyor, v4 siralanmiyor; birincil
+ * anahtar index'i sona ekleniyor, ortasina serpistirilmiyor. Ustelik iki cihaz
+ * kimlikleri bagimsiz uretecek (Faz 7) ve karisik nesilli bir id uzayi kalici
+ * olur. Simdi bir satir, Faz 7'den sonra sonsuza kadar.
+ *
+ * Mevcut v4 satirlar GECERLI kaliyor - bu bir migration degil, yalnizca yeni
+ * id'ler degisiyor. Katalog tohum id'leri (`seed-<yayginlik>`) bilerek
+ * deterministik ve bundan etkilenmiyor.
+ */
 @OptIn(ExperimentalUuidApi::class)
-internal fun newUuid(): String = Uuid.random().toString()
+internal fun newUuid(): String = Uuid.generateV7().toString()
 
 @OptIn(ExperimentalTime::class)
 internal fun now(): Long = Clock.System.now().toEpochMilliseconds()

@@ -140,6 +140,11 @@ class OptimisticReconcileTest {
         r.setTaken(sut.rowId, false)
 
         val after = db.tripLineDao().observeList(trip).first()
+        // Bu dosyanin KDoc'u tam bu tuzagi anlatiyor ama bu test ondan
+        // kacamamis: `first { }` yalnizca Süt satirinin varligini garanti eder,
+        // FILTRELENMIS liste yine bos olabilir ve `all {}` bos listede true
+        // doner. Boyut once pinlenmeli.
+        assertEquals(3, after.size)
         assertFalse(after.first { it.name == "Süt" }.checked)
         assertTrue(after.filter { it.name != "Süt" }.all { it.checked })
     }

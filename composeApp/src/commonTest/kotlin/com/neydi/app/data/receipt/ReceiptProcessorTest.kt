@@ -172,8 +172,13 @@ class ReceiptProcessorTest {
         val db = db(); prepare(db)
         processor(db, FakeReader(bimLines)).process("r1")
 
-        assertTrue(db.receiptLineDao().forReceipt("r1").all { it.needsReview })
-        assertTrue(db.receiptLineDao().forReceipt("r1").all { it.matchedProductId == null })
+        val lines = db.receiptLineDao().forReceipt("r1")
+        // BOYUT KONTROLU SART: `all {}` bos listede her zaman true doner, yani
+        // process() satir yazmayi tamamen birakirsa - F4.4/F4.6'nin en agir
+        // regresyonu - bu testin iki iddiasi da gecmeye devam ederdi.
+        assertEquals(4, lines.size)
+        assertTrue(lines.all { it.needsReview })
+        assertTrue(lines.all { it.matchedProductId == null })
     }
 
     /**

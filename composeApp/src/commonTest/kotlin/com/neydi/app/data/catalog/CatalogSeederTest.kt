@@ -101,4 +101,20 @@ class CatalogSeederTest {
         )
         assertEquals("meyve-sebze", SEED_CATEGORIES.first { it.order == 0 }.id)
     }
+
+    /**
+     * BELGELENEN SAYILAR TESTE BAGLI (F1.2'nin kurdugu kural: dokumantasyon
+     * curuyemez).
+     *
+     * Diger testlerin hepsi veritabanini VERI DOSYASIYLA karsilastiriyor, yani
+     * kendine gonderme yapiyor: CatalogSeedData 50 urune dusurulse
+     * `catalogIsSeeded`, `everyProductHasAKnownCategory` ve
+     * `commonalityRankHasNoGaps` yine gecerdi. ROADMAP "245 urun + 12 kategori"
+     * diyor; onu tutan tek sey bu iki satir.
+     */
+    @Test
+    fun documentedCatalogSizeIsPinned() {
+        assertEquals(245, SEED_PRODUCTS.size)
+        assertEquals(12, SEED_CATEGORIES.size)
+    }
 }

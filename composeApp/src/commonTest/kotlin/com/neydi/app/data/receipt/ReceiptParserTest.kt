@@ -140,13 +140,19 @@ class ReceiptParserTest {
     /** "TOPLAM KDV *2.39" urun DEGIL: toplamin icindeki verginin dokumu. */
     @Test
     fun bimVatLineIsNotAProduct() {
-        assertTrue(parseReceipt(bim).lines.none { it.amountMinor == 239L })
+        val lines = parseReceipt(bim).lines
+        // Negatif iddianin TABANI: satir listesi bosalirsa `none {}` yine true
+        // doner ve test hicbir sey kanitlamaz.
+        assertEquals(4, lines.size)
+        assertTrue(lines.none { it.amountMinor == 239L })
     }
 
     /** Odeme satiri toplamla AYNI tutari tasiyor; urun sayilirsa toplam ikiye katlanir. */
     @Test
     fun bimPaymentLineIsNotAProduct() {
-        assertTrue(parseReceipt(bim).lines.none { it.amountMinor == 22550L })
+        val lines = parseReceipt(bim).lines
+        assertEquals(4, lines.size)
+        assertTrue(lines.none { it.amountMinor == 22550L })
     }
 
     /** Miktar satiri urunden ONCE geliyor: "2 ad X 53.00" sonra KREMA *106.00. */
@@ -163,6 +169,7 @@ class ReceiptParserTest {
     @Test
     fun bimStripsMangledVatMarkFromName() {
         val names = parseReceipt(bim).lines.map { it.name }
+        assertEquals(4, names.size)
         assertTrue(names.none { it.endsWith("21.") || it.endsWith("220") }, "kalan: $names")
     }
 

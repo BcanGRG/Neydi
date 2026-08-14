@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+        allowBackup="false" - VARSAYILAN "true" BIR GIZLILIK KACAGIYDI.
+        API 26+ ile Android uygulamanin dosyalarini kullanicinin Google
+        Drive'ina otomatik yedekliyor. Bu uygulamanin dosyalari: her alisverisi,
+        fiyati ve hane uyesini tasiyan Room veritabani, ve `filesDir/receipts`
+        altindaki fis JPEG'leri. F4.2 ham kamera dosyasini "fis kisisel veri;
+        iki kopya hem yer hem gereksiz maruziyet" diye SILIYOR - manifest ise
+        sessizce ucuncu bir kopyayi Drive'a gonderiyordu, yani belgelenmis
+        karari dogrudan cürütüyordu.
+    -->
     <application
         android:name=".NeydiApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@android:drawable/sym_def_app_icon"
         android:label="Neydi"
         android:supportsRtl="false"
