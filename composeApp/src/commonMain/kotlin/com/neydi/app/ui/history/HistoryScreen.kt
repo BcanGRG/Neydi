@@ -56,9 +56,22 @@ fun HistoryScreen(
     onBack: () -> Unit,
     onOpenReceipt: (String) -> Unit,
 ) {
-    // safeDrawingPadding SART: cihazda "Geri" ve baslik durum cubugunun altina
-    // girdi. Placeholders'taki iskelet ekranlarda vardi, yeni ekranlarda
-    // unutulmustu.
+    // SURFACE ZORUNLU, sadece Column DEGIL.
+    //
+    // Ilk hali ciplak bir Column'du ve karanlik modda ekranin zemini
+    // themes.xml'deki SABIT `windowBackground = #FBF7F2`'den geliyordu:
+    // acik krem zemin uzerinde karanlik paletin beyaza yakin metni. NeydiTheme
+    // bir Surface saglamiyor, NavDisplay de zemin cizmiyor - ekranin kendisi
+    // cizmek zorunda (Placeholders ve ListContent oyle yapiyor).
+    //
+    // ONIZLEME BUNU MASKELEDI: NeydiPreview icerigi kendi Surface'ina
+    // sariyor, yani preview'de zemin dogru gorunuyordu. Hatanin yalnizca
+    // gercek ekranda var olmasinin sebebi bu.
+    //
+    // safeDrawingPadding da SART: cihazda "Geri" ve baslik durum cubugunun
+    // altina girdi. Placeholders'taki iskelet ekranlarda vardi, yeni
+    // ekranlarda unutulmustu.
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(Spacing.md)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text("‹ Geri") }
@@ -84,6 +97,7 @@ fun HistoryScreen(
                 TripBlock(trips[i], onOpenReceipt)
             }
         }
+    }
     }
 }
 
@@ -209,4 +223,32 @@ private fun HistoryPreview() = NeydiPreview {
 @Composable
 private fun HistoryEmptyPreview() = NeydiPreview {
     HistoryScreen(trips = emptyList(), onBack = {}, onOpenReceipt = {})
+}
+
+/**
+ * Gorulmeyen durumlar: bekliyor / okunuyor / toplam tutmuyor.
+ *
+ * Ilk onizlemeler yalnizca VERIFIED ve FAILED tasiyordu, yani amber tonlu
+ * MISMATCHED satiri ve iki gecici durum hic cizilmemisti.
+ */
+@PreviewLightDark
+@Composable
+private fun HistoryAllStatusesPreview() = NeydiPreview {
+    HistoryScreen(
+        trips = listOf(
+            HistoryTrip(
+                id = "t9",
+                closedAt = 1_755_100_000_000,
+                totalMinor = 48458,
+                receipts = listOf(
+                    HistoryReceipt("a", ReceiptStatus.PENDING, null, null, 1_755_100_000_000),
+                    HistoryReceipt("b", ReceiptStatus.READING, null, "FiLE MARKET", 1_755_099_000_000),
+                    HistoryReceipt("c", ReceiptStatus.MISMATCHED, 48458, "FiLE OVACIK / KEÇiÖREN", 1_755_098_000_000),
+                    HistoryReceipt("d", ReceiptStatus.VERIFIED, 22550, "BIM", 1_755_097_000_000),
+                ),
+            ),
+        ),
+        onBack = {},
+        onOpenReceipt = {},
+    )
 }
