@@ -12,6 +12,7 @@ import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
 import com.neydi.app.ui.receipt.ReceiptCheckViewModel
+import com.neydi.app.ui.missing.MissingItemsViewModel
 import com.neydi.app.ui.settings.SettingsViewModel
 // kotlinx.datetime.Clock artik kotlin.time.Clock'a deprecate typealias.
 import kotlin.time.Clock
@@ -67,6 +68,13 @@ val dataModule = module {
             suggestionEngine = get(),
             receiptDao = get(),
             processor = get(),
+        )
+    }
+
+    viewModel {
+        MissingItemsViewModel(
+            engine = get(), repo = get(),
+            productDao = get(), memberDao = get(),
         )
     }
 

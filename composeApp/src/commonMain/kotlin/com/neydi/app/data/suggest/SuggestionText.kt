@@ -17,3 +17,24 @@ fun Suggestion.reasonText(): String = when {
     daysSince == 1 -> "dün almıştın"
     else -> "$daysSince gün oldu"
 }
+
+/**
+ * Ekran 3'un satir gerekcesi - DUZ TURKCE, TAM CUMLE.
+ *
+ * `reasonText` cip icin kisa ("12 gun oldu"); burasi bir satirin altinda
+ * duran aciklama, yani cumle kurmasi gerekiyor. Tasarimin sarti: *"Her
+ * oneri duz Turkce bir gerekce tasir"* - gerekcesiz bir oneri reklam gibi
+ * okunuyor ve kullanici onu gormemeye basliyor.
+ *
+ * SIRA ONEMLI: en spesifik bilgi kazaniyor. "Gecen sefer unuttun" bir
+ * OLAY; tempo ise bir ORTALAMA - olay her zaman daha aciklayici.
+ */
+fun Suggestion.longReasonText(): String = when {
+    forgottenLastTrip -> "geçen sefer unutmuştun"
+    // Sabitte tempo anlatmak gereksiz: kullanici zaten "her zaman al" dedi.
+    isStaple -> "her seferinde alıyorsun"
+    // Vakti GECMIS: iki sayiyi birlikte vermek sart - "12 gündür almadın"
+    // tek basina cok mu az cok mu bilinmiyor.
+    daysSince > intervalDays -> "$daysSince gündür almadın, normalde $intervalDays günde bir"
+    else -> "genelde $intervalDays günde bir alıyorsun"
+}

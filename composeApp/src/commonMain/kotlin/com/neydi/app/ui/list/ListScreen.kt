@@ -144,6 +144,7 @@ fun ListScreen(
             clipboardText = null
         },
         onShoppingMode = vm::setShoppingMode,
+        onGoShopping = onGoShopping,
         estimate = estimate,
         onOpenSheet = vm::openSheet,
         onFinish = vm::finishShopping,
@@ -289,6 +290,8 @@ internal fun ListContent(
     onRowLongPress: (String) -> Unit,
     onClipboard: () -> Unit,
     onShoppingMode: (Boolean) -> Unit,
+    /** Ekran 3'e gider (evden cikmadan son kontrol). */
+    onGoShopping: () -> Unit,
     estimate: BasketEstimate,
     onOpenSheet: () -> Unit,
     onFinish: () -> Unit,
@@ -463,7 +466,11 @@ internal fun ListContent(
                     if (!state.isEmpty) {
                         NeydiButton(
                             text = "Alışverişe çıkıyorum",
-                            onClick = { onShoppingMode(true) },
+                            // EKRAN 3'E GIDIYOR, dogrudan moda GECMIYOR:
+                            // tasarimin akisi "evden cikmadan son kontrol".
+                            // Onerilecek bir sey yoksa Ekran 3 kendini
+                            // atliyor ve moda geciyor (bkz. MissingItemsRoute).
+                            onClick = onGoShopping,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = Spacing.md)
@@ -731,6 +738,7 @@ private fun ListPreviewHost(
     clipboardText = clipboard,
     onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
     onToggleChecked = { _, _ -> }, onRowLongPress = {}, onClipboard = {}, onShoppingMode = {},
+    onGoShopping = {},
     estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},
 )
 

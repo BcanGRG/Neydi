@@ -41,6 +41,15 @@ data class Suggestion(
     val intervalDays: Int,
     /** Gecen gezide unutuldu mu - gerekce metnini degistiriyor. */
     val forgottenLastTrip: Boolean,
+    /**
+     * Kullanicinin SABIT ilan ettigi bir urun mu (F6.8).
+     *
+     * Ekran 3 onerileri uc bolume ayiriyor ve bu alan "Her zamankiler"
+     * bolumunun uyeligini belirliyor. Skor degil BEYAN: kullanici isaretledi.
+     */
+    val isStaple: Boolean = false,
+    /** Olculmus alim sayisi - gerekce cumlesinde kullaniliyor. */
+    val purchaseCount: Int = 0,
 )
 
 /**
@@ -139,6 +148,8 @@ class SuggestionEngine(
             daysSince = daysSince,
             intervalDays = stats.medianIntervalDays ?: return null,
             forgottenLastTrip = lastOutcome == TakeOutcome.FORGOTTEN,
+            isStaple = product.isStaple,
+            purchaseCount = stats.purchaseCount,
         )
     }
 }
