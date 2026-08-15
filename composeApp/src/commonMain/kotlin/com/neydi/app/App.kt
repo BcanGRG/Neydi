@@ -17,7 +17,7 @@ import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
 import com.neydi.app.ui.finish.FinishShoppingRoute
-import com.neydi.app.ui.screens.SettingsScreen
+import com.neydi.app.ui.settings.SettingsRoute
 import com.neydi.app.ui.screens.MissingItemsScreen
 import com.neydi.app.ui.history.HistoryRoute
 import com.neydi.app.ui.screens.SetupScreen
@@ -95,7 +95,7 @@ fun App() {
                         onOpenReceipt = { go(ReceiptCheck(it)) },
                     )
                 }
-                entry<Settings> { SettingsScreen(onBack = { back() }) }
+                entry<Settings> { SettingsRoute(onBack = { back() }) }
                 entry<Setup> { SetupScreen(onFinish = { back() }) }
             },
         )

@@ -372,7 +372,10 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Üçüncü boş durum buraya bağlı:** `EmptyKind` yalnızca `ILK_GUN` ve `DONGU_ORTASI` taşıyor, oysa hem kendi KDoc'u hem `EmptyStates` *"ÜÇ boş durum"* diyor. Üçüncüsü *"kurulum atlandı"* ve F3.6 onu açıkça bu adıma erteledi. Tasarım ilk-gün için **iki** varyant istiyor: kurulum yapıldı → liste zaten dolu + kapatılabilir kart; kurulum atlandı → 12 tek-dokunuş çipi. Bugün yalnızca ikincisinin bir varyantı var ve o da **12 REYON kategorisini** gösteriyor, tasarımın saydığı 12 **ürünü** değil (ekmek, süt, yumurta, peynir, zeytin, domates, salatalık, soğan, çay, yoğurt, makarna, deterjan).
   **Adım 2'nin verisi hazır:** ~40 ürünlük grid için `CatalogSeedDao.byCategory` ve `commonalityRank` sıralaması var; eksik olan **seçim durumu** ve seçilenleri `isStaple` olarak yazmak (F6.8).
 
-- [ ] **6.7 — Ayarlar (Ekran 7).** *"Sıfır tasarım yatırımı, düz liste"* — ama beş bölümün üçünün **hiç veri kaynağı yok**.
+- [x] **6.7 — Ayarlar (Ekran 7).** ✅ *Cihazda doğrulandı.* *"Sıfır tasarım yatırımı, düz liste"* — ve beş bölümün üçünün veri kaynağı yoktu.
+  **Tasarımın kendi kuralı sorunu çözdü:** *"Boş bir bölüm başlığı, olmayan bir işi varmış gibi gösterir."* Veri olmayan bölüm **hiç çizilmiyor**, sahte veriyle ya da "yakında" yazısıyla doldurulmuyor. Çizilenler: Hane (Ad, Üyeler), Her zamankiler (N/12 + liste + kaldırma), Gizlilik.
+  **Çizilmeyenler ve sebepleri:** `suggestion_block` tablosu şemada var ama **hiçbir yazan yok** (F6.5 gelince dolacak); `store` tablosu var, hiçbir yazan yok — fiş `storeNameRaw` yazıyor ama Store satırı üretmiyor; `Household.joinCode` alanı var ama null, kod üretimi Faz 7'nin işi.
+  **"Verilerimi sil" bilerek yazılmadı** — bkz. Faz 11 açık soruları.
   Ekran **erişilebilir** (F4.9'da yatay kaydırma eklenene kadar "Ayarlar" düğmesi ekranın sağında kesiliyordu), ama içerik iskelet.
   1. **Hane** — `HouseholdDao.observeActive/upsert` ve `MemberDao.observeAll` var. **6 karakterlik katılma kodu: kolon yok, üretici yok** (F7.2'ye ait ama satır burada görünecek).
   2. **Her zamankiler (9/12, sıralanabilir, silinebilir)** — `observeStaples` sorgusu var ama **beslenmiyor ve çağıranı yok** (F6.8). *"Sıralanabilir"* için `Product`'ta `sortOrder` kolonu **yok**. *"Silinebilir"* = `isStaple = false` yazmak, yani yine F6.8.
@@ -533,6 +536,9 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 1. **Floating toolbar'ın `undo` ve `filter_list` düğmeleri.** Tasarımda üç ikon var (`add`, `undo`, `filter_list`); yalnızca `add` bağlandı. `undo`'nun davranışı çelişkili: Ekran 1 notu *"Geri alma 'Alındı' bölümünden tek dokunuş"* diyor, yani toolbar'daki `undo` neyi geri alıyor belirsiz. `filter_list` hiçbir yerde tanımlı değil (hangi ölçüte göre filtre?). **Hiçbir şey yapmayan buton çizmemek** için ikisi de atlandı.
 2. **İlk gün boş durumunun çipleri.** Tasarım 3×4 grid'de **12 başlangıç ÜRÜNÜ** gösteriyor (Ekmek, Süt, Yumurta…); kod **reyon** çipleri gösteriyor (F3.6'nın kararı). İkisi farklı iş: ürün çipi tek dokunuşta listeye düşüyor, reyon çipi sheet açıyor. Tasarıma dönmek F3.6'nın gerekçesini geçersiz kılıyor mu?
 3. **Başlıktaki avatar + varlık noktası.** Tasarımda her ekranın başlığında var (28dp daire, 6dp yeşil nokta). Kodda `avatarOnlyDrawnWhenPartnerAdded` testi var ama başlıkta çizilmiyor. Tek kullanıcılı hanede gösterilmeli mi?
+5. **"Verilerimi sil" (KVKK) nasıl onaylanacak?** Tasarım Ayarlar'da düz bir satır olarak gösteriyor (error rengi) ama uygulamanın **"sıfır modal dialog"** kuralı var. Geri alınamaz bir silmeyi onaysız çalıştırmak kabul edilemez, dialog ise tasarımın yasakladığı şey. Üçüncü bir yol gerekiyor (satır içi onay? iki aşamalı dokunuş?). Satır **hiç çizilmedi**.
+6. **Ayarlar'daki "Haneden çık" ve "Takip edilen zincirler" satırları.** İkisi de Faz 7'ye (senkron) ve Store yazımına bağlı; çizilmedi.
+
 4. **`PriceText` ayrımı.** Devir paketinin çözülmemiş tek token uyuşmazlığı: tasarım çipte 14sp / fiş satırında 17sp istiyor, kodda tek 15sp var. Paket *"ikiye ayır"* öneriyor.
 
 ## Şema sürüm planı — v2 → v3 ✅ **yapıldı ve cihazda doğrulandı**
