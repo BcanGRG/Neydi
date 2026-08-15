@@ -17,6 +17,8 @@ data class Store(
     /** Normalize zincir adi. ProductAlias.storeChain ile AYNI sozlugu kullanir. */
     val chain: String,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
 
@@ -74,6 +76,8 @@ data class Trip(
     /** Kurus. Fis okunmadiysa null - 0 DEGIL, "bilmiyorum" ile "bedava" ayri seyler. */
     val totalMinor: Long? = null,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
 
@@ -117,9 +121,44 @@ data class TripLine(
     /** Oneriden mi geldi. SuggestionEvent ile birlikte oneri isabetini olcer. */
     val fromSuggestion: Boolean = false,
     val note: String? = null,
+    /**
+     * ALINMADIYSA NEDEN - oneri motorunun bekledigi ayrim (F6.2).
+     *
+     * `checked` tek basina yetmiyor: kapanista iyimser mutabakat (F4.8)
+     * isaretlenmemis her satiri alindi yaziyor, yani kapali bir gezide
+     * `checked = 0` ancak kullanici Bitir ekranindan **geri aldiysa** kaliyor.
+     * Ama o geri alma iki farkli sey olabilir ve **ayni puani almamalari SART**:
+     * "gerekmedi" oneriyi **bastirmali**, "unuttum" **yukseltmeli**. Tek bir
+     * boolean ikisini ayni sey yapiyordu.
+     *
+     * NULL = kullanici bir sey soylemedi (yaygin durum: dokunmadi, iyimser
+     * mutabakat alindi yazdi). Kolondan **once** kapanmis geziler sonsuza kadar
+     * null kalir - commonMain'de `execSQL` olmadigi icin geri-doldurma
+     * imkansiz, o yuzden nullable olmak zorunda.
+     */
+    val takeOutcome: TakeOutcome? = null,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
+
+/**
+ * Bir planli satirin akibeti (F4.12 / F6.2).
+ *
+ * Tasarim Bitir ekraninda satir basina uc dugme istiyor: `[Aldim] [Gerekmedi]
+ * [Unuttum]`. Uclunun ayri olmasi bir UI tercihi degil, skor formulunun girdisi.
+ */
+enum class TakeOutcome {
+    /** Alindi. `checked = 1` ile birlikte anlamli. */
+    TAKEN,
+
+    /** Gerekmedi - bilincli olarak alinmadi. Oneriyi BASTIRIR. */
+    NOT_NEEDED,
+
+    /** Unutuldu - alinmasi gerekiyordu. Oneriyi YUKSELTIR. */
+    FORGOTTEN,
+}
 
 /**
  * Gezinin yasam dongusu: PLANNING -> SHOPPING -> CLOSED.

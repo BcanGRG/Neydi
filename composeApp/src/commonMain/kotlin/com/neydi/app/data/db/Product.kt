@@ -1,5 +1,6 @@
 package com.neydi.app.data.db
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
@@ -36,6 +37,8 @@ data class Product(
      */
     val isStaple: Boolean = false,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
 
@@ -72,6 +75,8 @@ data class ProductAlias(
     val productId: String,
     val confirmedAt: Long? = null,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
 
@@ -91,5 +96,19 @@ data class ProductStats(
     val lastPurchasedAt: Long?,
     /** Yeterli gozlem yoksa null - uydurma yerine "bilmiyorum". */
     val medianIntervalDays: Int?,
+    /**
+     * Kullanici/motor duzeltmesi - skoru asagi ya da yukari kaydiran carpan.
+     *
+     * AYRI KOLONDA, skorun icine gomulmus DEGIL: ancak boyle **denetlenebilir**
+     * ("uygulama bunu neden onerdi?") ve **sifirlanabilir** oluyor. Skora
+     * karistirilmis bir duzeltme, yanlis ogrenmeyi geri almanin tek yolunu
+     * butun istatistigi silmek yapardi.
+     *
+     * Varsayilan 0 = duzeltme yok. NOT NULL oldugu icin `defaultValue` ZORUNLU:
+     * commonMain'de `execSQL` olmadigi icin migration mevcut satirlara deger
+     * hesaplayamaz (bkz. ROADMAP "Sema surum plani").
+     */
+    @ColumnInfo(defaultValue = "0")
+    val muAdjust: Double = 0.0,
     val updatedAt: Long,
 )

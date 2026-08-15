@@ -17,6 +17,10 @@ data class Member(
     val displayName: String,
     /** Bu cihazin sahibi mi. Satir "es ekledi" avatarini yalnizca digerine cizer. */
     val isSelf: Boolean,
+    /** E-posta OTP girisi icin (F7.2). Null = bu uye henuz eslenmemis. */
+    val email: String? = null,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
