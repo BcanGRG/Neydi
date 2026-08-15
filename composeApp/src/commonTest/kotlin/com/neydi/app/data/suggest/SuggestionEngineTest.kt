@@ -216,4 +216,26 @@ class SuggestionEngineTest {
         val names = engine(db).suggestions(home).map { it.name }
         assertEquals(listOf("Yumurta", "Ekmek"), names)
     }
+
+    // --- Gerekce metni (F6.3) -----------------------------------------------
+
+    /** Maketlerden birebir: "14 gun oldu". */
+    @Test
+    fun reasonTextShowsDaysSince() {
+        val s = Suggestion("p", "Yumurta", 1.5, daysSince = 14, intervalDays = 10, forgottenLastTrip = false)
+        assertEquals("14 gün oldu", s.reasonText())
+    }
+
+    /** Kullanicinin kendi beyani gun sayisini EZIYOR. */
+    @Test
+    fun forgottenBeatsDayCount() {
+        val s = Suggestion("p", "Ekmek", 1.5, daysSince = 4, intervalDays = 3, forgottenLastTrip = true)
+        assertEquals("geçen sefer unutmuştun", s.reasonText())
+    }
+
+    @Test
+    fun sameDayAndYesterdayReadNaturally() {
+        assertEquals("bugün almıştın", Suggestion("p", "X", 2.0, 0, 10, false).reasonText())
+        assertEquals("dün almıştın", Suggestion("p", "X", 2.0, 1, 10, false).reasonText())
+    }
 }

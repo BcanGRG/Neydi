@@ -25,6 +25,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.neydi.app.data.db.CatalogSeed
+import com.neydi.app.data.suggest.Suggestion
+import com.neydi.app.data.suggest.reasonText
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SuggestionChip
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
@@ -50,17 +52,42 @@ import com.neydi.app.ui.theme.Spacing
 fun QuickAdd(
     input: String,
     suggestions: List<CatalogSeed>,
+    engineSuggestions: List<Suggestion>,
     onInputChange: (String) -> Unit,
     onAdd: (String) -> Unit,
     onSuggestionSelected: (CatalogSeed) -> Unit,
+    onEngineSuggestion: (Suggestion) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val extras = LocalNeydiExtraColors.current
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // Oneri seridi ALANIN USTUNDE: dokunulacak sey parmagin geldigi
-        // yerde olmali, klavyenin arkasinda degil.
-        if (suggestions.isNotEmpty()) {
+        // TEK SERIT, IKI MOD (F6.3): girdi BOSKEN motorun onerileri, kullanici
+        // yazarken otomatik tamamlama. Iki ayri serit ust uste binerdi; modu
+        // girdinin bos olup olmamasi seciyor. Serit ALANIN USTUNDE: dokunulacak
+        // sey parmagin geldigi yerde olmali, klavyenin arkasinda degil.
+        //
+        // Motor cipinin gerekcesi DUZ TURKCE ("14 gun oldu") - gerekcesiz cip
+        // reklam gibi okunur. Otomatik tamamlama cipi ise birim gosteriyor;
+        // o bir oneri degil, yazilani tamamlama.
+        val showEngine = input.isBlank() && engineSuggestions.isNotEmpty()
+        if (showEngine) {
+            LazyRow(
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = Spacing.md,
+                    vertical = Spacing.sm,
+                ),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                items(engineSuggestions, key = { it.productId }) { s ->
+                    SuggestionChip(
+                        label = s.name,
+                        reason = s.reasonText(),
+                        onClick = { onEngineSuggestion(s) },
+                    )
+                }
+            }
+        } else if (suggestions.isNotEmpty()) {
             LazyRow(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = Spacing.md,
@@ -129,7 +156,32 @@ private fun seed(id: String, name: String, unit: String) =
 @PreviewLightDark
 @Composable
 private fun QuickAddEmptyPreview() = NeydiPreview {
-    QuickAdd("", emptyList(), {}, {}, {})
+    QuickAdd(
+        input = "",
+        suggestions = emptyList(),
+        engineSuggestions = emptyList(),
+        onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onEngineSuggestion = {},
+    )
+}
+
+/**
+ * SERIDIN ONERI MODU: girdi bos, motor konusuyor - "Yumurta · 14 gun oldu".
+ * Bu onizleme tek seridin iki modundan gorunmeyenini tutuyor; cihazda ancak
+ * gunler arayla alisveris birikince cizilebilir.
+ */
+@PreviewLightDark
+@Composable
+private fun QuickAddEngineSuggestionsPreview() = NeydiPreview {
+    QuickAdd(
+        input = "",
+        suggestions = emptyList(),
+        engineSuggestions = listOf(
+            Suggestion("p1", "Yumurta", 1.9, daysSince = 14, intervalDays = 10, forgottenLastTrip = false),
+            Suggestion("p2", "Çay", 1.6, daysSince = 21, intervalDays = 14, forgottenLastTrip = false),
+            Suggestion("p3", "Ekmek", 1.5, daysSince = 4, intervalDays = 3, forgottenLastTrip = true),
+        ),
+        onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onEngineSuggestion = {},
+    )
 }
 
 @PreviewLightDark
@@ -142,9 +194,11 @@ private fun QuickAddWithSuggestionsPreview() = NeydiPreview {
             seed("2", "Tam Buğday Ekmek", "adet"),
             seed("3", "Ekşi Maya Ekmek", "adet"),
         ),
+        engineSuggestions = emptyList(),
         onInputChange = {},
         onAdd = {},
         onSuggestionSelected = {},
+        onEngineSuggestion = {},
     )
     Box(Modifier.height(Spacing.sm))
 }

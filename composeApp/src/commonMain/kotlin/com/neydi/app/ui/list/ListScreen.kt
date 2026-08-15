@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neydi.app.data.db.CatalogSeed
+import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.db.Category
 import com.neydi.app.data.looksLikeList
 import com.neydi.app.ui.components.ListItemRow
@@ -85,6 +86,7 @@ fun ListScreen(
     }
     val input by vm.input.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
+    val engineSuggestions by vm.engineSuggestions.collectAsStateWithLifecycle()
     val categories by vm.categories.collectAsStateWithLifecycle()
     val estimate by vm.estimate.collectAsStateWithLifecycle()
     val sheetOpen by vm.sheetOpen.collectAsStateWithLifecycle()
@@ -108,6 +110,8 @@ fun ListScreen(
         state = state,
         input = input,
         suggestions = suggestions,
+        engineSuggestions = engineSuggestions,
+        onEngineSuggestion = vm::addFromEngine,
         categories = categories,
         clipboardText = clipboardText,
         onInputChange = vm::onInputChanged,
@@ -251,6 +255,9 @@ internal fun ListContent(
     state: ListState,
     input: String,
     suggestions: List<CatalogSeed>,
+    /** Motorun onerileri - girdi bosken cizilen serit (F6.3). */
+    engineSuggestions: List<Suggestion>,
+    onEngineSuggestion: (Suggestion) -> Unit,
     categories: List<Category>,
     clipboardText: String?,
     onInputChange: (String) -> Unit,
@@ -398,9 +405,11 @@ internal fun ListContent(
                     ),
                     input = input,
                     suggestions = suggestions,
+                    engineSuggestions = engineSuggestions,
                     onInputChange = onInputChange,
                     onAdd = onAdd,
                     onSuggestionSelected = onSuggestionSelected,
+                    onEngineSuggestion = onEngineSuggestion,
                 )
             } else {
                 ShoppingBottomBar(
@@ -544,7 +553,8 @@ private fun ListPreviewHost(
     clipboard: String? = null,
     estimate: BasketEstimate = BasketEstimate(),
 ) = ListContent(
-    state = state, input = "", suggestions = emptyList(), categories = emptyList(),
+    state = state, input = "", suggestions = emptyList(),
+    engineSuggestions = emptyList(), onEngineSuggestion = {}, categories = emptyList(),
     clipboardText = clipboard,
     onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
     onToggleChecked = { _, _ -> }, onRowLongPress = {}, onClipboard = {}, onShoppingMode = {},
