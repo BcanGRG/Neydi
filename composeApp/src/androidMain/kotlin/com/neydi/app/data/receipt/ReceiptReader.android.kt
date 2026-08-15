@@ -117,19 +117,5 @@ internal fun visualRows(text: Text): List<String> {
     }
 }
 
-/**
- * Bir yonun ne kadar "fis gibi" okundugunu puanlar.
- *
- * Olcut: ACIKLAMA ile TUTARI ayni satirda birlestirebilmis satir sayisi. Dogru
- * yonde bu sayi yuksek; yanlis yonde tutarlar yalniz kaliyor ve neredeyse sifira
- * dusuyor. Toplam satir sayisini ya da karakter sayisini olcmek AYIRT ETMEZDI -
- * yanlis yonde de ayni metin okunuyor, yalnizca yanlis eslesiyor.
- */
-private val AMOUNT_ROW = Regex("""\S.*[*]?\d+[.,]\d{2}\s*$""")
-
-internal fun score(rows: List<String>): Int =
-    rows.count { satir ->
-        // Yalnizca tutar tasiyan satir sayilmaz: solunda metin de olmali,
-        // cunku olculen sey ESLESTIRME basarisi.
-        AMOUNT_ROW.containsMatchIn(satir) && satir.trimStart().first().isDigit().not()
-    }
+// Yon puanlayicisi commonMain'e tasindi (ReadingScore.kt) - artik AYRISTIRICIYI
+// calistirarak puanliyor ve bu sayede test edilebilir hale geldi.

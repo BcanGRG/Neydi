@@ -71,9 +71,6 @@ import io.github.vinceglb.filekit.createDirectories
 import io.github.vinceglb.filekit.div
 import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.name
-import io.github.vinceglb.filekit.dialogs.FileKitCameraFacing
-import io.github.vinceglb.filekit.dialogs.FileKitCameraType
-import io.github.vinceglb.filekit.dialogs.compose.rememberCameraPickerLauncher
 import com.neydi.app.ui.components.OutcomePicker
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
@@ -759,39 +756,13 @@ private fun CorrectionSheet(
 fun ReceiptCheckRoute(
     receiptId: String,
     onBack: () -> Unit,
-    /** Sonraki parca cekildi - ekran YENI fise gecmeli (ust oge degisir). */
-    onOpenPart: (String) -> Unit,
+    /** Fis cekme oturumunu acar (Ekran 4) - gezi kimligini tasiyor. */
+    onCapture: (String) -> Unit,
 ) {
     val vm: ReceiptCheckViewModel = koinViewModel { parametersOf(receiptId) }
     val state by vm.state.collectAsStateWithLifecycle()
     val editing by vm.editing.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
-
-    // SONRAKI PARCA KAMERASI (F4.13) - ListScreen'dekiyle ayni desen ve ayni
-    // dersler: hedef yol durumdan degil KAYNAK ADINDAN turetiliyor (Activity
-    // yeniden yaratilinca `remember` sifirlaniyor ve fis sessizce kayboluyordu),
-    // ham dosya yol uzerinden siliniyor (`content://` uzerinden silme cihazda
-    // hicbir sey yapmadi).
-    val receiptsDir = remember { FileKit.filesDir / "receipts" }
-    val partCamera = rememberCameraPickerLauncher { file ->
-        if (file != null) {
-            val dest = receiptsDir / ("fis-" + file.name.removePrefix("ham-"))
-            val raw = receiptsDir / file.name
-            vm.attachNextPart(
-                source = file,
-                destPath = dest.absolutePath(),
-                rawPath = raw.absolutePath(),
-            )
-        }
-    }
-
-    val nextPartId by vm.nextPartId.collectAsStateWithLifecycle()
-    LaunchedEffect(nextPartId) {
-        nextPartId?.let { id ->
-            vm.consumeNextPart()
-            onOpenPart(id)
-        }
-    }
 
     ReceiptCheckScreen(
         state = state,
@@ -803,13 +774,11 @@ fun ReceiptCheckRoute(
         onFixAmount = vm::fixAmount,
         onOutcome = vm::setOutcome,
         onReread = vm::rereadNextRotation,
-        onNextPart = {
-            receiptsDir.createDirectories()
-            // Ad zaman damgasi: parcalar birbirini EZMESIN.
-            val stamp = Clock.System.now().toEpochMilliseconds()
-            val temp = receiptsDir / "ham-$stamp.jpg"
-            partCamera.launch(FileKitCameraType.Photo, FileKitCameraFacing.Back, temp)
-        },
+        // CEKIM ARTIK BIR EKRAN, tek seferlik bir sistem kamerasi yolculugu
+        // DEGIL. Eskiden her parca icin uygulamadan cikip geri donmek
+        // gerekiyordu ve donuste ekran yeni fise ATLIYORDU - kullanici kac
+        // kare cektigini de goremiyordu.
+        onNextPart = { state.tripId?.let(onCapture) },
         onBack = onBack,
     )
 }

@@ -11,6 +11,20 @@
         sessizce ucuncu bir kopyayi Drive'a gonderiyordu, yani belgelenmis
         karari dogrudan cürütüyordu.
     -->
+    <!--
+        KAMERA IZNI uygulama ici kamera icin (Ekran 4). Sistem kamerasi
+        kullanilirken gerekmiyordu - o kendi izniyle calisiyor - ama cerceve
+        rehberi, kare sayaci ve arka kamera secimi ancak onizlemeye BIZ
+        sahipsek mumkun.
+
+        `android.hardware.camera` OZELLIGI ZORUNLU DEGIL: kamerasiz bir cihazda
+        uygulama yine calisir (liste, gecmis, ayarlar), yalnizca fis cekilemez.
+        `required="false"` yazmazsak Play Store kamerasiz cihazlari tamamen
+        eler.
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:name=".NeydiApplication"
         android:allowBackup="false"

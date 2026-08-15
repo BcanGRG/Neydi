@@ -14,6 +14,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.di.AppBootstrap
 import com.neydi.app.nav.FinishShopping
 import com.neydi.app.nav.Settings
+import com.neydi.app.nav.Capture
 import com.neydi.app.nav.DeleteData
 import com.neydi.app.nav.MissingItems
 import com.neydi.app.nav.History
@@ -21,6 +22,7 @@ import com.neydi.app.nav.ReceiptCheck
 import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
+import com.neydi.app.ui.capture.CaptureRoute
 import com.neydi.app.ui.finish.FinishShoppingRoute
 import com.neydi.app.ui.settings.DeleteDataRoute
 import com.neydi.app.ui.settings.SettingsRoute
@@ -94,6 +96,7 @@ fun App() {
                         onSettings = { go(Settings) },
                         onOpenReceipt = { go(ReceiptCheck(it)) },
                         onFixTaken = { go(FinishShopping(it)) },
+                        onCapture = { go(Capture(it)) },
                     )
                 }
                 entry<MissingItems> {
@@ -130,7 +133,22 @@ fun App() {
                     ReceiptCheckRoute(
                         receiptId = key.receiptId,
                         onBack = { back() },
-                        onOpenPart = { replaceTop(ReceiptCheck(it)) },
+                        onCapture = { go(Capture(it)) },
+                    )
+                }
+                entry<Capture> { key ->
+                    CaptureRoute(
+                        tripId = key.tripId,
+                        // "Bitti" ILK PARCAYA goturuyor, sonuncuya degil:
+                        // Fis Kontrol artik fisin tamamini tek akista ciziyor
+                        // (tasarim karari 4), yani ilk parca butun fisin
+                        // kapisi. Cekim ekrani BACK STACK'TEN CIKIYOR -
+                        // kontrolden geri donunce kamera yeniden acilmamali.
+                        onDone = { receiptId ->
+                            backStack.removeLastOrNull()
+                            receiptId?.let { go(ReceiptCheck(it)) }
+                        },
+                        onCancel = { back() },
                     )
                 }
                 entry<History> {

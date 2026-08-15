@@ -36,6 +36,8 @@ class SchemaBaselineTest {
         1 to "79a4b5c5f6f322a4419646c47e027adb",
         2 to "a80e7052abd5ae6f2761d37beb58041a",
         3 to "9a25da10097f10bb5f49f777e7a8c9ae",
+        // v4: Receipt.rawOcrText (F4.14). Tek nullable kolon.
+        4 to "c49e177df81931853a48b5fd6acc4bcb",
     )
 
     private val schemaDir: File by lazy {

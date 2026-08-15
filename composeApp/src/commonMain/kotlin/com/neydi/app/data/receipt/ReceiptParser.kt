@@ -80,6 +80,9 @@ private val DISCOUNT_WORDS = listOf("indirim", "iskonto", "kampanya")
 private val PAYMENT_WORDS = listOf(
     "kredi karti", "banka karti", "nakit", "para ustu", "pos", "bankasi",
     "visa", "master", "odenen",
+    // Sadakat puani satiri ("Müş PUAN: Müs Ind,. : *0,00") gercek AKYURT
+    // fisinde URUN olarak ayrisiyordu - 0,00 TL'lik bir urun.
+    "puan",
 )
 
 /** Fis kunyesi. Hicbiri urun degil. */
@@ -115,6 +118,40 @@ private val AMOUNT_SUFFIX =
     Regex("""^(.*?)[\s*xX×]*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*$""")
 
 /**
+ * KALEMLI TUTAR SATIRI - ad AYRI satirda (F4.14).
+ *
+ * AKYURT bir urunu IKI satira basiyor:
+ * ```
+ * 42 2980889 1,764 Kg 99,95 %01 176,31 t     <- bu satir
+ * TAVUK SENPILİÇ POŞETLİ KG                  <- adi
+ * ```
+ * Alanlar: sira no, barkod/tarti kodu, miktar, birim, birim fiyat, KDV orani,
+ * tutar. Ad HIC YOK - o yuzden eski ayristirici ("ad ve tutar ayni gorsel
+ * satirda") her satiri BARKODLA adlandiriyordu.
+ *
+ * NEDEN AYRI BIR DESEN, AYRI BIR AYRISTIRICI DEGIL: market basina ayristirici
+ * yazmak N kere bakim demek. Bu bir **duzen** farki ve desenler birbirini
+ * dislamiyor - bir satir bu sekle uyuyorsa hangi duzende oldugu satirin
+ * kendisinden belli. BIM ve File'in `AD ... *TUTAR` satirlari bu sekle
+ * UYMUYOR, yani onlarin yolu hic degismiyor.
+ *
+ * OCR TOLERANSLARI GERCEK OKUMADAN geliyor, tahminden degil:
+ * - Sira no ve kodda harf olabiliyor: `S0` (50), `869O508101426` (sifir yerine
+ *   harf O). O yuzden `[0-9OSIl]`.
+ * - Birim `Ka` okunabiliyor (`Kg` olacakti).
+ * - Satir sonunda tek harflik artik kaliyor: `176,31 t`, `41,95 Ł`. Tutarin
+ *   satir SONUNDA olmasini sart kosan eski kural bu yuzden on dokuz urunun
+ *   ALTISINI hic goremiyordu - iki satirli duzenden bile buyuk bir kayipti.
+ */
+private val ITEMISED_LINE = Regex(
+    """^\s*[0-9OSIl]{1,4}\s+[0-9OSIl]{5,}\s+(\d+(?:[.,]\d+)?)\s*""" +
+        """(adet|ad|kg|ka|gr|g|lt|l|ml|pkt|paket|kutu)\s+""" +
+        """(\d+[.,]\d{2})\s*[%o0]\s?\d{1,2}\s+""" +
+        """(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*\S{0,2}\s*$""",
+    RegexOption.IGNORE_CASE,
+)
+
+/**
  * MIKTAR SATIRI: "2 ad X 53.00", "0.182 kg X 690.00", "2 ad % 25.50".
  *
  * Ait oldugu urunden ONCE geliyor - gercek fiste olculdu, ve iki zincirde de
@@ -147,6 +184,51 @@ private val VAT_MARK_SUFFIX = Regex("""[\s%*#]*[%A-Z]?\d{1,3}\s*[.,]?\s*$""")
  * Ilk surum yalnizca virgul kabul ediyordu ve gerekce olarak "Turkiye'de fis
  * nokta basmiyor" yazilmisti. Yanlisti; BIM ve File Market nokta basiyor.
  */
+/**
+ * Kalemli satirin ALTINDAKI satir ad olmaya uygun mu (F4.14).
+ *
+ * UYGUN DEGILSE AD YAZILMIYOR. Bos birakmak, komsu satiri zorla ad yapmaktan
+ * iyi: yanlis ad fiyat gecmisine yanlis urun yazar ve kullanici bunu bir daha
+ * goremez, oysa bos ad ekranda barkod olarak gorunur ve dokunulabilir
+ * (tasarim karari 14).
+ */
+private fun nameCandidate(line: String): Boolean {
+    val trimmed = line.trim()
+    if (trimmed.length < 3) return false
+    // Harf tasimayan satir ad olamaz - bir sonraki kalemli satirin kendisi ya
+    // da KDV dokumu olabilir.
+    if (trimmed.none(Char::isLetter)) return false
+    if (ITEMISED_LINE.matchEntire(trimmed) != null) return false
+    // Sonu tutarla biten satir ad degil: BIM/File duzenindeki "AD ... *TUTAR"
+    // kendi basina bir urun, birinin adi degil.
+    if (AMOUNT_SUFFIX.matchEntire(trimmed) != null) return false
+    val key = matchKey(trimmed)
+    return !contains(key, TOTAL_WORDS) &&
+        !contains(key, VAT_WORDS) &&
+        !contains(key, PAYMENT_WORDS) &&
+        !contains(key, HEADER_WORDS)
+}
+
+/**
+ * Metinde YAN YANA en az iki harf var mi.
+ *
+ * Tek basina duran harfler OCR copu olabiliyor ("o01", "K 283,53"); iki yan
+ * yana harf ise bir KELIME baslangici. Olcu kaba ama gercek fiste ayirt edici:
+ * on dokuz urun adinin hepsi geciyor, dort sahte satirin dordu de eleniyor.
+ */
+private fun hasWord(text: String): Boolean =
+    text.zipWithNext().any { (a, b) -> a.isLetter() && b.isLetter() }
+
+/** OCR birimi normalize eder: `Ka` gercek fiste `Kg`nin okunmus hali. */
+private fun normalizeUnit(raw: String): String = when (raw.lowercase()) {
+    "ka", "kg" -> "kg"
+    "ad", "adet" -> "adet"
+    "gr", "g" -> "gr"
+    "lt", "l" -> "lt"
+    "pkt", "paket" -> "paket"
+    else -> raw.lowercase()
+}
+
 internal fun parseMinor(text: String): Long? {
     val clean = text.trim().trimStart('*', 'x', 'X', '×', ' ')
     val negative = clean.startsWith("-")
@@ -201,8 +283,42 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
 
     var receiptDate: Long? = null
 
-    for (raw in lines) {
+    // KALEMLI DUZENDE AD BIR ALT SATIRDA (F4.14) - yani dongu ILERI BAKMAK
+    // zorunda ve indeksli olmak zorunda. Ad olarak tuketilen satir bu kumeye
+    // giriyor ve kendi turunda bir daha degerlendirilmiyor; yoksa "TAVUK
+    // SENPILİÇ POŞETLİ KG" hem ad hem magaza adayi olurdu.
+    val consumedAsName = HashSet<Int>()
+
+    for ((index, raw) in lines.withIndex()) {
+        if (index in consumedAsName) continue
         val key = matchKey(raw)
+
+        // KALEMLI SATIR EN BASTA DENENIYOR: sekli en dar olan desen bu, ve
+        // eslesirse satirin ne oldugu kesin. Asagidaki genel dallar (magaza
+        // adayi, tutar soneki) daha gevsek - once onlara sorarsak kalemli
+        // satir yanlis kutuya duser. Cihazda tam bu oldu: kunye okunamayan
+        // parcada ILK kalemli satir MAGAZA ADI sanildi.
+        ITEMISED_LINE.matchEntire(raw)?.let { m ->
+            val amount = parseMinor(m.groupValues[4])
+            if (amount != null) {
+                // Ad BIR ALT SATIRDA. Yoksa isim slotu bos kaliyor ve ekran
+                // barkodu basliga koyuyor (tasarim karari 14) - uydurma bir ad
+                // yazmaktan iyi.
+                val name = lines.getOrNull(index + 1)
+                    ?.takeIf { nameCandidate(it) }
+                    ?.also { consumedAsName += index + 1 }
+                out += ParsedLine(
+                    rawText = raw,
+                    name = name?.trim() ?: "",
+                    count = m.groupValues[1].replace(",", ".").toDoubleOrNull() ?: 1.0,
+                    unit = normalizeUnit(m.groupValues[2]),
+                    unitPriceMinor = parseMinor(m.groupValues[3]),
+                    amountMinor = amount,
+                )
+            }
+            return@let
+        }
+        if (ITEMISED_LINE.matchEntire(raw) != null) continue
         // TARIH SATIRI MAGAZA ADI OLAMAZ. Yedek aday secimi bunu bilmek
         // zorunda: kunye satiri okunamadiginda ("13.08.2026 18:49 Sira No :
         // 218") satiri yedege giriyordu ve karar 11'den sonra bu KALICI bir
@@ -287,7 +403,12 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
             val name = match!!.groupValues[1]
                 .replace(VAT_MARK_SUFFIX, "")
                 .trim()
-            if (name.isNotBlank()) {
+            // AD OLMAYAN AD KABUL EDILMIYOR. Gercek AKYURT fisinde KDV dokum
+            // satirlari ("o01 4.571,58 45,72") urun olarak ayrisiyordu: geriye
+            // kalan "ad" yalnizca rakam ve tek harflik OCR copuydu. Iki YAN
+            // YANA harf istemek bunu keser ve hicbir gercek urun adini
+            // dislamaz - "KREMA", "TURŞU", "ETİ PUF" hepsi gecer.
+            if (name.isNotBlank() && hasWord(name)) {
                 out += ParsedLine(
                     rawText = raw,
                     name = name,

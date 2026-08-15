@@ -40,9 +40,6 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.createDirectories
-import io.github.vinceglb.filekit.dialogs.FileKitCameraFacing
-import io.github.vinceglb.filekit.dialogs.FileKitCameraType
-import io.github.vinceglb.filekit.dialogs.compose.rememberCameraPickerLauncher
 import io.github.vinceglb.filekit.div
 import io.github.vinceglb.filekit.filesDir
 import kotlin.time.Clock
@@ -95,6 +92,8 @@ fun ListScreen(
     onSettings: () -> Unit,
     onOpenReceipt: (String) -> Unit,
     onFixTaken: (String) -> Unit,
+    /** Fis cekme oturumunu acar (Ekran 4). Gezi kimligini tasiyor. */
+    onCapture: (String) -> Unit,
     vm: ListViewModel = koinViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -206,33 +205,10 @@ fun ListScreen(
         }
     }
 
-    // KAMERA BASLATICISI SHEET'IN DISINDA. Icinde remember edilseydi sheet
-    // kapaninca composable yok olur ve kamera donusunde (Android bu arada
-    // Activity'yi yeniden olusturabilir) sonucu teslim edecek yer kalmazdi.
-    val receiptsDir = remember { FileKit.filesDir / "receipts" }
-    val cameraLauncher = rememberCameraPickerLauncher { file ->
-        if (file != null) {
-            // HEDEF YOL DURUMDAN DEGIL, KAYNAK ADINDAN turetiliyor: "ham-X.jpg"
-            // -> "fis-X.jpg".
-            //
-            // Ilk halde hedefi `remember` icinde tutuyordum ve CIHAZDA HIC
-            // CALISMADI: kamera on plandayken Android Activity'yi yeniden
-            // olusturuyor, `remember` sifirlaniyor, hedef null oluyor ve fis
-            // sessizce hic kaydedilmiyordu - diskte yalnizca ham dosya kalmisti.
-            // `rememberSaveable` da cozerdi ama durumu tamamen kaldirmak daha
-            // saglam: kurtarilacak bir sey yok.
-            val dest = receiptsDir / ("fis-" + file.name.removePrefix("ham-"))
-            // `raw` BIZIM kurdugumuz PlatformFile, yani gercek dosya yolu.
-            // `file.absolutePath()` ise `content://` URI donuyor - onunla ne
-            // okuma ne silme calisiyor.
-            val raw = receiptsDir / file.name
-            vm.attachReceipt(
-                source = file,
-                destPath = dest.absolutePath(),
-                rawPath = raw.absolutePath(),
-            )
-        }
-    }
+    // SISTEM KAMERASI BASLATICISI KALDIRILDI (F4.16). Cekim artik kendi
+    // ekraninda (Ekran 4) ve `CaptureViewModel` uzerinden yuruyor; buradaki
+    // "Activity yeniden yaratilinca remember sifirlanir" dersi de gecerliligini
+    // yitirdi cunku uygulamadan hic cikilmiyor.
 
     productSheet?.let { sheet ->
         ModalBottomSheet(
@@ -263,28 +239,14 @@ fun ListScreen(
                 durationMinutes = o.durationMinutes,
                 onDismiss = vm::dismissSummary,
                 onFixTaken = vm.summaryTripId?.let { id -> { onFixTaken(id) } },
-                onTakeReceipt = {
-                    receiptsDir.createDirectories()
-                    // Ad zaman damgasi: iki fis birbirini EZMESIN. Sabit ad
-                    // kullanmak ayni gezide ikinci fisi (uzun fis iki parca
-                    // basildiginda oluyor) birincinin ustune yazardi.
-                    val stamp = Clock.System.now().toEpochMilliseconds()
-                    // KAMERA GECICI YOLA yaziyor, kucultme NIHAI yola.
-                    //
-                    // Ilk halde ikisi AYNI dosyaydi: kamera dogrudan hedefe
-                    // yaziyor, yani kucultme kaynagi ile hedefi cakisiyordu ve
-                    // cihazda sessizce ise yaramadi - gorsel 2944px kaldi,
-                    // sinir 2576 oldugu halde. Testler bunu goremezdi; ancak
-                    // ciktinin gercek boyutunu olcmek yakaladi.
-                    val temp = receiptsDir / "ham-$stamp.jpg"
-                    // Konumsal cagri: Kotlin parametre adlari bytecode'da yok
-                    // ve 'facing' tahminim yanlisti - derleyici soyledi.
-                    //
-                    // ARKA KAMERA yalnizca bir ISTEK. Sistem kamerasi yoksayabiliyor
-                    // ve test cihazi (Samsung) yoksayiyor: on kamerayla aciliyor,
-                    // kullanici tek dokunusla ceviriyor. Duzeltemedigimiz bir yer.
-                    cameraLauncher.launch(FileKitCameraType.Photo, FileKitCameraFacing.Back, temp)
-                },
+                // UYGULAMA ICI KAMERAYA gidiyor, sistem kamerasina DEGIL.
+                //
+                // Sistem kamerasi uc seyi birden veremiyordu: cerceve rehberi
+                // cizilemiyordu, kac kare cekildigi bilinmiyordu, ve arka
+                // kamera yalnizca bir ISTEKTI - test cihazi (Samsung) yok
+                // sayip on kamerayla aciyordu. Ucu de tasarimin Ekran 4'unde
+                // zaten tarif ediliyordu ("1. kare" ... "Bitti").
+                onTakeReceipt = vm.summaryTripId?.let { id -> { onCapture(id) } },
             )
         }
     }

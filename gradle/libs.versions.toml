@@ -59,11 +59,23 @@ sqlite = "2.7.0"
 ktor = "3.5.2"
 supabase = "3.7.0"
 mlkitText = "16.0.1"                      # cihazda, ucretsiz, Latin betigi Turkce'yi kapsiyor
+# CameraX 1.6.1 - son STABIL (2026-08-16'da Google Maven metadata'sindan
+# dogrulandi; 1.7.0-alpha03 "latest" gorunuyor ama alpha).
+# NEDEN UYGULAMA ICI KAMERA: sistem kamerasi ne cerceve rehberini, ne kare
+# sayacini, ne de arka kamera secimini garanti ediyor - `FileKitCameraFacing.Back`
+# isteniyordu ve cihaz yok sayiyordu. Tasarimin Ekran 4'u ("1. kare" ... "Bitti")
+# zaten uygulama ici bir kamera tarif ediyor.
+androidxCamera = "1.6.1"
 filekit = "0.14.2"                        # 0.15.0 cok yeni; 2 aylik saha suresi olani pinliyoruz
 coil = "3.5.0"
 
 [libraries]
 mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitText" }
+# CameraX: camera2 (surucu), lifecycle (baglama), view (PreviewView).
+# camera-core ucunun de transitif bagimliligi, ayrica yazilmiyor.
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "androidxCamera" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "androidxCamera" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "androidxCamera" }
 # Compose Multiplatform
 # compose.runtime / foundation / material3 / ui / components.resources / preview
 # kisayollarinin HEPSI CMP 1.11.1'de @Deprecated("Specify dependency directly").

@@ -512,6 +512,16 @@ interface ReceiptDao {
     suspend fun setReceiptDate(id: String, date: Long?)
 
     /**
+     * OCR'in okudugu ham gorsel satirlari saklar (F4.14).
+     *
+     * BASARISIZ OKUMADA YAZILMIYOR: `giveUp` yolu buraya hic ugramiyor, cunku
+     * onceki iyi okumanin ham satirlarini bos bir denemeyle ezmek, elde olan
+     * tek kurgunun kaybi demek olurdu - tam olarak bu alanin var olma sebebi.
+     */
+    @Query("UPDATE receipt SET rawOcrText = :text WHERE id = :id")
+    suspend fun setRawOcrText(id: String, text: String?)
+
+    /**
      * Bir gezinin fislerinde OKUNABILMIS toplamlarin toplami.
      *
      * TOPLAM, TEK FISIN KOPYASI DEGIL: uzun fis parca parca cekilebiliyor ve
