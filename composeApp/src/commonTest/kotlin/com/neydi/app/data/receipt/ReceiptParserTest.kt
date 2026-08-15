@@ -242,4 +242,75 @@ class ReceiptParserTest {
         assertEquals(true, arithmeticHolds(r.copy(totalMinor = r.totalMinor!! + 4)))
         assertEquals(false, arithmeticHolds(r.copy(totalMinor = r.totalMinor!! + 13)))
     }
+
+    // --- Basili tarih (F5.8) ------------------------------------------------
+
+    /** Iki gercek fis de gg.aa.yyyy ss:dd basiyor - ikisi de okunmali. */
+    @Test
+    fun printedDateIsParsedFromBothReceipts() {
+        assertTrue(parseReceipt(bim).receiptDate != null, "BIM tarihi okunamadi")
+        assertTrue(parseReceipt(file).receiptDate != null, "File tarihi okunamadi")
+    }
+
+    /** Gecersiz takvim degerleri null: bozuk OCR'dan uydurma damga uretilmez. */
+    @Test
+    fun invalidDatesAreRejected() {
+        assertNull(parseReceiptDate(32, 1, 2026, 12, 0))
+        assertNull(parseReceiptDate(1, 13, 2026, 12, 0))
+        assertNull(parseReceiptDate(31, 4, 2026, 12, 0)) // takvimde yok
+        assertNull(parseReceiptDate(1, 1, 1999, 12, 0))  // yil araligi disi
+    }
+
+    // --- Magaza adi (F5.9'un ayristirici yarisi) -----------------------------
+
+    /**
+     * SIRKET SATIRI ADRESE TERCIH EDILIYOR - ve bu gercek File fisinde
+     * olculmus bir hataydi: adres satiri ("FiLE OVACIK / KEC1OREN/ ANKARA")
+     * sirket satirindan once geliyor ve eski kural onu yakaliyordu. Cihazda
+     * Fis Kontrol basliginda adres gorunuyordu.
+     *
+     * Bu ayni zamanda dosyadaki ILK magaza adi iddiasi - onceden sifir test
+     * vardi.
+     */
+    @Test
+    fun companyLineBeatsAddressLine() {
+        val store = parseReceipt(file).storeName
+        assertEquals("FiLE MARKET MAĞAZACIL IK ANONiM ŞIRKET!", store)
+    }
+
+    @Test
+    fun bimStoreNameIsTheCompanyLine() {
+        assertEquals("BIM BIRLESIK MAGAZALAR A.S.", parseReceipt(bim).storeName)
+    }
+
+    // --- Indirimli fis: kapi ve isaret (F5.6) --------------------------------
+
+    /**
+     * SENTETIK VERI - ve gerekcesi yazilmali: gercek fislerimizin HICBIRINDE
+     * indirim satiri yok, yani bu yol ancak kurgu ile test edilebiliyor.
+     * Gercek indirimli fis geldiginde bu kurgu onunla DEGISTIRILMELI
+     * (kendi orneklerimizle kendimizi onaylama tuzagi F4.4'te kayitli).
+     */
+    private val discounted = listOf(
+        "MIGROS TICARET A.S.",
+        "13.08.2026 12:00",
+        "PEYNIR 600G %1. *200.00",
+        "SUT 1L %1. *50.00",
+        "INDIRIM KAMPANYA *-30.00",
+        "Odenecek KDV Dahil Tutar *220.00",
+        "Banka Kredi Karti (1) *220.00",
+    )
+
+    /** Indirim tutari POZITIF saklanir, isareti bayrak tasir. */
+    @Test
+    fun discountAmountIsStoredPositiveWithFlag() {
+        val indirim = parseReceipt(discounted).lines.single { it.discount }
+        assertEquals(3000, indirim.amountMinor)
+    }
+
+    /** Kapi indirimi CIKARIYOR: 200 + 50 - 30 = 220. */
+    @Test
+    fun arithmeticSubtractsDiscounts() {
+        assertEquals(true, arithmeticHolds(parseReceipt(discounted)))
+    }
 }

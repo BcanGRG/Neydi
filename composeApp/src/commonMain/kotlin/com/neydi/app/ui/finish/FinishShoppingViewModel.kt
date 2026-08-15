@@ -2,7 +2,10 @@ package com.neydi.app.ui.finish
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
+import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.data.db.TripLineDao
+import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.data.repo.ListRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +21,11 @@ data class FinishRow(
     val count: Double,
     val unit: String,
     val taken: Boolean,
+    /**
+     * Kullanicinin beyani; beyan yoksa iyimser varsayim geregi [TakeOutcome.TAKEN]
+     * gosteriliyor - kapanis zaten oyle yazdi.
+     */
+    val outcome: TakeOutcome,
 )
 
 /**
@@ -33,25 +41,44 @@ class FinishShoppingViewModel(
     private val tripId: String?,
     private val tripLineDao: TripLineDao,
     private val repo: ListRepository,
+    private val statsRebuilder: ProductStatsRebuilder,
 ) : ViewModel() {
+
+    private val householdId = DEFAULT_HOUSEHOLD_ID
 
     val rows: StateFlow<List<FinishRow>> =
         if (tripId == null) {
             flowOf(emptyList())
         } else {
             tripLineDao.observeList(tripId).map { list ->
-                list.map { FinishRow(it.rowId, it.name, it.count, it.unit, it.checked) }
+                list.map {
+                    FinishRow(
+                        id = it.rowId,
+                        name = it.name,
+                        count = it.count,
+                        unit = it.unit,
+                        taken = it.checked,
+                        outcome = it.takeOutcome ?: if (it.checked) TakeOutcome.TAKEN else TakeOutcome.FORGOTTEN,
+                    )
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * Bir satirin "alindi" durumunu degistirir.
+     * Kullanicinin beyani: aldim / gerekmedi / unuttum (F4.12).
      *
      * ANINDA YAZIYOR, "Kaydet" beklemiyor: kullanici ekrandan geri tusuyla
      * cikarsa duzeltmesi kaybolmamali. Gezi zaten kapali, yani bu yazma
      * hicbir seyi bekletmiyor.
+     *
+     * Ardindan ISTATISTIK YENIDEN KURULUYOR: "gerekmedi"/"unuttum" satiri
+     * isaretsiz birakiyor, yani az once kapanista alim sayilmis bir satir
+     * artik alim degil - `ProductStats` bunu ancak yeniden kurulumla gorur.
      */
-    fun setTaken(rowId: String, taken: Boolean) {
-        viewModelScope.launch { repo.setTaken(rowId, taken) }
+    fun setOutcome(rowId: String, outcome: TakeOutcome) {
+        viewModelScope.launch {
+            repo.setOutcome(rowId, outcome)
+            statsRebuilder.rebuild(householdId)
+        }
     }
 }

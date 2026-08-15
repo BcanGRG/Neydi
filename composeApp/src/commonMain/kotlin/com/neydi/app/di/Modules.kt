@@ -7,6 +7,7 @@ import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.stats.ProductStatsRebuilder
+import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
@@ -68,7 +69,7 @@ val dataModule = module {
     viewModel { HistoryViewModel(tripDao = get(), receiptDao = get()) }
 
     viewModel { (tripId: String?) ->
-        FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get())
+        FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())
     }
 
     // receiptId parametreyle geliyor: hangi fisi kontrol ettigimiz hedefin
@@ -80,6 +81,7 @@ val dataModule = module {
             receiptDao = get(),
             receiptLineDao = get(),
             productDao = get(),
+            tripLineDao = get(),
             aliasDao = get(),
             catalogSeedDao = get(),
             repo = get(),
@@ -90,6 +92,12 @@ val dataModule = module {
     }
 
     single { ProductStatsRebuilder(statsDao = get(), clock = ::now) }
+    single {
+        SuggestionEngine(
+            statsDao = get(), productDao = get(), tripDao = get(),
+            tripLineDao = get(), clock = ::now,
+        )
+    }
 
     single {
         ReceiptProcessor(

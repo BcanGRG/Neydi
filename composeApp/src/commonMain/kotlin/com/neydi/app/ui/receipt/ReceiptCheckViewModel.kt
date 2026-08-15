@@ -12,6 +12,8 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.db.ReceiptLine
 import com.neydi.app.data.db.ReceiptLineDao
 import com.neydi.app.data.db.ReceiptStatus
+import com.neydi.app.data.db.TripLineDao
+import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.receipt.ReceiptReadOutcome
 import com.neydi.app.data.receipt.TOLERANCE_MINOR
@@ -20,6 +22,7 @@ import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -33,6 +36,13 @@ data class CheckRow(
     /** Fiste YAZAN hali. Gri alt satir olarak gosteriliyor. */
     val rawText: String,
     val needsReview: Boolean,
+)
+
+/** "Listede vardi, fiste yok" satiri (F4.12). */
+data class UnaccountedRow(
+    val rowId: String,
+    val name: String,
+    val outcome: TakeOutcome,
 )
 
 /**
@@ -49,6 +59,15 @@ data class CheckState(
     val sumMinor: Long = 0,
     val gateHolds: Boolean? = null,
     val rows: List<CheckRow> = emptyList(),
+    /**
+     * Fiste GORUNMEYEN liste satirlari (F4.12) - tasarimdaki *"Listede vardi,
+     * fiste yok (N)"* bolumu.
+     *
+     * Fis neyin alindigini zaten kanitliyor; uc-sonuc sorusu yalnizca fisin
+     * DOGRULAMADIGI satirlar icin anlamli. O yuzden bolum fis satirlarindan
+     * ayri ve yalnizca fark kumesini tasiyor.
+     */
+    val unaccounted: List<UnaccountedRow> = emptyList(),
     val failedMessage: String? = null,
     /** Tek seferlik bilgi: "bu yonde okunamadi, eski okuma korundu" gibi. */
     val notice: String? = null,
@@ -60,6 +79,7 @@ class ReceiptCheckViewModel(
     private val receiptDao: ReceiptDao,
     private val receiptLineDao: ReceiptLineDao,
     private val productDao: ProductDao,
+    private val tripLineDao: TripLineDao,
     private val aliasDao: ProductAliasDao,
     private val catalogSeedDao: CatalogSeedDao,
     private val repo: ListRepository,
@@ -94,7 +114,28 @@ class ReceiptCheckViewModel(
     private suspend fun reload(notice: String? = null) {
         val receipt = receiptDao.byId(receiptId)
         val lines = receiptLineDao.forReceipt(receiptId)
-        val sum = lines.sumOf { it.lineTotalMinor }
+        // Fark kumesi: gezideki satirlardan, urunu fiste eslesmis olanlar
+        // dusuluyor. Eslesmemis fis satirlari kimseyi aklayamaz - urunu belli
+        // degil.
+        val matched = lines.mapNotNull { it.matchedProductId }.toSet()
+        val unaccounted = receipt?.tripId?.let { tripId ->
+            tripLineDao.observeList(tripId).first()
+                .filter { it.productId !in matched }
+                .map { row ->
+                    UnaccountedRow(
+                        rowId = row.rowId,
+                        name = row.name,
+                        outcome = row.takeOutcome
+                            ?: if (row.checked) TakeOutcome.TAKEN else TakeOutcome.FORGOTTEN,
+                    )
+                }
+        }.orEmpty()
+        // KAPI TEK: ayristiricinin kurali (F4.5/F5.6) ekranda da gecerli -
+        // indirimler CIKARILIYOR. Eski hali hepsini pozitif topluyordu ve
+        // indirimli fiste islemcinin yazdigi durum (VERIFIED) ile ekrandaki
+        // cip (tutmuyor) CELISIYORDU. `isDiscount` v3'te kalici oldugu icin
+        // ayni hesap artik veritabanindan yeniden kurulabiliyor.
+        val sum = lines.sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
         val total = receipt?.totalMinor
         _state.value = CheckState(
             loading = false,
@@ -103,6 +144,7 @@ class ReceiptCheckViewModel(
             sumMinor = sum,
             gateHolds = total?.let { kotlin.math.abs(sum - it) <= TOLERANCE_MINOR },
             rows = lines.map { it.toRow() },
+            unaccounted = unaccounted,
             // SATIR VARSA hata mesaji GOSTERILMEZ.
             //
             // Okunamayan fis mesaji ekrani devraliyor; satirlar duruyorken bunu
@@ -173,6 +215,22 @@ class ReceiptCheckViewModel(
             // yani istatistik yeniden kurulmali (F6.1). Kapanis coktan gecti.
             statsRebuilder.rebuild(receipt.householdId)
             dismissEdit()
+            reload()
+        }
+    }
+
+    /**
+     * Fiste gorunmeyen liste satirinin akibeti (F4.12).
+     *
+     * Yazmanin ardindan istatistik yeniden kuruluyor: "gerekmedi"/"unuttum"
+     * satiri isaretsiz birakiyor ve az once alim sayilmis bir satir artik alim
+     * degil.
+     */
+    fun setOutcome(rowId: String, outcome: TakeOutcome) {
+        viewModelScope.launch {
+            val receipt = receiptDao.byId(receiptId) ?: return@launch
+            repo.setOutcome(rowId, outcome)
+            statsRebuilder.rebuild(receipt.householdId)
             reload()
         }
     }

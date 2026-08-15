@@ -5,6 +5,7 @@ import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.Receipt
 import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.db.ReceiptStatus
+import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.db.TripDao
@@ -168,6 +169,27 @@ class ListRepository(
      */
     suspend fun setStaple(productId: String, isStaple: Boolean) {
         productDao.setStaple(productId, isStaple, clock())
+    }
+
+    /**
+     * Satirin akibetini kaydeder (F4.12).
+     *
+     * Uc sonucun AYNI puani almamasi F6.2'nin sarti: *"gerekmedi"* oneriyi
+     * bastirmali, *"unuttum"* yukseltmeli. Tek bir boolean ikisini ayni sey
+     * yapiyordu.
+     *
+     * [TakeOutcome.TAKEN] disindaki ikisi satiri isaretsiz birakiyor, yani
+     * `ProductStats` onlari alim SAYMIYOR - istatistik `checked = 1` okuyor.
+     * `checkedAt` de temizleniyor ki "alindi" izi kalmasin.
+     */
+    suspend fun setOutcome(rowId: String, outcome: TakeOutcome) {
+        val taken = outcome == TakeOutcome.TAKEN
+        tripLineDao.setOutcome(
+            id = rowId,
+            checked = taken,
+            at = if (taken) clock() else null,
+            outcome = outcome,
+        )
     }
 
     /** Bitir ekranindan geri alma: bu satir aslinda alinmadi. */

@@ -47,6 +47,14 @@ data class ReceiptReading(
     val storeName: String?,
     val lines: List<ParsedLine>,
     val totalMinor: Long?,
+    /**
+     * Fisin BASILI tarihi, epoch millis (F5.8). Null = okunamadi.
+     *
+     * Fiyat gecmisinin `observedAt`'i bunu kullanmali - fotografin cekildigi
+     * an degil. Eski fisleri tek gunde toplu cekmek, tarih olmadan butun
+     * gozlemleri ayni x degerine yigar ve grafigi tek noktaya duzler.
+     */
+    val receiptDate: Long? = null,
     val rawLines: List<String>,
 )
 
@@ -75,6 +83,14 @@ private val PAYMENT_WORDS = listOf(
 )
 
 /** Fis kunyesi. Hicbiri urun degil. */
+/**
+ * Sirket/kunye satirini adres satirindan ayiran kelimeler.
+ *
+ * Bunlar HEADER_WORDS'te de var (kunye gurultusu olarak) - burada ters yonde
+ * kullaniliyorlar: magaza adini secerken sirket satirinin ISARETI oluyorlar.
+ */
+private val COMPANY_WORDS = listOf("magazacilik", "magazalar", "market", "sirket", "a s", "ticaret")
+
 private val HEADER_WORDS = listOf(
     "fatura", "sira no", "tckn", "vkn", "ettn", "vdm", "onay no", "ref no",
     "tesekkur", "musteri", "kasiyer", "kasa", "mah", "cad", "sok", "bulvari",
@@ -176,23 +192,55 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
     val lines = rawLines.map { it.trim() }.filter { it.isNotBlank() }
     val out = mutableListOf<ParsedLine>()
     var total: Long? = null
-    var store: String? = null
+    var storeCompany: String? = null
+    var storeFallback: String? = null
     // Miktar satiri urunden ONCE geldigi icin bekletiliyor.
     var pendingCount: Double? = null
     var pendingUnit: String? = null
     var pendingUnitPrice: Long? = null
 
+    var receiptDate: Long? = null
+
     for (raw in lines) {
         val key = matchKey(raw)
 
-        // Magaza adi: ilk kunye-olmayan, tutar tasimayan anlamli satir.
-        // "magazalar"/"market" kunye kelimesi ama magaza adinin da parcasi -
-        // o yuzden magaza adi ONCE aliniyor, kunye elemesinden once.
-        if (store == null && key.isNotBlank() && raw.length > 6 &&
+        // FISIN BASILI TARIHI (F5.8): "13.08.2026 18:49" gibi. Gg.aa.yyyy
+        // bicimi Turk fislerinde standart; iki gercek fiste de bu bicim.
+        // Ilk eslesen kazaniyor - fisin ust kunyesindeki tarih islem tarihi,
+        // alt kisimdaki POS satirlarindaki tekrarlar degil.
+        if (receiptDate == null) {
+            RECEIPT_DATE.find(raw)?.let { m ->
+                receiptDate = parseReceiptDate(
+                    day = m.groupValues[1].toInt(),
+                    month = m.groupValues[2].toInt(),
+                    year = m.groupValues[3].toInt(),
+                    hour = m.groupValues[4].toIntOrNull() ?: 12,
+                    minute = m.groupValues[5].toIntOrNull() ?: 0,
+                )
+            }
+        }
+
+        // Magaza adi: SIRKET satiri adres satirina TERCIH ediliyor.
+        //
+        // Eski kural "ilk anlamli satir"di ve gercek File fisinde ADRESI
+        // yakaliyordu: "FiLE OVACIK / KEC1OREN/ ANKARA" sirket satirindan
+        // ("FiLE MARKET MAGAZACILIK ANONIM SIRKETI") once geliyor. Cihazda Fis
+        // Kontrol basliginda adres gorunuyordu ve Store.name adres olacakti.
+        //
+        // Simdi: sirket iseareti tasiyan satir ("magazacilik", "magazalar",
+        // "market", "a s", "sirket") gorulene kadar ilk aday YEDEKTE tutuluyor;
+        // kunye satiri gelirse o kazaniyor, hic gelmezse yedek kullaniliyor.
+        // chainKey ikisinden de ayni zinciri urettigi icin alias'lar etkilenmez;
+        // degisen yalnizca gorunen ad.
+        if (storeCompany == null && key.isNotBlank() && raw.length > 6 &&
             AMOUNT_SUFFIX.matchEntire(raw) == null &&
             !contains(key, listOf("arsiv", "fatura"))
         ) {
-            store = raw
+            if (contains(key, COMPANY_WORDS)) {
+                storeCompany = raw
+            } else if (storeFallback == null) {
+                storeFallback = raw
+            }
             continue
         }
 
@@ -250,10 +298,11 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
     }
 
     return ReceiptReading(
-        storeName = store,
+        storeName = storeCompany ?: storeFallback,
         lines = out,
         totalMinor = total,
         rawLines = rawLines,
+        receiptDate = receiptDate,
     )
 }
 
@@ -272,4 +321,37 @@ fun arithmeticHolds(reading: ReceiptReading): Boolean? {
     val computed = reading.lines.sumOf { if (it.discount) -it.amountMinor else it.amountMinor }
     val diff = computed - total
     return (if (diff < 0) -diff else diff) <= TOLERANCE_MINOR
+}
+
+/**
+ * Fis tarihi: `13.08.2026 18:49` ya da saatsiz `13.08.2026`.
+ *
+ * Yil DORT hane sart: "13.08.26" gibi kisaltmalar POS referans numaralarinin
+ * icinde de gorunebiliyor ve yanlis pozitif uretir.
+ */
+private val RECEIPT_DATE = Regex("""\b(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2}))?""")
+
+/**
+ * Basili tarihi epoch millis'e cevirir - CIHAZIN saat diliminde.
+ *
+ * Fis yerel saatte basiliyor; UTC varsaymak Istanbul'da 3 saatlik kayma olurdu
+ * ve gun sinirindaki alisverisler yanlis gune duserdi (bkz. `daysBetween`
+ * gerekcesi).
+ *
+ * @return millis, ya da tarih gecersizse (ay 13, gun 32...) null - bozuk OCR
+ *   tarihinden uydurma bir damga uretmek en kotusu olurdu.
+ */
+internal fun parseReceiptDate(day: Int, month: Int, year: Int, hour: Int, minute: Int): Long? {
+    if (month !in 1..12 || day !in 1..31 || year !in 2000..2100) return null
+    if (hour !in 0..23 || minute !in 0..59) return null
+    return try {
+        with(kotlinx.datetime.TimeZone.currentSystemDefault()) {
+            kotlinx.datetime.LocalDateTime(year, month, day, hour, minute)
+                .toInstant()
+                .toEpochMilliseconds()
+        }
+    } catch (_: IllegalArgumentException) {
+        // 31 Nisan gibi takvimde olmayan gun.
+        null
+    }
 }
