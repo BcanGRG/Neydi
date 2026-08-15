@@ -56,7 +56,7 @@ class ClipboardAddTest {
         val db = db()
         db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         paste(
             r, trip.id,
@@ -85,7 +85,7 @@ class ClipboardAddTest {
         val db = db()
         db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         paste(r, trip.id, "ekmek\nsüt\nekmek")
 
@@ -101,7 +101,7 @@ class ClipboardAddTest {
         val db = db()
         db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         paste(r, trip.id, "Ekmek\nEKMEK\nekmek")
 

@@ -52,7 +52,7 @@ class TripLifecycleTest {
     @Test
     fun newTripStartsInPlanning() = runTest {
         val db = db(); prepare(db)
-        val trip = repo(db).openOrGetActiveTrip(home)
+        val trip = repo(db).openOrGetActiveTrip(home, "m1")
         assertEquals(TripStatus.PLANNING, trip.status)
         assertNull(trip.ownerMemberId, "acilista kapatan uye olmamali")
         assertNull(trip.completedAt)
@@ -63,7 +63,7 @@ class TripLifecycleTest {
     fun shoppingModeIsPersistedOnTheTrip() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         r.setShoppingMode(trip.id, enabled = true)
         assertEquals(TripStatus.SHOPPING, db.tripDao().byId(trip.id)?.status)
@@ -76,7 +76,7 @@ class TripLifecycleTest {
     fun closingSetsStatusOwnerAndTimestamp() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         assertTrue(r.closeTrip(trip.id, memberId = "m1"), "ilk kapatma basarili olmali")
 
@@ -98,7 +98,7 @@ class TripLifecycleTest {
         val db = db(); prepare(db)
         var now = 1_000L
         val r = repo(db, clock = { now })
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         assertTrue(r.closeTrip(trip.id, memberId = "m1"))
 
@@ -118,12 +118,12 @@ class TripLifecycleTest {
     fun closedTripIsNoLongerActive() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val first = r.openOrGetActiveTrip(home)
+        val first = r.openOrGetActiveTrip(home, "m1")
         r.closeTrip(first.id, memberId = "m1")
 
         assertNull(db.tripDao().activeOrNull(home), "kapanmis gezi aktif gorunmemeli")
 
-        val fresh = r.openOrGetActiveTrip(home)
+        val fresh = r.openOrGetActiveTrip(home, "m1")
         assertTrue(fresh.id != first.id, "kapanistan sonra yeni gezi acilmali")
         assertEquals(TripStatus.PLANNING, fresh.status)
     }
@@ -140,7 +140,7 @@ class TripLifecycleTest {
     fun closedTripCannotBeReopened() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
         r.closeTrip(trip.id, memberId = "m1")
 
         r.setShoppingMode(trip.id, enabled = true)
@@ -155,9 +155,9 @@ class TripLifecycleTest {
     fun historyShowsOnlyClosedTrips() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val first = r.openOrGetActiveTrip(home)
+        val first = r.openOrGetActiveTrip(home, "m1")
         r.closeTrip(first.id, memberId = "m1")
-        val open = r.openOrGetActiveTrip(home)
+        val open = r.openOrGetActiveTrip(home, "m1")
 
         val history = db.tripDao().observeHistory(home).first()
         assertEquals(listOf(first.id), history.map { it.id })

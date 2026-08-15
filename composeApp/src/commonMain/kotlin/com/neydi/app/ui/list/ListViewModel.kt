@@ -22,11 +22,13 @@ import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
+import com.neydi.app.ui.product.ProductSheetState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
@@ -99,13 +101,70 @@ class ListViewModel(
                 initialValue = ListState(),
             )
 
+    /**
+     * Bu cihazin uyesi.
+     *
+     * Flow henuz yayin yapmadiysa DOGRUDAN veritabanindan okunuyor - sessizce
+     * vazgecmek kullanicinin yazdigi seyin kaybolmasi demek olurdu. Bu, F3.2'de
+     * cihazda yakalanan bir hatanin dersi: ViewModel uyeyi yalnizca `init`'te
+     * bir kez okuyordu ve o an bos donerse **her ekleme sessizce hicbir sey
+     * yapmiyordu**.
+     *
+     * Gezi acmak da artik uye istiyor (sabit tohumlamasi icin), o yuzden uc
+     * cagri yeri bunu paylasiyor.
+     */
+    private suspend fun selfMemberId(): String? =
+        myMemberId.value ?: memberDao.self(household)?.id
+
+    /**
+     * Urun Detayi sheet'i (Ekran 5) - HEDEF DEGIL, sheet.
+     *
+     * `Destinations.kt` karari yaziyor: *"EKLE ve URUN DETAYI de hedef degil,
+     * Liste uzerinde acilan bottom sheet'lerdir."* O yuzden Nav3 back stack'inde
+     * degil, ekranin kendi state'inde.
+     */
+    private val _productSheet = MutableStateFlow<ProductSheetState?>(null)
+    val productSheet: StateFlow<ProductSheetState?> = _productSheet
+
+    fun openProductSheet(productId: String) {
+        viewModelScope.launch {
+            val product = productDao.byId(productId) ?: return@launch
+            _productSheet.value = ProductSheetState(
+                productId = product.id,
+                name = product.name,
+                isStaple = product.isStaple,
+            )
+        }
+    }
+
+    fun closeProductSheet() {
+        _productSheet.value = null
+    }
+
+    /**
+     * "Her zamankiler"e ekler / cikarir (F6.8).
+     *
+     * Sheet'in kendi state'i de ANINDA guncelleniyor: anahtar yazmanin
+     * veritabanindan geri okunmasini beklemiyor, yoksa parmak kalkinca anahtar
+     * eski halinde donmus gorunurdu. Listedeki satir zaten Flow'dan tazeleniyor.
+     */
+    fun setStaple(productId: String, isStaple: Boolean) {
+        viewModelScope.launch {
+            repo.setStaple(productId, isStaple)
+            _productSheet.update { current ->
+                current?.takeIf { it.productId == productId }?.copy(isStaple = isStaple) ?: current
+            }
+        }
+    }
+
     fun toggleChecked(rowId: String, checked: Boolean) {
         viewModelScope.launch { repo.toggleChecked(rowId, checked) }
     }
 
     fun setShoppingMode(enabled: Boolean) {
         viewModelScope.launch {
-            val trip = repo.openOrGetActiveTrip(household)
+            val memberId = selfMemberId() ?: return@launch
+            val trip = repo.openOrGetActiveTrip(household, memberId)
             repo.setShoppingMode(trip.id, enabled)
         }
     }
@@ -187,7 +246,8 @@ class ListViewModel(
      */
     fun finishShopping() {
         viewModelScope.launch {
-            val trip = repo.openOrGetActiveTrip(household)
+            val memberId = selfMemberId() ?: return@launch
+            val trip = repo.openOrGetActiveTrip(household, memberId)
             val rows = tripLineDao.observeList(trip.id).first()
             _summary.value = ShoppingSummary(
                 takenCount = rows.count { it.checked },
@@ -202,7 +262,7 @@ class ListViewModel(
             // mutabakat ikinci kez CALISMIYOR; calissaydi satin almalar cift
             // sayilir ve oneri araliklari yariya duserdi.
             _summaryTripId = trip.id
-            val closed = repo.closeTrip(trip.id, memberId = myMemberId.value ?: return@launch)
+            val closed = repo.closeTrip(trip.id, memberId = memberId)
             if (closed) {
                 // VARSAYILAN-IYIMSER MUTABAKAT (F4.8): isaretlenmemis planli
                 // satirlar alindi sayiliyor. Yalnizca KAPATAN cihaz yaziyor -
@@ -379,8 +439,8 @@ class ListViewModel(
     private suspend fun addAndAwait(name: String, categoryId: String?, unit: String?, count: Double) {
             // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
             // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
-            val memberId = myMemberId.value ?: memberDao.self(household)?.id ?: return
-            val trip = repo.openOrGetActiveTrip(household)
+            val memberId = selfMemberId() ?: return
+            val trip = repo.openOrGetActiveTrip(household, memberId)
 
             // Kategori/kanonik ad cozumlemesi ORTAK: fis duzeltmesi de ayni
             // fonksiyondan geciyor (ProductResolver), yoksa iki kapi ayni urunu

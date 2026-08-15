@@ -5,6 +5,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.padding
@@ -46,9 +47,15 @@ object Motion {
  * Her etkilesimli eleman icin basili hal. clickable'i da bu sarar ki
  * bir cagri yerinde scale'i unutmak mumkun olmasin.
  */
+/**
+ * @param onLongPress verilirse uzun basma da yakalaniyor. Basili hal (scale +
+ *   overlay) ikisinde de ayni, yani kullanici iki hareketin de kaydedildigini
+ *   ayni gorsel dille goruyor.
+ */
 @Composable
 fun Modifier.pressable(
     enabled: Boolean = true,
+    onLongPress: (() -> Unit)? = null,
     onTap: () -> Unit,
 ): Modifier {
     val source = remember { MutableInteractionSource() }
@@ -64,10 +71,11 @@ fun Modifier.pressable(
     return this
         .graphicsLayer { scaleX = scale; scaleY = scale }
         .alpha(if (enabled) 1f else Motion.DISABLED_ALPHA)
-        .clickable(
+        .combinedClickable(
             interactionSource = source,
             indication = indication,
             enabled = enabled,
+            onLongClick = onLongPress,
             onClick = onTap,
         )
 }

@@ -185,4 +185,79 @@ class ListStateTest {
         assertTrue(state.isEmpty)
         assertEquals(0, state.totalRows)
     }
+
+    // --- "Her zamankiler" bolumu (F6.8) ------------------------------------
+
+    /**
+     * Sabitler KENDI BOLUMUNDE ve EN USTTE - tasarim maketlerindeki gibi.
+     *
+     * Reyon adi tasimiyorlar cunku bir sabit hangi reyondan olursa olsun bu
+     * bolumde toplaniyor; kategori gruplamasinin disinda.
+     */
+    @Test
+    fun staplesGetTheirOwnSectionAtTheTop() {
+        val state = listOf(
+            row("Domates", "Meyve-Sebze"),
+            row("Ekmek", "Fırın-Ekmek", isStaple = true),
+            row("Süt", "Süt-Kahvaltılık", isStaple = true),
+        ).toSections(myMemberId = "ben")
+
+        assertEquals(STAPLE_SECTION_TITLE, state.sections.first().title)
+        assertEquals(listOf("Ekmek", "Süt"), state.sections.first().rows.map { it.row.name })
+        // Ve kategori bolumlerinde TEKRAR gorunmuyorlar.
+        val digerleri = state.sections.drop(1).flatMap { it.rows }.map { it.row.name }
+        assertEquals(listOf("Domates"), digerleri)
+    }
+
+    /**
+     * ALISVERIS MODUNDA BOLUM YOK - tasarim maketinde de yok.
+     *
+     * Reyonda sira DONUYOR ve sabit bir urun de sonucta bir reyondan alinacak;
+     * onu listenin basina cekmek market yuruyusunu bozardi.
+     */
+    @Test
+    fun noStapleSectionInShoppingMode() {
+        val state = listOf(
+            row("Domates", "Meyve-Sebze"),
+            row("Ekmek", "Fırın-Ekmek", isStaple = true),
+        ).toSections(myMemberId = "ben", shoppingMode = true)
+
+        assertTrue(state.sections.none { it.title == STAPLE_SECTION_TITLE })
+        assertEquals(2, state.sections.sumOf { it.rows.size })
+        // Sabit kendi reyonunda duruyor.
+        assertEquals(
+            listOf("Fırın-Ekmek"),
+            state.sections.filter { b -> b.rows.any { it.row.name == "Ekmek" } }.map { it.title },
+        )
+    }
+
+    /** Hic sabit yoksa bolum HIC cizilmiyor - bos bolum yasak. */
+    @Test
+    fun noStapleSectionWhenThereAreNone() {
+        val state = listOf(row("Domates")).toSections(myMemberId = "ben")
+
+        assertTrue(state.sections.none { it.title == STAPLE_SECTION_TITLE })
+        assertEquals(1, state.sections.size)
+    }
+
+    /** Bolum en fazla 12 satir - tasarimin siniri. */
+    @Test
+    fun stapleSectionIsCappedAtTwelve() {
+        val state = (1..15).map { row("Sabit $it", isStaple = true) }
+            .toSections(myMemberId = "ben")
+
+        assertEquals(12, state.sections.first { it.title == STAPLE_SECTION_TITLE }.rows.size)
+    }
+
+    /** Isaretlenen sabit "Alindi"ya iniyor, bolumde kalmiyor. */
+    @Test
+    fun checkedStapleMovesToTaken() {
+        val state = listOf(
+            row("Ekmek", isStaple = true, checked = true),
+            row("Süt", isStaple = true),
+        ).toSections(myMemberId = "ben")
+
+        assertEquals(listOf("Süt"), state.sections.first().rows.map { it.row.name })
+        assertEquals(listOf("Ekmek"), state.taken.map { it.row.name })
+    }
 }

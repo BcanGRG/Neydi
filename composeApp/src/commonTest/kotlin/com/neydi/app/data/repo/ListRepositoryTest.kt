@@ -47,8 +47,8 @@ class ListRepositoryTest {
         val db = db(); prepare(db)
         val r = repo(db)
 
-        val first = r.openOrGetActiveTrip(home)
-        val second = r.openOrGetActiveTrip(home)
+        val first = r.openOrGetActiveTrip(home, "m1")
+        val second = r.openOrGetActiveTrip(home, "m1")
 
         assertEquals(first.id, second.id, "ikinci cagri yeni bir alisveris acti")
     }
@@ -58,9 +58,9 @@ class ListRepositoryTest {
         val db = db(); prepare(db)
         val r = repo(db)
 
-        val first = r.openOrGetActiveTrip(home)
+        val first = r.openOrGetActiveTrip(home, "m1")
         r.closeTrip(first.id, memberId = "m1")
-        val fresh = r.openOrGetActiveTrip(home)
+        val fresh = r.openOrGetActiveTrip(home, "m1")
 
         assertTrue(fresh.id != first.id, "bitmis alisveris hala aktif goruluyor")
     }
@@ -74,7 +74,7 @@ class ListRepositoryTest {
     fun readdingSameProductIncrementsQuantity() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
         val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
 
         r.add(home, trip.id, bread, memberId = "m1")
@@ -103,7 +103,7 @@ class ListRepositoryTest {
     fun checkAndUncheckFlowThrough() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
         val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
         val row = r.add(home, trip.id, milk, memberId = "m1")
 
@@ -129,7 +129,7 @@ class ListRepositoryTest {
     fun deletedRowDoesNotResurrect() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
         val product = r.findOrCreateProduct(home, "Yumurta", "sut-kahvalti", "adet")
         val row = r.add(home, trip.id, product, memberId = "m1")
         r.remove(row.id)

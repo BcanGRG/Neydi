@@ -54,6 +54,7 @@ import com.neydi.app.ui.components.ListRow
 import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SectionHeader
+import com.neydi.app.ui.product.ProductSheetContent
 import com.neydi.app.ui.theme.Motion
 import com.neydi.app.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
@@ -90,6 +91,7 @@ fun ListScreen(
     val sheetCategory by vm.sheetCategory.collectAsStateWithLifecycle()
     val sheetProducts by vm.sheetProducts.collectAsStateWithLifecycle()
     val summary by vm.summary.collectAsStateWithLifecycle()
+    val productSheet by vm.productSheet.collectAsStateWithLifecycle()
 
     // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
     // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
@@ -113,6 +115,7 @@ fun ListScreen(
         onSuggestionSelected = vm::addFromSuggestion,
         onCategorySelected = vm::onCategorySelected,
         onToggleChecked = vm::toggleChecked,
+        onRowLongPress = vm::openProductSheet,
         onClipboard = {
             clipboardText?.let(vm::addFromClipboard)
             clipboardText = null
@@ -186,6 +189,21 @@ fun ListScreen(
         }
     }
 
+    productSheet?.let { sheet ->
+        ModalBottomSheet(
+            onDismissRequest = vm::closeProductSheet,
+            // Zemin rengi ACIKCA veriliyor: bu palet `surfaceContainer*` tonal
+            // token'larini tanimlamiyor ve M3 kendi mor baseline'ina dusuyor.
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            ProductSheetContent(
+                state = sheet,
+                onStapleChange = { vm.setStaple(sheet.productId, it) },
+                bottomPadding = bottomInset,
+            )
+        }
+    }
+
     // Ozet karti TEK SEFERLIK: kapatilinca bir daha acilmiyor.
     summary?.let { o ->
         ModalBottomSheet(
@@ -240,6 +258,8 @@ internal fun ListContent(
     onSuggestionSelected: (CatalogSeed) -> Unit,
     onCategorySelected: (Category) -> Unit,
     onToggleChecked: (String, Boolean) -> Unit,
+    /** Satira uzun basma - Urun Detayi sheet'ini aciyor (F6.8). */
+    onRowLongPress: (String) -> Unit,
     onClipboard: () -> Unit,
     onShoppingMode: (Boolean) -> Unit,
     estimate: BasketEstimate,
@@ -335,6 +355,10 @@ internal fun ListContent(
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onToggleChecked(row.id, !row.row.checked)
                             },
+                            // Uzun basma Urun Detayi sheet'ini aciyor (F6.8).
+                            // Tasarimin belirledigi acici fiyat cipi ama o
+                            // ancak F5.2 ile gorunecek - bkz. ListItemRow.
+                            onLongPress = { onRowLongPress(row.productId) },
                         )
                     }
                 }
@@ -359,6 +383,7 @@ internal fun ListContent(
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onToggleChecked(row.id, false)
                             },
+                            onLongPress = { onRowLongPress(row.productId) },
                         )
                     }
                 }
@@ -493,8 +518,17 @@ private fun ShoppingBottomBar(remaining: Int, onFinish: () -> Unit, modifier: Mo
 
 // --- Preview ---------------------------------------------------------------
 
-private fun s(id: String, name: String, count: String? = null, checked: Boolean = false) =
-    UiRow(id, ListRow(name, quantity = count, checked = checked))
+private fun s(
+    id: String,
+    name: String,
+    count: String? = null,
+    checked: Boolean = false,
+    isStaple: Boolean = false,
+) = UiRow(
+    id = id,
+    productId = "p-$id",
+    row = ListRow(name, quantity = count, checked = checked, isStaple = isStaple),
+)
 
 private val SAMPLE = ListState(
     sections = listOf(
@@ -513,7 +547,7 @@ private fun ListPreviewHost(
     state = state, input = "", suggestions = emptyList(), categories = emptyList(),
     clipboardText = clipboard,
     onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
-    onToggleChecked = { _, _ -> }, onClipboard = {}, onShoppingMode = {},
+    onToggleChecked = { _, _ -> }, onRowLongPress = {}, onClipboard = {}, onShoppingMode = {},
     estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},
 )
 

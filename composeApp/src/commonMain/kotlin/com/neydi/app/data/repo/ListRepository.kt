@@ -25,6 +25,9 @@ import kotlinx.coroutines.flow.flowOf
  * saf kalir ve testte deterministik olur - `Clock.System.now()` cagiran bir
  * repository "gecen sefer ne zaman aldik" mantigini test edilemez yapar.
  */
+/** "Her zamankiler" bolumunun tasarimdaki ust siniri. */
+const val STAPLE_LIMIT = 12
+
 class ListRepository(
     private val tripDao: TripDao,
     private val tripLineDao: TripLineDao,
@@ -53,7 +56,7 @@ class ListRepository(
      * kisit kismi index gerektirdigi icin semada ifade EDILEMIYOR (F2.3).
      * Yeni gezi acmadan once mutlaka buradan gecilmeli.
      */
-    suspend fun openOrGetActiveTrip(householdId: String): Trip {
+    suspend fun openOrGetActiveTrip(householdId: String, memberId: String): Trip {
         tripDao.activeOrNull(householdId)?.let { return it }
         val trip = Trip(
             id = newId(),
@@ -62,7 +65,35 @@ class ListRepository(
             createdAt = clock(),
         )
         tripDao.insert(trip)
+        // SABITLER YENI LISTEYE OTOMATIK GIRIYOR (F6.8).
+        //
+        // Tasarim bunu ozet kartinda kullaniciya aciktan soyluyor:
+        // *"Bir sonraki alisveriste her zamankiler yeniden eklenecek."*
+        //
+        // NEDEN BURADA, ayri bir fonksiyonda DEGIL: gezinin dogdugu TEK yer bu
+        // ve KDoc'u da "yeni gezi acmadan once mutlaka buradan gecilmeli" diyor.
+        // Tohumlamayi cagiranin sorumluluguna birakmak, bu projede daha once
+        // defalarca yasanan "cagirmayi unut" hatasini davet ederdi - ve unutulsa
+        // sessizce yalnizca bos liste gorunurdu.
+        //
+        // `memberId` parametresi tam bu yuzden ZORUNLU ve varsayilansiz: sabit
+        // satirlarin da bir ekleyeni olmak zorunda (`addedByMemberId` NOT NULL)
+        // ve varsayilan bir deger koymak tohumlamayi yeniden atlanabilir yapardi.
+        seedStaples(householdId, trip.id, memberId)
         return trip
+    }
+
+    /**
+     * Sabitleri yeni geziye ekler. En fazla [STAPLE_LIMIT] satir.
+     *
+     * Sinir tasarimdan: "Her zamankiler" bolumu en fazla 12 satir. Ustu, bir
+     * listeyi acan kullaniciya kendi yazmadigi 20 satir gostermek olurdu ve
+     * "gerekmeyeni sil" isi listeyi kurmaktan pahali hale gelirdi.
+     */
+    private suspend fun seedStaples(householdId: String, tripId: String, memberId: String) {
+        productDao.staples(householdId).take(STAPLE_LIMIT).forEach { product ->
+            add(householdId = householdId, tripId = tripId, product = product, memberId = memberId)
+        }
     }
 
     /**
@@ -127,6 +158,17 @@ class ListRepository(
      */
     suspend fun reconcileOptimistically(tripId: String): Int =
         tripLineDao.markAllTaken(tripId, clock())
+
+    /**
+     * Urunu "her zamankiler"e ekler ya da cikarir (F6.8).
+     *
+     * Etkisi bir sonraki gezide gorunuyor: [openOrGetActiveTrip] yeni liste
+     * acarken sabitleri otomatik ekliyor. Tasarim bunu ozet kartinda aciktan
+     * soyluyor - *"Bir sonraki alisveriste her zamankiler yeniden eklenecek."*
+     */
+    suspend fun setStaple(productId: String, isStaple: Boolean) {
+        productDao.setStaple(productId, isStaple, clock())
+    }
 
     /** Bitir ekranindan geri alma: bu satir aslinda alinmadi. */
     suspend fun setTaken(lineId: String, taken: Boolean) {
