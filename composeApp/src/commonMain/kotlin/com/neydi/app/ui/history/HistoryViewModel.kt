@@ -8,6 +8,7 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripDao
+import com.neydi.app.data.receipt.physicalReceipts
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -71,6 +72,13 @@ internal fun combineTrips(trips: List<Trip>, receipts: List<Receipt>): List<Hist
             closedAt = trip.completedAt ?: trip.startedAt,
             totalMinor = trip.totalMinor,
             receipts = fisHaritasi[trip.id].orEmpty().let { tripReceipts ->
+                // Fiziksel fis gruplari: parca olup olmadigini gezideki fis
+                // SAYISI degil, ayni fisin parcasi olup olmadigi belirliyor
+                // (bkz. samePhysicalReceipt - iki ayri magaza fisi tek gezide
+                // olabiliyor ve cihazda oyleydi).
+                val groupSize = physicalReceipts(tripReceipts)
+                    .flatMap { grup -> grup.map { it.id to grup.size } }
+                    .toMap()
                 tripReceipts.map {
                     HistoryReceipt(
                         id = it.id,
@@ -78,11 +86,25 @@ internal fun combineTrips(trips: List<Trip>, receipts: List<Receipt>): List<Hist
                         totalMinor = it.totalMinor,
                         storeName = it.storeNameRaw,
                         capturedAt = it.capturedAt,
-                        // Parca: toplami okunamamis (MISMATCHED + null) bir fis,
-                        // ayni gezide baska fisler varken buyuk olasilikla uzun
-                        // fisin parcasi - toplam yalnizca son parcada basili.
+                        // Parca: AYNI FIZIKSEL FISIN baska parcalari da var.
+                        //
+                        // `totalMinor == null` KOSULU KALDIRILDI ve sebebi
+                        // somut: toplam yalnizca SON parcada basili, yani o
+                        // kosul tam olarak son parcayi disarida birakiyordu.
+                        // Son parca butun fisin toplamini tasiyip yalnizca kendi
+                        // satirlarini tasidigi icin MISMATCHED olmasi
+                        // KACINILMAZ - ve amber "sorunlu" zemini giyiyordu. Her
+                        // uzun fiste, her seferinde, kullanici hata yapmadan.
+                        //
+                        // Kosul GEZIDEKI FIS SAYISI degil GRUP BOYU: iki ayri
+                        // magaza fisi tek gezide olabiliyor ve o durumda ikisi
+                        // de tek basina degerlendirilmeli - biri gercekten
+                        // tutmuyorsa amber HAK EDILMIS.
+                        //
+                        // FAILED bundan MUAF: okunamayan bir parca gercek bir
+                        // sorun ve sorunlu gorunmeye devam ediyor.
                         isPart = it.status == ReceiptStatus.MISMATCHED &&
-                            it.totalMinor == null && tripReceipts.size > 1,
+                            (groupSize[it.id] ?: 1) > 1,
                     )
                 }
             },

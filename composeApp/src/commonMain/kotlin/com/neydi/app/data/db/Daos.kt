@@ -411,6 +411,15 @@ interface ReceiptDao {
     @Query("SELECT COUNT(*) FROM receipt WHERE tripId = :tripId AND deletedAt IS NULL")
     suspend fun countForTrip(tripId: String): Int
 
+    /**
+     * Gezideki fisler, cekim sirasinda - fiziksel fis gruplamasinin girdisi.
+     *
+     * `observeForTrip`'in tek seferlik hali: kapi hesabi anlik bir goruntu
+     * istiyor, akis degil.
+     */
+    @Query("SELECT * FROM receipt WHERE tripId = :tripId AND deletedAt IS NULL ORDER BY capturedAt")
+    suspend fun forTrip(tripId: String): List<Receipt>
+
     @Query("UPDATE receipt SET status = :status, errorMessage = :error WHERE id = :id")
     suspend fun setStatus(id: String, status: ReceiptStatus, error: String? = null)
 
@@ -478,6 +487,40 @@ interface ReceiptLineDao {
 
     @Query("DELETE FROM receipt_line WHERE receiptId = :receiptId")
     suspend fun clearForReceipt(receiptId: String)
+
+    /**
+     * VERILEN FISLERIN satirlarinin toplami, kurus (F4.13 duzeltmesi).
+     *
+     * ARITMETIK DEGISMEZ FIZIKSEL FISE AIT, FOTOGRAFA DEGIL. Uzun fis parca
+     * parca cekilince TOPLAM yalnizca SON parcada basili oluyor ama o parca
+     * fisin yalnizca bir bolumunun satirlarini tasiyor. Kapiyi tek fotograf
+     * kapsaminda hesaplamak son parcada **yapisal olarak** tutmuyor cikariyordu:
+     * her uzun fiste, her seferinde amber "tutmuyor" - kullanici hicbir hata
+     * yapmadan.
+     *
+     * KAPSAM GEZI DEGIL, FIZIKSEL FIS: id kumesini `samePhysicalReceipt`
+     * veriyor. Gezi kapsami cihazda olculdu ve YANLISTI - bir gezide iki ayri
+     * magaza fisi olabiliyor ve onlari toplamak dogru okunmus bir fisi
+     * digerinin hatasiyla amber yapiyordu.
+     *
+     * YAN KAZANC: bindiren cekimi yakaliyor. Kullanici ayni satirlari iki
+     * parcada birden cekerse toplam fisin toplamini ASAR ve kapi bunu soyler -
+     * bugun hicbir sey soylemiyor.
+     *
+     * Isaret [ReceiptLine.isDiscount]'tan geliyor, sayidan degil - tutar her
+     * zaman pozitif saklaniyor (bkz. `ParsedLine` KDoc).
+     *
+     * @return kurus, ya da hic satir yoksa null. SUM() bos kumede NULL doner ve
+     *   bu istenen: "hic satir yok" ile "toplami sifir" ayri seyler.
+     */
+    @Query(
+        """
+        SELECT SUM(CASE WHEN isDiscount THEN -lineTotalMinor ELSE lineTotalMinor END)
+        FROM receipt_line
+        WHERE receiptId IN (:receiptIds) AND deletedAt IS NULL
+        """,
+    )
+    suspend fun sumLinesForReceipts(receiptIds: List<String>): Long?
 }
 
 /** ProductAlias DAO'su - F4.7 ogrenmesi buradan geciyor. */

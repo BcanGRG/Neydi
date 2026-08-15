@@ -213,6 +213,22 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Yeni bileşen `OutcomePicker`** (`Modifier.pressable` üzerine) — Material3 `SegmentedButton` da indication'ı sabit kodluyor.
   **Spec'ten hâlâ açık kalanlar:** `[Elle sadece toplam gir]` yolu (yeni klavye olamaz — tek klavye fiş tutarı alanı) ve süre satırı (`durationMinutes` hep null; alışveriş modunun başlangıç zamanı saklanmıyor). Bunlar F6.7/F10 tarafında küçük işler olarak duruyor.
 
+- [x] **4.13b — Aritmetik kapısı parçalı fişte yanlış alarm veriyordu.** ✅ *Cihazda gerçek veriyle doğrulandı.*
+  **Hata:** kapı her **fotoğrafa** ayrı uygulanıyordu, halbuki aritmetik değişmez **fiziksel fişe** ait. Uzun fişte TOPLAM yalnızca son parçada basılı ama o parça satırların yalnızca bir bölümünü taşıyor — yani son parçada kapı **yapısal olarak** tutmuyor çıkıyordu. Her uzun fişte, her seferinde, kullanıcı hiçbir hata yapmadan amber *"toplam tutmuyor"*. Ara parçalar bundan yalnızca toplamları `null` olduğu için kurtuluyordu: `isPart = total == null && tripReceiptCount > 1` koşulu tam olarak son parçayı dışarıda bırakıyordu.
+  **İlk düzeltme yanlıştı ve cihaz onu çürüttü.** Kapıyı **gezi** kapsamına almak denendi; kullanıcının veritabanında tek gezide **iki ayrı mağaza** fişi çıktı (BİM 225,50 + File Market 484,58). Gezi kapsamı, File Market'in doğru okunmuş **sessiz** halini BİM'in ayrıştırma hatasıyla amber'a çeviriyordu — düzeltilmek istenen hatanın yer değiştirmiş hali.
+  **Doğru kapsam fiziksel fiş** (`samePhysicalReceipt`): künye yalnızca fişin **başında** basılı olduğu için uzun fişin ilk parçası mağaza adını taşıyor, sonrakiler taşımıyor; iki ayrı mağaza fişiyse ikisi de kendi adını taşıyor ve adlar farklı. Gruplama `chainKey` üzerinden — alias öğrenmesiyle **aynı** anahtar, yoksa iki ayrı "aynı mağaza" tanımı oluşurdu.
+  **Yan kazanç:** bindiren çekim artık yakalanıyor. Kullanıcı aynı satırları iki parçada birden çekerse toplam fişin toplamını **aşar** ve kapı bunu söyler; bugün hiçbir şey söylemiyordu.
+  **Cihazda:** AKYURT parçası nötr *"parça"*, FiLE MARKET çipsiz/sessiz, BİM amber *"toplam tutmuyor"* — sonuncusu **hak edilmiş** (satırlar 227,89, basılı 225,50; fark 2,39 = `TOPLAM KDV` satırı ürün sanılmış, ayrı bir ayrıştırıcı hatası).
+  10 yeni test (`ReceiptGroupingTest` + kapsam testleri), 206 test 0 hata.
+
+- [ ] **4.15 — Parça dikişi: bindirmeyi tehlike değil çapa yap.** *(kullanıcı önerisinden doğdu)*
+  **Kullanıcının önerisi:** tek fotoğraf çekilsin, arkada uygun okuma düzenine göre parçalansın; parçalama sınırları net olsun ki aynı satır iki kez okunmasın.
+  **Birinci yarısı fizik nedeniyle olmuyor:** kırpmak piksel üretmiyor. Ölçüm kayıtlı (`ReceiptProcessor.MIN_USABLE_LINES` gerekçesi): ~60 kalemlik fiş tek karede satır başına **4,7 piksel**, ML Kit 60 satırın **2'sini** okuyabildi — ve *"ham kamera çözünürlüğü bile ~7 px/satır verirdi"*. Yani çok kare **zorunlu**; `MAX_LONG_EDGE` kaldırılsa da değişmiyor.
+  **İkinci yarısı haklı ve çözülmemiş:** bugün parçalar birbirinden habersiz. Kullanıcıdan **temiz kesim** istemek yanlış yük — doğru olan kasıtlı **bindirme** istemek ve dikişi uygulamanın yapması: *"bir önceki karenin son 2-3 satırı görünsün"*. Bindiren satırlar dikişin **çapası** olur, tehlikesi değil; belge tarayıcılarının panoramada yaptığı bu.
+  **Ne kazandırır:** tek okuma → aritmetik kapısı fişin tamamını gerçekten doğrular (4.13b bunun yarısını zaten getirdi), satırlar bir kez sayılır, kullanıcı tek kontrol ekranı görür.
+  **Bugün ne koruyor, ne korumuyor:** `purchaseCount` güvende — `ProductStatsDao.purchaseEvents` `GROUP BY productId, tripId` yapıyor, yani aynı ürün iki parçada okunsa da bir kez sayılıyor. **F5.1'in fiyat gözlemlerinde bu koruma yok**; dikiş ya da tekilleştirme F5.1'den önce gelmeli, yoksa çift fiyat kaydı yazılır.
+  **Önkoşul F4.14 ile ortak:** ham satırlar kalıcı olmadan dikiş yazılamaz.
+
 - [ ] **5.1 — `PriceObservation` yazımı.** *Fazın kilit taşı; her şey buna bakıyor.*
   **Hazır olan:** entity `Receipt.kt:91` (11 alan, `(productId, observedAt)` ve `storeId` index'leri, şema **sürüm 2**'de yayında). **Eksik olan:** `PriceObservationDao` (`Daos.kt:254`) **yalnızca iki okuma sorgusu içeriyor — `@Insert`, `@Upsert`, `@Update`, `@Delete` hiçbiri yok**. Repo genelinde `PriceObservation(` yapıcısı **sıfır** yerde çağrılıyor.
   **ReceiptLine → PriceObservation eşlemesi, alan alan:**

@@ -204,11 +204,16 @@ private fun LoadingBlock() {
 @Composable
 private fun GateChip(state: CheckState) {
     val extras = LocalNeydiExtraColors.current
+    // PARCALI FISTE SAYILAR FISIN TAMAMINA AIT, bu parcaya degil - kapi gezi
+    // kapsaminda hesaplaniyor (bkz. ReceiptCheckViewModel). Ekranda yalnizca bu
+    // parcanin satirlari duruyor, o yuzden hangi kumeden bahsettigimiz yaziyor;
+    // yoksa kullanici ekrandaki satirlari toplayip tutturmaya calisirdi.
+    val scope = if (state.isPart) "Fişin tamamı" else "Toplam"
     val (text, color) = when (state.gateHolds) {
-        true -> "Toplam tutuyor · ${formatMinor(state.totalMinor ?: 0)}" to extras.success
+        true -> "$scope tutuyor · ${formatMinor(state.totalMinor ?: 0)}" to extras.success
         false -> {
             val fark = (state.totalMinor ?: 0) - state.sumMinor
-            "Toplam ${formatMinor(fark)} tutmuyor" to extras.warning
+            "$scope ${formatMinor(fark)} tutmuyor" to extras.warning
         }
         // PARCA HALI NOTR, amber DEGIL: toplam son parcada basili, bu parcada
         // olmamasi kullanicinin hatasi degil. Amber "tutmuyor" giydirmek
