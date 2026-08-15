@@ -159,6 +159,42 @@ class ReceiptProcessorTest {
         assertEquals(bimLines, db.receiptDao().byId("r1")?.rawOcrText?.lines())
     }
 
+    /**
+     * DAHA KOTU BIR OKUMA IYISININ USTUNE YAZMIYOR (F4.14b).
+     *
+     * F4.13'un sozu "elle yon cevirme iyi bir okumayi ASLA bozmamali"ydi ama
+     * korumasi yalnizca BASARISIZ okumaya bakiyordu. Cihazda olculdu: on dokuz
+     * satirlik iyi bir okuma, dort kez "baska yonde oku" sonunda SIFIR satira
+     * dustu. Bu test o yolu kapatiyor.
+     */
+    @Test
+    fun worseRereadDoesNotReplaceBetterReading() = runTest {
+        val db = db(); prepare(db)
+        val p = processor(db, FakeReader(bimLines))
+        p.process("r1")
+        val before = db.receiptLineDao().forReceipt("r1").map { it.lineTotalMinor }
+
+        // Ayni fisin YALNIZCA IKI urun satiri okunan hali: esigi geciyor ama
+        // daha az urun veriyor.
+        val weakerRead = bimLines.filterNot { it.startsWith("TURŞU") || it.startsWith("GOFRET") }
+        val outcome = processor(db, FakeReader(weakerRead)).process("r1", forceRotation = 90)
+
+        assertEquals(ReceiptReadOutcome.KEPT_PREVIOUS, outcome)
+        assertEquals(before, db.receiptLineDao().forReceipt("r1").map { it.lineTotalMinor })
+    }
+
+    /** ESITLIKTE YENI KAZANIYOR: dugmeye basmak hicbir sey yapmamis gibi durmasin. */
+    @Test
+    fun equallyGoodRereadIsAccepted() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        assertEquals(
+            ReceiptReadOutcome.PARSED,
+            processor(db, FakeReader(bimLines)).process("r1", forceRotation = 90),
+        )
+    }
+
     // --- Karar 11 · magaza satiri fisten doguyor ----------------------------
 
     /**

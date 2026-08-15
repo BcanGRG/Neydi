@@ -184,7 +184,20 @@ class ReceiptCheckViewModel(
             val receipt = receiptDao.byId(receiptId)
             // BEKLEYEN fis burada isleniyor: OCR fotograf cekilirken degil,
             // ekran acilinca kosuyor (F4.2'nin "fotograf asla bloklamaz" kurali).
-            if (receipt?.status == ReceiptStatus.PENDING) processor.process(receiptId)
+            //
+            // OKUNAMAMIS FIS DE YENIDEN DENENIYOR (F4.14b) ve bu bir tercih
+            // degil zorunluluk: ayristirici ya da yon puanlayicisi duzeldiginde
+            // eski basarisiz fisler kendiliginden duzelmeli. Aksi halde
+            // kullanicinin tek yolu "baska yonde oku" dugmesiydi - yani
+            // uygulamanin kendi hatasini elle telafi etmesi isteniyordu.
+            //
+            // Satiri OLAN fise dokunulmuyor: yeniden okuma ancak elde hicbir
+            // sey yokken bedava.
+            val failedWithNothing = receipt?.status == ReceiptStatus.FAILED &&
+                receiptLineDao.forReceipt(receiptId).isEmpty()
+            if (receipt?.status == ReceiptStatus.PENDING || failedWithNothing) {
+                processor.process(receiptId)
+            }
             reload()
         }
     }
@@ -464,10 +477,17 @@ class ReceiptCheckViewModel(
             reload(
                 notice = when (outcome) {
                     // ONCEKI OKUMA KORUNDU: kullanici bir sey kaybetmedi ve
-                    // bunu bilmeli, yoksa buton bozuk sanilir.
+                    // bunu bilmeli, yoksa buton bozuk sanilir. Iki ayri sebep
+                    // ayni cumleye ciiyor - "okunamadi" ve "daha kotu okundu" -
+                    // cunku kullanici acisindan sonuc ayni: ekran degismedi ve
+                    // elindeki kayip degil.
                     ReceiptReadOutcome.KEPT_PREVIOUS ->
-                        "$degrees° yönünde okunamadı, önceki okuma korundu."
-                    ReceiptReadOutcome.PARSED -> "$degrees° yönünde okundu."
+                        "$degrees° daha iyisini vermedi, önceki okuma duruyor."
+                    // SATIR SAYISI YAZILIYOR. "Okundu" tek basina hicbir sey
+                    // soylemiyordu: kullanici ekranin degisip degismedigini
+                    // ancak satirlari sayarak anlayabiliyordu.
+                    ReceiptReadOutcome.PARSED ->
+                        "$degrees° yönünde okundu · ${_state.value.rows.size} satır"
                     else -> null
                 },
             )

@@ -93,6 +93,28 @@ class ReceiptProcessor(
         }
 
         val reading = parseReceipt(okuma)
+
+        // IYI OKUMA KOTUSUYLE EZILMIYOR (F4.14b).
+        //
+        // F4.13 "elle yon cevirme iyi bir okumayi ASLA bozmamali" diye soz
+        // vermisti ama korumasi yalnizca BASARISIZ okumaya bakiyordu: yeni
+        // deneme esigi gecerse - daha KOTU olsa bile - eskisinin uzerine
+        // yaziyordu. Cihazda olculdu: on dokuz satirlik iyi bir okuma, dort
+        // kez "baska yonde oku" sonunda SIFIR satira dustu ve fis
+        // "okunamadi"ya gecti. Kullanicinin geri donus yolu yoktu.
+        //
+        // Kiyas AYRISTIRICI SONUCU uzerinden (bkz. ReadingScore): satir sekli
+        // degil, o okumadan kac urun cikacagi.
+        //
+        // ESITLIKTE YENI KAZANIYOR: kullanici bir sey degistirmek icin bastı,
+        // ayni kalitedeki yeni okumayi reddetmek dugmeyi bozuk gosterirdi.
+        if (forceRotation != null && previous.isNotEmpty() &&
+            reading.lines.size < previous.size
+        ) {
+            receiptDao.setStatus(receiptId, previousStatus)
+            return ReceiptReadOutcome.KEPT_PREVIOUS
+        }
+
         // Yeniden isleme: onceki satirlar silinip yeniden yaziliyor. Ustune
         // eklemek ayni fisi iki kez sayardi ve aritmetik kapisi bunu ancak
         // rastgele yakalardi.
