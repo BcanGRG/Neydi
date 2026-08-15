@@ -1,10 +1,10 @@
 # Neydi — Yol Haritası
 
-Tek gerçek kaynak. 11 faz, **91 adım**. Her adım bir PR.
+Tek gerçek kaynak. 11 faz, **92 adım**. Her adım bir PR.
 
 *Sayı bu oturumda mekanik olarak yeniden sayıldı. Eskiden 67 yazıyordu; fark 0.0, 1.3b ve 4.10 gibi numaralandırma şemasının öngörmediği ama meşru adımlardan ve bu oturumda eklenen yeni maddelerden geliyor.*
 
-**İlerleme:** 34 / 91 — *34 kapandı · 4 kod tamam, cihaz doğrulaması bekliyor · 53 açık.* **Sırada Faz 6 (öneri motoru)** — Faz 5 değil; bağımlılıkların bir kısmı ters yönde akıyor. Faz 6'nın ilk adımı **F6.8**, ve ondan önce **tek bir v2→v3 şema bump'ı** (bkz. Şema sürüm planı).
+**İlerleme:** 35 / 92 — *35 kapandı · 4 kod tamam, cihaz doğrulaması bekliyor · 53 açık.* **Şema v3 yapıldı (F2.8)**, yani Faz 5/6 artık veri yazabilir. **Sırada Faz 6 (öneri motoru), ilk adım F6.8** (`isStaple` yazma yolu) — onsuz Ekran 3 hiç açılamaz.
 
 ---
 
@@ -57,7 +57,7 @@ Ekran görüntüsü: `adb exec-out screencap -p > shot.png`
 | 5 | **F2.1 → F2.6** | Room + katalog. Listenin kalıcı olması için gerekli |
 | 6 | **F3.2 → F3.8** | Gerçek Liste ekranı: bölümler, hızlı ekleme, alışveriş modu, boş durumlar |
 | 7 | **Faz 4** ✅ | Fiş yakalama — bitti, uçtan uca cihazda doğrulandı |
-| 8 | **Şema v2 → v3** *(tek bump)* | Faz 5, 6 ve 7'nin dokuz şema değişikliği. **Buradan önce Faz 5/6 veri yazmamalı** — bkz. Şema sürüm planı |
+| 8 | **Şema v2 → v3** *(tek bump)* ✅ **F2.8** | Faz 5, 6 ve 7'nin dokuz şema değişikliği; cihazda gerçek v2 verisiyle doğrulandı. Faz 5/6 artık veri yazabilir |
 | 9 | **F2.7 · F3.9** | Katalog yeniden tohumlanabilir olsun + "Diğer" kategorisi. İkisi birbirine bağlı ve **F0.4 ile F6.x onları bekliyor** |
 | 10 | **Faz 6** (6.8 önce) | Öneri motoru. `isStaple` yazma yolu (**F6.8**) en başta: onsuz Ekran 3 hiç açılamaz |
 | 11 | **Faz 5** | Fiyat hafızası. F0.5 kararı verildi (**fiyat takipçisi**), 5.4/5.5 F0.4'e bağlı ve en sonda |
@@ -145,6 +145,12 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 - [x] **3.7 — Ekle sheet (Ekran 2).** ✅ İki katmanlı: reyon grid'i → reyonun ürün çipleri (yaygınlığa göre, alfabetik değil). Serbest metin kaçış yolu altta — katalog 245 ürün, Türkiye'deki her ürün değil; katalogda olmayanı isteyen kullanıcı tıkanırsa sheet bir duvara dönüşür. **Liste arkada görünür kalıyor** — bu şartı korumak yerleşimin en zor kısmı oldu. **Beş deneme, hepsi cihazda görüldü:** (1) sabit 340dp grid → kaçış butonu çubuğun altında; (2) `weight(1f)` → kısmi açık sheet içeriği **sınırsız** yükseklikle ölçüyor, grid tüm alanı alıyor, buton kayboluyor; (3) `skipPartiallyExpanded` → buton görünüyor ama sheet **ekranı kaplıyor**, "liste arkada kalsın" kuralı bozuluyor; (4) `contentWindowInsets` → sheet içinde `safeDrawing` sıfır dönüyor, etkisiz; (5) dışarıdan geçilen alt boşluk → buton zaten taşmış, altına boşluk eklemek onu yukarı çekmiyor. **Doğrusu ölçümle bulundu:** `uiautomator dump` üçüncü sıranın etiketlerini ve butonu `bounds="[0,0][0,0]"` gösterdi — sıfır yüksekliğe kırpılmışlardı; sheet taşan içeriği kaydırmıyor, **kırpıyor**. Grid bütçesi ekran yüksekliğinin %24'ü, buton `y 1993→2047` ile çubuğun üstünde. **Sheet zemini açıkça veriliyor:** palet `surfaceContainer*` tonal token'larını tanımlamıyor, M3 kendi mor baseline'ına düşüyordu.
 - [~] **3.8 — Sepet tahmini + özet kartı.** Yapı kuruldu, **veri Faz 4/5'ten gelecek.** Tahmin her ürünün **en son** gözlenen fiyatından hesaplanıyor (ortalama değil — zamla birlikte gerçeğin gerisinde kalır). **Dürüst olmak zorunda:** fiyatı bilinmeyen ürünler toplama girmiyor, o yüzden "en az X TL" diyor ve kaçının fiyatını bildiğini yazıyor; hiç fiyat yoksa satır **hiç çizilmiyor** — "0,00 TL" yalan olurdu. Özet kartı tutar bilinmese de anlamlı: "6 ürün alındı, 2 tanesi kaldı". Tutar 36sp Fraunces. `kurusFormatla` Türkçe yazım (ondalık virgül, binlik nokta), 5 test. **`[~]` çünkü hiçbiri gerçek veriyle görülmedi:** `price_observation` boş (Faz 5) ve `Trip.totalMinor` fişten gelecek (Faz 4). Preview'lerde ve testlerde doğru, cihazda henüz gösterecek veri yok.
 
+- [x] **2.8 — Şema v3: Faz 5/6/7'nin dokuz değişikliği tek bump'ta.** ✅ *Cihazda gerçek v2 verisi üzerine kuruldu, `pm clear` yapılmadan; migration sorunsuz, verinin tamamı sağ.* `version = 3`, `AutoMigration(2, 3)`, `3.json` dışa aktarıldı. Üretilen migration **20 `ALTER` + 2 `CREATE TABLE` + 1 `UNIQUE INDEX`** — boş değil ve bu ayrıca kontrol edildi.
+  **Neden tek bump:** dokuz değişiklik üç faza dağılsa **dokuz korumasız bump** olurdu ve her biri F4.1'in sessiz kazasını tekrarlayabilirdi. **Neden şimdi:** `price_observation`, `suggestion_event` ve `pending_op` bugün **boş** — tablo boşken şemasındaki hata bedava, ilk satırdan sonra onu yeniden şekillendirecek `execSQL` yok.
+  **Nöbetçi bump'tan ÖNCE yazıldı** (`SchemaBaselineTest`, projenin ilk `androidHostTest` dosyası) ve bump'tan sonra hâlâ yeşil kaldı — temellerin dokunulmadığı iddia edilmedi, **ölçüldü**.
+  **İki enum yeniden adlandırma penceresi de bu bump'ta kapandı:** `OpType` ve `SuggestionOutcome` girdileri Türkçeydi ve yayınlanmış şemada **TEXT** olarak duruyorlardı; iki tablo da boş olduğu için yeniden adlandırma bedavaydı. İlk satır yazıldıktan sonra bir girdiyi değiştirmek mevcut satırları yetim bırakırdı — Room'un enum dönüştürücüsü bilinmeyen adı **okurken atar**, yani uygulama kendi geçmişini okurken çökerdi.
+  **Tam liste, gerekçeleri ve kural** → **Şema sürüm planı** bölümü.
+
 - [ ] **3.9 — "Diğer" kategorisi** *(F2.7'ye bağlı; birlikte yapılmalı)*. `DEFAULT_CATEGORY = "temel-gida"` — katalogda eşleşmeyen **her** serbest ürün ve **her** fiş düzeltmesi oraya düşüyor. Tasarımın reyon sırası sonda bir **`Diğer`** ile bitiyor; tohumlanan 12 kategoride öyle bir şey **yok**.
   **Neden sessizce bozuyor:** `temel-gida` 245 tohumun **40**'ını zaten tutuyor (en kalabalık ikinci). Katalog *"Türkiye'deki her ürün değil"* ve araştırma 6 ayda ~100 farklı ürün öngörüyor, çoğu **kullanıcının yazdığı**. Hepsi + fiş düzeltmelerinden doğan her ürün **market yürüyüşünün ortasındaki** 6. sıraya dosyalanıyor. Bölümlerin var olma sebebi tek: alfabetik sıra *"insanı markette ileri geri yürütür"*. 6. sırada alakasız ürün biriktiren bir bölüm **tam olarak o sorunu geri getiriyor** — ve hata vermeden, test kırmadan, görünür bir kırılma anı olmadan.
   **İki iş, biri değil:** (1) `Diğer` kategorisi sıra 12'de + `DEFAULT_CATEGORY` onu göstersin; (2) **ürünün kategorisini değiştirme yolu** — bugün hiçbir yerde yok (`ProductDao.update` var, `categoryId`'yi değiştiren çağıran yok). Doğal yeri Ekran 5, tasarımın iki anahtarı koyduğu yerin yanı.
@@ -211,12 +217,12 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Kabul ölçütü (cihazda görülebilir, UI değişikliği gerektirmeden):** `EstimatedBasket` satırı ilk kez çizilir. Bugün `pricedCount == 0` olduğu için o satır **hiç** çizilmiyor (`BasketAndSummary.kt:47` erken dönüyor: *"Hiç fiyat bilinmiyorsa satır HİÇ ÇİZİLMEZ; 0,00 TL yazmak yalan olurdu"*). İlk `PriceObservation` satırı yazıldığı an görünür — F3.8'in `[~]` işareti tam bu yüzden duruyor.
   **Karar gerekiyor — senkron:** `PriceObservation` `householdId` + `deletedAt` taşıyor, yani Conventions kuralı 2'ye göre **senkron edilecek kullanıcı verisi**. `PendingOp` outbox entity'si var (`Sync.kt:17`) ama **DAO'su yok ve hiçbir yazma kuyruk kaydı üretmiyor**. Ya yalnızca yerel yazıp Faz 7'ye bir geri-doldurma borcu bırakılacak, ya da "yerele yaz + kuyruğa ekle" deseni **burada** kurulacak.
 
-- [ ] **5.6 — İki aritmetik kapısını tek yere indir** *(cihazsız, F5.1'den ÖNCE)*. **Bugün iki ayrı hesap var ve indirimli fişte farklı karar veriyorlar:** `arithmeticHolds` (`ReceiptParser.kt`) indirimleri **çıkarıyor**, `ReceiptCheckViewModel.reload` ise ekrandaki çipi `lines.sumOf { it.lineTotalMinor }` ile **hepsi pozitif** toplayarak yeniden hesaplıyor. Yani işlemcinin veritabanına yazdığı durum (VERIFIED/MISMATCHED) ile kullanıcının ekranda gördüğü çip çelişebilir.
+- [ ] **5.6 — İki aritmetik kapısını tek yere indir** *(cihazsız, F5.1'den ÖNCE)*. **Kolon hazır:** `ReceiptLine.isDiscount` v3 ile geldi; kalan iş ayrıştırıcının bayrağını oraya yazmak ve ekran kapısını `arithmeticHolds`'a bağlamak. **Bugün iki ayrı hesap var ve indirimli fişte farklı karar veriyorlar:** `arithmeticHolds` (`ReceiptParser.kt`) indirimleri **çıkarıyor**, `ReceiptCheckViewModel.reload` ise ekrandaki çipi `lines.sumOf { it.lineTotalMinor }` ile **hepsi pozitif** toplayarak yeniden hesaplıyor. Yani işlemcinin veritabanına yazdığı durum (VERIFIED/MISMATCHED) ile kullanıcının ekranda gördüğü çip çelişebilir.
   **Kök sebep bir şema boşluğu:** `ParsedLine.discount` bayrağı (`ReceiptParser.kt:42`) kalıcılaştırmada **atılıyor** — `ReceiptLine`'da `discount` kolonu yok. Ayrıştırıcı indirim satırını tutarı **pozitife çevirerek** üretiyor (*"İşareti bayrak taşıyor, sayı değil"*) ve adı `İndirim` koyuyor; yazıldıktan sonra onu indirim yapan hiçbir şey kalmıyor.
   **F5.1 için neden bloklayıcı:** naif bir "her fiş satırına bir gözlem" yazıcısı **indirimi ürün fiyatı olarak kaydeder**. Bugün bunu tesadüfen `needsReview` süzgeci engelliyor (indirim satırı bir ürüne eşleşmiyor) — ama kullanıcı Fiş Kontrol'de o satırı bir ürüne bağlarsa engel kalkıyor.
   **İş:** `ReceiptLine`'a `discount: Boolean` kolonu (şema **2 → 3**, bkz. **Şema sürüm planı**), ekran kapısını `arithmeticHolds`'ı çağıracak biçimde birleştir, ve **indirim satırı içeren bir kurgu fişle test yaz** — gerçek fişlerimizin hiçbirinde indirim satırı yok, o yüzden bu tek yer sentetik veriyle test edilmek zorunda ve gerekçesi yazılmalı.
 
-- [ ] **5.8 — Fişin bastığı tarihi ayrıştır** *(cihazsız, F5.1'den ÖNCE)*. **Bugün hiç okunmuyor.** `ReceiptReading` (`ReceiptParser.kt:46`) yalnızca `storeName` / `lines` / `totalMinor` / `rawLines` taşıyor; `Receipt` entity'sinde de tarih kolonu yok. Oysa tarih **OCR çıktısında duruyor**: `13.08.2026 18:49 Sira No : 218` — test kurgusunun içinde, kullanılmayan bir satır olarak.
+- [ ] **5.8 — Fişin bastığı tarihi ayrıştır** *(cihazsız, F5.1'den ÖNCE)*. **Kolon hazır:** `Receipt.receiptDate` v3 ile geldi; kalan iş regex + `ReceiptReading.receiptDate` + `observedAt` bağlantısı. **Bugün hiç okunmuyor.** `ReceiptReading` (`ReceiptParser.kt:46`) yalnızca `storeName` / `lines` / `totalMinor` / `rawLines` taşıyor; `Receipt` entity'sinde de tarih kolonu yok. Oysa tarih **OCR çıktısında duruyor**: `13.08.2026 18:49 Sira No : 218` — test kurgusunun içinde, kullanılmayan bir satır olarak.
   **Neden F5.1'den önce:** `observedAt` bunu bekliyor. Onsuz fiyat geçmişi **fotoğrafın çekildiği ana** damgalanır, alışverişin yapıldığı ana değil. Aynı alışverişin fişi bir hafta sonra çekilirse trend bir hafta kayar; kullanıcı bunu asla göremez. Araştırma tarihi "neredeyse kusursuz okunan" alanlar arasında sayıyordu ve `score.ts:189` onu skorluyor — yani ölçüm koşumu, uygulamanın hiç çıkarmadığı bir alanı puanlıyor.
   **İş:** `Regex` ile `gg.aa.yyyy [ss:dd]`, `ReceiptReading.receiptDate`, `Receipt.receiptDate` kolonu (şema **2 → 3**, F5.6 ile aynı bump'ta), ve `observedAt = receiptDate ?: capturedAt`. **Gerçek iki fişin kurgusuyla test** — ikisi de tarih taşıyor, yani bu sentetik veri gerektirmeyen nadir maddelerden biri.
 
@@ -290,10 +296,10 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Eksik sorgu:** **hiçbir sorgu gezi-ötesi okuyamıyor** — `trip_line` sorgularının **dördü de** tek `tripId` kapsamında. Gereken şekil: `SELECT tl.productId, t.completedAt FROM trip_line tl JOIN trip t ON t.id = tl.tripId WHERE t.householdId = :hh AND t.completedAt IS NOT NULL AND tl.checked = 1 ...`. Index desteği var; `checked` index'siz ama bu ölçekte (80 ürün × 60 gezi) sorun değil. `observeHistory`'nin varsayılan `LIMIT 50`'si naif yeniden kullanımda geçmişi kırpar — dikkat.
   **⚠️ KARAR GEREKİYOR, fazın en önemli kararı:** **fişten gelen satın almalar `trip_line`'a hiç ulaşmıyor.** Fiş Kontrol bir satırı ürüne bağladığında yalnızca `receipt_line.matchedProductId` yazılıyor; `TripLine` veya `PriceObservation` yazılmıyor. Yani **listeye yazılmadan alınan ekmek** bir `receipt_line` üretir, `trip_line` üretmez. `ProductStats`'i yalnızca `trip_line`'dan kurmak, tam olarak kullanıcının **unuttuğu** ürünleri sayamaz — yani F4'ün var olma sebebini (*"fiş, listeye yazılmasa bile ekmeği içeriyor"*) es geçer. Üç seçenek: (a) yalnızca `trip_line`; (b) `trip_line` ∪ eşleşmiş `receipt_line` (fiş → gezi → `completedAt` üzerinden); (c) F5.1 önce `trip_line`'a geri-doldurma yapsın.
 
-- [ ] **6.2 — Skor formülü.** Sıklık + gecikmişlik + geçen sefer unutuldu mu.
-  **⚠️ `muAdjust` kolonu ŞEMADA YOK.** Roadmap onu *"ayrı kolonda tutulur ki denetlenebilir ve sıfırlanabilir olsun"* diye şart koşuyor; entity'de ve dışa aktarılmış şemada (`product_stats` createSql) böyle bir alan yok. Eklemek **şema 2 → 3** demek (bkz. **Şema sürüm planı**). Nullable ya da `defaultValue`'lu eklenirse migration tamamen otomatik kalır; `NOT NULL` + varsayılansız olursa **kalmaz**.
+- [ ] **6.2 — Skor formülü.** Sıklık + gecikmişlik + geçen sefer unutuldu mu. **İki kolon hazır:** `ProductStats.muAdjust` ve `TripLine.takeOutcome` (`TAKEN/NOT_NEEDED/FORGOTTEN`) v3 ile geldi.
+  **~~`muAdjust` kolonu ŞEMADA YOK~~ → v3'te eklendi.** Roadmap onu *"ayrı kolonda tutulur ki denetlenebilir ve sıfırlanabilir olsun"* diye şart koşuyor; entity'de ve dışa aktarılmış şemada (`product_stats` createSql) böyle bir alan yok. `defaultValue = "0"` ile eklendi, yani migration tamamen otomatik kaldı.
   **⚠️ Soğuk başlangıç bağı kopuk:** `Product.seedId` alanı var ve **hiç doldurulmuyor** — `resolveProduct` eşleşen `CatalogSeed`'i buluyor, adını, kategorisini ve birimini kullanıyor, ama `seed.id`'yi yere bırakıyor. Tohum id'leri deterministik (`seed-<yayginlik>`), yani `seedId` dolu olsaydı `commonalityRank` doğrudan string'den okunabilirdi. Şimdi gözlem sayısı az olan bir ürün için "bu katalogda 7. sırada" bilgisini geri almak `matchKey`'i yeniden türetip katalogu yeniden sorgulamayı gerektiriyor. Yazmayı düzeltmek tek satır ama **mevcut satırları geri doldurmuyor**.
-  **⚠️ "Geçen sefer unuttun" sinyali kayıplı, ve tasarım üç sonuç istiyor:** kapanışta `markAllTaken` işaretlenmemiş **her** satırı alındı yazdığı için, normal bir kapanıştan sonra kapalı gezide **hiç** işaretsiz satır kalmıyor. `checked = 0`'ın hayatta kalmasının tek yolu kullanıcının Bitir ekranından geri alması. Yani kullanılabilir sinyal: *kapalı gezi + `checked = 0`* = **kullanıcı açıkça "bunu almadım" dedi**. Ama tasarım satır başına **üç düğme** istiyor — `[Aldım] [Gerekmedi] [Unuttum]` — ve şemada tek bir `checked: Boolean` var, gerekçe kolonu yok. *"Gerekmedi"* öneriyi **bastırmalı**, *"unuttum"* **yükseltmeli**; ikisi aynı puanı alamaz. **Karar:** `trip_line`'a nullable bir sonuç kolonu mu, `SuggestionEvent` olarak mı, yoksa çakışma kabul mü?
+  **⚠️ "Geçen sefer unuttun" sinyali kayıplı, ve tasarım üç sonuç istiyor:** kapanışta `markAllTaken` işaretlenmemiş **her** satırı alındı yazdığı için, normal bir kapanıştan sonra kapalı gezide **hiç** işaretsiz satır kalmıyor. `checked = 0`'ın hayatta kalmasının tek yolu kullanıcının Bitir ekranından geri alması. Yani kullanılabilir sinyal: *kapalı gezi + `checked = 0`* = **kullanıcı açıkça "bunu almadım" dedi**. Ama tasarım satır başına **üç düğme** istiyor — `[Aldım] [Gerekmedi] [Unuttum]` — ve şemada tek bir `checked: Boolean` var, gerekçe kolonu yok. *"Gerekmedi"* öneriyi **bastırmalı**, *"unuttum"* **yükseltmeli**; ikisi aynı puanı alamaz. **Karar verildi ve kolon hazır:** `TripLine.takeOutcome` nullable enum (`TAKEN/NOT_NEEDED/FORGOTTEN`). Nullable olmak **zorundaydı** — kolondan önce kapanmış geziler için değer gerçekten bilinmiyor ve geri-doldurma imkânsız. Kalan iş üç düğmeyi Bitir ekranına koymak (**F4.12**) ve skorda ayrı ağırlıklamak.
 
 - [ ] **6.3 — Öneri şeridi.** En fazla **5 çip**, **her çip düz Türkçe gerekçe taşır** ("Yumurta · 14 gün oldu"). Gerekçesiz çip reklam gibi okunur. **Animasyon yok, badge yok, nokta yok.**
   **Bileşen hazır ve sözleşmeyi zaten taşıyor:** `SuggestionChip(label, reason)` KDoc'unda *"GEREKÇE ÇİPİN İÇİNDE … Gerekçesiz bir çip reklam gibi okunur"* yazıyor, 40dp yükseklikte, `Modifier.pressable` üzerinde.
@@ -321,7 +327,7 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 - [ ] **6.5 — Sabit terfisi + bastırma.**
   **⚠️ Şemada bastırma/engelleme kavramı HİÇ YOK.** Engelleme tablosu yok, hiçbir entity'de "önermeyi bırak" kolonu yok.
   **Tek ilgili yapı:** `SuggestionEvent` + `SuggestionOutcome` (`GOSTERILDI/EKLENDI/REDDEDILDI/YOKSAYILDI`). KDoc'u gerekçeyi tam söylüyor: *"Bu tablo olmadan öneri motoru KENDİ İSABETİNİ ÖLÇEMEZ. Sürekli reddedilen bir öneriyi susturmanın tek yolu reddedildiğini kaydetmiş olmak."* `reason` kolonu kullanıcıya **gösterilen** gerekçeyi saklıyor — F6.3'ün ihtiyaç duyduğu denetim izi.
-  **Eksikler:** (1) **DAO yok**, accessor yok, Koin binding yok — tablo boş ve erişilemez. (2) **Index yok**: üç-vuruş kuralı `productId` başına `COUNT(*) WHERE outcome IN (REDDEDILDI, YOKSAYILDI)` istiyor; bu, her gösterimle büyüyen append-only bir günlükte **tam tarama**. En az `(householdId, productId, outcome)` gerekiyor. (3) **Geri alınabilir engelleme kaydı yok**: tasarım kalıcı engelleme listesinin **Ayarlar'da görünür** ve her satırın **tek dokunuşla geri alınabilir** olmasını şart koşuyor (*"kara delik olmamalı"*). Append-only bir günlükte temiz bir "engeli kaldır" yazması yok — karşı-olay eklemek ve her okumayı onu katlamayı öğretmek gerekir. **Karar:** olaylardan türetme mi, ayrı `suggestion_block` tablosu mu (`productId, blockedAt, source=AUTO|MANUAL, unblockedAt`)?
+  **Eksikler:** (1) **DAO yok**, accessor yok, Koin binding yok — tablo boş ve erişilemez. (2) **Index yok**: üç-vuruş kuralı `productId` başına `COUNT(*) WHERE outcome IN (REDDEDILDI, YOKSAYILDI)` istiyor; bu, her gösterimle büyüyen append-only bir günlükte **tam tarama**. En az `(householdId, productId, outcome)` gerekiyor. (3) **Geri alınabilir engelleme kaydı yok**: tasarım kalıcı engelleme listesinin **Ayarlar'da görünür** ve her satırın **tek dokunuşla geri alınabilir** olmasını şart koşuyor (*"kara delik olmamalı"*). Append-only bir günlükte temiz bir "engeli kaldır" yazması yok — karşı-olay eklemek ve her okumayı onu katlamayı öğretmek gerekir. **Karar verildi ve tablo hazır:** ayrı `suggestion_block` tablosu (`productId`, `source`, `blockedAt`, `unblockedAt`, `UNIQUE(householdId, productId)`). Append-only olay günlüğünde temiz bir "engeli kaldır" yazması yoktu ve tasarım listenin görünür + tek dokunuşla geri alınabilir olmasını şart koşuyor. `SuggestionEvent`'e de tombstone eklendi.
   **⚠️ Faz 7'den ÖNCE çözülmesi gereken sözleşme çelişkisi:** `SuggestionEvent` `householdId` taşıyor — Conventions kuralı 2'ye göre senkron edilen kullanıcı verisi — ama `deletedAt` **taşımıyor** ve `ProductStats` gibi yazılı bir muafiyeti de yok. Üstelik `Daos.kt` başlığı *"`deletedAt IS NULL` HER SORGUDA"* diye katı bir kural koyuyor ve bu tabloda o süzgeç **yazılamaz**. Ya yerel-yalnız append-only günlük olduğunu (ProductStats gibi) **yazacak**, ya da tombstone alacak. Sonradan kolon eklemek bir şema bump'ı daha demek.
   **Giriş noktaları yok:** tasarım *"Bunu önerme"* anahtarını **Ekran 5**'e koyuyor (F5.3, henüz yok) ve oraya giden tek kanca `onPriceClick` — o da bağlanmamış.
   **Üç-vuruş sessiz otomatik bastırma** hiç "önerme" demeyen kullanıcı için kendi kendini iyileştirir; bu, listenin görünür olmasının **yerine** geçmez, ikisi birlikte gerekir.
@@ -469,53 +475,64 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 
 - [ ] **10.4 — Araştırma güncellemesi** *(cihazsız)*. Faz 0 sonucunu `docs/03-arastirma-bulgulari.md`'ye işle; çürütülen varsayımları güncelle. **Bu adım koştuğu ana kadar o doküman aktif olarak yanlış bilgi veriyor** — en az on bir iddiası çürütüldü ve doküman hâlâ ilk hallerini yazıyor (görsel LLM'in birincil mimari olduğu, çevrimdışı OCR'ın kapsam dışı olduğu, TOPLAM'ın neredeyse kusursuz okunduğu, mağaza adının neredeyse kusursuz okunduğu, fiş başına ~20 kalem, tek native dikiş, barkod yolunun çalıştığı…). Tam liste bu dosyanın **Öğrenilenler** bölümünde.
 
-## Şema sürüm planı — tek bir v2 → v3 bump
+## Şema sürüm planı — v2 → v3 ✅ **yapıldı ve cihazda doğrulandı**
 
-> **Bu bölüm bir adım değil, kalan üç fazı bağlayan bir kural.** Faz 5, 6 ve 7'nin **dokuz ayrı** şema değişikliğine ihtiyacı var. Dokuzunu tek bir bump'ta toplamak bir tercih değil, ölçülmüş bir zorunluluk.
+> **Durum: bump tamamlandı.** `version = 3`, `AutoMigration(2, 3)`, dışa aktarılmış `3.json` (identityHash `9a25da10097f10bb5f49f777e7a8c9ae`). Aşağıdaki plan kayıt için duruyor; **kural kısmı hâlâ geçerli ve gelecek her bump'ta uygulanacak.**
 
-**Neden toplamak zorunlu:** her bump bir **elle cihaz dansı** demek (v2 kur → veri ekle → v3 kur, `pm clear` yapmadan) ve **F4.1'in sessiz kazası her seferinde tekrarlanabilir**. O kazada, sürüm hata ayıklamak için geçici olarak 1'e çekilince Room **`1.json` temelini yeni kolonlarla üzerine yazdı**, diff boş çıktı ve **hiçbir şey yapmayan bir migration** üretildi — derleme ve testler yeşil kaldı. Dokuz değişiklik üç faza dağılırsa **dokuz korumasız bump** olur.
+### Ne girdi
 
-**Neden erken olmak zorunlu:** üç tablo bugün **boş** ve Faz 5/6 sırasında dolmaya başlıyor — `price_observation`, `suggestion_event`, `pending_op`. **Tablo boşken şemasındaki hata bedavadır.** F5.1 kullanıcının telefonunda bir kez koştuktan sonra `price_observation` hanenin **tek fiyat geçmişini** tutuyor — uygulamanın ikinci varlık sebebi — ve onu yeniden şekillendirecek `execSQL` **yok**.
-
-### Kural: her yeni kolon nullable ya da varsayılanlı olmak ZORUNDA
-
-`AutoMigration(1,2)`'nin tamamen otomatik olmasının sebebi tek: eklenen tek NOT NULL kolon bir varsayılan taşıyor (`Trip.status @ColumnInfo(defaultValue = "PLANNING")`), diğeri (`ownerMemberId`) nullable.
-
-`connection.execSQL` commonMain'de **yok** (androidx.sqlite bilerek dışarıda bıraktı: web varyantı suspend, nonWeb değil). Bunun **iki yarısı var ve tehlikeli olan ikinci yarı şimdiye kadar yazılmamıştı:**
-
-1. Yasak olan **yalnızca VERİ GERİ-DOLDURMA**. Anotasyonla yapılan yapısal değişiklikler — `@DeleteTable`, `@DeleteColumn`, `@RenameTable`, `@RenameColumn` — `execSQL` istemiyor ve **kullanılabilir**. Yani silmek/yeniden adlandırmak serbest; **mevcut satırlar için bir değer hesaplamak** değil.
-2. Dolayısıyla **sert kural:** yeni kolon ya nullable olacak ya `@ColumnInfo(defaultValue = ...)` taşıyacak. Anlamlı bir sabit varsayılanı olmayan bir NOT NULL kolon **hiç eklenemez** — ya nullable bir ara kolon + çalışma zamanında tembel doldurma, ya tabloyu yıkıp yeniden kurmak gerekir.
-
-**Bu kural üç geleceği hemen belirliyor:** F7.4'ün `updatedAt`'i `createdAt`'e **varsayılan olamaz** (ifade varsayılanı yok, geri-doldurma yok) → `Long?` olacak ve her okuyucu null'ı `createdAt` sayacak. F6.2'nin `muAdjust`'ı zararsız (`defaultValue = "0"`) çünkü `product_stats` saf türetilmiş cache ve bugün sıfır satır — `@DeleteTable` + yeniden kurmak da yasal. F6.2'nin "unuttum / gerekmedi" kolonu geçmiş geziler için **gerçekten bilinmiyor** → nullable olacak ve kolondan önce kapanmış her gezi **sonsuza kadar gerekçesiz** kalacak.
-
-### v3 bump'ına girecekler
+Üretilen migration **20 `ALTER TABLE` + 2 `CREATE TABLE` + 1 `CREATE UNIQUE INDEX`** — boş değil, ve bu ayrıca kontrol edildi (F4.1'in belirtisi tam olarak *hiçbir şey yapmayan* bir migration'dı).
 
 | Ne | Kime ait | Biçim |
 |---|---|---|
-| `ReceiptLine.unit` (fiyat tabanı) | F5.1 | `defaultValue = "adet"` |
+| `ReceiptLine.unit` | F5.1 | `String?` — fiyatın hangi birim başına olduğunu belirleyen şey |
 | `ReceiptLine.isDiscount` | F5.6 | `Boolean, defaultValue = "0"` |
 | `Receipt.receiptDate` | F5.8 | `Long?` |
-| `price_observation.source` ya da ayrı `external_price` tablosu | F5.4 | `RECEIPT/MANUAL/CATALOG` — ayrı tablo daha iyi oturuyor (tazelik damgası gerekiyor) |
-| `product_stats.muAdjust` | F6.2 | `defaultValue = "0"` |
-| `trip_line` "neden alınmadı" | F6.2 | nullable enum |
-| Bastırma/engelleme tablosu ya da `product.dontSuggest` | F6.5 | yeni tablo |
-| `app_settings`: kurulum bayrağı + tempo + gizlilik anahtarları | F6.6/F6.7 | hane başına tek satır |
-| `Household.joinCode`, `Member.email` | F6.7/F7.2 | nullable |
+| `PriceObservation.priceUnit` | F5.1 | `String?` |
+| `ProductStats.muAdjust` | F6.2 | `Double, defaultValue = "0"` |
+| `TripLine.takeOutcome` | F6.2 / F4.12 | `TakeOutcome?` = `TAKEN / NOT_NEEDED / FORGOTTEN` |
+| `suggestion_block` tablosu | F6.5 | `productId` + `source` (`AUTO/MANUAL`) + `blockedAt` + `unblockedAt?`, `UNIQUE(householdId, productId)` |
+| `app_settings` tablosu | F6.6 / F6.7 | hane başına tek satır: `setupCompletedAt`, `tempoDays`, `syncPhotos` |
+| `Household.joinCode`, `Member.email` | F6.7 / F7.2 | `String?` |
 | `updatedAt` — **senkron edilen 11 tablonun hepsinde** | F7.4 | `Long?` |
+| `SuggestionEvent.deletedAt` | F6.5 | `Long?` — tabloda tombstone **yoktu** ve yazılı muafiyeti de yoktu |
+| Enum girdileri Türkçe→İngilizce | — | `OpType` → `INSERT/UPDATE/DELETE`; `SuggestionOutcome` → `SHOWN/ADDED/REJECTED/IGNORED` |
 
-**Tek bir `app_settings` tablosu** (hane başına bir satır) F6.5'in engelleme görünürlüğüne, F6.6'nın kurulum bayrağı + tempo'suna ve F6.7'nin gizlilik anahtarlarına birlikte hizmet ediyor — üç bump yerine bir bump için en güçlü argüman bu.
+### Ne bilerek GİRMEDİ
 
-### Aynı bump'ta kapanması gereken pencere: Türkçe enum girdileri
+**`external_price` tablosu (F5.4).** Şeklini marketfiyati'nın gerçek yanıtı belirliyor ve o endpoint **hiç çağrılmadı**. Şeklini tahmin ettiğim bir tabloyu boşken eklemek, sonradan bir bump'tan **daha kötü**: yanlış şekil de boşken bedava değil, çünkü F5.4 onu doldurduğunda düzeltmek yine bump gerektirir. Bu yüzden F5.4 kendi bump'ını taşıyacak ve o zamana kadar API'nin dönüşü bilinecek. Sınır şu: **şekli bugün var olan kod ya da tasarım spec'i belirliyorsa girdi, keşfedilmemiş bir dış API belirliyorsa girmedi.**
 
-F4 yeniden adlandırma kaydı enum girdilerini yeniden adlandırmanın *"yalnızca iki koşul önce doğrulandığı için güvenli"* olduğunu söylüyordu: şema **sürüm 1**'de ve o kolonu **hiçbir şey yazmıyor**. **İki enum için o koşulların ikisi de artık geçersiz ve kimse fark etmedi:** `OpType { EKLE, GUNCELLE, SIL }` ve `SuggestionOutcome { GOSTERILDI, EKLENDI, REDDEDILDI, YOKSAYILDI }` — ikisi de yayınlanmış v2 şemasında **TEXT** olarak duruyor.
+### Kural (değişmedi, her bump'ta geçerli): yeni kolon nullable ya da varsayılanlı
 
-İki tablo da şu an **boş** (DAO yok, yazıcı yok), yeniden adlandırma **hâlâ bedava**. F6.3/F6.5 ilk `SuggestionEvent`'i ya da F7.5 ilk `PendingOp`'u yazdığı an bir girdiyi yeniden adlandırmak mevcut satırları **sessizce yetim** bırakır — Room'un enum dönüştürücüsü bilinmeyen adı **okurken atar**, yani uygulama kendi geçmişini okurken çöker. **Şimdi iki düzenleme, sonra geri-doldurulamayan bir migration + veri kaybı kararı.** (`EmptyKind { ILK_GUN, DONGU_ORTASI }` yalnızca UI'da, hiç kalıcılaşmıyor — her zaman güvenli.)
+`connection.execSQL` commonMain'de **yok** (androidx.sqlite bilerek dışarıda bıraktı: web varyantı suspend, nonWeb değil). Bunun **iki yarısı var:**
 
-### Bu bump'ı korumak için gereken şey henüz yok
+1. Yasak olan **yalnızca VERİ GERİ-DOLDURMA**. Anotasyonla yapısal değişiklikler — `@DeleteTable`, `@DeleteColumn`, `@RenameTable`, `@RenameColumn` — `execSQL` istemiyor ve **kullanılabilir**.
+2. Dolayısıyla **sert kural:** yeni kolon ya nullable olacak ya `@ColumnInfo(defaultValue = ...)` taşıyacak. Bu bump'ta eklenen iki NOT NULL kolonun (`isDiscount`, `muAdjust`) ikisi de varsayılan taşıyor; üretilen SQL'de `NOT NULL DEFAULT 0` olarak göründüğü doğrulandı. Anlamlı bir sabit varsayılanı olmayan bir NOT NULL kolon **hiç eklenemez**.
 
-**Migration'ı regresyon testine sokmanın hiçbir yolu yok**, üçü de doğrulandı: (1) katalogda `room3-testing` yok, yani `MigrationTestHelper` yok; (2) her test `Room.inMemoryDatabaseBuilder` kullanıyor ve o **daima güncel sürümde** kurup hiçbir migration yolunu koşmuyor; (3) **CI yok** — `.github` dizini yok, tek otomasyon sürüm kontrolüne girmeyen graphify hook'ları.
+**Bu kuralın belirlediği bir gelecek:** F7.4'ün `updatedAt`'i `createdAt`'e **varsayılan olamazdı** (ifade varsayılanı yok), o yüzden `Long?` girdi ve **her okuyucu null'ı `createdAt` saymak zorunda**. Bunu Conventions'a madde 7 olarak yazmak ve her DAO UPDATE'inin `updatedAt` yazmasını sağlamak **F7.4'ün işi** — kolon hazır, yazma yolu değil.
 
-**Somut nöbetçi (F10.5'in "regresyon nöbetçisi" ile aynı sınıf):** yayınlanmış her şema JSON'unun `identityHash`'ini bir teste bağla. Bugünkü değerler — `1.json`: `79a4b5c5f6f322a4419646c47e027adb`, 16 entity; `2.json`: `a80e7052abd5ae6f2761d37beb58041a`, 16 entity. İkisinden biri değişirse test kırılır. F4.1'in kazasını **sessiz ve yıkıcı** olmaktan **gürültülü** olmaya çevirir; bugün onu hiçbir şey fark etmez. → **F10.15**
+### Cihazda doğrulama — F4.1'i yakalayan sınavın aynısı
+
+**Gerçek v2 verisi olan telefona v3 kuruldu, `pm clear` YAPILMADAN.** Sonuç:
+
+- `PRAGMA user_version = 3`
+- **19 tablo** (18 entity + Room'un `room_master_table`'ı); iki yeni tablo da yerinde
+- Beklenen **21 yeni kolonun 21'i** de var, eksik yok
+- **Migration öncesi verinin tamamı sağ:** 245 katalog tohumu, 12 kategori, 7 ürün, 4 gezi, 6 gezi satırı, 4 fiş, 6 fiş satırı — ve **1 `ProductAlias`, yani F4.7'nin öğrendiği düzeltme migration'dan sağ çıktı**
+- Yeni nullable kolonlar NULL, yeni NOT NULL kolonlar varsayılanında; okunmuş File fişi hâlâ 484,58 toplamını taşıyor
+- Çökme yok, `Migration didn't properly handle` yok
+
+*Not: doğrulama ekran görüntüsüyle değil **veritabanının kendisi çekilip okunarak** yapıldı — şema sürümü, her kolon ve her satır sayısı doğrudan sorgulandı. Ekran görüntüsünden güçlü kanıt.*
+
+### Ve artık bir nöbetçisi var → **F10.15 ✅**
+
+`SchemaBaselineTest` (`androidHostTest` — projenin ilk androidHostTest dosyası, bkz. F10.13) yayınlanmış her şema JSON'unun `identityHash`'ini **elle yazılmış** değerlere karşı doğruluyor: 1.json, 2.json ve 3.json. Üç test: temeller değişmemiş · her yayınlanmış dosya var · diskteki en yüksek şema takip ediliyor.
+
+**Neden elle yazılmış hash:** dosyayı kendisiyle karşılaştırmak hiçbir şey kanıtlamaz. Bu değerler **ikinci bir gerçek kaynağı** — biri değişirse ikisi ayrışır ve test bağırır. F4.1'in kazasını *sessiz ve yıkıcı* olmaktan *gürültülü* olmaya çeviren şey bu; o gün hiçbir şey fark etmemişti.
+
+**Bump sırası da bunun için seçildi:** nöbetçi **bump'tan önce** yazıldı ve 1/2 ile yeşil olduğu görüldü; bump'tan sonra **hâlâ yeşil** kaldı — yani temellerin dokunulmadığı iddia edilmedi, **ölçüldü**. (Ayrıca `git status` yalnızca `3.json`'u yeni gösterdi, 1 ve 2'de diff yok.)
+
+**Yeni sürüm eklerken:** yeni `<n>.json` üretildikten sonra hash'i teste eklenir. **Eski satırlar asla güncellenmez** — güncellemek nöbetçiyi anlamsız kılar.
 
 ---
 

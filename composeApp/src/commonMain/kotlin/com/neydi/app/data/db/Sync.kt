@@ -27,7 +27,14 @@ data class PendingOp(
     val lastError: String? = null,
 )
 
-enum class OpType { EKLE, GUNCELLE, SIL }
+/**
+ * Enum girdileri TEXT olarak saklaniyor, yani bu adlar **sema**.
+ *
+ * Turkce yazilmislardi (`EKLE/GUNCELLE/SIL`) ve yayinlanmis v2 semasinda oyle
+ * duruyorlardi. Yeniden adlandirma yalnizca `pending_op` bos oldugu icin bedava
+ * oldu - bkz. `SuggestionOutcome`'daki ayni not.
+ */
+enum class OpType { INSERT, UPDATE, DELETE }
 
 /**
  * Senkron imleci. Hane basina tek satir.

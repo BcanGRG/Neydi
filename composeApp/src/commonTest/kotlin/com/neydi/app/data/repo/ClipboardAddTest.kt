@@ -54,7 +54,7 @@ class ClipboardAddTest {
     @Test
     fun whatsappListIsAdded() = runTest {
         val db = db()
-        db.householdDao().upsert(Household(home, "Bizim ev", 0))
+        db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home)
 
@@ -83,7 +83,7 @@ class ClipboardAddTest {
     @Test
     fun repeatedLineIncrementsQuantity() = runTest {
         val db = db()
-        db.householdDao().upsert(Household(home, "Bizim ev", 0))
+        db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home)
 
@@ -99,7 +99,7 @@ class ClipboardAddTest {
     @Test
     fun caseDifferenceIsOneProduct() = runTest {
         val db = db()
-        db.householdDao().upsert(Household(home, "Bizim ev", 0))
+        db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home)
 

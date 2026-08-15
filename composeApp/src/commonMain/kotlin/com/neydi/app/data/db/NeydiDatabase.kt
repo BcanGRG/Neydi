@@ -35,10 +35,12 @@ import androidx.room3.RoomDatabaseConstructor
         ReceiptLine::class,
         PriceObservation::class,
         SuggestionEvent::class,
+        SuggestionBlock::class,
+        AppSettings::class,
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
     // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
     //
@@ -48,7 +50,35 @@ import androidx.room3.RoomDatabaseConstructor
     // (androidx.sqlite onu ortak API'den bilerek cikarmis: web varyanti
     // suspend, nonWeb degil). Kapaliligi `completedAt`e baglayinca sorun
     // ortadan kalkti - eski satirlarda o alan zaten dogru.
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    // v2 -> v3: **TEK TOPLU BUMP** ve bu bir tercih degil.
+    //
+    // Faz 5, 6 ve 7'nin dokuz ayri sema ihtiyaci vardi. Her bump bir elle cihaz
+    // dansi demek (v2 kur -> veri ekle -> v3 kur, `pm clear` YAPMADAN) ve
+    // F4.1'in sessiz kazasini her seferinde tekrarlayabilir: o kazada surum
+    // hata ayiklamak icin gecici olarak 1'e cekilince Room `1.json` temelini
+    // uzerine yazdi, diff bos cikti ve **hicbir sey yapmayan** bir migration
+    // uretildi - derleme ve 93 test yesil kaldi. Dokuz degisiklik uc faza
+    // dagilsa dokuz korumasiz bump olurdu.
+    //
+    // VE ERKEN OLMAK ZORUNDAYDI: `price_observation`, `suggestion_event` ve
+    // `pending_op` bugun BOS. Tablo bosken semasindaki hata bedava. F5.1
+    // kullanicinin telefonunda bir kez kostuktan sonra `price_observation`
+    // hanenin tek fiyat gecmisini tutuyor ve onu yeniden sekillendirecek
+    // `execSQL` YOK.
+    //
+    // TAMAMEN OTOMATIK KALMASININ KURALI: eklenen her NOT NULL kolon bir
+    // `@ColumnInfo(defaultValue = ...)` tasiyor (`ReceiptLine.isDiscount`,
+    // `ProductStats.muAdjust`), geri kalani nullable. Veri geri-doldurmasi
+    // gerektiren hicbir sey eklenmedi - eklenemezdi.
+    //
+    // DAO'LAR BU BUMP'A DAHIL DEGIL: yeni tablolarin (`suggestion_block`,
+    // `app_settings`) ve yeni kolonlarin okuyucularini kendi fazlari yaziyor
+    // (F5.1, F6.1, F6.5, F6.6). Sema ile erisim ayri isler; burada yalnizca
+    // tablolar bosken sekli dogru olsun diye sema tasiniyor.
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
+    ],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)
 abstract class NeydiDatabase : RoomDatabase() {

@@ -19,6 +19,15 @@ data class Household(
     /** UUID v7 - zaman siralanabilir, boylece index'ler dagilmaz. */
     @PrimaryKey val id: String,
     val name: String,
+    /**
+     * Haneye katilma kodu - 6 karakter, Ayarlar'da dokunmayla kopyalaniyor.
+     *
+     * Null = henuz uretilmedi. Uretimi ve dogrulanmasi F7.2'nin isi; kolon
+     * simdi eklendi cunku sonradan eklemek bir sema bump'i daha demekti.
+     */
+    val joinCode: String? = null,
     val createdAt: Long,
+    /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
+    val updatedAt: Long? = null,
     val deletedAt: Long? = null,
 )
