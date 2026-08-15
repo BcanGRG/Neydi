@@ -282,6 +282,24 @@ interface TripLineDao {
     suspend fun markAllTaken(tripId: String, at: Long): Int
 
     /**
+     * Urunun SON kapali gezideki beyani (F6.2).
+     *
+     * Skor formulunun "gecen sefer unutuldu mu" girdisi. Yalnizca kapali
+     * gezilere bakiyor: acik gezideki satirin akibeti henuz yok.
+     */
+    @Query(
+        """
+        SELECT tl.takeOutcome FROM trip_line tl
+        JOIN trip t ON t.id = tl.tripId
+        WHERE tl.productId = :productId
+          AND t.completedAt IS NOT NULL AND t.deletedAt IS NULL
+          AND tl.deletedAt IS NULL
+        ORDER BY t.completedAt DESC LIMIT 1
+        """,
+    )
+    suspend fun lastOutcome(productId: String): TakeOutcome?
+
+    /**
      * UC SONUCU TEK YAZMADA (F4.12).
      *
      * `checked` ve `takeOutcome` AYNI ifadede yaziliyor cunku ikisi tek bir

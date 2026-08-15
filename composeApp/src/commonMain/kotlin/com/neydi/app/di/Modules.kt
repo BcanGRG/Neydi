@@ -7,6 +7,7 @@ import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.stats.ProductStatsRebuilder
+import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
@@ -91,6 +92,12 @@ val dataModule = module {
     }
 
     single { ProductStatsRebuilder(statsDao = get(), clock = ::now) }
+    single {
+        SuggestionEngine(
+            statsDao = get(), productDao = get(), tripDao = get(),
+            tripLineDao = get(), clock = ::now,
+        )
+    }
 
     single {
         ReceiptProcessor(
