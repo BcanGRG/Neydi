@@ -509,6 +509,31 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 
 - [ ] **10.4 — Araştırma güncellemesi** *(cihazsız)*. Faz 0 sonucunu `docs/03-arastirma-bulgulari.md`'ye işle; çürütülen varsayımları güncelle. **Bu adım koştuğu ana kadar o doküman aktif olarak yanlış bilgi veriyor** — en az on bir iddiası çürütüldü ve doküman hâlâ ilk hallerini yazıyor (görsel LLM'in birincil mimari olduğu, çevrimdışı OCR'ın kapsam dışı olduğu, TOPLAM'ın neredeyse kusursuz okunduğu, mağaza adının neredeyse kusursuz okunduğu, fiş başına ~20 kalem, tek native dikiş, barkod yolunun çalıştığı…). Tam liste bu dosyanın **Öğrenilenler** bölümünde.
 
+## Faz 11 — Tasarım sadakati *(15 Ağu 2026'da açıldı)*
+
+> **Tasarım kaynağı artık repoda:** `docs/tasarim/`. Devir paketinin *"Claude Design projesi burada YOK"* uyarısı geçersiz — proje `Neydi Tasarım.zip` içinde duruyormuş. Denetim: [05-tasarim-denetimi.md](05-tasarim-denetimi.md).
+>
+> **Mekanik kuralların hepsi zaten temizdi** (Fraunces 24sp altı yok, accent yalnızca `AccentSurface` içinde, `clickable` sıfır kullanım, `uppercase` yok, `0.5.dp` yok, blur/renkli gölge yok, dynamic color yok, dialog/badge/bottom-nav yok). Sapmalar **yapısal**.
+
+- [x] **11.1 — İkon seti.** ✅ Uygulamada **hiç ikon yoktu**; tasarım her ekranda kullanıyor. Sadakatin önündeki en büyük tekil engeldi.
+  **Sapma kayda geçti:** tasarım **Material Symbols Rounded** istiyor, o font paketlenmiş bir Compose artifact'i olarak yayınlanmıyor ve indirilemedi. `Icons.Rounded.*` kullanıldı — aynı çizim dili, aynı 24dp optik boyut. `NeydiIcon.kt` tasarımın **adlarını** taşıyor (`NeydiIcons.PushPin`), böylece çağrı yerleri tasarım dosyasıyla yan yana okunabiliyor ve set değişirse tek dosya değişiyor.
+  Artifact JetBrains tarafında 1.7.3'ten sonra yayınlanmadı; sürüm ayrı pinlendi (ikonlar salt veri, çalışma zamanında bir şey bağlamıyor).
+- [x] **11.2 — Ekran 1 yapısal sapmaları.** ✅ Çip şeridi → `more_vert` taşma menüsü + altta "Alışverişe çıkıyorum"; başlık alt satırı "N ürün" → "Son alışveriş: 8 gün önce · 642 TL"; başlık 24sp → 22sp/700; `size/header` token'ı eklendi; `push_pin`, girdide `add`, floating toolbar (pill + hairline + 3dp gölge + 56dp hedefler).
+- [x] **11.3 — Boş durumlar.** ✅ Sola hizalı, Fraunces başlık, tasarımın metinleri, ve **"Geçen sefer aldıklarını ekle"** (yeni yetenek: `addFromLastTrip`).
+
+- [ ] **11.4 — Tanımlı ama hiç kullanılmayan tasarım primitifleri.** *(`Category.tintArgb`/F6.9 ile aynı sınıf hata)*
+  Devir paketi bunları getirdi, hiçbir ekran bağlamadı: **`Modifier.focusRing`** (0 kullanım — tasarım *"ripple olmadığı için 2dp halka zorunlu"* diyor, yani klavye/erişilebilirlik odağı hiçbir yerde görünmüyor), **`AccentSurface`** ve **`AccentStrip`** (0 kullanım; şerit Ekran 3'ün *"geçen sefer unuttun"* satırı için), **`SafeArea`** (0 kullanım).
+  `SafeArea` için **karar verildi ve sapma bilinçli:** ekranlar sabit 44/34dp yerine gerçek `WindowInsets.safeDrawing` kullanıyor. Android'de doğrusu bu — tasarımın sabitleri iOS ölçüleri ve cihazdan cihaza değişen çentik/gezinme çubuğunu karşılamıyor. `SafeArea` sabitleri referans olarak duruyor.
+- [ ] **11.5 — Ekran 6 · 2 · 4 sadakat denetimi.** Yazılmış ama denetlenmemiş ekranlar.
+- [ ] **11.6 — Alışveriş modu satır container'ı.** Tasarım: ışıkta surface `#FFFFFF`'e çıkıyor, satırlar 1.5dp kenarlık kazanıyor, metadata tek bir `chevron_right` arkasına katlanıyor. Kodda kenarlık var, surface yükselmesi ve chevron katlaması yok.
+
+### ⚠️ Kullanıcıya sorulacak — iş bunlarsız ilerledi
+
+1. **Floating toolbar'ın `undo` ve `filter_list` düğmeleri.** Tasarımda üç ikon var (`add`, `undo`, `filter_list`); yalnızca `add` bağlandı. `undo`'nun davranışı çelişkili: Ekran 1 notu *"Geri alma 'Alındı' bölümünden tek dokunuş"* diyor, yani toolbar'daki `undo` neyi geri alıyor belirsiz. `filter_list` hiçbir yerde tanımlı değil (hangi ölçüte göre filtre?). **Hiçbir şey yapmayan buton çizmemek** için ikisi de atlandı.
+2. **İlk gün boş durumunun çipleri.** Tasarım 3×4 grid'de **12 başlangıç ÜRÜNÜ** gösteriyor (Ekmek, Süt, Yumurta…); kod **reyon** çipleri gösteriyor (F3.6'nın kararı). İkisi farklı iş: ürün çipi tek dokunuşta listeye düşüyor, reyon çipi sheet açıyor. Tasarıma dönmek F3.6'nın gerekçesini geçersiz kılıyor mu?
+3. **Başlıktaki avatar + varlık noktası.** Tasarımda her ekranın başlığında var (28dp daire, 6dp yeşil nokta). Kodda `avatarOnlyDrawnWhenPartnerAdded` testi var ama başlıkta çizilmiyor. Tek kullanıcılı hanede gösterilmeli mi?
+4. **`PriceText` ayrımı.** Devir paketinin çözülmemiş tek token uyuşmazlığı: tasarım çipte 14sp / fiş satırında 17sp istiyor, kodda tek 15sp var. Paket *"ikiye ayır"* öneriyor.
+
 ## Şema sürüm planı — v2 → v3 ✅ **yapıldı ve cihazda doğrulandı**
 
 > **Durum: bump tamamlandı.** `version = 3`, `AutoMigration(2, 3)`, dışa aktarılmış `3.json` (identityHash `9a25da10097f10bb5f49f777e7a8c9ae`). Aşağıdaki plan kayıt için duruyor; **kural kısmı hâlâ geçerli ve gelecek her bump'ta uygulanacak.**
