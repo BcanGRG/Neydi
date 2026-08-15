@@ -6,6 +6,7 @@ import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.AppSettings
 import com.neydi.app.data.db.AppSettingsDao
 import com.neydi.app.data.db.CatalogSeedDao
+import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.STAPLE_LIMIT
 import com.neydi.app.data.repo.resolveProduct
@@ -67,6 +68,7 @@ data class SetupState(
 class SetupViewModel(
     private val catalogSeedDao: CatalogSeedDao,
     private val settingsDao: AppSettingsDao,
+    private val memberDao: MemberDao,
     private val repo: ListRepository,
     private val clock: () -> Long,
 ) : ViewModel() {
@@ -149,6 +151,20 @@ class SetupViewModel(
                     createdAt = clock(),
                 ),
             )
+            // LISTE DOLU ACILMALI ve bunu cihaz ogretti: kurulum sabitleri
+            // yaziyordu ama LISTEDE HICBIR SEY GORUNMUYORDU - sabitler geziye
+            // gezi ACILIRKEN dusuyor (`seedStaples`) ve kurulumdan cikinca
+            // acik gezi yoktu. Kullanici on iki urun sectikten sonra "Liste
+            // bos" goruyordu; tasarimin kendi cumlesi ise "kurulum yapildi ->
+            // liste zaten dolu".
+            //
+            // Hicbir sey secilmediyse gezi ACILMIYOR: bos bir gezi acmak
+            // Gecmis'e hayalet satir yazardi ve ilk gun bos hali de kaybolurdu.
+            if (chosen.isNotEmpty()) {
+                memberDao.self(household)?.let { self ->
+                    repo.openOrGetActiveTrip(householdId = household, memberId = self.id)
+                }
+            }
             onDone()
         }
     }

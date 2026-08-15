@@ -373,13 +373,14 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Giriş noktaları yok:** tasarım *"Bunu önerme"* anahtarını **Ekran 5**'e koyuyor (F5.3, henüz yok) ve oraya giden tek kanca `onPriceClick` — o da bağlanmamış.
   **Üç-vuruş sessiz otomatik bastırma** hiç "önerme" demeyen kullanıcı için kendi kendini iyileştirir; bu, listenin görünür olmasının **yerine** geçmez, ikisi birlikte gerekir.
 
-- [~] **6.6 — Kurulum (Ekran 8).** *Kod tamam, cihaz doğrulaması bekliyor.* **İKİ adım** (tasarım karari 6), ~40 ürünlük grid, tempo çipi. Var olma sebebi tek: 15. gezide değil **3. gezide** akıllı hissetmek.
+- [x] **6.6 — Kurulum (Ekran 8).** ✅ *Cihazda uçtan uca doğrulandı.* **İKİ adım** (tasarım kararı 6), ~40 ürünlük grid, tempo çipi. Var olma sebebi tek: 15. gezide değil **3. gezide** akıllı hissetmek.
   **İki karar da tasarımdan geldi ve uygulandı (karar 6):**
   1. **Hane adımı Faz 7'de.** Var olmayan bir auth için e-posta alanı çizmek tutulamayacak bir söz vermek olurdu. Kurulum şimdilik "1 / 2" ve "2 / 2"; auth geldiği gün yeniden üç adım olacak ve ilerleme çubuğu segment sayısını adımdan aldığı için kendiliğinden düzelecek.
   2. **Tetikleyici: `setupCompletedAt` boş VE hane hiç ürün görmemiş.** İkinci koşul olmadan mevcut kurulumlarda dolu bir veritabanının üstüne onboarding açılıyordu. `ProductDao.count` bunu tek sorguyla kesiyor.
   **`AppSettingsDao` yazıldı** — `app_settings` v3'te şemaya girmişti ama hiçbir okuyanı yoktu (`NeydiDatabase` KDoc'u bunu zaten söylüyordu: *"DAO'lar bu bump'a dahil değil"*). İlk okuyanı bu adım.
   **Hedefe artık gidiliyor:** `App.kt` bootstrap bittikten sonra koşulu soruyor ve Kurulum'u **Liste'nin üstüne** bindiriyor — kök olarak değil. Böylece "Listeme geç" ve "Atla" aynı yere çıkıyor ve eski `onFinish = back()` tuzağı (kök olsaydı sessiz no-op) doğmuyor.
   **Sınır kararı:** seçim `STAPLE_LIMIT` (12) ile sınırlı — Ayarlar'da kullanıcının yeniden göreceği sayının aynısı. Sınıra gelince seçilmemiş çipler sönüyor, **seçilmişler dokunulabilir kalıyor** (yoksa kullanıcı kendi seçtiği on iki ürünle hapsolurdu).
+  **Cihaz bir eksik öğretti:** kurulum sabitleri yazıyordu ama **listede hiçbir şey görünmüyordu** — sabitler geziye *gezi açılırken* düşüyor (`seedStaples`) ve kurulumdan çıkınca açık gezi yoktu. Kullanıcı on iki ürün seçtikten sonra *"Liste boş"* görüyordu; tasarımın cümlesi ise *"kurulum yapıldı → liste zaten dolu"*. Kurulum artık seçim varsa geziyi açıyor. Hiçbir şey seçilmediyse **açmıyor** — boş gezi Geçmiş'e hayalet satır yazardı.
   **Üçüncü boş durum hâlâ açık:** `EmptyKind` iki girdi taşıyor, üçüncüsü *"kurulum atlandı"*. Kurulum artık `setupCompletedAt` yazdığı için ayrım **mümkün**; boş durumun kendisi ayrı bir adım.
 
 - [x] **6.7 — Ayarlar (Ekran 7).** ✅ *Cihazda doğrulandı.* *"Sıfır tasarım yatırımı, düz liste"* — ve beş bölümün üçünün veri kaynağı yoktu.

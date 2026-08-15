@@ -97,7 +97,7 @@ val dataModule = module {
     viewModel {
         SetupViewModel(
             catalogSeedDao = get(), settingsDao = get(),
-            repo = get(), clock = ::now,
+            memberDao = get(), repo = get(), clock = ::now,
         )
     }
 
