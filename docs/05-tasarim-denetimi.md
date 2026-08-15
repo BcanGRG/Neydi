@@ -48,8 +48,8 @@ Uygulamanın sürenin %90'ının geçtiği ekranı, ve sapmaların çoğu burada
 | 3 | Başlık alt satırı *"Son alışveriş: 8 gün önce · 642 TL"* | *"N ürün"* | ✅ **düzeltildi** — `lastTripSummary`, 5 test |
 | 4 | Başlık 22sp/700 (`title22`) | `headlineMedium` = 24sp | ✅ **düzeltildi** — iki punto büyüktü |
 | 5 | `size/header = 56` token'ı | kodda yok | ✅ **eklendi** — `SizesExtra.header` |
-| 6 | Girdinin solunda `add` ikonu | yok | açık |
-| 7 | "Her zamankiler" bölümünde `push_pin` ikonu | yeşil nokta | açık |
+| 6 | Girdinin solunda `add` ikonu | yok | ✅ **düzeltildi** |
+| 7 | "Her zamankiler" bölümünde `push_pin` ikonu | yeşil nokta | ✅ **düzeltildi** — nokta "sabit" anlamını taşımıyordu |
 | 8 | Öneri şeridi: *"Yumurta · 14 gün oldu"* + *"+3 öneri"* | F6.3 yazıldı, şerit var | veri yokken çizilmiyor — doğru davranış, "+N öneri" çipi eksik |
 
 Cihazda doğrulandı: başlık *"Son alışveriş: bugün"* (tutar okunamadığı için yazılmıyor — dürüstlük kuralı), `⋮` menüsü `surfaceVariant` zemin + 24dp kart köşesiyle açılıyor, birincil buton en altta.
@@ -73,16 +73,22 @@ Tasarımın kendi gerekçesi:
 
 Ekran 5'in tasarımı özellikle değerli: F5.7'nin (ambalaj küçülmesi) görsel sözleşmesi tam yazılmış — *"ambalaj kırılmasında dikey kesikli çizgi, iki dönem ayrı polyline; tek çizgi çizmek 5 L ile 4 L'yi aynı ürün gibi göstermek olurdu"*.
 
-## Devir paketinin kapattığını söylediği eksikler
+## Devir paketinin kapattığını söylediği eksikler — incelendi
 
-`handoff/README.md` sekiz eksik sayıyor ve üçü hâlâ kodda karşılıksız görünüyor — `Motion.kt` (173 satır), `AccentChip.kt` (178 satır) ve `Dimens.kt` (6 satır) devir paketindeki hallerinden farklı. Farkların hangi yönde olduğu (repo mu ilerlemiş, tasarım parçası mı düşmüş) **henüz incelenmedi** — bu denetimin bir sonraki adımı.
+`handoff/README.md` sekiz eksik sayıyor. **Sekizi de kodda var**: `Modifier.pressable`, `Modifier.focusRing`, `SafeArea`, `Elevation`, `NeydiExtraShapes`, `AccentSurface`, `SpacingExtra`, `Motion.settle`. Dosya farkları (Motion 173, AccentChip 178 satır) yalnızca isim ve önizleme farkı; API yüzeyleri aynı.
 
-## Sıradaki iş
+**Asıl bulgu başka:** beşi **tanımlı ama hiçbir yerde kullanılmıyordu** — `Category.tintArgb`/F6.9 ile aynı sınıf hata. Bunlardan `Elevation.floatingToolbar` alışveriş çubuğuna bağlandı; `focusRing`, `AccentSurface` ve `AccentStrip` hâlâ açık (ROADMAP F11.4). `SafeArea` için sapma bilinçli: ekranlar sabit 44/34dp yerine gerçek `WindowInsets.safeDrawing` kullanıyor — Android'de doğrusu bu.
 
-1. Ekran 1'in 1–5. maddeleri (yapısal, küçük, hemen görünür)
-2. `Motion.kt` / `AccentChip.kt` / `Dimens.kt` fark incelemesi
-3. Ekran 2 · 4 · 6 sadakat denetimi (yazılmış ekranlar)
-4. Ekran 3 / 5 / 7 / 8 — artık gerçek tasarımdan üretilebilir
+## Yapılanlar ve sıradaki iş
+
+**15 Ağustos'ta kapananlar:** ikon seti (11.1), Ekran 1 yapısal sapmaları (11.2), boş durumlar (11.3), Ekran 6 Geçmiş + mini grafik, F6.9 kategori tonları, F6.7 Ayarlar, F6.4 Ekran 3, Ekran 2'nin başlık/sayaç/grid farkları.
+
+**Sıradaki:**
+1. Ekran 2'nin arama alanı (işlevsel eksik) ve `check_circle`
+2. Ekran 4 — tutarı manşet yapmak, "Eksik satır ekle", aday sheet'i
+3. `focusRing` / `AccentSurface` / `AccentStrip` bağlantısı (F11.4)
+4. Ekran 8 Kurulum (F6.6) — 1. adım auth'a bağlı, 2–3. adımlar yazılabilir
+5. Ekran 5 Ürün Detayı — Faz 5'e bağlı
 
 ## Ekran 2 — Ekle sheet
 
