@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +47,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import androidx.compose.ui.unit.dp
 import com.neydi.app.data.db.CatalogSeed
 import com.neydi.app.data.db.TakeOutcome
@@ -54,6 +57,16 @@ import com.neydi.app.data.receipt.UNREADABLE_MESSAGE
 import com.neydi.app.data.parseMinorInput
 import com.neydi.app.ui.components.AccentChip
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.NeydiButton
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.absolutePath
+import io.github.vinceglb.filekit.createDirectories
+import io.github.vinceglb.filekit.div
+import io.github.vinceglb.filekit.filesDir
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.dialogs.FileKitCameraFacing
+import io.github.vinceglb.filekit.dialogs.FileKitCameraType
+import io.github.vinceglb.filekit.dialogs.compose.rememberCameraPickerLauncher
 import com.neydi.app.ui.components.OutcomePicker
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.NeydiExtraShapes
@@ -84,6 +97,8 @@ fun ReceiptCheckScreen(
     onFixAmount: (CheckRow, Long) -> Unit,
     onOutcome: (String, TakeOutcome) -> Unit,
     onReread: () -> Unit,
+    /** Uzun fisin sonraki parcasini cek (F4.13). */
+    onNextPart: () -> Unit,
     onBack: () -> Unit,
 ) {
     // SURFACE ZORUNLU: ciplak Column karanlik modda themes.xml'deki sabit
@@ -106,7 +121,8 @@ fun ReceiptCheckScreen(
 
         when {
             state.loading -> LoadingBlock()
-            state.failedMessage != null -> UnreadableNotice(state.failedMessage, onReread)
+            state.failedMessage != null ->
+                UnreadableNotice(state.failedMessage, onReread, onNextPart)
             else -> {
                 GateChip(state)
                 state.notice?.let {
@@ -133,6 +149,15 @@ fun ReceiptCheckScreen(
                 Spacer(Modifier.height(Spacing.sm))
                 // Yon dogru bulunmus olsa bile buton duruyor: otomatik secim iki
                 // fiste dogru bildi, ucuncude yanlis bilirse kullanici tikanmasin.
+                if (state.isPart) {
+                    // Parca okundu; sonraki parca tek dokunus uzakta olmali.
+                    NeydiButton(
+                        text = "Sonraki parçayı çek",
+                        onClick = onNextPart,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(Spacing.xs))
+                }
                 RotateRow(onReread)
                 Spacer(Modifier.height(Spacing.sm))
                 Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Tamam") }
@@ -185,13 +210,26 @@ private fun GateChip(state: CheckState) {
             val fark = (state.totalMinor ?: 0) - state.sumMinor
             "Toplam ${formatMinor(fark)} tutmuyor" to extras.warning
         }
-        null -> "Toplam okunamadı · satırlar ${formatMinor(state.sumMinor)}" to extras.warning
+        // PARCA HALI NOTR, amber DEGIL: toplam son parcada basili, bu parcada
+        // olmamasi kullanicinin hatasi degil. Amber "tutmuyor" giydirmek
+        // durust ama yanlis yonlendiriciydi.
+        null ->
+            if (state.isPart) {
+                "Parça fişi · toplam son parçada" to MaterialTheme.colorScheme.surfaceVariant
+            } else {
+                "Toplam okunamadı · satırlar ${formatMinor(state.sumMinor)}" to extras.warning
+            }
     }
     Surface(color = color, shape = NeydiExtraShapes.pill) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = Color.White,
+            // Notr (parca) cipte zemin acik - beyaz yazi kaybolurdu.
+            color = if (color == MaterialTheme.colorScheme.surfaceVariant) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                Color.White
+            },
             modifier = Modifier.padding(horizontal = Spacing.sm, vertical = 6.dp),
         )
     }
@@ -317,9 +355,15 @@ private fun UnaccountedSection(
     }
 }
 
-/** Okunamayan fis: sebebi ve cikis yolu birlikte (F4.4 olcumu). */
+/**
+ * Okunamayan fis: sebebi ve cikis yolu BIRLIKTE (F4.4 olcumu + F4.13).
+ *
+ * "Parca parca cek" tavsiyesinin yanina TEK DOKUNUSLUK yol: kullanicinin ana
+ * marketi uzun fis basiyor, yani bu ekran onun icin ana akis. Tavsiyeden sonra
+ * Liste'ye donup ozet kartini yeniden bulmak zorunda kalmamali.
+ */
 @Composable
-private fun UnreadableNotice(message: String, onReread: () -> Unit) {
+private fun UnreadableNotice(message: String, onReread: () -> Unit, onNextPart: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Surface(
             color = MaterialTheme.colorScheme.surfaceVariant,
@@ -333,6 +377,12 @@ private fun UnreadableNotice(message: String, onReread: () -> Unit) {
             )
         }
         Spacer(Modifier.height(Spacing.sm))
+        NeydiButton(
+            text = "Parça parça çek",
+            onClick = onNextPart,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(Spacing.xs))
         RotateRow(onReread)
     }
 }
@@ -469,11 +519,42 @@ private fun CorrectionSheet(
  * yapmak, Gecmis'ten iki fisi ust uste acmayi bozardi.
  */
 @Composable
-fun ReceiptCheckRoute(receiptId: String, onBack: () -> Unit) {
+fun ReceiptCheckRoute(
+    receiptId: String,
+    onBack: () -> Unit,
+    /** Sonraki parca cekildi - ekran YENI fise gecmeli (ust oge degisir). */
+    onOpenPart: (String) -> Unit,
+) {
     val vm: ReceiptCheckViewModel = koinViewModel { parametersOf(receiptId) }
     val state by vm.state.collectAsStateWithLifecycle()
     val editing by vm.editing.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
+
+    // SONRAKI PARCA KAMERASI (F4.13) - ListScreen'dekiyle ayni desen ve ayni
+    // dersler: hedef yol durumdan degil KAYNAK ADINDAN turetiliyor (Activity
+    // yeniden yaratilinca `remember` sifirlaniyor ve fis sessizce kayboluyordu),
+    // ham dosya yol uzerinden siliniyor (`content://` uzerinden silme cihazda
+    // hicbir sey yapmadi).
+    val receiptsDir = remember { FileKit.filesDir / "receipts" }
+    val partCamera = rememberCameraPickerLauncher { file ->
+        if (file != null) {
+            val dest = receiptsDir / ("fis-" + file.name.removePrefix("ham-"))
+            val raw = receiptsDir / file.name
+            vm.attachNextPart(
+                source = file,
+                destPath = dest.absolutePath(),
+                rawPath = raw.absolutePath(),
+            )
+        }
+    }
+
+    val nextPartId by vm.nextPartId.collectAsStateWithLifecycle()
+    LaunchedEffect(nextPartId) {
+        nextPartId?.let { id ->
+            vm.consumeNextPart()
+            onOpenPart(id)
+        }
+    }
 
     ReceiptCheckScreen(
         state = state,
@@ -485,6 +566,13 @@ fun ReceiptCheckRoute(receiptId: String, onBack: () -> Unit) {
         onFixAmount = vm::fixAmount,
         onOutcome = vm::setOutcome,
         onReread = vm::rereadNextRotation,
+        onNextPart = {
+            receiptsDir.createDirectories()
+            // Ad zaman damgasi: parcalar birbirini EZMESIN.
+            val stamp = Clock.System.now().toEpochMilliseconds()
+            val temp = receiptsDir / "ham-$stamp.jpg"
+            partCamera.launch(FileKitCameraType.Photo, FileKitCameraFacing.Back, temp)
+        },
         onBack = onBack,
     )
 }
@@ -521,7 +609,7 @@ private fun ReceiptCheckHoldsPreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
     )
 }
 
@@ -540,7 +628,7 @@ private fun ReceiptCheckMismatchPreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
     )
 }
 
@@ -552,7 +640,7 @@ private fun ReceiptCheckUnreadablePreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
     )
 }
 
@@ -571,7 +659,7 @@ private fun ReceiptCheckLoadingPreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
     )
 }
 
@@ -591,7 +679,7 @@ private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
     )
 }
 
@@ -614,6 +702,6 @@ private fun ReceiptCheckCorrectionPreview() = NeydiPreview {
             )
         },
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
     )
 }

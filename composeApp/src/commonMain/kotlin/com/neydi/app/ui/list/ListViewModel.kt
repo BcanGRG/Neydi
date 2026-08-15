@@ -9,14 +9,13 @@ import com.neydi.app.data.db.Category
 import com.neydi.app.data.db.CategoryDao
 import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
+import com.neydi.app.data.db.ReceiptDao
+import com.neydi.app.data.receipt.ReceiptProcessor
+import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
-import com.neydi.app.data.receipt.downscaleForOcr
-import com.neydi.app.data.receipt.deleteFileAt
-import com.neydi.app.data.receipt.writeBytesTo
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.readBytes
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
@@ -57,9 +56,24 @@ class ListViewModel(
     private val priceObservationDao: PriceObservationDao,
     private val statsRebuilder: ProductStatsRebuilder,
     private val suggestionEngine: SuggestionEngine,
+    private val receiptDao: ReceiptDao,
+    private val processor: ReceiptProcessor,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
+
+    init {
+        // TAKILI KALAN FISLERI ISLE (F4.13). Cihazda yasandi: cekimden sonra
+        // Fis Kontrol ekrani acilmadan surec olurse fis PENDING'de sonsuza
+        // kadar takiliyor ve kullanici "parca parca cek" mesajini HIC gormuyor
+        // - iki fis boyle bulundu. Isleme zaten idempotent (satirlar silinip
+        // yeniden yaziliyor), o yuzden burada sessizce kosmak guvenli; sonuc
+        // Gecmis'te "bekliyor" yerine gercek durum olarak gorunuyor.
+        viewModelScope.launch {
+            receiptDao.pending().forEach { processor.process(it.id) }
+        }
+    }
+
     /**
      * FLOW, tek seferlik okuma DEGIL: uyeyi bootstrap yaratiyor ve bu ekran
      * ondan once acilabiliyor. Tek okuma o yaristas null doner, bir daha
@@ -357,32 +371,14 @@ class ListViewModel(
         // bir gezi dogururdu.
         val tripId = _summaryTripId ?: return
         viewModelScope.launch {
-            // Baytlari BURADA okuyoruz: kaynak `content://` URI de olabilir
-            // (kamera FileProvider uzerinden yaziyor) ve PlatformFile ikisini
-            // de cozuyor. Kucultmeye yol vermek cihazda sessizce basarisizdi.
-            val bytes = source.readBytes()
-            val ok = downscaleForOcr(bytes, destPath)
-            if (!ok) {
-                // Kucultemedik: HAM BAYTLARI ayni yola yaz. Boylece kayitli yol
-                // HER ZAMAN bizim dosyamiz - `content://` URI saklamak yanlis
-                // olurdu, izin baglari kalici degil ve yol yarin cozulmez.
-                writeBytesTo(destPath, bytes)
-            }
-            // Ham dosyayi SIL. Fis fotograflari kisisel veri; iki kopya tutmak
-            // hem yer hem gereksiz maruziyet, kucultulmus hali OCR icin yeterli.
-            //
-            // YOL uzerinden, PlatformFile.delete() uzerinden DEGIL: kameranin
-            // dondurdugu dosya bir `content://` URI ve onun uzerinden silme
-            // cihazda sessizce hicbir sey yapmadi - ham dosya diskte kaldi.
-            if (destPath != rawPath) deleteFileAt(rawPath)
-            val receipt = repo.enqueueReceipt(
+            val receipt = attachReceiptToTrip(
+                repo = repo,
                 householdId = household,
                 tripId = tripId,
-                imagePath = destPath,
+                source = source,
+                destPath = destPath,
+                rawPath = rawPath,
             )
-            // Fis Kontrol ekranini ACMAK ICIN kimligi yayinla. Tek seferlik
-            // olay: tuketilmezse konfigurasyon degisiminde ekran ikinci kez
-            // acilirdi.
             _openReceiptId.value = receipt.id
         }
     }

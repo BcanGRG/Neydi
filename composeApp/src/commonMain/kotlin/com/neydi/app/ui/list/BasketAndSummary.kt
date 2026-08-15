@@ -165,6 +165,17 @@ internal fun SummaryCard(
                     .padding(top = Spacing.sm)
                     .fillMaxWidth(),
             )
+            // Cekim rehberi tasarimin kamera overlay metninden - sistem
+            // kamerasina overlay konamadigi icin BURADA (F4.13). Kullanicinin
+            // ana marketi uzun fis basiyor; tavsiye cekimden ONCE gorunmeli,
+            // basarisiz okumadan sonra degil.
+            Text(
+                text = "Fişin tamamı kadraja girsin. Uzunsa parça parça çek — her karede 10–15 satır.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = Spacing.xs),
+            )
         }
 
         if (onFixTaken != null) {
