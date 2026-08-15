@@ -4,6 +4,7 @@ import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
+import com.neydi.app.data.repo.DataWipe
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.stats.ProductStatsRebuilder
@@ -13,6 +14,7 @@ import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
 import com.neydi.app.ui.receipt.ReceiptCheckViewModel
 import com.neydi.app.ui.missing.MissingItemsViewModel
+import com.neydi.app.ui.settings.DeleteDataViewModel
 import com.neydi.app.ui.settings.SettingsViewModel
 // kotlinx.datetime.Clock artik kotlin.time.Clock'a deprecate typealias.
 import kotlin.time.Clock
@@ -52,6 +54,8 @@ val dataModule = module {
     single { get<NeydiDatabase>().receiptDao() }
     single { get<NeydiDatabase>().receiptLineDao() }
     single { get<NeydiDatabase>().productAliasDao() }
+    single { get<NeydiDatabase>().storeDao() }
+    single { get<NeydiDatabase>().dataWipeDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
     single { get<NeydiDatabase>().productStatsDao() }
 
@@ -81,11 +85,18 @@ val dataModule = module {
     viewModel {
         SettingsViewModel(
             householdDao = get(), memberDao = get(),
-            productDao = get(), clock = ::now,
+            productDao = get(), storeDao = get(), clock = ::now,
         )
     }
 
-    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get(), tripLineDao = get()) }
+    viewModel { DeleteDataViewModel(wipe = get(), memberDao = get()) }
+
+    viewModel {
+        HistoryViewModel(
+            tripDao = get(), receiptDao = get(),
+            tripLineDao = get(), receiptLineDao = get(),
+        )
+    }
 
     viewModel { (tripId: String?) ->
         FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())
@@ -110,6 +121,7 @@ val dataModule = module {
         )
     }
 
+    single { DataWipe(dao = get()) }
     single { ProductStatsRebuilder(statsDao = get(), clock = ::now) }
     single {
         SuggestionEngine(
@@ -126,6 +138,7 @@ val dataModule = module {
             productDao = get(),
             aliasDao = get(),
             tripDao = get(),
+            storeDao = get(),
             statsRebuilder = get(),
             clock = ::now,
             newId = ::newUuid,

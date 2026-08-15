@@ -51,6 +51,16 @@ data object History : NeydiKey
 @Serializable
 data object Settings : NeydiKey
 
+/**
+ * "Verilerimi sil" onayi (tasarim karari 2).
+ *
+ * DIALOG DEGIL HEDEF olmasi kararin kendisi: v1'in "sifir modal dialog" kurali
+ * bozulmadan silme onaya baglaniyor, ve geri tusu dogal bir vazgecme yolu
+ * oluyor.
+ */
+@Serializable
+data object DeleteData : NeydiKey
+
 @Serializable
 data object Setup : NeydiKey
 
@@ -81,6 +91,7 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
             subclass(ReceiptCheck::class)
             subclass(History::class)
             subclass(Settings::class)
+            subclass(DeleteData::class)
             subclass(Setup::class)
         }
     }
@@ -107,5 +118,6 @@ private fun NeydiKey.hasSerializerRegistration(): Unit = when (this) {
     is ReceiptCheck -> Unit
     is History -> Unit
     is Settings -> Unit
+    is DeleteData -> Unit
     is Setup -> Unit
 }

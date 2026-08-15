@@ -203,6 +203,12 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
 
     for (raw in lines) {
         val key = matchKey(raw)
+        // TARIH SATIRI MAGAZA ADI OLAMAZ. Yedek aday secimi bunu bilmek
+        // zorunda: kunye satiri okunamadiginda ("13.08.2026 18:49 Sira No :
+        // 218") satiri yedege giriyordu ve karar 11'den sonra bu KALICI bir
+        // hataya donusuyor - Ayarlar'daki Magazalar bolumune "Sira" adinda
+        // bir zincir yaziliyor ve onu silecek bir yuzey yok.
+        val isDateLine = RECEIPT_DATE.containsMatchIn(raw)
 
         // FISIN BASILI TARIHI (F5.8): "13.08.2026 18:49" gibi. Gg.aa.yyyy
         // bicimi Turk fislerinde standart; iki gercek fiste de bu bicim.
@@ -238,7 +244,7 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
         ) {
             if (contains(key, COMPANY_WORDS)) {
                 storeCompany = raw
-            } else if (storeFallback == null) {
+            } else if (storeFallback == null && !isDateLine) {
                 storeFallback = raw
             }
             continue

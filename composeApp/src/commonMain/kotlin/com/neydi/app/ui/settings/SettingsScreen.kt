@@ -46,13 +46,14 @@ import org.koin.compose.viewmodel.koinViewModel
  * yilda bir kez arayacagi yer.
  *
  * BOS BOLUM HIC CIZILMEZ ve bu ekranin en onemli kurali. Tasarimin gerekcesi:
- * *"Bos bir bolum basligi, olmayan bir isi varmis gibi gosterir."* Uc bolum
- * su an cizilmiyor cunku verileri YOK:
+ * *"Bos bir bolum basligi, olmayan bir isi varmis gibi gosterir."*
  *
+ * - **Magazalar**: ilk fiste market adi okununca KENDILIGINDEN doluyor
+ *   (tasarim karari 11) - satir yokken bolum cizilmiyor, elle magaza ekleme
+ *   yok.
  * - **Onerilmeyenler**: `suggestion_block` tablosu semada var (v3) ama hicbir
- *   yazan yok - F6.5 (bastirma) yazilinca dolacak.
- * - **Magazalar**: `store` tablosu var, hicbir yazan yok. Fis `storeNameRaw`
- *   yaziyor ama Store satiri uretmiyor.
+ *   yazan yok - F6.5 (bastirma) yazilinca dolacak; bolum o gune kadar
+ *   cizilmiyor.
  * - **Katilma kodu**: `Household.joinCode` alani var ama null; kod uretimi
  *   Faz 7'nin (senkron) isi.
  *
@@ -60,10 +61,15 @@ import org.koin.compose.viewmodel.koinViewModel
  * olarak yasakladigi sey olurdu.
  */
 @Composable
-fun SettingsRoute(onBack: () -> Unit) {
+fun SettingsRoute(onBack: () -> Unit, onDeleteData: () -> Unit) {
     val vm: SettingsViewModel = koinViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
-    SettingsScreen(state = state, onBack = onBack, onRemoveStaple = vm::removeStaple)
+    SettingsScreen(
+        state = state,
+        onBack = onBack,
+        onRemoveStaple = vm::removeStaple,
+        onDeleteData = onDeleteData,
+    )
 }
 
 @Composable
@@ -71,6 +77,7 @@ fun SettingsScreen(
     state: SettingsState,
     onBack: () -> Unit,
     onRemoveStaple: (String) -> Unit,
+    onDeleteData: () -> Unit = {},
 ) {
     val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -141,11 +148,34 @@ fun SettingsScreen(
                     }
                 }
 
+                // MAGAZALAR SATIR VARKEN CIZILIYOR (tasarim karari 11).
+                //
+                // Tasarimin bos hali bu bolumu "Ilk fisten ogrenilecek"
+                // yaziyla ciziyordu; karar 11 onun yerine bolumun HIC
+                // cizilmemesini soyluyor - ilk fisten sonra kendiliginden
+                // gorunuyor, yani bos hal hic yasanmiyor.
+                if (state.stores.isNotEmpty()) {
+                    SectionHeader("Mağazalar")
+                    SettingRow(
+                        label = "Takip edilen zincirler",
+                        // Adlar DEGERIN kendisi: uc bes zincir tek satira
+                        // sigiyor ve ayri bir liste ekrani acmayi gereksiz
+                        // kiliyor.
+                        value = state.stores.joinToString(", ") { it.name },
+                    )
+                    Note("Mağazalar ilk fişte market adı okunduğunda kendiliğinden birikir; elle mağaza eklenmez.")
+                }
+
                 SectionHeader("Gizlilik")
                 Note(
                     "Fiş fotoğrafları cihazında kalır; yalnızca ürün adı, fiyatı ve " +
                         "market adı hane içinde paylaşılır.",
                 )
+                Spacer(Modifier.height(10.dp))
+                // SATIR CHEVRON KAZANDI ve tam ekran onaya gidiyor (tasarim
+                // karari 2). Dialog yasagi bozulmuyor, silme de onaysiz
+                // calismiyor.
+                DangerRow(label = "Verilerimi sil", onClick = onDeleteData)
                 Spacer(Modifier.height(Spacing.xl))
             }
         }
@@ -201,6 +231,41 @@ private fun SettingRow(
             }
         }
         Hairline()
+    }
+}
+
+/**
+ * Yikici satir: metin ve chevron error renginde, ustunde hairline.
+ *
+ * `SettingRow` DEGIL: o satirin bir degeri var ve dokunulamaz. Bu satirin isi
+ * dokunulmak - ve renk, dokunmanin bedelini soyleyen tek isaret.
+ */
+@Composable
+private fun DangerRow(label: String, onClick: () -> Unit) {
+    Column {
+        Hairline()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(NeydiExtraShapes.pill)
+                .pressable(onTap = onClick)
+                .heightIn(min = 56.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.weight(1f),
+            )
+            NeydiIcon(
+                icon = NeydiIcons.ChevronRight,
+                contentDescription = null,
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        }
     }
 }
 
@@ -292,13 +357,23 @@ private fun SettingsFilledPreview() = NeydiPreview {
                 StapleRow("p2", "Süt"),
                 StapleRow("p3", "Yumurta"),
             ),
+            stores = listOf(
+                StoreRow("s1", "MİGROS"),
+                StoreRow("s2", "A101"),
+                StoreRow("s3", "BİM"),
+            ),
         ),
         onBack = {},
         onRemoveStaple = {},
     )
 }
 
-/** Yeni hane: sabit yok, katilma kodu yok - iki bolum de kendi bos halinde. */
+/**
+ * Yeni hane: sabit yok, magaza yok, katilma kodu yok.
+ *
+ * Magazalar bolumu bu onizlemede HIC GORUNMEMELI - karar 11'in gorsel
+ * karsiligi tam olarak bu.
+ */
 @PreviewLightDark
 @Composable
 private fun SettingsEmptyPreview() = NeydiPreview {

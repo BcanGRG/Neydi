@@ -1,10 +1,6 @@
 package com.neydi.app.ui.receipt
 
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.draw.clip
-import com.neydi.app.ui.components.NeydiIcon
-import com.neydi.app.ui.components.NeydiIcons
-import com.neydi.app.ui.theme.Sizes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -45,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,8 +60,11 @@ import com.neydi.app.data.formatMinor
 import com.neydi.app.data.receipt.UNREADABLE_MESSAGE
 import com.neydi.app.data.parseMinorInput
 import com.neydi.app.ui.components.AccentChip
-import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.AccentSurface
 import com.neydi.app.ui.components.NeydiButton
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
+import com.neydi.app.ui.components.NeydiPreview
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.createDirectories
@@ -77,6 +78,7 @@ import com.neydi.app.ui.components.OutcomePicker
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
 import com.neydi.app.ui.theme.NeydiExtraShapes
+import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -142,14 +144,29 @@ fun ReceiptCheckScreen(
                 fontWeight = FontWeight.Bold,
             )
         }
-        state.subtitle?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        // AD ESNER, TARIH KIRPILMAZ (tasarim karari 13). Tek Text olsaydi
+        // uzun magaza adi tarihi ekran disina iterdi - cihazda tam bu oldu.
+        if (state.subtitleStore != null || state.subtitleMeta != null) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                state.subtitleStore?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
+                state.subtitleMeta?.let {
+                    Text(
+                        text = if (state.subtitleStore != null) " · $it" else it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
+            }
         }
         Spacer(Modifier.height(Spacing.sm))
 
@@ -169,9 +186,21 @@ fun ReceiptCheckScreen(
                 // Toplam okunamadiysa manset CIZILMIYOR: dogrulanmamis bir
                 // sayiyi 36sp'de manset yapmak, kullanicinin
                 // sorgulayamayacagi bir yerde tahmini gercek gibi sunmak.
-                state.totalMinor?.let { total ->
+                // MANSET SLOTU BOS KALMIYOR (tasarim karari 15).
+                //
+                // Toplam okunamadiysa satirlarin toplami yaziliyor ve onundeki
+                // "~" bunun fiste basili rakam DEGIL bizim toplamimiz oldugunu
+                // soyluyor - sepet tahminindeki isaretin aynisi. Sessiz kalmak
+                // kullaniciyi fisi elle toplamaya birakirdi.
+                //
+                // Onceki hal daha kotuydu: manset hic cizilmiyor, uzun cumleli
+                // cip ("Toplam okunamadi · satirlar 1.085,65 TL") onun yerini
+                // alip ekrani kapliyordu. Bir cip manset kadar yer kaplayamaz.
+                val headline = state.totalMinor?.let { formatMinor(it) }
+                    ?: state.sumMinor.takeIf { it > 0 }?.let { "~${formatMinor(it)}" }
+                headline?.let {
                     Text(
-                        text = formatMinor(total),
+                        text = it,
                         style = MaterialTheme.typography.displayMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -190,12 +219,29 @@ fun ReceiptCheckScreen(
                     )
                 }
                 Spacer(Modifier.height(Spacing.sm))
+                // TEK AKIS (tasarim karari 4): parcalar ayri ekran degil, ayni
+                // listenin bolum basliklari. Parcayi ayri satir yapmak toplami
+                // iki yere bolerdi; parcayi hic gostermemek ise yanlis okunan
+                // parcaya erisimi kapatirdi - Gecmis tam olarak o yuzden var.
                 LazyColumn(
                     modifier = Modifier.weight(1f, fill = false),
                     verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                 ) {
-                    items(state.rows, key = { it.id }) { row ->
-                        CheckRowItem(row) { onEdit(row) }
+                    state.sections.forEach { section ->
+                        // Tek parcali fiste baslik null ve HIC cizilmiyor.
+                        section.title?.let { title ->
+                            item(key = "part-${section.receiptId}") {
+                                PartHeader(title = title, meta = section.meta)
+                            }
+                        }
+                        items(section.rows, key = { it.id }) { row ->
+                            CheckRowItem(row) { onEdit(row) }
+                        }
+                    }
+                    // "DEVAMINI CEK" LISTENIN SONUNDA, alt butonlarin arasinda
+                    // DEGIL: yaptigi is son satirin devami, onay degil.
+                    if (state.isPart) {
+                        item(key = "next-part") { NextPartRow(onNextPart) }
                     }
                 }
                 if (state.unaccounted.isNotEmpty()) {
@@ -205,15 +251,6 @@ fun ReceiptCheckScreen(
                 Spacer(Modifier.height(Spacing.sm))
                 // Yon dogru bulunmus olsa bile buton duruyor: otomatik secim iki
                 // fiste dogru bildi, ucuncude yanlis bilirse kullanici tikanmasin.
-                if (state.isPart) {
-                    // Parca okundu; sonraki parca tek dokunus uzakta olmali.
-                    NeydiButton(
-                        text = "Bu fişin devamını çek",
-                        onClick = onNextPart,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(Spacing.xs))
-                }
                 RotateRow(onReread)
                 Spacer(Modifier.height(Spacing.sm))
                 NeydiButton(
@@ -285,8 +322,34 @@ private fun GateChip(state: CheckState) {
             if (state.isPart) {
                 "Parça fişi · toplam son parçada" to MaterialTheme.colorScheme.surfaceVariant
             } else {
-                "Toplam okunamadı · satırlar ${formatMinor(state.sumMinor)}" to extras.warning
+                // KISA KALIYOR: rakam artik mansette, cip yalnizca NEREDEN
+                // geldigini soyluyor (tasarim karari 15).
+                "Satırlardan hesaplandı" to extras.accent
             }
+    }
+    // Amber dolgu ISIK MODUNDA KENARLIK ZORUNLU - AccentSurface o sozlesmenin
+    // tek uygulanma yeri, elle background(accent) yazmak yasak.
+    if (color == extras.accent) {
+        AccentSurface(shape = NeydiExtraShapes.pill) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = Spacing.sm, vertical = 6.dp),
+            ) {
+                NeydiIcon(
+                    icon = NeydiIcons.Functions,
+                    contentDescription = null,
+                    size = 18.dp,
+                    tint = extras.onAccent,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = extras.onAccent,
+                )
+            }
+        }
+        return
     }
     Surface(color = color, shape = NeydiExtraShapes.pill) {
         Text(
@@ -310,56 +373,159 @@ private fun GateChip(state: CheckState) {
  * duzeltilebiliyor - "emin degil" icin ayri bir onay akisi kurmak kullaniciyi
  * iki farkli sey ogrenmeye zorlardi.
  */
+/**
+ * Parca bolum basligi (tasarim karari 4).
+ *
+ * Bir SATIR DEGIL: dokunulamiyor, zemini yok, kart gibi cizilmiyor. Isi
+ * satirlari birbirinden ayirmak - girinti ya da kutu eklemek yeni bir bilesen
+ * gerektirirdi, halbuki hiyerarsi tek bir tipografi farkiyla soyleniyor.
+ */
+@Composable
+private fun PartHeader(title: String, meta: String?) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 2.dp, start = 4.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        meta?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
+ * *"Bu fişin devamını çek"* (tasarim karari 4).
+ *
+ * DOLGULU BUTON DEGIL: dolgulu hali "Onayla ve kaydet" ile ayni agirliktaydi
+ * ve iki farkli isi ayni sesle soyluyordu. Burada yapilan is son satirin
+ * devami - metin ve ikon, primary renginde.
+ */
+@Composable
+private fun NextPartRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(NeydiExtraShapes.pill)
+            .pressable(onTap = onClick)
+            .padding(horizontal = 4.dp, vertical = 10.dp)
+            .heightIn(min = Sizes.minTapTarget),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NeydiIcon(
+            icon = NeydiIcons.PhotoCamera,
+            contentDescription = null,
+            size = 20.dp,
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.width(Spacing.xs))
+        Text(
+            text = "Bu fişin devamını çek",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
 @Composable
 private fun CheckRowItem(row: CheckRow, onClick: () -> Unit) {
     val extras = LocalNeydiExtraColors.current
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = if (row.needsReview) extras.accent.copy(alpha = 0.14f)
-        else MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.fillMaxWidth(),
+    val styles = LocalNeydiTextStyles.current
+    // ADI OKUNAMAYAN SATIR (tasarim karari 14): baslik slotunda barkod
+    // duruyor, hata mesaji DEGIL. "Eslesmedi" yedi satirin yedisine ayni
+    // cumleyi yazinca ekran hicbir sey soylemiyordu; barkod en azindan
+    // satirlari birbirinden ayiriyor ve fiste gercekten yazan sey.
+    val nameless = row.productName == null && row.barcode != null
+
+    // SURFACE(onClick) DEGIL, pressable: tiklanabilir Material3 Surface
+    // ripple'i sabit kodluyor ve tema override'i ona ulasmiyor (calisma
+    // sozlesmesi, "Material3 Surface" maddesi).
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .pressable(onTap = onClick)
+            .background(
+                if (row.needsReview) extras.accent.copy(alpha = 0.14f)
+                else MaterialTheme.colorScheme.surfaceVariant,
+            )
+            .padding(Spacing.sm)
+            .heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.padding(Spacing.sm).heightIn(min = 48.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = row.productName ?: "Eşleşmedi",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (row.needsReview) FontWeight.Normal else FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (row.needsReview) {
-                        AccentChip(
-                            text = if (row.productName == null) "yeni" else "emin değil",
-                            modifier = Modifier.padding(start = Spacing.xs),
-                        )
-                    }
-                }
-                // FISTE YAZAN HALI. Bu satir silinemez: yanlis eslesmeyi geri
-                // alabilen tek ipucu bu.
+        // 4dp amber serit: "bu satir onay bekliyor" gozle soyleniyor.
+        if (row.needsReview) {
+            Box(
+                Modifier
+                    .width(4.dp)
+                    .height(36.dp)
+                    .clip(NeydiExtraShapes.pill)
+                    .background(extras.accent),
+            )
+            Spacer(Modifier.width(10.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = row.rawText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = row.productName ?: row.barcode ?: "Eşleşmedi",
+                    // BARKOD AD GIBI DEGIL: bir kademe kucuk (15sp) ve
+                    // ikincil renkte, yani "bu bir ad degil" bakista
+                    // anlasiliyor.
+                    style = if (nameless) styles.priceChip else MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (row.needsReview) FontWeight.Normal else FontWeight.Medium,
+                    color = if (nameless) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
+                // Adsiz satirda cip YOK: ikinci satir zaten ne oldugunu ve
+                // ne yapilacagini soyluyor, cip ucuncu kez tekrar ederdi.
+                if (row.needsReview && !nameless) {
+                    AccentChip(
+                        text = if (row.productName == null) "yeni" else "emin değil",
+                        modifier = Modifier.padding(start = Spacing.xs),
+                    )
+                }
             }
             Text(
-                text = formatMinor(row.amountMinor, currency = ""),
-                // `priceRow`, `priceChip` DEGIL (tasarim karari 10). Fis
-                // satirindaki fiyat DOKUNULABILIR ve duzeltilebilir; bir
-                // kademe buyuk olmasi (17sp) dokunulabilirligin kendisi,
-                // sus degil. Stil zaten tanimliydi ama HIC KULLANILMIYORDU.
-                style = LocalNeydiTextStyles.current.priceRow,
-                modifier = Modifier.padding(start = Spacing.sm),
+                // Adsiz satirda NE OLDUGUNU ve CIKIS YOLUNU ayni cumle
+                // veriyor. Diger satirlarda fiste yazan hali duruyor -
+                // yanlis eslesmeyi geri alabilen tek ipucu o.
+                text = if (nameless) "adı okunamadı — dokun, ürünü seç" else row.rawText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+        }
+        Text(
+            text = formatMinor(row.amountMinor, currency = ""),
+            // `priceRow`, `priceChip` DEGIL (tasarim karari 10). Fis
+            // satirindaki fiyat DOKUNULABILIR ve duzeltilebilir; bir kademe
+            // buyuk olmasi (17sp) dokunulabilirligin kendisi, sus degil.
+            style = styles.priceRow,
+            modifier = Modifier.padding(start = Spacing.sm),
+        )
+        if (nameless) {
+            Spacer(Modifier.width(Spacing.xs))
+            NeydiIcon(icon = NeydiIcons.ChevronRight, contentDescription = null, size = 22.dp)
         }
     }
 }
@@ -660,9 +826,14 @@ private val SHEET_MAX_HEIGHT = 520.dp
 // --- Onizlemeler ------------------------------------------------------------
 
 private val sampleRows = listOf(
-    CheckRow("1", "Krema", 10600, 2.0, "KREMA 18YAĞLI 200ML %1. *106.00", false),
-    CheckRow("2", null, 8450, 1.0, "TURŞU KORNI ŞON 670G 21. *84.50", true),
-    CheckRow("3", "Poşet", 100, 1.0, "ALIŞVERIŞ POŞETi BiM 220 *1.00", false),
+    CheckRow("1", "r1", "Krema", 10600, 2.0, "KREMA 18YAĞLI 200ML %1. *106.00", false),
+    CheckRow("2", "r1", null, 8450, 1.0, "TURŞU KORNI ŞON 670G 21. *84.50", true),
+    CheckRow("3", "r1", "Poşet", 100, 1.0, "ALIŞVERIŞ POŞETi BiM 220 *1.00", false),
+)
+
+/** Tek parcali fis: baslik yok, tek bolum. */
+private val sampleSections = listOf(
+    CheckSection(receiptId = "r1", title = null, meta = null, rows = sampleRows),
 )
 
 @PreviewLightDark
@@ -675,7 +846,7 @@ private fun ReceiptCheckHoldsPreview() = NeydiPreview {
             totalMinor = 19150,
             sumMinor = 19150,
             gateHolds = true,
-            rows = sampleRows,
+            sections = sampleSections,
         ),
         editing = null,
         suggestions = emptyList(),
@@ -694,7 +865,7 @@ private fun ReceiptCheckMismatchPreview() = NeydiPreview {
             totalMinor = 22550,
             sumMinor = 19150,
             gateHolds = false,
-            rows = sampleRows,
+            sections = sampleSections,
         ),
         editing = null,
         suggestions = emptyList(),
@@ -734,6 +905,49 @@ private fun ReceiptCheckLoadingPreview() = NeydiPreview {
     )
 }
 
+/**
+ * COK PARCALI FIS TEK AKISTA (tasarim karari 4).
+ *
+ * Onizlemesi olmadan bu hal cihazda ancak iki kare cekilerek gorulebilir -
+ * yani pratikte hic gorulmezdi. Bolum basliklari, "devamini cek" satiri ve
+ * fisin TAMAMINA ait manset burada bir arada.
+ */
+@PreviewLightDark
+@Composable
+private fun ReceiptCheckMultiPartPreview() = NeydiPreview {
+    ReceiptCheckScreen(
+        state = CheckState(
+            loading = false,
+            subtitleStore = "MİGROS",
+            subtitleMeta = "12 Ağustos 15:31 · 2 parça",
+            totalMinor = 64250,
+            sumMinor = 64250,
+            gateHolds = true,
+            isPart = true,
+            sections = listOf(
+                CheckSection(
+                    receiptId = "r1",
+                    title = "Parça 1",
+                    meta = "2 satır",
+                    rows = sampleRows.take(2),
+                ),
+                CheckSection(
+                    receiptId = "r2",
+                    title = "Parça 2",
+                    meta = "1 satır · 1 satır kontrol bekliyor",
+                    rows = listOf(
+                        CheckRow("9", "r2", null, 16400, 1.0, "KSR PYNR 400G *164.00", true),
+                    ),
+                ),
+            ),
+        ),
+        editing = null,
+        suggestions = emptyList(),
+        onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
+    )
+}
+
 /** Kapinin UCUNCU hali: toplam okunamadi - "tutmadi" ile ayni sey DEGIL. */
 @PreviewLightDark
 @Composable
@@ -745,7 +959,7 @@ private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
             totalMinor = null,
             sumMinor = 19150,
             gateHolds = null,
-            rows = sampleRows,
+            sections = sampleSections,
         ),
         editing = null,
         suggestions = emptyList(),
@@ -764,7 +978,7 @@ private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
 @Composable
 private fun ReceiptCheckCorrectionPreview() = NeydiPreview {
     ReceiptCheckScreen(
-        state = CheckState(loading = false, storeName = "FiLE MARKET", rows = sampleRows),
+        state = CheckState(loading = false, storeName = "FiLE MARKET", sections = sampleSections),
         editing = sampleRows[1],
         suggestions = List(8) { i ->
             CatalogSeed(

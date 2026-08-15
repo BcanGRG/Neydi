@@ -14,6 +14,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.di.AppBootstrap
 import com.neydi.app.nav.FinishShopping
 import com.neydi.app.nav.Settings
+import com.neydi.app.nav.DeleteData
 import com.neydi.app.nav.MissingItems
 import com.neydi.app.nav.History
 import com.neydi.app.nav.ReceiptCheck
@@ -21,6 +22,7 @@ import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
 import com.neydi.app.ui.finish.FinishShoppingRoute
+import com.neydi.app.ui.settings.DeleteDataRoute
 import com.neydi.app.ui.settings.SettingsRoute
 import com.neydi.app.ui.missing.MissingItemsRoute
 import com.neydi.app.ui.history.HistoryRoute
@@ -121,7 +123,22 @@ fun App() {
                         onOpenReceipt = { go(ReceiptCheck(it)) },
                     )
                 }
-                entry<Settings> { SettingsRoute(onBack = { back() }) }
+                entry<Settings> {
+                    SettingsRoute(onBack = { back() }, onDeleteData = { go(DeleteData) })
+                }
+                entry<DeleteData> {
+                    DeleteDataRoute(
+                        onBack = { back() },
+                        // SILME BITINCE LISTEYE DONULUYOR, Ayarlar'a degil:
+                        // arkadaki ekranlarin hepsi artik olmayan veriyi
+                        // gosteriyor. Liste tek dogru varis - hem uygulamanin
+                        // kendisi hem de silmeden sonra dogru olan tek ekran.
+                        onDeleted = {
+                            backStack.removeAll(backStack.drop(1))
+                            toast = "Verilerin silindi"
+                        },
+                    )
+                }
                 entry<Setup> { SetupScreen(onFinish = { back() }) }
             },
         )

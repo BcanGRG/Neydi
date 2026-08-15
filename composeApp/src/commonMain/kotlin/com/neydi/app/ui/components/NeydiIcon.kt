@@ -15,10 +15,12 @@ import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.Functions
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Search
@@ -67,6 +69,8 @@ object NeydiIcons {
     val ExpandMore: ImageVector get() = Icons.Rounded.ExpandMore
     val Undo: ImageVector get() = Icons.Rounded.Undo
     val FilterList: ImageVector get() = Icons.Rounded.FilterList
+    /** "Satirlardan hesaplandi" - toplam okunamadiginda (tasarim karari 15). */
+    val Functions: ImageVector get() = Icons.Rounded.Functions
     val ContentPaste: ImageVector get() = Icons.Rounded.ContentPaste
     val ContentCopy: ImageVector get() = Icons.Rounded.ContentCopy
     val Search: ImageVector get() = Icons.Rounded.Search
@@ -75,6 +79,8 @@ object NeydiIcons {
     val Logout: ImageVector get() = Icons.Rounded.Logout
     val DragIndicator: ImageVector get() = Icons.Rounded.DragIndicator
     val ReceiptLong: ImageVector get() = Icons.Rounded.ReceiptLong
+    /** "Bu fisin devamini cek" - cok parcali fis (tasarim karari 4). */
+    val PhotoCamera: ImageVector get() = Icons.Rounded.PhotoCamera
     val HourglassTop: ImageVector get() = Icons.Rounded.HourglassTop
 
     /** Fis "kontrol bekliyor" hali. Dolgusuz varyant - tasarim rest FILL 0 diyor. */

@@ -6,6 +6,8 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.db.ReceiptLine
 import com.neydi.app.data.db.ReceiptLineDao
 import com.neydi.app.data.db.ReceiptStatus
+import com.neydi.app.data.db.Store
+import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.stats.ProductStatsRebuilder
@@ -69,6 +71,7 @@ class ReceiptProcessor(
     private val productDao: ProductDao,
     private val aliasDao: ProductAliasDao,
     private val tripDao: TripDao,
+    private val storeDao: StoreDao,
     private val statsRebuilder: ProductStatsRebuilder,
     private val clock: () -> Long,
     private val newId: () -> String,
@@ -141,6 +144,7 @@ class ReceiptProcessor(
         // kullanacak. Okunamadiysa null kaliyor - capturedAt'e dusmek okuyan
         // tarafin isi, uydurmak bizim isimiz degil.
         receiptDao.setReceiptDate(receiptId, reading.receiptDate)
+        rememberStore(receipt.householdId, receipt.tripId, reading.storeName)
         rollUpTripTotal(receipt.tripId)
         // ISTATISTIK YENIDEN KURULUYOR (F6.1).
         //
@@ -171,6 +175,44 @@ class ReceiptProcessor(
      */
     private suspend fun rollUpTripTotal(tripId: String) {
         tripDao.setTotal(tripId, receiptDao.sumTotalsForTrip(tripId))
+    }
+
+    /**
+     * Magaza satirini fisten dogurur ve geziye baglar (tasarim karari 11).
+     *
+     * KULLANICI ELLE MAGAZA EKLEMIYOR. Elle girilen bir magaza fiyat
+     * karsilastirmasina hicbir veri katmiyor - karsilastirmayi besleyen sey
+     * fisin kendisi; kullaniciya is verip karsiliginda hicbir sey dondurmeyen
+     * bir form, "her ekran varligini ispat eder" kuralina takiliyor.
+     *
+     * TEKILLIK ZINCIRDE, ADDA DEGIL: ayni marketin iki subesi ("BIM AKYURT",
+     * "BIM BADEMLIK") tek satir uretiyor, cunku `chainKey` ikisinden de ayni
+     * anahtari cikariyor - fiyat karsilastirmasi da zaten zincir bazinda
+     * anlamli.
+     *
+     * ADI EKRANDA GORULEN HALIYLE saklaniyor (`storeDisplayName`, karar 13):
+     * Ayarlar'da ticari unvan cizmek Fis Kontrol'de duzeltilen seyi baska bir
+     * ekranda geri getirirdi.
+     *
+     * Magaza adi okunamadiysa HICBIR SEY YAZILMIYOR - "bilinmiyor" adinda bir
+     * magaza satiri, bolumun bos kalmasindan daha kotu.
+     */
+    private suspend fun rememberStore(householdId: String, tripId: String, storeNameRaw: String?) {
+        val display = storeDisplayName(storeNameRaw) ?: return
+        val chain = chainKey(storeNameRaw)
+        val existing = storeDao.findByChain(householdId, chain)
+        val storeId = existing?.id ?: newId().also { id ->
+            storeDao.insert(
+                Store(
+                    id = id,
+                    householdId = householdId,
+                    name = display,
+                    chain = chain,
+                    createdAt = clock(),
+                ),
+            )
+        }
+        tripDao.setStoreIfAbsent(tripId, storeId)
     }
 
     /**

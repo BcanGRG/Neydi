@@ -261,6 +261,10 @@ class ReceiptUiLogicTest {
     /**
      * TASARIM MAGAZAYI BASLIK YAPIYOR. Ad ilk OKUNABILMIS fisten geliyor: cok
      * parcali fiste kunye yalnizca ilk parcada basili, sonrakiler tasimiyor.
+     *
+     * VE ZINCIR ADI YAZILIYOR, ticari unvan degil (tasarim karari 13):
+     * "BIM BIRLESIK MAGAZALAR" satirin tamamini yiyip tarihi ekran disina
+     * itiyordu.
      */
     @Test
     fun tripRowTakesStoreFromFirstReadableReceipt() {
@@ -275,7 +279,7 @@ class ReceiptUiLogicTest {
         )
 
         val row = result.single()
-        assertEquals("BIM BIRLESIK MAGAZALAR", row.storeName)
+        assertEquals("BIM", row.storeName)
         assertEquals(18, row.itemCount)
     }
 

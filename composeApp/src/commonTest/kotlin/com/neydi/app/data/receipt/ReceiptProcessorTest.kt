@@ -13,6 +13,7 @@ import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.stats.ProductStatsRebuilder
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,6 +87,7 @@ class ReceiptProcessorTest {
             productDao = db.productDao(),
             aliasDao = db.productAliasDao(),
             tripDao = db.tripDao(),
+            storeDao = db.storeDao(),
             statsRebuilder = ProductStatsRebuilder(db.productStatsDao(), clock = { 500L }),
             clock = { 500L },
             newId = { "line-${++n}" },
@@ -121,6 +123,64 @@ class ReceiptProcessorTest {
 
         assertEquals(ReceiptStatus.MISMATCHED, db.receiptDao().byId("r1")?.status)
         assertTrue(db.receiptLineDao().forReceipt("r1").isNotEmpty())
+    }
+
+    // --- Karar 11 · magaza satiri fisten doguyor ----------------------------
+
+    /**
+     * MAGAZA SATIRI ELLE DEGIL FISTEN DOGUYOR ve adi EKRANDA GORULEN hali -
+     * ticari unvan degil (karar 13 ile ayni ad).
+     *
+     * Gezi de magazaya BAGLANIYOR: bag kurulmazsa `Trip.storeId` sonsuza kadar
+     * null kalir ve fiyat karsilastirmasi hangi zincirden konustugunu bilemez.
+     */
+    @Test
+    fun receiptGivesBirthToStoreRow() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        val stores = db.storeDao().observeAll(home).first()
+        assertEquals(1, stores.size)
+        assertEquals("BIM", stores.single().name)
+        assertEquals("bim", stores.single().chain)
+        assertEquals(stores.single().id, db.tripDao().byId(trip)?.storeId)
+    }
+
+    /**
+     * AYNI ZINCIR IKINCI SATIR DOGURMUYOR. Yoksa Ayarlar'daki bolum bir liste
+     * degil bir gunluk olurdu: on fis = on "BIM" satiri.
+     */
+    @Test
+    fun secondReceiptFromSameChainReusesStore() = runTest {
+        val db = db(); prepare(db)
+        db.receiptDao().insert(
+            Receipt(
+                id = "r2",
+                householdId = home,
+                tripId = trip,
+                imagePath = "/tmp/r2.jpg",
+                capturedAt = 200,
+                createdAt = 200,
+            ),
+        )
+        val p = processor(db, FakeReader(bimLines))
+        p.process("r1")
+        p.process("r2")
+
+        assertEquals(1, db.storeDao().observeAll(home).first().size)
+    }
+
+    /**
+     * MAGAZA ADI OKUNAMADIYSA HICBIR SEY YAZILMIYOR. "bilinmiyor" adinda bir
+     * magaza satiri, bolumun bos kalmasindan daha kotu olurdu.
+     */
+    @Test
+    fun unreadableStoreWritesNoStoreRow() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines.drop(1))).process("r1")
+
+        assertTrue(db.storeDao().observeAll(home).first().isEmpty())
+        assertEquals(null, db.tripDao().byId(trip)?.storeId)
     }
 
     /**

@@ -184,6 +184,17 @@ interface TripDao {
     suspend fun setTotal(id: String, total: Long?)
 
     /**
+     * Geziyi fisten okunan magazaya baglar (tasarim karari 11).
+     *
+     * `storeId IS NULL` KOSULU VAR: ilk okunan magaza kaliyor. Cok parcali bir
+     * fisin ikinci parcasi yanlis okunursa gezi mağaza degistirmemeli - ve
+     * kullanicinin elle duzeltmesi de (o yuzey yazilinca) bu yazmayla
+     * ezilmemeli.
+     */
+    @Query("UPDATE trip SET storeId = :storeId WHERE id = :id AND storeId IS NULL")
+    suspend fun setStoreIfAbsent(id: String, storeId: String)
+
+    /**
      * KARSILASTIR-VE-YAZ ile kapatir. "TEK CIHAZ KAPATIR" kuralini ZORLAYAN yer.
      *
      * completedAt IS NULL sayesinde ikinci kapatma denemesi SIFIR satir
@@ -550,6 +561,26 @@ interface ReceiptLineDao {
     suspend fun clearForReceipt(receiptId: String)
 
     /**
+     * Fis basina satir ve onay bekleyen satir sayisi (tasarim karari 4).
+     *
+     * TEK SORGU, fis basina bir sorgu DEGIL: `observeLineCounts` ile ayni
+     * gerekce - elli gezilik bir gecmiste N+1 sorgu listeyi acilirken
+     * kilitlerdi.
+     */
+    @Query(
+        """
+        SELECT rl.receiptId AS receiptId,
+               COUNT(*) AS lineCount,
+               SUM(CASE WHEN rl.needsReview THEN 1 ELSE 0 END) AS reviewCount
+        FROM receipt_line rl
+        JOIN receipt r ON r.id = rl.receiptId
+        WHERE r.householdId = :householdId AND rl.deletedAt IS NULL AND r.deletedAt IS NULL
+        GROUP BY rl.receiptId
+        """,
+    )
+    fun observeLineCounts(householdId: String): Flow<List<ReceiptLineCount>>
+
+    /**
      * VERILEN FISLERIN satirlarinin toplami, kurus (F4.13 duzeltmesi).
      *
      * ARITMETIK DEGISMEZ FIZIKSEL FISE AIT, FOTOGRAFA DEGIL. Uzun fis parca
@@ -613,4 +644,43 @@ interface ProductAliasDao {
         """,
     )
     suspend fun find(householdId: String, chain: String, normalized: String): ProductAlias?
+}
+
+/**
+ * Store DAO'su - magaza satiri FISTEN DOGUYOR (tasarim karari 11).
+ *
+ * ELLE MAGAZA EKLEME YOK ve bu bilincli: elle girilen bir magaza fiyat
+ * karsilastirmasina hicbir veri katmiyor, karsilastirmayi besleyen sey fisin
+ * kendisi. Bu yuzden burada `insert` ve `observeAll` disinda bir sey yok -
+ * guncelleme, silme, yeniden adlandirma cagrilari YAZILMADI cunku onlari
+ * cagiracak bir yuzey yok.
+ */
+@Dao
+interface StoreDao {
+    /**
+     * ZINCIR BAZINDA TEKIL. Ayni zincirin ikinci fisi yeni satir DOGURMUYOR:
+     * "Migros"tan on fis cekmek Ayarlar'a on satir yazsaydi bolum bir liste
+     * degil bir gunluk olurdu.
+     */
+    @Query(
+        """
+        SELECT * FROM store
+        WHERE householdId = :householdId AND chain = :chain AND deletedAt IS NULL
+        LIMIT 1
+        """,
+    )
+    suspend fun findByChain(householdId: String, chain: String): Store?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(store: Store)
+
+    /** Ayarlar'daki Magazalar bolumu. Bos donerse bolum HIC cizilmiyor. */
+    @Query(
+        """
+        SELECT * FROM store
+        WHERE householdId = :householdId AND deletedAt IS NULL
+        ORDER BY createdAt
+        """,
+    )
+    fun observeAll(householdId: String): Flow<List<Store>>
 }
