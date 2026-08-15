@@ -60,14 +60,6 @@ fun MissingItemsScreen(onAdd: () -> Unit, onCancel: () -> Unit) = AppScaffold(
 }
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) = AppScaffold(
-    title = "Ayarlar",
-    description = "Hane, her zamankiler, onerilmeyenler, magazalar, gizlilik.",
-) {
-    NeydiButton("Geri", onBack)
-}
-
-@Composable
 fun SetupScreen(onFinish: () -> Unit) = AppScaffold(
     title = "Kurulum",
     description = "Uc adim, bir daha gorunmez. Amac: 15. gezide degil 3. gezide akilli hissetmek.",
@@ -85,12 +77,6 @@ fun SetupScreen(onFinish: () -> Unit) = AppScaffold(
 @Composable
 private fun MissingItemsPreview() = NeydiPreview {
     MissingItemsScreen(onAdd = {}, onCancel = {})
-}
-
-@PreviewLightDark
-@Composable
-private fun SettingsPreview() = NeydiPreview {
-    SettingsScreen(onBack = {})
 }
 
 @PreviewLightDark

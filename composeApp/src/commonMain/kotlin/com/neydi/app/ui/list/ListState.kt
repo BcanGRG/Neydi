@@ -1,6 +1,8 @@
 package com.neydi.app.ui.list
 
+import com.neydi.app.data.daysBetween
 import com.neydi.app.data.db.ListRowProjection
+import com.neydi.app.data.formatMinor
 import com.neydi.app.ui.components.ListRow
 import com.neydi.app.data.repo.STAPLE_LIMIT
 import com.neydi.app.ui.components.turkishInitials
@@ -21,10 +23,47 @@ data class ListState(
     val shoppingMode: Boolean = false,
     /** Bos durumu hangi metinle cizecegimizi belirler. */
     val emptyKind: EmptyKind = EmptyKind.ILK_GUN,
+    /** Basligin alt satiri icin son kapanmis gezi; hic yoksa null. */
+    val lastTrip: LastTrip? = null,
 ) {
     val isEmpty: Boolean get() = !loading && sections.isEmpty() && taken.isEmpty()
     val totalRows: Int get() = sections.sumOf { it.rows.size } + taken.size
     val remainingRow: Int get() = sections.sumOf { b -> b.rows.count { !it.row.checked } }
+}
+
+/**
+ * Basligin alt satirindaki son alisveris hatirlatmasi (Ekran 1 tasarimi).
+ *
+ * @property closedAt gezinin kapandigi an, epoch millis.
+ * @property totalMinor fisten okunmus tutar, kurus; okunamadiysa null.
+ */
+data class LastTrip(val closedAt: Long, val totalMinor: Long?)
+
+/**
+ * Basligin alt satiri: *"Son alisveris: 8 gun once · 642 TL"*.
+ *
+ * TASARIM SAYI SAYMIYOR, HATIRLATIYOR. Onceki hali "N urun" idi ve ekranin
+ * kendisi zaten o satirlari gosteriyordu - baslik ayni bilgiyi tekrar ediyor,
+ * hicbir sey eklemiyordu. Tasarimin sectigi bilgi listede OLMAYAN tek sey:
+ * en son ne zaman ve ne kadara alisveris yapildigi.
+ *
+ * TUTAR OKUNAMADIYSA YAZILMIYOR: "642 TL" yerine "0 TL" ya da "- TL" yazmak
+ * dogrulanmamis bir sayiyi manset yapmak olurdu (bkz. F4.11'in ayni karari).
+ *
+ * @param now cagiran taraftan geliyor ki test deterministik olsun.
+ */
+internal fun lastTripSummary(lastTrip: LastTrip?, now: Long): String {
+    if (lastTrip == null) return "Henüz alışveriş yok"
+    val days = daysBetween(lastTrip.closedAt, now)
+    val whenText = when {
+        // Negatif gun: cihaz saati geri alinmis. "-2 gun once" yazmaktansa
+        // bugune yuvarlamak daha az yanlis.
+        days <= 0 -> "bugün"
+        days == 1 -> "dün"
+        else -> "$days gün önce"
+    }
+    val amount = lastTrip.totalMinor?.let { " · ${formatMinor(it)}" } ?: ""
+    return "Son alışveriş: $whenText$amount"
 }
 
 /**

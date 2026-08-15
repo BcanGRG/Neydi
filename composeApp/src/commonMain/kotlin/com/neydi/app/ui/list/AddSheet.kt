@@ -1,5 +1,17 @@
 package com.neydi.app.ui.list
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
+import com.neydi.app.ui.theme.Sizes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
+import com.neydi.app.ui.theme.NeydiExtraShapes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -28,6 +41,8 @@ import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SuggestionChip
 import com.neydi.app.ui.components.turkishInitials
+import com.neydi.app.ui.theme.CategoryTint
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
 
@@ -54,6 +69,13 @@ internal fun AddSheetContent(
     onProduct: (CatalogSeed) -> Unit,
     onFreeText: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Bu sheet acik kalirken eklenen urun sayisi (tasarim: "3 urun eklendi"). */
+    addedCount: Int = 0,
+    /** Sheet ici arama metni (tasarim: "Urun ara"). */
+    query: String = "",
+    onQueryChange: (String) -> Unit = {},
+    /** Aramanin sonuclari; bos sorguda bos liste. */
+    results: List<CatalogSeed> = emptyList(),
 ) {
     // GRID YUKSEKLIGI EKRANA ORANLI, sabit dp DEGIL.
     //
@@ -81,9 +103,25 @@ internal fun AddSheetContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = selected?.name ?: "Ne ekleyelim?",
+                // KOKTE "Ekle" - tasarimin basligi bu. "Ne ekleyelim?" bir
+                // soru soruyordu; sheet zaten kullanicinin actigi bir sey,
+                // sormasi gereken bir sey yok. Reyona girildiginde reyon adi
+                // basliga geciyor: orada kullanicinin NEREDE oldugu bilgisi
+                // sorudan daha degerli.
+                text = selected?.name ?: "Ekle",
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
             )
+            if (selected == null && addedCount > 0) {
+                // "N urun eklendi" - sheet acik kalirken kac tane eklendigini
+                // sayiyor. Tasarimin karari ve dogru: sheet kapanmadigi icin
+                // kullanici listeye bakamiyor, sayac tek geri bildirim.
+                Text(
+                    text = "$addedCount ürün eklendi",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (selected != null) {
                 Text(
                     text = "← Reyonlar",
@@ -94,9 +132,76 @@ internal fun AddSheetContent(
             }
         }
 
-        if (selected == null) {
+        // ARAMA ALANI - tasarimin sheet basligindaki ikinci satiri.
+        //
+        // ISLEVSEL BIR EKSIKTI: arama yalnizca alttaki hizli ekleme
+        // cubugunda vardi, yani kullanici aradigi urunu bulmak icin sheet'i
+        // KAPATMAK zorundaydi. Sheet'in butun amaci "dokunma = ekle, sheet
+        // acik kalir" oldugu icin bu tam tersi yonde calisiyordu.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(NeydiExtraShapes.textField)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(
+                    Sizes.hairline,
+                    LocalNeydiExtraColors.current.hairline,
+                    NeydiExtraShapes.textField,
+                )
+                .padding(horizontal = 14.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                NeydiIcon(
+                    icon = NeydiIcons.Search,
+                    contentDescription = null,
+                    size = 22.dp,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(10.dp))
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    singleLine = true,
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    decorationBox = { inner ->
+                        if (query.isEmpty()) {
+                            Text(
+                                text = "Ürün ara",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        inner()
+                    },
+                )
+            }
+        }
+
+        if (query.isNotBlank()) {
+            // ARAMA REYON SECIMINI EZIYOR: kullanici yaziyorsa aradigi sey
+            // hangi reyonda oldugundan bagimsiz. Sonuc yoksa liste bos
+            // kaliyor ve alttaki kacis satiri aranan kelimeyi tasiyor.
+            LazyColumn(modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO)) {
+                items(results, key = { it.id }) { seed ->
+                    SuggestionChip(
+                        label = seed.name,
+                        reason = seed.defaultUnit,
+                        onClick = { onProduct(seed) },
+                    )
+                }
+            }
+        } else if (selected == null) {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 84.dp),
+                // UC SUTUN SABIT, uyarlanabilir DEGIL: tasarim 3x4 grid
+                // istiyor ve kutucuk boyutu (56dp) zaten sabit. Adaptive
+                // genis ekranda dorde cikip tasarimin ritmini bozuyordu.
+                columns = GridCells.Fixed(3),
                 modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
@@ -107,7 +212,20 @@ internal fun AddSheetContent(
                         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                         modifier = Modifier.pressable(onTap = { onCategory(category) }),
                     ) {
-                        CategoryTile(turkishInitials(category.name))
+                        // TON TOHUMDAN GELIYOR (F6.9). Onceden 12 kategori
+                        // de ayni griydi: `Category.tintArgb` tohumlaniyor ama
+                        // hicbir yerde okunmuyordu. Ham ton dogrudan dolgu
+                        // olamaz (orta-koyu ve doygun); zeminle karistirmasi
+                        // ve kontrast olcumu CategoryTint'te.
+                        CategoryTile(
+                            initials = turkishInitials(category.name),
+                            tint = CategoryTint.fill(
+                                tintArgb = category.tintArgb,
+                                surface = MaterialTheme.colorScheme.surface,
+                                isLight = LocalNeydiExtraColors.current.isLight,
+                            ),
+                            contentColor = CategoryTint.content(MaterialTheme.colorScheme.onSurface),
+                        )
                         Text(
                             text = category.name,
                             style = MaterialTheme.typography.labelSmall,
@@ -135,7 +253,10 @@ internal fun AddSheetContent(
         // degil. Katalogda olmayan bir sey isteyen kullanici burada tikanirsa
         // sheet bir duvar olur.
         NeydiButton(
-            text = "Listede yok, kendim yazayım",
+            // TASARIM ARANAN KELIMEYI METNIN ICINE KOYUYOR: '"kuru kayisi"
+            // ekle'. Kullanicinin yazdigi seyi geri gostermek, butonun ne
+            // yapacagini tahmin ettirmiyor - soyluyor.
+            text = if (query.isNotBlank()) "\"$query\" ekle" else "Listede yok, kendim yazayım",
             onClick = onFreeText,
             container = MaterialTheme.colorScheme.surfaceVariant,
             content = MaterialTheme.colorScheme.onSurfaceVariant,

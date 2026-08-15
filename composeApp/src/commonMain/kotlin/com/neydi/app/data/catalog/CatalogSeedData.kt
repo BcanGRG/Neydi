@@ -18,7 +18,7 @@ internal data class SeedCategory(
     /** MARKET GEZME sirasi, alfabetik DEGIL. Alfabetik siralamak insani
      *  markette ileri geri yurutur. */
     val order: Int,
-    val tonArgb: Long,
+    val tintArgb: Long,
 )
 
 internal data class SeedProduct(

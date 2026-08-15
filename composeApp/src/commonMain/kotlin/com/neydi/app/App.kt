@@ -17,8 +17,8 @@ import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
 import com.neydi.app.ui.finish.FinishShoppingRoute
-import com.neydi.app.ui.screens.SettingsScreen
-import com.neydi.app.ui.screens.MissingItemsScreen
+import com.neydi.app.ui.settings.SettingsRoute
+import com.neydi.app.ui.missing.MissingItemsRoute
 import com.neydi.app.ui.history.HistoryRoute
 import com.neydi.app.ui.screens.SetupScreen
 import com.neydi.app.ui.list.ListScreen
@@ -68,8 +68,18 @@ fun App() {
                     )
                 }
                 entry<MissingItems> {
-                    MissingItemsScreen(
-                        onAdd = { go(FinishShopping()) },
+                    // IKI TEL HATASI DUZELTILDI (F6.4):
+                    // (1) `onAdd` Ekran 4'e (FinishShopping) gidiyordu -
+                    //     yani "eksikleri ekle" demek alisverisi BITIRMEK
+                    //     anlamina geliyordu. Ustelik FinishShopping(null)
+                    //     bos listeye dusuyor, o ekran kalici olarak bos
+                    //     ciziliyordu.
+                    // (2) Tasarimin istedigi: secilenleri ekle ve ALISVERIS
+                    //     MODUNA GIR. Artik oyle.
+                    MissingItemsRoute(
+                        // Mod gecisini ViewModel yapiyor (gezinin durumu,
+                        // ekranin degil); burada yalnizca geri donuluyor.
+                        onEnterShopping = { back() },
                         onCancel = { back() },
                     )
                 }
@@ -95,7 +105,7 @@ fun App() {
                         onOpenReceipt = { go(ReceiptCheck(it)) },
                     )
                 }
-                entry<Settings> { SettingsScreen(onBack = { back() }) }
+                entry<Settings> { SettingsRoute(onBack = { back() }) }
                 entry<Setup> { SetupScreen(onFinish = { back() }) }
             },
         )

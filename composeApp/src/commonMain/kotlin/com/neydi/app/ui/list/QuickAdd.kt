@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -27,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.neydi.app.data.db.CatalogSeed
 import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.suggest.reasonText
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SuggestionChip
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
@@ -117,6 +121,17 @@ fun QuickAdd(
                 .padding(horizontal = Spacing.md),
             contentAlignment = Alignment.CenterStart,
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+            // TASARIMIN `add` IKONU (22sp, outline rengi). Alanin ne ise
+            // yaradigini yer isaretinden ONCE soyluyor: klavye acildiginda
+            // yer isareti kayboluyor ama ikon kaliyor.
+            NeydiIcon(
+                icon = NeydiIcons.Add,
+                contentDescription = null,
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(10.dp))
             BasicTextField(
                 value = input,
                 onValueChange = onInputChange,
@@ -144,6 +159,7 @@ fun QuickAdd(
                     content()
                 },
             )
+            }
         }
     }
 }

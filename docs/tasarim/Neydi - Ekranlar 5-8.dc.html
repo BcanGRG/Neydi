@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@72,600,30,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#E4D8C9; font-family:'Plus Jakarta Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#B34418; text-decoration:none; }
+  a:hover { color:#8A5A00; }
+</style>
+</helmet>
+
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;color:#221A14">
+
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Ekran 5 · 6 · 7 · 8</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Ürün Detayı · Geçmiş · Ayarlar · Kurulum</div>
+    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Dördü de varlığını ispat eden destinasyonlar: fiyat geçmişi satırı açıklar, Geçmiş yanlış okunmuş fişe dönmenin tek yolu, Ayarlar düz bir liste, Kurulum yalnızca bir kez görünür.</div>
+    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45"><a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a></div>
+  </div>
+
+  <!-- EKRAN 5 -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">Ekran 5</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Ürün Detayı — genişleyebilen sheet</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Okunacak şey grafik değil manşet cümlesi; grafik cümleyi açıklar.</div>
+    </div>
+
+    <div id="4a" style="display:flex;flex-direction:column;gap:16px;background:#F1E7DB;border:1px solid #C9B9A5;border-radius:32px;padding:32px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="height:28px;padding:0 12px;border-radius:999px;background:#221A14;display:flex;align-items:center;font:700 13px/1 'Plus Jakarta Sans';color:#F5EDE6">4a</div>
+        <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Üç veri durumu yan yana</div>
+      </div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Aynı sheet, veri miktarına göre üç ayrı yoğunluk. Sağdaki 9 gözlemli örnek ambalaj küçülmesi içeriyor: paket fiyatı sabit kalmış, gerçek artış litre fiyatında. Yanlış bir şey göstermektense hiçbir şey göstermeme kuralı bu üç halin tamamını belirliyor.</div>
+
+      <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+
+        <!-- 0 GÖZLEM -->
+        <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+          <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">0 gözlem</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">grafik yok · manşet yok · yüzde yok</div></div>
+          <div data-screen-label="5 0 gözlem" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+            <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:26</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+            <div style="flex:1;min-height:0;overflow:hidden;padding:0 16px;opacity:.4;display:flex;flex-direction:column;gap:10px">
+              <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+              <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box;flex:none"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Kuru Kayısı</div></div>
+              <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box;flex:none"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Domates 1 kg</div></div>
+              <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box;flex:none"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Zeytin 500 g</div></div>
+            </div>
+            <div style="flex:none;background:#FFFFFF;border-top:1px solid #E7DACB;border-radius:28px 28px 0 0;padding:12px 16px 34px;display:flex;flex-direction:column;gap:14px">
+              <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:56px;height:56px;border-radius:24px;background:#F1E7DB;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#5C4F45;flex:none">KU</div>
+                <div style="font:700 18px/1.28 'Plus Jakarta Sans'">Kuru Kayısı</div>
+              </div>
+              <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45">Fiş çektikçe burada fiyat geçmişi birikecek.</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Her zamankilere ekle</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1 GÖZLEM -->
+        <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+          <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">1 gözlem</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">manşet var, grafik yok · tek noktadan trend yalandır</div></div>
+          <div data-screen-label="5 1 gözlem" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+            <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:27</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+            <div style="flex:1;min-height:0;overflow:hidden;padding:0 16px;opacity:.4;display:flex;flex-direction:column;gap:10px">
+              <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+              <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box;flex:none"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Beyaz Peynir 600 g</div></div>
+              <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box;flex:none"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Yumurta 10'lu</div></div>
+            </div>
+            <div style="flex:none;background:#FFFFFF;border-top:1px solid #E7DACB;border-radius:28px 28px 0 0;padding:12px 16px 34px;display:flex;flex-direction:column;gap:14px">
+              <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:56px;height:56px;border-radius:24px;background:#EAEDF4;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#3B4A6B;flex:none">BE</div>
+                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Son ödediğin: 138,50 TL</div>
+              </div>
+              <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">A101 · 12 gün önce · 600 g paket</div>
+              <div style="height:1px;background:#E7DACB"></div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="font:600 16px/1.28 'Plus Jakarta Sans'">Alım geçmişi</div>
+                <div style="display:flex;align-items:center;gap:10px;height:40px;border-bottom:1px solid #E7DACB">
+                  <div style="width:76px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">1 Ağu</div>
+                  <div style="flex:1;font:500 14px/1.3 'Plus Jakarta Sans'">A101</div>
+                  <div style="width:56px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">600 g</div>
+                  <div style="width:76px;flex:none;text-align:right;font:600 14px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">138,50 TL</div>
+                </div>
+              </div>
+              <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Bir sonraki fişten sonra buraya grafik gelecek.</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Her zamankilere ekle</div><div style="width:44px;height:26px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:flex-end;padding:2px;box-sizing:border-box;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#fff"></div></div></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9 GÖZLEM · AMBALAJ KÜÇÜLMESİ -->
+        <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+          <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">9 gözlem · ambalaj küçülmesi</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">paket fiyatı sabit, litre fiyatı %30 arttı</div></div>
+          <div data-screen-label="5 9 gözlem" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+            <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:28</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+            <div style="flex:none;padding:0 16px;opacity:.4;display:flex;flex-direction:column;gap:8px">
+              <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+              <div style="display:flex;align-items:center;gap:10px;height:36px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box;flex:none"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Ayçiçek Yağı</div></div>
+            </div>
+            <div style="flex:1;min-height:0;margin-top:10px;background:#FFFFFF;border-top:1px solid #E7DACB;border-radius:28px 28px 0 0;display:flex;flex-direction:column;overflow:hidden">
+              <div style="flex:none;display:flex;flex-direction:column;gap:12px;padding:12px 16px 14px;border-bottom:1px solid #E7DACB">
+                <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
+                <div style="display:flex;align-items:flex-start;gap:12px">
+                  <div style="width:56px;height:56px;border-radius:24px;background:#F6E7D2;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#8A5A00;flex:none">AY</div>
+                  <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Ayçiçek yağı 5 L'den 4 L'ye düştü · litre fiyatı 72 TL → 94 TL</div>
+                </div>
+                <div style="height:28px;align-self:flex-start;padding:0 10px;border-radius:999px;background:#E0A32E;border:1.5px solid #8A5A00;display:flex;align-items:center;font:600 13px/1 'Plus Jakarta Sans';color:#3A2600;font-variant-numeric:tabular-nums">5 L → 4 L · paket fiyatı aynı kaldı</div>
+              </div>
+              <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
+                <div style="display:flex;gap:8px;align-items:center">
+                  <div style="height:36px;padding:0 14px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">1 ay</div>
+                  <div style="height:36px;padding:0 14px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';color:#fff">6 ay</div>
+                  <div style="height:36px;padding:0 14px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">1 yıl</div>
+                  <div style="flex:1"></div>
+                  <div style="height:36px;padding:0 12px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';color:#fff">lt fiyatı</div>
+                </div>
+                <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:20px;padding:14px 12px 10px;display:flex;flex-direction:column;gap:8px">
+                  <svg width="326" height="164" viewBox="0 0 326 164" fill="none">
+                    <line x1="0" y1="121" x2="326" y2="121" stroke="#E7DACB" stroke-width="1"></line>
+                    <line x1="0" y1="81" x2="326" y2="81" stroke="#E7DACB" stroke-width="1" stroke-dasharray="4 4"></line>
+                    <text x="4" y="115" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">en az 64,00</text>
+                    <text x="4" y="75" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">ortalama 78,20</text>
+                    <line x1="184" y1="14" x2="184" y2="132" stroke="#8A5A00" stroke-width="1.5" stroke-dasharray="3 3"></line>
+                    <text x="188" y="24" font-family="Plus Jakarta Sans" font-size="11" font-weight="600" fill="#8A5A00">ambalaj 4 L</text>
+                    <polyline points="18,121 55,119 92,113 129,107 166,99" stroke="#B34418" stroke-width="2.5" fill="none" stroke-linejoin="round"></polyline>
+                    <polyline points="203,48 240,45 277,41 314,37" stroke="#B34418" stroke-width="2.5" fill="none" stroke-linejoin="round"></polyline>
+                    <circle cx="18" cy="121" r="4" fill="#B34418"></circle>
+                    <circle cx="55" cy="119" r="4" fill="#B34418"></circle>
+                    <circle cx="92" cy="113" r="4" fill="#B34418"></circle>
+                    <circle cx="129" cy="107" r="4" fill="#B34418"></circle>
+                    <circle cx="166" cy="99" r="4" fill="#B34418"></circle>
+                    <circle cx="203" cy="48" r="4" fill="#B34418"></circle>
+                    <circle cx="240" cy="45" r="4" fill="#B34418"></circle>
+                    <circle cx="277" cy="41" r="4" fill="#B34418"></circle>
+                    <circle cx="314" cy="37" r="5" fill="#B34418" stroke="#FBF7F2" stroke-width="2"></circle>
+                    <text x="286" y="29" font-family="Plus Jakarta Sans" font-size="11" font-weight="600" fill="#221A14">93,88</text>
+                    <text x="6" y="150" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Mar</text>
+                    <text x="84" y="150" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Nis</text>
+                    <text x="160" y="150" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">May</text>
+                    <text x="236" y="150" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Tem</text>
+                    <text x="298" y="150" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Ağu</text>
+                  </svg>
+                  <div style="font:500 12px/1.35 'Plus Jakarta Sans';color:#5C4F45">Litre fiyatı · 9 gözlem. Ambalaj değiştiği için çizgi kırıldı, iki dönem birleştirilmedi.</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:600 16px/1.28 'Plus Jakarta Sans'">Nerede ucuz</div><div style="font:500 12px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">14:20 itibarıyla · 4 L</div></div>
+                  <sc-for list="{{ oilStores }}" as="s" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;justify-content:space-between;height:44px;flex:none;padding:0 14px;border-radius:16px;background:#F1E7DB;border:1px solid #E7DACB"><div style="font:500 15px/1.3 'Plus Jakarta Sans'">{{ s.name }}</div><div style="display:flex;align-items:center;gap:10px"><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ s.unit }}</div><div style="font:600 15px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ s.price }}</div></div></div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;padding:2px 0 16px"><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#8A7666">Alım geçmişi ve tempo için kaydır</div><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#8A7666">expand_more</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9 GÖZLEM · KAYDIRILMIŞ HAL -->
+        <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+          <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">9 gözlem · sheet kaydırılmış</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">9 satır alım geçmişi · tempo · iki anahtar</div></div>
+          <div data-screen-label="5 9 gözlem alt" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+            <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:29</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+            <div style="flex:none;height:24px"></div>
+            <div style="flex:1;min-height:0;background:#FFFFFF;border-top:1px solid #E7DACB;border-radius:28px 28px 0 0;display:flex;flex-direction:column;overflow:hidden">
+              <div style="flex:none;display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #E7DACB">
+                <div style="width:40px;height:40px;border-radius:16px;background:#F6E7D2;display:flex;align-items:center;justify-content:center;font:800 15px/1 'Plus Jakarta Sans';color:#8A5A00;flex:none">AY</div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:1px;min-width:0">
+                  <div style="font:700 18px/1.28 'Plus Jakarta Sans'">Ayçiçek Yağı</div>
+                  <div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">4 L · litre fiyatı 93,88 TL</div>
+                </div>
+                <div style="height:26px;padding:0 10px;border-radius:999px;background:#E0A32E;border:1.5px solid #8A5A00;display:flex;align-items:center;font:600 12px/1 'Plus Jakarta Sans';color:#3A2600;flex:none">5 L → 4 L</div>
+              </div>
+              <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:600 16px/1.28 'Plus Jakarta Sans'">Alım geçmişi</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">9 gözlem</div></div>
+                  <div style="display:flex;align-items:center;gap:10px;height:24px;flex:none">
+                    <div style="width:64px;flex:none;font:600 12px/1.3 'Plus Jakarta Sans';color:#8A7666">tarih</div>
+                    <div style="flex:1;font:600 12px/1.3 'Plus Jakarta Sans';color:#8A7666">market</div>
+                    <div style="width:38px;flex:none;font:600 12px/1.3 'Plus Jakarta Sans';color:#8A7666">amb.</div>
+                    <div style="width:70px;flex:none;text-align:right;font:600 12px/1.3 'Plus Jakarta Sans';color:#8A7666">ödenen</div>
+                    <div style="width:64px;flex:none;text-align:right;font:600 12px/1.3 'Plus Jakarta Sans';color:#8A7666">birim</div>
+                  </div>
+                  <sc-for list="{{ oilBuys }}" as="b" hint-placeholder-count="9">
+                    <div style="display:flex;align-items:center;gap:10px;height:44px;flex:none;border-top:1px solid #E7DACB">
+                      <div style="width:64px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ b.date }}</div>
+                      <div style="flex:1;font:500 14px/1.3 'Plus Jakarta Sans';min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.store }}</div>
+                      <div style="width:38px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ b.pack }}</div>
+                      <div style="width:70px;flex:none;text-align:right;font:600 14px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ b.price }}</div>
+                      <div style="width:64px;flex:none;text-align:right;font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ b.unit }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">Genelde 3 alışverişte bir alıyorsun · son alım 11 gün önce</div>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;height:56px;flex:none;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Her zamankilere ekle</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;height:56px;flex:none;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+                </div>
+                <div style="flex:none;height:34px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:0;flex:1;min-width:320px;max-width:420px;background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px 24px 10px">
+          <div style="font:700 16px/1.28 'Plus Jakarta Sans';padding-bottom:12px">Ambalaj küçülmesi nasıl gösterilir</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:12px 0;border-top:1px solid #E7DACB"><div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Birim otomatik değişir</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Ambalaj değiştiği anda varsayılan birim "paket fiyatı"ndan "lt fiyatı"na geçer — karşılaştırılabilir olan tek eksen bu. Kullanıcı isterse pakete dönebilir, ama açılış hali dürüst olandır.</div></div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:12px 0;border-top:1px solid #E7DACB"><div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Çizgi birleştirilmez</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Ambalaj kırılmasında dikey #8A5A00 kesikli çizgi var ve iki dönem ayrı polyline. Tek çizgi çizmek 5 L ile 4 L'yi aynı ürün gibi göstermek olurdu.</div></div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:12px 0;border-top:1px solid #E7DACB"><div style="font:600 14px/1.5 'Plus Jakarta Sans';color:#8A5A00">Liste satırında ne yazar</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">Satırda trend ve delta çipi bastırılır, yerine "5 L → 4 L · aynı fiyat" yazar. Ambalaj küçülmesi asla fiyat düşüşü gibi görünmez, sparkline da çizilmez.</div></div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:12px 0;border-top:1px solid #E7DACB"><div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Manşet cümlesi</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Fraunces 24sp, düz Türkçe, önce olguyu söyler: ambalaj küçüldü, sonra gerçek artışı verir. Ekran görüntüsü alınacak şey bu cümle.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Dolu · 9 gözlem</div>
+        <div data-screen-label="5 Detay" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:20</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;padding:0 16px;opacity:.4;display:flex;flex-direction:column;gap:8px">
+            <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+            <div style="display:flex;align-items:center;gap:10px;height:36px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Domates 1 kg</div></div>
+          </div>
+          <div style="flex:1;margin-top:10px;background:#FFFFFF;border-top:1px solid #E7DACB;border-radius:28px 28px 0 0;display:flex;flex-direction:column;overflow:hidden">
+            <div style="flex:none;display:flex;flex-direction:column;gap:12px;padding:12px 16px 14px;border-bottom:1px solid #E7DACB">
+              <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:56px;height:56px;border-radius:24px;background:#EAEDF4;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#3B4A6B;flex:none">SÜ</div>
+                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Süt 32 TL → 41 TL · son 3 ayda %28 arttı</div>
+              </div>
+            </div>
+            <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
+              <div style="display:flex;gap:8px">
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">1 ay</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';color:#fff">6 ay</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">1 yıl</div>
+                <div style="flex:1"></div>
+                <div style="height:36px;padding:0 12px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">lt fiyatı</div>
+              </div>
+              <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:20px;padding:14px 12px 10px;display:flex;flex-direction:column;gap:8px">
+                <svg width="326" height="150" viewBox="0 0 326 150" fill="none">
+                  <line x1="0" y1="118" x2="326" y2="118" stroke="#E7DACB" stroke-width="1"></line>
+                  <line x1="0" y1="74" x2="326" y2="74" stroke="#E7DACB" stroke-width="1" stroke-dasharray="4 4"></line>
+                  <text x="4" y="112" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">en az 32,00</text>
+                  <text x="4" y="68" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">ortalama 36,40</text>
+                  <polyline points="18,116 56,110 94,98 132,96 170,80 208,66 246,52 284,38 316,26" stroke="#B34418" stroke-width="2.5" fill="none" stroke-linejoin="round"></polyline>
+                  <circle cx="18" cy="116" r="4" fill="#B34418"></circle>
+                  <circle cx="56" cy="110" r="4" fill="#B34418"></circle>
+                  <circle cx="94" cy="98" r="4" fill="#B34418"></circle>
+                  <circle cx="132" cy="96" r="4" fill="#B34418"></circle>
+                  <circle cx="170" cy="80" r="4" fill="#B34418"></circle>
+                  <circle cx="208" cy="66" r="4" fill="#B34418"></circle>
+                  <circle cx="246" cy="52" r="4" fill="#B34418"></circle>
+                  <circle cx="284" cy="38" r="4" fill="#B34418"></circle>
+                  <circle cx="316" cy="26" r="5" fill="#B34418" stroke="#FBF7F2" stroke-width="2"></circle>
+                  <text x="286" y="18" font-family="Plus Jakarta Sans" font-size="11" font-weight="600" fill="#221A14">41,00</text>
+                  <text x="6" y="140" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Mar</text>
+                  <text x="88" y="140" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Nis</text>
+                  <text x="166" y="140" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Haz</text>
+                  <text x="244" y="140" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Tem</text>
+                  <text x="296" y="140" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7666">Ağu</text>
+                </svg>
+                <div style="font:500 12px/1.3 'Plus Jakarta Sans';color:#5C4F45">Her nokta bir gözlem · tümü 1 L ambalaj</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:600 16px/1.28 'Plus Jakarta Sans'">Nerede ucuz</div><div style="font:500 12px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">14:20 itibarıyla</div></div>
+                <sc-for list="{{ stores }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 14px;border-radius:16px;background:#F1E7DB;border:1px solid #E7DACB"><div style="font:500 15px/1.3 'Plus Jakarta Sans'">{{ s.name }}</div><div style="font:600 15px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ s.price }}</div></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="font:600 16px/1.28 'Plus Jakarta Sans'">Alım geçmişi</div>
+                <sc-for list="{{ buys }}" as="b" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;height:40px;border-bottom:1px solid #E7DACB">
+                    <div style="width:76px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ b.date }}</div>
+                    <div style="flex:1;font:500 14px/1.3 'Plus Jakarta Sans'">{{ b.store }}</div>
+                    <div style="width:34px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ b.qty }}</div>
+                    <div style="width:76px;flex:none;text-align:right;font:600 14px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ b.price }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">Genelde 10 günde bir alıyorsun · son alım 6 gün önce</div>
+              <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB">
+                  <div style="font:500 17px/1.28 'Plus Jakarta Sans'">Her zamankilere ekle</div>
+                  <div style="width:44px;height:26px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:flex-end;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB">
+                  <div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div>
+                  <div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">0 gözlem ve 1 gözlem</div>
+        <div data-screen-label="5 Boş" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:24</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:1;padding:0 16px;opacity:.4;display:flex;flex-direction:column;gap:8px">
+            <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+            <div style="display:flex;align-items:center;gap:10px;height:36px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Kuru Kayısı</div></div>
+            <div style="display:flex;align-items:center;gap:10px;height:36px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Beyaz Peynir 600 g</div></div>
+          </div>
+          <div style="flex:none;background:#FFFFFF;border-top:1px solid #E7DACB;border-radius:28px 28px 0 0;padding:12px 16px 20px;display:flex;flex-direction:column;gap:14px">
+            <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:56px;height:56px;border-radius:24px;background:#F1E7DB;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#5C4F45;flex:none">KU</div>
+              <div style="font:700 18px/1.28 'Plus Jakarta Sans'">Kuru Kayısı</div>
+            </div>
+            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45">Fiş çektikçe burada fiyat geçmişi birikecek.</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Her zamankilere ekle</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div><div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div></div>
+            </div>
+          </div>
+          <div style="flex:none;background:#F1E7DB;border-top:1px solid #E7DACB;padding:16px 16px 34px;display:flex;flex-direction:column;gap:12px">
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#8A5A00">1 gözlem hali</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:56px;height:56px;border-radius:24px;background:#EAEDF4;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#3B4A6B;flex:none">BE</div>
+              <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Son ödediğin: 138,50 TL</div>
+            </div>
+            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">A101 · 12 gün önce · 600 g</div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Grafik yok, yüzde yok. Tek noktadan trend bir yalandır.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Karanlık · çevrimdışı (Nerede ucuz sessizce yok)</div>
+        <div data-screen-label="5 Karanlık" style="width:390px;height:844px;background:#13100E;border:1px solid #3A322C;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none;color:#F5EDE6">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>22:20</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">airplanemode_active</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;padding:0 16px;opacity:.35;display:flex;flex-direction:column;gap:8px">
+            <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+            <div style="display:flex;align-items:center;gap:10px;height:36px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7A6E;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Domates 1 kg</div></div>
+          </div>
+          <div style="flex:1;margin-top:10px;background:#241E1A;border-top:1px solid #3A322C;border-radius:28px 28px 0 0;display:flex;flex-direction:column;overflow:hidden">
+            <div style="flex:none;display:flex;flex-direction:column;gap:12px;padding:12px 16px 14px;border-bottom:1px solid #3A322C">
+              <div style="width:36px;height:4px;border-radius:2px;background:#3A322C;align-self:center"></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:56px;height:56px;border-radius:24px;background:#1E2330;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#A9BCE0;flex:none">SÜ</div>
+                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Süt 32 TL → 41 TL · son 3 ayda %28 arttı</div>
+              </div>
+            </div>
+            <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
+              <div style="display:flex;gap:8px">
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#13100E;border:1px solid #3A322C;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">1 ay</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#8FC7A2;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';color:#13100E">6 ay</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#13100E;border:1px solid #3A322C;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">1 yıl</div>
+                <div style="flex:1"></div>
+                <div style="height:36px;padding:0 12px;border-radius:999px;background:#13100E;border:1px solid #3A322C;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">lt fiyatı</div>
+              </div>
+              <div style="background:#13100E;border:1px solid #3A322C;border-radius:20px;padding:14px 12px 10px;display:flex;flex-direction:column;gap:8px">
+                <svg width="326" height="150" viewBox="0 0 326 150" fill="none">
+                  <line x1="0" y1="118" x2="326" y2="118" stroke="#3A322C" stroke-width="1"></line>
+                  <line x1="0" y1="74" x2="326" y2="74" stroke="#3A322C" stroke-width="1" stroke-dasharray="4 4"></line>
+                  <text x="4" y="112" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7A6E">en az 32,00</text>
+                  <text x="4" y="68" font-family="Plus Jakarta Sans" font-size="11" font-weight="500" fill="#8A7A6E">ortalama 36,40</text>
+                  <polyline points="18,116 56,110 94,98 132,96 170,80 208,66 246,52 284,38 316,26" stroke="#FF9166" stroke-width="2.5" fill="none" stroke-linejoin="round"></polyline>
+                  <circle cx="18" cy="116" r="4" fill="#FF9166"></circle>
+                  <circle cx="56" cy="110" r="4" fill="#FF9166"></circle>
+                  <circle cx="94" cy="98" r="4" fill="#FF9166"></circle>
+                  <circle cx="132" cy="96" r="4" fill="#FF9166"></circle>
+                  <circle cx="170" cy="80" r="4" fill="#FF9166"></circle>
+                  <circle cx="208" cy="66" r="4" fill="#FF9166"></circle>
+                  <circle cx="246" cy="52" r="4" fill="#FF9166"></circle>
+                  <circle cx="284" cy="38" r="4" fill="#FF9166"></circle>
+                  <circle cx="316" cy="26" r="5" fill="#FF9166" stroke="#13100E" stroke-width="2"></circle>
+                  <text x="286" y="18" font-family="Plus Jakarta Sans" font-size="11" font-weight="600" fill="#F5EDE6">41,00</text>
+                </svg>
+                <div style="font:500 12px/1.3 'Plus Jakarta Sans';color:#C6B6A9">Her nokta bir gözlem · tümü 1 L ambalaj</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="font:600 16px/1.28 'Plus Jakarta Sans'">Alım geçmişi</div>
+                <sc-for list="{{ buys }}" as="b" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;height:40px;border-bottom:1px solid #3A322C">
+                    <div style="width:76px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#C6B6A9;font-variant-numeric:tabular-nums">{{ b.date }}</div>
+                    <div style="flex:1;font:500 14px/1.3 'Plus Jakarta Sans'">{{ b.store }}</div>
+                    <div style="width:34px;flex:none;font:500 14px/1.3 'Plus Jakarta Sans';color:#C6B6A9;font-variant-numeric:tabular-nums">{{ b.qty }}</div>
+                    <div style="width:76px;flex:none;text-align:right;font:600 14px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ b.price }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#C6B6A9;font-variant-numeric:tabular-nums">Genelde 10 günde bir alıyorsun · son alım 6 gün önce</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #3A322C"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Her zamankilere ekle</div><div style="width:44px;height:26px;border-radius:999px;background:#8FC7A2;display:flex;align-items:center;justify-content:flex-end;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#13100E"></div></div></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-top:1px solid #3A322C"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div><div style="width:44px;height:26px;border-radius:999px;background:#3A322C;display:flex;align-items:center;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#241E1A"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EKRAN 6 + 7 -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">Ekran 6 · 7</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Geçmiş ve Ayarlar</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">İkisi de düz liste, sıfır tasarım yatırımı.</div>
+    </div>
+
+    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Geçmiş · dolu</div>
+        <div data-screen-label="6 Geçmiş" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>19:02</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:14px;padding:0 16px 14px;border-bottom:1px solid #E7DACB">
+            <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:96px">
+              <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:96px"><div style="background:#B34418;border-radius:8px 8px 0 0" data-h="{{ b.h }}"></div></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px">
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:12px;height:72px;flex:none;border-bottom:1px solid #E7DACB">
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <div style="font:500 17px/1.28 'Plus Jakarta Sans'">{{ h.store }}</div>
+                  <div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ h.date }} · {{ h.count }}</div>
+                </div>
+                <div style="width:92px;flex:none;text-align:right;font:600 17px/1.28 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ h.total }}</div>
+                <span style="font-family:'Material Symbols Rounded';font-size:22px;flex:none" data-icon="{{ h.iconColor }}">{{ h.icon }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:none;height:34px"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Geçmiş · boş (tek satır, CTA yok)</div>
+        <div data-screen-label="6 Boş" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>09:14</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:0 20px">
+            <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2">Henüz alışveriş yok</div>
+            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45">İlk listeni tamamladığında burada görünecek.</div>
+          </div>
+          <div style="flex:none;padding:0 20px 34px"><div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#8A7666">Tek alışveriş varsa mini grafik gizlenir — tek çubuklu grafik grafik değildir.</div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Ayarlar</div>
+        <div data-screen-label="7 Ayarlar" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>19:06</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Ayarlar</div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px">
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Hane</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Ad</div><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45">Bizim Ev</div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Katılma kodu</div><div style="display:flex;align-items:center;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans';letter-spacing:0.08em;font-variant-numeric:tabular-nums">K7M2QP</div><span style="font-family:'Material Symbols Rounded';font-size:20px;color:#5C4F45">content_copy</span></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Üyeler</div><div style="display:flex;align-items:center;gap:6px"><div style="width:24px;height:24px;border-radius:50%;background:#B34418;display:flex;align-items:center;justify-content:center;font:700 12px/1 'Plus Jakarta Sans';color:#fff">A</div><div style="width:24px;height:24px;border-radius:50%;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:700 12px/1 'Plus Jakarta Sans';color:#fff">E</div></div></div>
+            <div style="display:flex;align-items:center;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans';color:#B3261E">Haneden çık</div></div>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Her zamankiler</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Sabit ürünler</div><div style="display:flex;align-items:center;gap:8px"><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">9/12</div><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">chevron_right</span></div></div>
+            <sc-for list="{{ pinnedSettings }}" as="p" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;height:52px;border-bottom:1px solid #E7DACB">
+                <span style="font-family:'Material Symbols Rounded';font-size:20px;color:#8A7666">drag_indicator</span>
+                <div style="flex:1;font:500 15px/1.3 'Plus Jakarta Sans'">{{ p.name }}</div>
+                <span style="font-family:'Material Symbols Rounded';font-size:20px;color:#8A7666">close</span>
+              </div>
+            </sc-for>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Önerilmeyenler</div>
+            <div style="display:flex;align-items:center;gap:12px;height:52px;border-bottom:1px solid #E7DACB"><div style="flex:1;font:500 15px/1.3 'Plus Jakarta Sans'">Enerji İçeceği</div><div style="height:32px;padding:0 12px;border-radius:999px;background:#F1E7DB;border:1px solid #8A7666;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans'">Geri al</div></div>
+            <div style="display:flex;align-items:center;gap:12px;height:52px;border-bottom:1px solid #E7DACB"><div style="flex:1;font:500 15px/1.3 'Plus Jakarta Sans'">Hazır Kek</div><div style="height:32px;padding:0 12px;border-radius:999px;background:#F1E7DB;border:1px solid #8A7666;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans'">Geri al</div></div>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Mağazalar</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Takip edilen zincirler</div><div style="display:flex;align-items:center;gap:8px"><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45">Migros, A101, BİM</div><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">chevron_right</span></div></div>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Gizlilik</div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;padding-bottom:10px">Fiş fotoğrafları cihazında kalır; yalnızca ürün adı, fiyatı ve market adı hane içinde paylaşılır.</div>
+            <div style="display:flex;align-items:center;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans';color:#B3261E">Verilerimi sil</div></div>
+          </div>
+          <div style="flex:none;height:34px"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Ayarlar · boş hal (yeni hane)</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">boş bölüm hiç çizilmez</div></div>
+        <div data-screen-label="7 Boş" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>09:16</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Ayarlar</div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px">
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Hane</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Ad</div><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#8A7666">Adsız hane</div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Katılma kodu</div><div style="display:flex;align-items:center;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans';letter-spacing:0.08em;font-variant-numeric:tabular-nums">R4TB9C</div><span style="font-family:'Material Symbols Rounded';font-size:20px;color:#5C4F45">content_copy</span></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Üyeler</div><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45">Sadece sen · kodu eşine ver</div></div>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:16px 0 6px">Her zamankiler</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Sabit ürünler</div><div style="display:flex;align-items:center;gap:8px"><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">0/12</div><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">chevron_right</span></div></div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;padding:10px 0 0">Her alışverişte aldığın ürünler birkaç fişten sonra kendiliğinden burada birikir; istersen şimdi de ekleyebilirsin.</div>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:20px 0 6px">Mağazalar</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Takip edilen zincirler</div><div style="display:flex;align-items:center;gap:8px"><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#8A7666">İlk fişten öğrenilecek</div><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">chevron_right</span></div></div>
+            <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;padding:20px 0 6px">Gizlilik</div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;padding-bottom:10px">Fiş fotoğrafları cihazında kalır; yalnızca ürün adı, fiyatı ve market adı hane içinde paylaşılır.</div>
+            <div style="display:flex;align-items:center;height:56px;border-top:1px solid #E7DACB"><div style="font:500 17px/1.28 'Plus Jakarta Sans';color:#B3261E">Verilerimi sil</div></div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#8A7666;padding:14px 0">"Önerilmeyenler" bölümü hiç çizilmedi — henüz reddedilmiş öneri yok. Boş bir bölüm başlığı göstermek, olmayan bir işi varmış gibi gösterir.</div>
+          </div>
+          <div style="flex:none;height:34px"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Geçmiş · karanlık</div>
+        <div data-screen-label="6 Karanlık" style="width:390px;height:844px;background:#13100E;border:1px solid #3A322C;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none;color:#F5EDE6">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>23:02</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:14px;padding:0 16px 14px;border-bottom:1px solid #241E1A">
+            <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:96px">
+              <sc-for list="{{ barsDark }}" as="b" hint-placeholder-count="6">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:96px"><div style="background:#FF9166;border-radius:8px 8px 0 0" data-h="{{ b.h }}"></div></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px">
+            <sc-for list="{{ history }}" as="h" hint-placeholder-count="7">
+              <div style="display:flex;align-items:center;gap:12px;height:72px;flex:none;border-bottom:1px solid #241E1A">
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <div style="font:500 17px/1.28 'Plus Jakarta Sans'">{{ h.store }}</div>
+                  <div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#C6B6A9;font-variant-numeric:tabular-nums">{{ h.date }} · {{ h.count }}</div>
+                </div>
+                <div style="width:92px;flex:none;text-align:right;font:600 17px/1.28 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ h.total }}</div>
+                <span style="font-family:'Material Symbols Rounded';font-size:22px;flex:none" data-icon="{{ h.iconColorDark }}">{{ h.icon }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:none;height:34px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;gap:32px;flex-wrap:wrap;align-items:center">
+      <div style="font:700 15px/1.3 'Plus Jakarta Sans'">Fiş durumu ikonları</div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#2E6B45;font-variation-settings:'FILL' 1">receipt_long</span><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">fiş var</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">receipt_long</span><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">fiş yok</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#5C4F45">hourglass_top</span><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">işleniyor</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#96560A;font-variation-settings:'FILL' 1">error</span><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">kontrol bekliyor</div></div>
+      <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;flex:1;min-width:280px">Mini grafik eksensiz, açıklamasız, etkileşimsiz — yalnızca son 6 alışverişin toplamı.</div>
+    </div>
+  </div>
+
+  <!-- EKRAN 8 -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">Ekran 8</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Kurulum — 3 adım, bir daha görünmez</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Var olma sebebi: uygulamanın 15. gezide değil 3. gezide akıllı hissetmesi.</div>
+    </div>
+
+    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Adım 1 · Hane</div>
+        <div data-screen-label="8 Adım1" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>08:40</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 16px 0">
+            <div style="flex:1;height:4px;border-radius:2px;background:#B34418"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#E7DACB"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#E7DACB"></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:32px 20px 0">
+            <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">1 / 3</div>
+            <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:36px;line-height:1.1;letter-spacing:-0.01em">İki kişilik bir liste</div>
+            <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45">Aynı listeyi ikiniz de görün. Eşin eklediği satır listede baş harfiyle görünür.</div>
+            <div style="height:52px;border-radius:18px;background:#FFFFFF;border:1px solid #E7DACB;display:flex;align-items:center;padding:0 16px;font:400 17px/1 'Plus Jakarta Sans';color:#8A7666;margin-top:8px">E-posta</div>
+            <div style="height:52px;border-radius:999px;background:#B34418;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff">Yeni hane oluştur</div>
+            <div style="display:flex;align-items:center;gap:12px"><div style="flex:1;height:1px;background:#E7DACB"></div><div style="font:500 14px/1 'Plus Jakarta Sans';color:#8A7666">veya</div><div style="flex:1;height:1px;background:#E7DACB"></div></div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ codeBoxes }}" as="c" hint-placeholder-count="6">
+                <div style="flex:1;height:56px;border-radius:14px;background:#FFFFFF;border:1px solid #E7DACB;display:flex;align-items:center;justify-content:center;font:700 22px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ c.ch }}</div>
+              </sc-for>
+            </div>
+            <div style="height:52px;border-radius:999px;background:#FBF7F2;border:1px solid #8A7666;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans'">Kodla katıl</div>
+          </div>
+          <div style="flex:none;height:34px"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Adım 2 · asıl önemli olan</div>
+        <div data-screen-label="8 Adım2" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>08:42</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 16px 0">
+            <div style="flex:1;height:4px;border-radius:2px;background:#B34418"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#B34418"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#E7DACB"></div>
+          </div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:10px;padding:20px 20px 14px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">2 / 3</div><div style="font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Atla</div></div>
+            <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:30px;line-height:1.15">Her alışverişte aldıklarınız</div>
+            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45">Bunlar her yeni listeye otomatik eklenir. Sonra da değiştirebilirsin.</div>
+          </div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;padding:0 16px">
+            <sc-for list="{{ setupItems }}" as="s" hint-placeholder-count="40">
+              <div style="height:40px;padding:0 14px;border-radius:999px;display:flex;align-items:center;gap:6px;font:500 15px/1 'Plus Jakarta Sans';box-sizing:border-box" data-sel="{{ s.sel }}">
+                <sc-if value="{{ s.sel }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-family:'Material Symbols Rounded';font-size:16px;font-variation-settings:'FILL' 1">check</span>
+                </sc-if>
+                {{ s.name }}
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 16px 34px;border-top:1px solid #E7DACB">
+            <div style="height:52px;border-radius:999px;background:#B34418;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff;font-variant-numeric:tabular-nums">Devam (9 seçildi)</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Adım 3 · Tempo</div>
+        <div data-screen-label="8 Adım3" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>08:44</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 16px 0">
+            <div style="flex:1;height:4px;border-radius:2px;background:#B34418"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#B34418"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#B34418"></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:20px 20px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">3 / 3</div><div style="font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Atla</div></div>
+            <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:36px;line-height:1.1;letter-spacing:-0.01em">Ne sıklıkla markete gidiyorsunuz?</div>
+            <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45">"12 gündür almadın" gibi gerekçeleri buna göre hesaplıyoruz.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+              <div style="height:44px;padding:0 18px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 15px/1 'Plus Jakarta Sans'">Haftada 1</div>
+              <div style="height:44px;padding:0 18px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;font:600 15px/1 'Plus Jakarta Sans';color:#fff">10 günde bir</div>
+              <div style="height:44px;padding:0 18px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 15px/1 'Plus Jakarta Sans'">2 haftada bir</div>
+              <div style="height:44px;padding:0 18px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;font:500 15px/1 'Plus Jakarta Sans'">Belirsiz</div>
+            </div>
+          </div>
+          <div style="flex:none;padding:12px 16px 34px">
+            <div style="height:52px;border-radius:999px;background:#B34418;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff">Listeme geç</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Adım 2 · karanlık</div>
+        <div data-screen-label="8 Karanlık" style="width:390px;height:844px;background:#13100E;border:1px solid #3A322C;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none;color:#F5EDE6">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>22:42</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 16px 0">
+            <div style="flex:1;height:4px;border-radius:2px;background:#FF9166"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#FF9166"></div>
+            <div style="flex:1;height:4px;border-radius:2px;background:#241E1A"></div>
+          </div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:10px;padding:20px 20px 14px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#F2C14E">2 / 3</div><div style="font:600 15px/1 'Plus Jakarta Sans';color:#C6B6A9">Atla</div></div>
+            <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:30px;line-height:1.15">Her alışverişte aldıklarınız</div>
+            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#C6B6A9">Bunlar her yeni listeye otomatik eklenir.</div>
+          </div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;padding:0 16px">
+            <sc-for list="{{ setupItems }}" as="s" hint-placeholder-count="40">
+              <div style="height:40px;padding:0 14px;border-radius:999px;display:flex;align-items:center;gap:6px;font:500 15px/1 'Plus Jakarta Sans';box-sizing:border-box" data-seldark="{{ s.sel }}">
+                <sc-if value="{{ s.sel }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-family:'Material Symbols Rounded';font-size:16px;font-variation-settings:'FILL' 1">check</span>
+                </sc-if>
+                {{ s.name }}
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:none;padding:12px 16px 34px;border-top:1px solid #241E1A">
+            <div style="height:52px;border-radius:999px;background:#FF9166;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#3B1503;font-variant-numeric:tabular-nums">Devam (9 seçildi)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:28px;display:grid;grid-template-columns:repeat(3,1fr);gap:28px">
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Kurulum bitince</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Zaten dolu bir Liste ekranına düşülür — boş bir ekrana değil. Adım 2 ve 3'te "Atla" görünür; atlanırsa 12 çipli boş hal devreye girer.</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Ürün Detayı neden sheet</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Reyondayken listeyi terk etmiş hissettirmemeli. Push edilen ekran değil, liste satırındaki fiyat çipinden tek dokunuşla açılan genişleyebilen sheet.</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">"1 hafta" aralığı yok</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">10 günlük alışveriş temposunun haftalık çözünürlüğü yoktur. Çevrimdışıyken "Nerede ucuz" bloğu sessizce yok olur — hata metni gösterilmez.</div></div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.paint(); }
+  componentDidUpdate() { this.paint(); }
+  paint() {
+    const root = document;
+    root.querySelectorAll('[data-h]').forEach(el => {
+      const v = el.getAttribute('data-h');
+      if (!v || v === 'undefined') return;
+      el.style.height = v + 'px';
+    });
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      const v = el.getAttribute('data-icon');
+      if (!v || v === 'undefined') return;
+      const [color, fill] = v.split('|');
+      el.style.color = color;
+      if (fill === '1') el.style.fontVariationSettings = "'FILL' 1";
+    });
+    root.querySelectorAll('[data-sel]').forEach(el => {
+      const on = el.getAttribute('data-sel') === 'true';
+      el.style.background = on ? '#3F6B54' : '#F1E7DB';
+      el.style.color = on ? '#FFFFFF' : '#221A14';
+      el.style.border = on ? '1px solid #3F6B54' : '1px solid #E7DACB';
+      el.style.fontWeight = on ? '600' : '500';
+    });
+    root.querySelectorAll('[data-seldark]').forEach(el => {
+      const on = el.getAttribute('data-seldark') === 'true';
+      el.style.background = on ? '#8FC7A2' : '#241E1A';
+      el.style.color = on ? '#13100E' : '#F5EDE6';
+      el.style.border = on ? '1px solid #8FC7A2' : '1px solid #3A322C';
+      el.style.fontWeight = on ? '600' : '500';
+    });
+  }
+  renderVals() {
+    const sel = (name) => ({ name, sel: true });
+    const un = (name) => ({ name, sel: false });
+    return {
+      oilStores: [
+        { name: "BİM · Barbaros", price: "349,00 TL", unit: "87,25/lt" },
+        { name: "A101 · Küçükbakkalköy", price: "369,90 TL", unit: "92,48/lt" },
+        { name: "Migros · Ataşehir", price: "384,50 TL", unit: "96,13/lt" }
+      ],
+      oilBuys: [
+        { date: "2 Ağu", store: "A101", pack: "4 L", price: "375,50", unit: "93,88/lt" },
+        { date: "18 Tem", store: "Migros", pack: "4 L", price: "369,90", unit: "92,48/lt" },
+        { date: "6 Tem", store: "A101", pack: "4 L", price: "364,00", unit: "91,00/lt" },
+        { date: "24 Haz", store: "BİM", pack: "4 L", price: "359,90", unit: "89,98/lt" },
+        { date: "11 Haz", store: "A101", pack: "5 L", price: "359,90", unit: "71,98/lt" },
+        { date: "29 May", store: "Migros", pack: "5 L", price: "344,00", unit: "68,80/lt" },
+        { date: "16 May", store: "A101", pack: "5 L", price: "334,50", unit: "66,90/lt" },
+        { date: "2 May", store: "BİM", pack: "5 L", price: "324,00", unit: "64,80/lt" },
+        { date: "19 Nis", store: "A101", pack: "5 L", price: "320,00", unit: "64,00/lt" }
+      ],
+      stores: [
+        { name: "A101 · Ataşehir", price: "38,50 TL" },
+        { name: "BİM · Küçükbakkalköy", price: "39,90 TL" },
+        { name: "Migros · Ataşehir", price: "41,00 TL" }
+      ],
+      buys: [
+        { date: "6 Ağu", store: "Migros", qty: "2", price: "41,00 TL" },
+        { date: "27 Tem", store: "A101", qty: "2", price: "38,50 TL" },
+        { date: "16 Tem", store: "Migros", qty: "1", price: "37,00 TL" },
+        { date: "5 Tem", store: "BİM", qty: "2", price: "35,90 TL" }
+      ],
+      bars: [{ h: 52 }, { h: 68 }, { h: 44 }, { h: 78 }, { h: 62 }, { h: 88 }],
+      barsDark: [{ h: 52 }, { h: 68 }, { h: 44 }, { h: 78 }, { h: 62 }, { h: 88 }],
+      history: [
+        { store: "Migros Ataşehir", date: "12 Ağustos", count: "18 ürün", total: "642,50 TL", icon: "receipt_long", iconColor: "#2E6B45|1", iconColorDark: "#7FD1A0|1" },
+        { store: "A101 Küçükbakkalköy", date: "4 Ağustos", count: "6 ürün", total: "184,90 TL", icon: "error", iconColor: "#96560A|1", iconColorDark: "#F0B357|1" },
+        { store: "Migros Ataşehir", date: "25 Temmuz", count: "17 ürün", total: "601,00 TL", icon: "receipt_long", iconColor: "#2E6B45|1", iconColorDark: "#7FD1A0|1" },
+        { store: "BİM Barbaros", date: "16 Temmuz", count: "9 ürün", total: "268,40 TL", icon: "receipt_long", iconColor: "#8A7666|0", iconColorDark: "#8A7A6E|0" },
+        { store: "Migros Ataşehir", date: "6 Temmuz", count: "19 ürün", total: "588,00 TL", icon: "receipt_long", iconColor: "#2E6B45|1", iconColorDark: "#7FD1A0|1" },
+        { store: "A101 Küçükbakkalköy", date: "27 Haziran", count: "7 ürün", total: "212,60 TL", icon: "hourglass_top", iconColor: "#5C4F45|0", iconColorDark: "#C6B6A9|0" },
+        { store: "Migros Ataşehir", date: "17 Haziran", count: "16 ürün", total: "534,20 TL", icon: "receipt_long", iconColor: "#2E6B45|1", iconColorDark: "#7FD1A0|1" }
+      ],
+      pinnedSettings: [
+        { name: "Tam Buğday Ekmek" }, { name: "Pınar Süt 1 L" }, { name: "Yumurta 10'lu" }
+      ],
+      codeBoxes: [{ ch: "K" }, { ch: "7" }, { ch: "M" }, { ch: "2" }, { ch: "Q" }, { ch: "P" }],
+      setupItems: [
+        sel("Ekmek"), sel("Süt"), sel("Yumurta"), un("Kaşar Peyniri"), sel("Beyaz Peynir"),
+        sel("Zeytin"), un("Tereyağı"), sel("Yoğurt"), un("Ayran"), un("Bal"),
+        sel("Domates"), sel("Salatalık"), un("Biber"), un("Patlıcan"), sel("Soğan"),
+        un("Patates"), un("Limon"), un("Maydanoz"), un("Muz"), un("Elma"),
+        un("Tavuk Göğsü"), un("Kıyma"), un("Sucuk"), un("Salam"),
+        un("Pirinç"), un("Bulgur"), un("Makarna"), un("Un"), un("Şeker"),
+        un("Ayçiçek Yağı"), un("Zeytinyağı"), un("Salça"), un("Tuz"),
+        sel("Çay"), un("Kahve"), un("Su 5 L"), un("Maden Suyu"),
+        un("Deterjan"), un("Bulaşık Deterjanı"), un("Kağıt Havlu")
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

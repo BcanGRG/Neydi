@@ -8,6 +8,7 @@ import com.neydi.app.data.db.NeydiDatabaseConstructor
 import com.neydi.app.data.db.Product
 import com.neydi.app.data.db.ProductAlias
 import com.neydi.app.data.db.Receipt
+import com.neydi.app.data.db.ReceiptLine
 import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.matchKey
@@ -354,5 +355,72 @@ class ReceiptProcessorTest {
         val store = db.receiptDao().byId("r1")?.storeNameRaw
         assertNotNull(store)
         assertTrue(store.contains("BIM"), "magaza adi: $store")
+    }
+
+    // --- Gezi kapsamli aritmetik kapisi (F4.13 duzeltmesi) ------------------
+
+    /**
+     * SATIRLAR FIZIKSEL FIS BOYUNCA TOPLANIYOR, TEK FOTOGRAFTA DEGIL.
+     *
+     * Kapinin dayandigi sayi bu. Tek fotograf kapsaminda hesaplanan toplam,
+     * uzun fisin SON parcasinda yapisal olarak tutmuyor cikiyordu: toplam
+     * yalnizca o parcada basili ama satirlarin geri kalani onceki parcalarda.
+     *
+     * Test isiriyor: sorgu tek `receiptId`'ye cekilirse 45100 yerine 22550 doner.
+     */
+    @Test
+    fun lineSumSpansAllPartsOfOneReceipt() = runTest {
+        val db = db(); prepare(db)
+        db.receiptDao().insert(
+            Receipt(
+                id = "r2", householdId = home, tripId = trip,
+                imagePath = "/tmp/r2.jpg", capturedAt = 200, createdAt = 200,
+            ),
+        )
+        val p = processor(db, FakeReader(bimLines))
+        p.process("r1")
+        p.process("r2")
+
+        val singleReceipt = db.receiptLineDao().forReceipt("r1")
+            .sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
+        assertEquals(22550, singleReceipt, "tek parcanin satirlari")
+        assertEquals(
+            45100,
+            db.receiptLineDao().sumLinesForReceipts(listOf("r1", "r2")),
+            "iki parcanin satirlari",
+        )
+    }
+
+    /**
+     * INDIRIM CIKARILIYOR - isaret bayraktan geliyor, sayidan degil.
+     *
+     * Tutar her zaman pozitif saklaniyor (bkz. `ParsedLine` KDoc). Sorgu
+     * bayragi gozardi etseydi indirimli fiste kapi ayristiricidan FARKLI karar
+     * verirdi; ekran kapisinin ayni hatasi F5.6'da kayitli.
+     */
+    @Test
+    fun lineSumSubtractsDiscounts() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+        db.receiptLineDao().insertAll(
+            listOf(
+                ReceiptLine(
+                    id = "indirim", householdId = home, receiptId = "r1",
+                    rawText = "INDIRIM *10.00", rawTextNormalized = "indirim",
+                    unitPriceMinor = null, lineTotalMinor = 1000,
+                    isDiscount = true, createdAt = 300,
+                ),
+            ),
+        )
+
+        assertEquals(21550, db.receiptLineDao().sumLinesForReceipts(listOf("r1")))
+    }
+
+    /** Hic satir yoksa NULL - "satir yok" ile "toplami sifir" ayri seyler. */
+    @Test
+    fun lineSumIsNullWhenNoLines() = runTest {
+        val db = db(); prepare(db)
+
+        assertEquals(null, db.receiptLineDao().sumLinesForReceipts(listOf("r1")))
     }
 }

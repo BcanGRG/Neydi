@@ -19,6 +19,7 @@ import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.receipt.ReceiptReadOutcome
 import com.neydi.app.data.receipt.TOLERANCE_MINOR
 import com.neydi.app.data.receipt.chainKey
+import com.neydi.app.data.receipt.samePhysicalReceipt
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
@@ -76,11 +77,18 @@ data class CheckState(
     /**
      * Bu fis cok parcali bir cekimin PARCASI mi (F4.13).
      *
-     * Turetiliyor, saklanmiyor: toplami okunamamis (null) bir fis, ayni gezide
-     * baska fisler varken buyuk olasilikla uzun fisin bir parcasi - toplam
-     * yalnizca son parcada basili. Bu ayrim olmadan ara parcalar amber
-     * "toplam tutmuyor" giyiyordu: durust ama yanlis yonlendirici, cunku
-     * kullanici hata yapmadi.
+     * Turetiliyor, saklanmiyor: gezide birden fazla fis varsa bu fis tek
+     * basina bir alisverisin tamami degil, bir bolumu.
+     *
+     * ONCE `toplam == null` KOSULU DA VARDI VE SON PARCAYI DISARIDA
+     * BIRAKIYORDU. Toplam yalnizca son parcada basili oldugu icin o parca
+     * "parca degil" sayiliyor, ama fisin TAMAMININ toplamiyla kendi
+     * satirlarinin toplami karsilastiriliyordu - yani her uzun fiste, her
+     * seferinde amber "tutmuyor". Kullanici hicbir hata yapmadan. Ara parcalar
+     * bu tuzaktan yalnizca toplamlari okunamadigi icin kurtuluyordu.
+     *
+     * Simdi kapi da gezi kapsaminda hesaplaniyor ([sumMinor] / [totalMinor]),
+     * yani parca ekraninda gorunen sayilar FISIN TAMAMINA ait.
      */
     val isPart: Boolean = false,
 )
@@ -147,9 +155,38 @@ class ReceiptCheckViewModel(
         // indirimli fiste islemcinin yazdigi durum (VERIFIED) ile ekrandaki
         // cip (tutmuyor) CELISIYORDU. `isDiscount` v3'te kalici oldugu icin
         // ayni hesap artik veritabanindan yeniden kurulabiliyor.
-        val sum = lines.sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
-        val total = receipt?.totalMinor
-        val tripReceiptCount = receipt?.let { receiptDao.countForTrip(it.tripId) } ?: 0
+        val ownSum = lines.sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
+        // KAPI FIZIKSEL FIS KAPSAMINDA HESAPLANIYOR (F4.13 duzeltmesi).
+        //
+        // Aritmetik degismez fiziksel fise ait, FOTOGRAFA degil. Uzun fis parca
+        // parca cekilince TOPLAM yalnizca SON parcada basili oluyor ama o parca
+        // fisin yalnizca bir bolumunun satirlarini tasiyor - yani tek fotograf
+        // kapsaminda hesaplanan kapi son parcada YAPISAL OLARAK tutmuyor
+        // cikiyordu. Her uzun fiste, her seferinde, kullanici hicbir hata
+        // yapmadan amber "tutmuyor". Ara parcalar bundan yalnizca toplamlari
+        // null oldugu icin kurtuluyordu.
+        //
+        // KAPSAM GEZI DEGIL: bir gezide iki AYRI magaza fisi olabiliyor ve
+        // cihazda tam olarak o vardi (BIM + File Market). Gezi kapsami, dogru
+        // okunmus File Market fisini BIM'in ayristirma hatasiyla amber'a
+        // ceviriyordu - duzeltilmek istenen hatanin yer degistirmis hali.
+        // Gruplama `samePhysicalReceipt` icinde, gerekcesiyle birlikte.
+        val group = receipt?.let { samePhysicalReceipt(receiptDao.forTrip(it.tripId), it.id) }
+            .orEmpty()
+        val isPart = group.size > 1
+        val sum = if (isPart) {
+            // null = grupta hic satir yok; kendi toplamimiz (0) dogru cevap.
+            receiptLineDao.sumLinesForReceipts(group.map { it.id }) ?: ownSum
+        } else {
+            ownSum
+        }
+        val total = if (isPart) {
+            // Hicbir parcanin toplami okunamadiysa null kaliyor ve kapi
+            // "dogrulanamadi" diyor - parca cipi bunu notr gosteriyor.
+            group.mapNotNull { it.totalMinor }.takeIf { it.isNotEmpty() }?.sum()
+        } else {
+            receipt?.totalMinor
+        }
         _state.value = CheckState(
             loading = false,
             storeName = receipt?.storeNameRaw,
@@ -167,7 +204,7 @@ class ReceiptCheckViewModel(
             failedMessage = receipt?.errorMessage
                 ?.takeIf { receipt.status == ReceiptStatus.FAILED && lines.isEmpty() },
             notice = notice,
-            isPart = total == null && tripReceiptCount > 1,
+            isPart = isPart,
         )
     }
 

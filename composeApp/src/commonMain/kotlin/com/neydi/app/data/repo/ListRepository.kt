@@ -253,6 +253,43 @@ class ListRepository(
         return row
     }
 
+    /**
+     * Son kapanmis gezide ALINAN urunleri bugunun listesine ekler.
+     *
+     * Tasarimin dongu-ortasi bos durumundaki tek hayalet butonu bunu cagiriyor
+     * ("Gecen sefer aldiklarini ekle"). Bos ekranin en ucuz cikis yolu: liste
+     * bos cunku alisveris yeni bitti, ve bir sonraki liste buyuk olcude ayni.
+     *
+     * ZATEN LISTEDE OLANI IKI KEZ EKLEMEZ - [add] mevcut satirin adedini
+     * artiriyor, o yuzden burada filtrelemek sart: aksi halde butona iki kez
+     * dokunan kullanici her urunden iki tane ister hale gelirdi.
+     *
+     * @return eklenen satir sayisi; 0 ise eklenecek bir sey yoktu.
+     */
+    suspend fun addFromLastTrip(householdId: String, memberId: String): Int {
+        val lastTrip = tripDao.lastClosed(householdId) ?: return 0
+        val previous = tripLineDao.takenForTrip(lastTrip.id)
+        if (previous.isEmpty()) return 0
+
+        val trip = openOrGetActiveTrip(householdId, memberId)
+        val alreadyThere = tripLineDao.productIdsForTrip(trip.id).toSet()
+
+        var added = 0
+        for (line in previous) {
+            if (line.productId in alreadyThere) continue
+            val product = productDao.byId(line.productId) ?: continue
+            add(
+                householdId = householdId,
+                tripId = trip.id,
+                product = product,
+                memberId = memberId,
+                count = line.quantity,
+            )
+            added++
+        }
+        return added
+    }
+
     /** checkedAt SAKLANIYOR: reyonda mi evde mi isaretlendi sorusu sonra lazim olacak. */
     suspend fun toggleChecked(rowId: String, checked: Boolean) =
         tripLineDao.setChecked(rowId, checked, if (checked) clock() else null)

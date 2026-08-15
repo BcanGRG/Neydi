@@ -12,6 +12,8 @@ import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
 import com.neydi.app.ui.receipt.ReceiptCheckViewModel
+import com.neydi.app.ui.missing.MissingItemsViewModel
+import com.neydi.app.ui.settings.SettingsViewModel
 // kotlinx.datetime.Clock artik kotlin.time.Clock'a deprecate typealias.
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -59,7 +61,7 @@ val dataModule = module {
 
     viewModel {
         ListViewModel(
-            repo = get(), tripLineDao = get(), memberDao = get(),
+            repo = get(), tripDao = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
             statsRebuilder = get(),
@@ -69,7 +71,21 @@ val dataModule = module {
         )
     }
 
-    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get()) }
+    viewModel {
+        MissingItemsViewModel(
+            engine = get(), repo = get(),
+            productDao = get(), memberDao = get(),
+        )
+    }
+
+    viewModel {
+        SettingsViewModel(
+            householdDao = get(), memberDao = get(),
+            productDao = get(), clock = ::now,
+        )
+    }
+
+    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get(), tripLineDao = get()) }
 
     viewModel { (tripId: String?) ->
         FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())

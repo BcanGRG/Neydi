@@ -186,17 +186,127 @@ class ReceiptUiLogicTest {
         assertFalse(result.single().receipts.single().isPart)
     }
 
-    /** Toplami OKUNMUS ama tutmayan fis parca degil - o gercekten tutmuyor. */
+    /**
+     * TOPLAMI TASIYAN SON PARCA DA PARCADIR - hatanin ta kendisi buydu.
+     *
+     * Toplam yalnizca son parcada basili. O parca butun fisin toplamini tasiyip
+     * yalnizca kendi satirlarini tasidigi icin MISMATCHED olmasi KACINILMAZ.
+     * Eski kural `totalMinor == null` sarti kostugu icin tam olarak bu parcayi
+     * disarida birakiyor ve amber "sorunlu" zemini giydiriyordu - her uzun
+     * fiste, her seferinde, kullanici hicbir hata yapmadan.
+     *
+     * Test isiriyor: `tripReceipts.size > 1` sarti kaldirilip eski
+     * `totalMinor == null` geri konursa burasi kirilir.
+     */
     @Test
-    fun genuineMismatchIsNotAPart() {
+    fun lastPartCarryingTheTotalIsStillAPart() {
         val result = combineTrips(
-            trips = listOf(trip("t1", 500, null)),
+            trips = listOf(trip("t1", 500, 108565)),
             receipts = listOf(
-                receipt("r1", "t1", ReceiptStatus.MISMATCHED).copy(totalMinor = 10000),
-                receipt("r2", "t1", ReceiptStatus.VERIFIED).copy(totalMinor = 48458),
+                receipt("ilk", "t1", ReceiptStatus.MISMATCHED),
+                // Son parca: FISIN TAMAMININ toplami basili, ama satirlarin
+                // yalnizca bir bolumu burada.
+                receipt("son", "t1", ReceiptStatus.MISMATCHED).copy(totalMinor = 108565),
             ),
         )
 
-        assertFalse(result.single().receipts.single { it.id == "r1" }.isPart)
+        val rows = result.single().receipts
+        assertTrue(rows.single { it.id == "ilk" }.isPart)
+        assertTrue(rows.single { it.id == "son" }.isPart)
+    }
+
+    /**
+     * IKI AYRI MAGAZA FISI PARCA DEGIL - biri tutmuyorsa amber HAK EDILMIS.
+     *
+     * Cihazda gercek hali vardi: tek gezide BIM ve File Market fisleri. Kosul
+     * "gezide birden fazla fis var mi" olsaydi BIM'in gercek uyumsuzlugu notr
+     * gorunurdu - yani duzeltilen hatanin ters yonu.
+     */
+    @Test
+    fun receiptsFromDifferentStoresAreNotParts() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, 71008)),
+            receipts = listOf(
+                receipt("bim", "t1", ReceiptStatus.MISMATCHED)
+                    .copy(storeNameRaw = "BIM BIRLESIK MAGAZALAR A.S.", totalMinor = 22550),
+                receipt("file", "t1", ReceiptStatus.VERIFIED)
+                    .copy(storeNameRaw = "FiLE MARKET MAGAZACILIK", totalMinor = 48458),
+            ),
+        )
+
+        assertFalse(result.single().receipts.single { it.id == "bim" }.isPart)
+    }
+
+    /**
+     * OKUNAMAYAN PARCA MUAF: FAILED gercek bir sorun ve sorunlu gorunmeli.
+     *
+     * Parca sayilmasi amber zemini kaldirirdi ve kullanici okunamamis bir
+     * fotografi fark etmezdi - halbuki tek yapmasi gereken tekrar cekmek.
+     */
+    @Test
+    fun failedPartStaysAProblem() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = listOf(
+                receipt("okunamadi", "t1", ReceiptStatus.FAILED),
+                receipt("son", "t1", ReceiptStatus.MISMATCHED).copy(totalMinor = 48458),
+            ),
+        )
+
+        assertFalse(result.single().receipts.single { it.id == "okunamadi" }.isPart)
+    }
+
+    // --- Gecmis satiri (Ekran 6 tasarimi) -----------------------------------
+
+    /**
+     * TASARIM MAGAZAYI BASLIK YAPIYOR. Ad ilk OKUNABILMIS fisten geliyor: cok
+     * parcali fiste kunye yalnizca ilk parcada basili, sonrakiler tasimiyor.
+     */
+    @Test
+    fun tripRowTakesStoreFromFirstReadableReceipt() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, 22550)),
+            receipts = listOf(
+                receipt("parca2", "t1", ReceiptStatus.MISMATCHED).copy(capturedAt = 300),
+                receipt("ilk", "t1", ReceiptStatus.VERIFIED)
+                    .copy(capturedAt = 100, storeNameRaw = "BIM BIRLESIK MAGAZALAR"),
+            ),
+            lineCounts = mapOf("t1" to 18),
+        )
+
+        val row = result.single()
+        assertEquals("BIM BIRLESIK MAGAZALAR", row.storeName)
+        assertEquals(18, row.itemCount)
+    }
+
+    /**
+     * Hic fis yoksa magaza adi null - satir "Fis eklenmedi" yaziyor.
+     *
+     * Ekran ayrica FIS VAR AMA MAGAZA OKUNAMADI halini ayri gosteriyor:
+     * ikisini birlestirmek okunamamis bir fisi hic cekilmemis gibi
+     * gosterirdi. Bu ayrimin verisi `receipts` listesinin bos olup olmamasi.
+     */
+    @Test
+    fun tripRowHasNoStoreWhenNoReceipt() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = emptyList(),
+        )
+
+        assertEquals(null, result.single().storeName)
+        assertEquals(0, result.single().itemCount)
+        assertEquals(emptyList(), result.single().receipts)
+    }
+
+    /** Fis VAR ama magaza okunamadi: ad yine null ama fis listesi DOLU. */
+    @Test
+    fun tripRowKeepsReceiptWhenStoreUnreadable() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = listOf(receipt("r1", "t1", ReceiptStatus.FAILED)),
+        )
+
+        assertEquals(null, result.single().storeName)
+        assertEquals(1, result.single().receipts.size)
     }
 }

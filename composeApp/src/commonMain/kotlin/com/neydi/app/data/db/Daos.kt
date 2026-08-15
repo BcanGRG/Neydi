@@ -132,6 +132,16 @@ interface TripDao {
     @Query("SELECT * FROM trip WHERE householdId = :householdId AND completedAt IS NOT NULL AND deletedAt IS NULL ORDER BY completedAt DESC LIMIT :limit")
     fun observeHistory(householdId: String, limit: Int = 50): Flow<List<Trip>>
 
+    /** En son kapanan gezi - "Gecen sefer aldiklarini ekle" bunun uzerinden calisiyor. */
+    @Query(
+        """
+        SELECT * FROM trip
+        WHERE householdId = :householdId AND completedAt IS NOT NULL AND deletedAt IS NULL
+        ORDER BY completedAt DESC LIMIT 1
+        """,
+    )
+    suspend fun lastClosed(householdId: String): Trip?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(trip: Trip)
 
@@ -189,6 +199,46 @@ interface TripDao {
 interface TripLineDao {
     @Query("SELECT * FROM trip_line WHERE tripId = :tripId AND deletedAt IS NULL ORDER BY createdAt")
     fun observeLines(tripId: String): Flow<List<TripLine>>
+
+    /**
+     * Bir gezide GERCEKTEN ALINAN satirlar - "Gecen sefer aldiklarini ekle"
+     * bos durum butonunun kaynagi (Ekran 1 tasarimi).
+     *
+     * `checked = 1` tek olcut ve yeterli: uc-sonuc secici (F4.12)
+     * NOT_NEEDED ve FORGOTTEN satirlarini isaretsiz birakiyor, iyimser
+     * mutabakat (F4.8) ise kapanista alinanlari isaretliyor. Yani
+     * "gerekmedi" dedigi bir urunu bir sonraki listeye geri koymuyoruz -
+     * kullanicinin acikca reddettigi seyi tekrar onune surmek olurdu.
+     */
+    @Query(
+        """
+        SELECT * FROM trip_line
+        WHERE tripId = :tripId AND checked = 1 AND deletedAt IS NULL
+        ORDER BY createdAt
+        """,
+    )
+    suspend fun takenForTrip(tripId: String): List<TripLine>
+
+    /** Gezideki CANLI satirlarin urun kimlikleri - iki kez eklemeyi onlemek icin. */
+    @Query("SELECT productId FROM trip_line WHERE tripId = :tripId AND deletedAt IS NULL")
+    suspend fun productIdsForTrip(tripId: String): List<String>
+
+    /**
+     * Gezi basina satir sayisi - Gecmis satirindaki *"14 Agu · 18 urun"*.
+     *
+     * TEK SORGU, gezi basina bir sorgu DEGIL: elli gezilik bir gecmiste N+1
+     * sorgu acmak listeyi acilirken kilitlerdi.
+     */
+    @Query(
+        """
+        SELECT tl.tripId AS tripId, COUNT(*) AS lineCount
+        FROM trip_line tl
+        JOIN trip t ON t.id = tl.tripId
+        WHERE t.householdId = :householdId AND tl.deletedAt IS NULL AND t.deletedAt IS NULL
+        GROUP BY tl.tripId
+        """,
+    )
+    fun observeLineCounts(householdId: String): Flow<List<TripLineCount>>
 
     /**
      * Liste ekraninin tek sorgusu. JOIN Kotlin tarafinda birlestirmekten iyi:
@@ -411,6 +461,15 @@ interface ReceiptDao {
     @Query("SELECT COUNT(*) FROM receipt WHERE tripId = :tripId AND deletedAt IS NULL")
     suspend fun countForTrip(tripId: String): Int
 
+    /**
+     * Gezideki fisler, cekim sirasinda - fiziksel fis gruplamasinin girdisi.
+     *
+     * `observeForTrip`'in tek seferlik hali: kapi hesabi anlik bir goruntu
+     * istiyor, akis degil.
+     */
+    @Query("SELECT * FROM receipt WHERE tripId = :tripId AND deletedAt IS NULL ORDER BY capturedAt")
+    suspend fun forTrip(tripId: String): List<Receipt>
+
     @Query("UPDATE receipt SET status = :status, errorMessage = :error WHERE id = :id")
     suspend fun setStatus(id: String, status: ReceiptStatus, error: String? = null)
 
@@ -478,6 +537,40 @@ interface ReceiptLineDao {
 
     @Query("DELETE FROM receipt_line WHERE receiptId = :receiptId")
     suspend fun clearForReceipt(receiptId: String)
+
+    /**
+     * VERILEN FISLERIN satirlarinin toplami, kurus (F4.13 duzeltmesi).
+     *
+     * ARITMETIK DEGISMEZ FIZIKSEL FISE AIT, FOTOGRAFA DEGIL. Uzun fis parca
+     * parca cekilince TOPLAM yalnizca SON parcada basili oluyor ama o parca
+     * fisin yalnizca bir bolumunun satirlarini tasiyor. Kapiyi tek fotograf
+     * kapsaminda hesaplamak son parcada **yapisal olarak** tutmuyor cikariyordu:
+     * her uzun fiste, her seferinde amber "tutmuyor" - kullanici hicbir hata
+     * yapmadan.
+     *
+     * KAPSAM GEZI DEGIL, FIZIKSEL FIS: id kumesini `samePhysicalReceipt`
+     * veriyor. Gezi kapsami cihazda olculdu ve YANLISTI - bir gezide iki ayri
+     * magaza fisi olabiliyor ve onlari toplamak dogru okunmus bir fisi
+     * digerinin hatasiyla amber yapiyordu.
+     *
+     * YAN KAZANC: bindiren cekimi yakaliyor. Kullanici ayni satirlari iki
+     * parcada birden cekerse toplam fisin toplamini ASAR ve kapi bunu soyler -
+     * bugun hicbir sey soylemiyor.
+     *
+     * Isaret [ReceiptLine.isDiscount]'tan geliyor, sayidan degil - tutar her
+     * zaman pozitif saklaniyor (bkz. `ParsedLine` KDoc).
+     *
+     * @return kurus, ya da hic satir yoksa null. SUM() bos kumede NULL doner ve
+     *   bu istenen: "hic satir yok" ile "toplami sifir" ayri seyler.
+     */
+    @Query(
+        """
+        SELECT SUM(CASE WHEN isDiscount THEN -lineTotalMinor ELSE lineTotalMinor END)
+        FROM receipt_line
+        WHERE receiptId IN (:receiptIds) AND deletedAt IS NULL
+        """,
+    )
+    suspend fun sumLinesForReceipts(receiptIds: List<String>): Long?
 }
 
 /** ProductAlias DAO'su - F4.7 ogrenmesi buradan geciyor. */

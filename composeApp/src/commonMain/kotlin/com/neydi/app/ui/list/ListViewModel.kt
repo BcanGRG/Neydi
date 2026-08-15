@@ -13,6 +13,7 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
 import io.github.vinceglb.filekit.PlatformFile
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
  */
 class ListViewModel(
     private val repo: ListRepository,
+    private val tripDao: TripDao,
     private val tripLineDao: TripLineDao,
     private val memberDao: MemberDao,
     private val productDao: ProductDao,
@@ -102,6 +104,21 @@ class ListViewModel(
     private val emptyKind: Flow<EmptyKind> = productDao.observeAll(household)
         .map { if (it.isEmpty()) EmptyKind.ILK_GUN else EmptyKind.DONGU_ORTASI }
 
+    /**
+     * Basligin alt satirini besleyen son KAPANMIS gezi (Ekran 1 tasarimi).
+     *
+     * `observeHistory` zaten yalnizca kapanmis gezileri, `completedAt DESC`
+     * siralamasiyla donduruyor - ilki en sonuncusu.
+     */
+    private val lastTrip: Flow<LastTrip?> = tripDao.observeHistory(household, limit = 1)
+        .map { trips ->
+            trips.firstOrNull()?.let { trip ->
+                // completedAt burada asla null olamaz (sorgunun kendisi eliyor)
+                // ama sozlesmeyi kod seviyesinde de tutuyoruz.
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+            }
+        }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ListState> =
         combine(
@@ -111,7 +128,10 @@ class ListViewModel(
             myMemberId,
             shoppingMode,
             emptyKind,
-        ) { rows, memberId, mod, kind -> rows.toSections(memberId, mod, kind) }
+            lastTrip,
+        ) { rows, memberId, mod, kind, last ->
+            rows.toSections(memberId, mod, kind).copy(lastTrip = last)
+        }
             .stateIn(
                 scope = viewModelScope,
                 // 5 saniye: konfigurasyon degisiminde akis kopmasin, ama
@@ -143,6 +163,10 @@ class ListViewModel(
      * bu parametre en bastan vardi ama hicbir cagiran doldurmuyordu - yani
      * oneri isabeti olculemiyordu. Artik olculuyor.
      */
+    /** Sheet acik kalirken eklenen urun sayisi (Ekran 2 tasarimi). */
+    private val _sheetAddedCount = MutableStateFlow(0)
+    val sheetAddedCount: StateFlow<Int> = _sheetAddedCount
+
     fun addFromEngine(suggestion: Suggestion) {
         viewModelScope.launch {
             val memberId = selfMemberId() ?: return@launch
@@ -218,6 +242,18 @@ class ListViewModel(
         viewModelScope.launch { repo.toggleChecked(rowId, checked) }
     }
 
+    /**
+     * Dongu ortasi bos durumunun hayalet butonu (Ekran 1 tasarimi).
+     *
+     * Zaten listede olan urun ATLANIYOR - bkz. `ListRepository.addFromLastTrip`.
+     */
+    fun addFromLastTrip() {
+        viewModelScope.launch {
+            val memberId = selfMemberId() ?: return@launch
+            repo.addFromLastTrip(household, memberId)
+        }
+    }
+
     fun setShoppingMode(enabled: Boolean) {
         viewModelScope.launch {
             val memberId = selfMemberId() ?: return@launch
@@ -249,10 +285,39 @@ class ListViewModel(
     private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
     val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
 
-    fun openSheet() { _sheetOpen.value = true }
+    /** Sheet ici arama (Ekran 2 tasarimi). */
+    private val _sheetQuery = MutableStateFlow("")
+    val sheetQuery: StateFlow<String> = _sheetQuery
+
+    private val _sheetResults = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val sheetResults: StateFlow<List<CatalogSeed>> = _sheetResults
+
+    fun onSheetQueryChanged(text: String) {
+        _sheetQuery.value = text
+        viewModelScope.launch {
+            _sheetResults.value = if (text.isBlank()) {
+                emptyList()
+            } else {
+                // matchKey uzerinden: kullanici "sut" yazinca "Sut" bulunmali
+                // (bkz. MatchKey.kt'nin Turkce buyuk/kucuk harf tuzagi).
+                catalogSeedDao.search(matchKey(text), limit = 20)
+            }
+        }
+    }
+
+    fun openSheet() {
+        _sheetOpen.value = true
+        _sheetQuery.value = ""
+        _sheetResults.value = emptyList()
+        // Sayac her acilista SIFIRLANIYOR: "3 urun eklendi" bu oturumun
+        // sayisi, hanenin toplam gecmisi degil.
+        _sheetAddedCount.value = 0
+    }
 
     fun closeSheet() {
         _sheetOpen.value = false
+        _sheetQuery.value = ""
+        _sheetResults.value = emptyList()
         _sheetCategory.value = null
         _sheetProducts.value = emptyList()
     }
@@ -273,6 +338,7 @@ class ListViewModel(
     /** Sheet'ten urun eklemek sheet'i KAPATMAZ: pes pese ekleme normal. */
     fun addFromSheet(seed: CatalogSeed) {
         addInternal(seed.name, seed.categoryId, seed.defaultUnit, 1.0)
+        _sheetAddedCount.value += 1
     }
 
     // --- Sepet tahmini + ozet (F3.8) ---------------------------------------

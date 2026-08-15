@@ -213,6 +213,22 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Yeni bileşen `OutcomePicker`** (`Modifier.pressable` üzerine) — Material3 `SegmentedButton` da indication'ı sabit kodluyor.
   **Spec'ten hâlâ açık kalanlar:** `[Elle sadece toplam gir]` yolu (yeni klavye olamaz — tek klavye fiş tutarı alanı) ve süre satırı (`durationMinutes` hep null; alışveriş modunun başlangıç zamanı saklanmıyor). Bunlar F6.7/F10 tarafında küçük işler olarak duruyor.
 
+- [x] **4.13b — Aritmetik kapısı parçalı fişte yanlış alarm veriyordu.** ✅ *Cihazda gerçek veriyle doğrulandı.*
+  **Hata:** kapı her **fotoğrafa** ayrı uygulanıyordu, halbuki aritmetik değişmez **fiziksel fişe** ait. Uzun fişte TOPLAM yalnızca son parçada basılı ama o parça satırların yalnızca bir bölümünü taşıyor — yani son parçada kapı **yapısal olarak** tutmuyor çıkıyordu. Her uzun fişte, her seferinde, kullanıcı hiçbir hata yapmadan amber *"toplam tutmuyor"*. Ara parçalar bundan yalnızca toplamları `null` olduğu için kurtuluyordu: `isPart = total == null && tripReceiptCount > 1` koşulu tam olarak son parçayı dışarıda bırakıyordu.
+  **İlk düzeltme yanlıştı ve cihaz onu çürüttü.** Kapıyı **gezi** kapsamına almak denendi; kullanıcının veritabanında tek gezide **iki ayrı mağaza** fişi çıktı (BİM 225,50 + File Market 484,58). Gezi kapsamı, File Market'in doğru okunmuş **sessiz** halini BİM'in ayrıştırma hatasıyla amber'a çeviriyordu — düzeltilmek istenen hatanın yer değiştirmiş hali.
+  **Doğru kapsam fiziksel fiş** (`samePhysicalReceipt`): künye yalnızca fişin **başında** basılı olduğu için uzun fişin ilk parçası mağaza adını taşıyor, sonrakiler taşımıyor; iki ayrı mağaza fişiyse ikisi de kendi adını taşıyor ve adlar farklı. Gruplama `chainKey` üzerinden — alias öğrenmesiyle **aynı** anahtar, yoksa iki ayrı "aynı mağaza" tanımı oluşurdu.
+  **Yan kazanç:** bindiren çekim artık yakalanıyor. Kullanıcı aynı satırları iki parçada birden çekerse toplam fişin toplamını **aşar** ve kapı bunu söyler; bugün hiçbir şey söylemiyordu.
+  **Cihazda:** AKYURT parçası nötr *"parça"*, FiLE MARKET çipsiz/sessiz, BİM amber *"toplam tutmuyor"* — sonuncusu **hak edilmiş** (satırlar 227,89, basılı 225,50; fark 2,39 = `TOPLAM KDV` satırı ürün sanılmış, ayrı bir ayrıştırıcı hatası).
+  10 yeni test (`ReceiptGroupingTest` + kapsam testleri), 206 test 0 hata.
+
+- [ ] **4.15 — Parça dikişi: bindirmeyi tehlike değil çapa yap.** *(kullanıcı önerisinden doğdu)*
+  **Kullanıcının önerisi:** tek fotoğraf çekilsin, arkada uygun okuma düzenine göre parçalansın; parçalama sınırları net olsun ki aynı satır iki kez okunmasın.
+  **Birinci yarısı fizik nedeniyle olmuyor:** kırpmak piksel üretmiyor. Ölçüm kayıtlı (`ReceiptProcessor.MIN_USABLE_LINES` gerekçesi): ~60 kalemlik fiş tek karede satır başına **4,7 piksel**, ML Kit 60 satırın **2'sini** okuyabildi — ve *"ham kamera çözünürlüğü bile ~7 px/satır verirdi"*. Yani çok kare **zorunlu**; `MAX_LONG_EDGE` kaldırılsa da değişmiyor.
+  **İkinci yarısı haklı ve çözülmemiş:** bugün parçalar birbirinden habersiz. Kullanıcıdan **temiz kesim** istemek yanlış yük — doğru olan kasıtlı **bindirme** istemek ve dikişi uygulamanın yapması: *"bir önceki karenin son 2-3 satırı görünsün"*. Bindiren satırlar dikişin **çapası** olur, tehlikesi değil; belge tarayıcılarının panoramada yaptığı bu.
+  **Ne kazandırır:** tek okuma → aritmetik kapısı fişin tamamını gerçekten doğrular (4.13b bunun yarısını zaten getirdi), satırlar bir kez sayılır, kullanıcı tek kontrol ekranı görür.
+  **Bugün ne koruyor, ne korumuyor:** `purchaseCount` güvende — `ProductStatsDao.purchaseEvents` `GROUP BY productId, tripId` yapıyor, yani aynı ürün iki parçada okunsa da bir kez sayılıyor. **F5.1'in fiyat gözlemlerinde bu koruma yok**; dikiş ya da tekilleştirme F5.1'den önce gelmeli, yoksa çift fiyat kaydı yazılır.
+  **Önkoşul F4.14 ile ortak:** ham satırlar kalıcı olmadan dikiş yazılamaz.
+
 - [ ] **5.1 — `PriceObservation` yazımı.** *Fazın kilit taşı; her şey buna bakıyor.*
   **Hazır olan:** entity `Receipt.kt:91` (11 alan, `(productId, observedAt)` ve `storeId` index'leri, şema **sürüm 2**'de yayında). **Eksik olan:** `PriceObservationDao` (`Daos.kt:254`) **yalnızca iki okuma sorgusu içeriyor — `@Insert`, `@Upsert`, `@Update`, `@Delete` hiçbiri yok**. Repo genelinde `PriceObservation(` yapıcısı **sıfır** yerde çağrılıyor.
   **ReceiptLine → PriceObservation eşlemesi, alan alan:**
@@ -325,8 +341,9 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Cihaz doğrulamasının dürüst sınırı:** tamamlama modu cihazda doğrulandı (*"yum" → Yumurta, Yumuşatıcı*); **öneri modu cihazda henüz çizilemez** çünkü cihazdaki bütün alımlar aynı gün yapıldı → medyan 0 → tempo yok → skor yok — ve bu **doğru davranış** (uydurma tempo yok). Öneri modu Room testleri + önizlemeyle kanıtlı; gerçek çipler günler arayla alışveriş birikince kendiliğinden görünecek.
   **Bilinçli erteleme:** `SuggestionEvent` yazımı (SHOWN/ADDED) **F6.5'te** — tablo orada DAO'suyla birlikte geliyor; üç-vuruş bastırması olmadan yalnız gösterim kaydı yarım bir iş olurdu.
 
-- [ ] **6.4 — Eksik Olabilir (Ekran 3).**
-  **⚠️ EKRAN ŞU AN AÇILAMIYOR ve sebebi F4.9'daki hatanın aynısı:** `ListScreen` `onGoShopping` parametresini alıyor, `App.kt` ona `go(MissingItems)` veriyor, ve **gövdede hiçbir yerde çağrılmıyor** — `ListContent`'in 17 parametresi arasında bile yok. Başlıkta *"Alışverişe çıkıyorum"* diye bir düğme **hiç yok**. Kotlin kullanılmayan fonksiyon parametresi için uyarı vermediği için sessiz. (`onHistory` da tam böyleydi; F4.9'da yakalandı.)
+- [~] **6.4 — Eksik Olabilir (Ekran 3).** *Ekran yazıldı ve cihazda doğrulandı; fiyat satırı F5.1'i bekliyor.*
+  **✅ İKİ TEL HATASI DA DÜZELTİLDİ (15 Ağu).** `onGoShopping` artık Ekran 1'in altındaki *"Alışverişe çıkıyorum"* butonundan çağrılıyor; `onAdd` Ekran 4'e değil, seçilenleri ekleyip **alışveriş moduna** geçiyor. Aşağıdaki teşhis kayıt olarak duruyor.
+  **⚠️ (çözüldü) EKRAN AÇILAMIYORDU ve sebebi F4.9'daki hatanın aynısı:** `ListScreen` `onGoShopping` parametresini alıyor, `App.kt` ona `go(MissingItems)` veriyor, ve **gövdede hiçbir yerde çağrılmıyor** — `ListContent`'in 17 parametresi arasında bile yok. Başlıkta *"Alışverişe çıkıyorum"* diye bir düğme **hiç yok**. Kotlin kullanılmayan fonksiyon parametresi için uyarı vermediği için sessiz. (`onHistory` da tam böyleydi; F4.9'da yakalandı.)
   **⚠️ İkinci tel hatası:** `onAdd = { go(FinishShopping()) }` — yani Ekran 3'ün birincil eylemi kullanıcıyı **Ekran 4'e** yolluyor. Tasarım *"[Ekle (4)]"* diyor: seçilenleri listeye ekle ve **alışveriş moduna gir**. Üstelik `FinishShopping(null)` `FinishShoppingViewModel`'de `flowOf(emptyList())`'e düşüyor, yani o ekran **kalıcı olarak boş** çiziliyor. Bir de iki spec çelişiyor: `Destinations` KDoc'u *"tripId null ise aktif alışveriş kapatılıyor"* diyor, `App.kt` yorumu *"gezi ZATEN KAPALI, bu ekran kapatmıyor"* diyor. **Karar:** `tripId` non-null olsun ve null dalı silinsin, ya da "aktif geziyi kapat" anlamı gerçekten yazılsın.
   **Üç bölüm ve asimetrik varsayılanlar** — asimetri bilinçli: *"geçen sefer unuttun"* ve *"her zamankiler"* varsayılan **açık**, tahmin bölümü varsayılan **kapalı**. Tahmin uygulamanın **kendi başına akıl yürüttüğü tek yer** ve varsayılan-açık muamelesi görmez.
   **Bölüm bölüm eksikler:**
@@ -349,6 +366,10 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Üç-vuruş sessiz otomatik bastırma** hiç "önerme" demeyen kullanıcı için kendi kendini iyileştirir; bu, listenin görünür olmasının **yerine** geçmez, ikisi birlikte gerekir.
 
 - [ ] **6.6 — Kurulum (Ekran 8).** 3 adım, ~40 ürünlük grid, tempo çipi. Var olma sebebi tek: 15. gezide değil **3. gezide** akıllı hissetmek.
+  **Veri hazır:** `AppSettings.setupCompletedAt` ve `AppSettings.tempoDays` şemada (v3) — ama **DAO'su yok ve hiçbir yazan yok**. Adım 2'nin ihtiyacı (`productDao.setStaple`) F6.8 ile geldi, katalog tohumları hazır.
+  **⚠️ İKİ KARAR GEREKİYOR, iş bunlarsız ilerlemedi:**
+  1. **1. adım (Hane) auth'a bağlı ve Faz 7'de.** Tasarım e-posta + "Yeni hane oluştur" + katılma kodu istiyor; hiçbiri yok. Kurulum şimdilik **iki adım** mı olsun (tempo + sabitler, "1 / 2" · "2 / 2"), yoksa Faz 7'ye kadar hiç mi görünmesin? Tasarımın "1 / 3" etiketleri buna göre değişir.
+  2. **Ekran ne zaman açılacak?** "Bir daha görünmez" diyor ama tetikleyici tanımlı değil. `setupCompletedAt == null` yeterli mi — yoksa "hane hiç ürün görmedi" koşulu da gerekli mi? İkincisi olmadan, **mevcut kurulumlarda dolu bir veritabanının üstüne onboarding açılır**; bu cihazda gerçek veri var ve o sürpriz kabul edilemez olurdu.
   **⚠️ Hedefe HİÇBİR YERDEN gidilmiyor.** `Setup` serializer'a kayıtlı, exhaustive `when` bekçisinde var, `App.kt`'de girdisi var — ve repo genelinde **tek bir `go(Setup)` yok**. `MissingItems`'in en azından ölü bir çağıran lambda'sı vardı; Setup'ın hiç yok. Bu, exhaustive-`when` bekçisinin **göremediği** delik: kaydı olan ama ulaşılamayan hedef.
   **⚠️ Ek tuzak:** back stack kökü daima `Liste` ve `back()` boyut 1'in altına inmiyor. Setup ileride **ilk açılış kökü** yapılırsa, bugünkü `onFinish = back()` **sessiz bir no-op** olur ve kullanıcı ekranda mahsur kalır.
   **⚠️ Şemada "kurulum koştu mu" sorusunu cevaplayacak hiçbir şey yok.** `Household` yalnızca id/ad/tarih taşıyor; `Member` yalnızca ad/isSelf; **ayar/tercih entity'si yok**, DataStore/Preferences bağımlılığı da yok. Dahası `bootstrap` **her açılışta** koşuyor ve haneyi sabit `DEFAULT_HOUSEHOLD_ID` ile **koşulsuz** yaratıyor — yani "hane yoksa Kurulum'u göster" **hiçbir zaman doğru olamaz**.
@@ -356,7 +377,10 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   **Üçüncü boş durum buraya bağlı:** `EmptyKind` yalnızca `ILK_GUN` ve `DONGU_ORTASI` taşıyor, oysa hem kendi KDoc'u hem `EmptyStates` *"ÜÇ boş durum"* diyor. Üçüncüsü *"kurulum atlandı"* ve F3.6 onu açıkça bu adıma erteledi. Tasarım ilk-gün için **iki** varyant istiyor: kurulum yapıldı → liste zaten dolu + kapatılabilir kart; kurulum atlandı → 12 tek-dokunuş çipi. Bugün yalnızca ikincisinin bir varyantı var ve o da **12 REYON kategorisini** gösteriyor, tasarımın saydığı 12 **ürünü** değil (ekmek, süt, yumurta, peynir, zeytin, domates, salatalık, soğan, çay, yoğurt, makarna, deterjan).
   **Adım 2'nin verisi hazır:** ~40 ürünlük grid için `CatalogSeedDao.byCategory` ve `commonalityRank` sıralaması var; eksik olan **seçim durumu** ve seçilenleri `isStaple` olarak yazmak (F6.8).
 
-- [ ] **6.7 — Ayarlar (Ekran 7).** *"Sıfır tasarım yatırımı, düz liste"* — ama beş bölümün üçünün **hiç veri kaynağı yok**.
+- [x] **6.7 — Ayarlar (Ekran 7).** ✅ *Cihazda doğrulandı.* *"Sıfır tasarım yatırımı, düz liste"* — ve beş bölümün üçünün veri kaynağı yoktu.
+  **Tasarımın kendi kuralı sorunu çözdü:** *"Boş bir bölüm başlığı, olmayan bir işi varmış gibi gösterir."* Veri olmayan bölüm **hiç çizilmiyor**, sahte veriyle ya da "yakında" yazısıyla doldurulmuyor. Çizilenler: Hane (Ad, Üyeler), Her zamankiler (N/12 + liste + kaldırma), Gizlilik.
+  **Çizilmeyenler ve sebepleri:** `suggestion_block` tablosu şemada var ama **hiçbir yazan yok** (F6.5 gelince dolacak); `store` tablosu var, hiçbir yazan yok — fiş `storeNameRaw` yazıyor ama Store satırı üretmiyor; `Household.joinCode` alanı var ama null, kod üretimi Faz 7'nin işi.
+  **"Verilerimi sil" bilerek yazılmadı** — bkz. Faz 11 açık soruları.
   Ekran **erişilebilir** (F4.9'da yatay kaydırma eklenene kadar "Ayarlar" düğmesi ekranın sağında kesiliyordu), ama içerik iskelet.
   1. **Hane** — `HouseholdDao.observeActive/upsert` ve `MemberDao.observeAll` var. **6 karakterlik katılma kodu: kolon yok, üretici yok** (F7.2'ye ait ama satır burada görünecek).
   2. **Her zamankiler (9/12, sıralanabilir, silinebilir)** — `observeStaples` sorgusu var ama **beslenmiyor ve çağıranı yok** (F6.8). *"Sıralanabilir"* için `Product`'ta `sortOrder` kolonu **yok**. *"Silinebilir"* = `isStaple = false` yazmak, yani yine F6.8.
@@ -364,7 +388,8 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
   4. **Mağazalar** — `Store` entity var, DAO/accessor/binding **yok**, satır **yok** (F5.9).
   5. **Gizlilik (KVKK — düz dil + "Verilerimi sil")** — `HouseholdDao.softDelete` var ama **cascade veya silme rutini yok**; Conventions kuralı 3 gereği haneyi tombstone'lamak alt satırların **hiçbirini** silmez. Ayrıca fiş JPEG'leri diskte ayrı duruyor ve onları da silmek gerekir — *"Verilerimi sil"* bunları kapsamazsa yazdığı şeyi yapmıyor demektir. (İlgili: manifest'teki `allowBackup` varsayılanı bu oturumda kapatıldı, çünkü fiş fotoğraflarını ve veritabanını sessizce Google Drive'a yedekliyordu.)
 
-- [ ] **6.9 — Kategori tonlarını bağla** *(veri zaten geliyor; hiçbir adım sahiplenmiyordu)*. `Category.tintArgb` **12 gerçek ton ile tohumlanıyor** ve **hiçbir yerde okunmuyor** — `CategoryTile`'ın `tint`'i her çağrı yerinde varsayılanda kalıyor, yani **12 kategori kutucuğunun hepsi aynı gri** çiziliyor. Tasarımın *"56dp sıcak tonlu squircle"*'ı uygulanmamış, halbuki palet **veritabanında yayında**. `TODO(kategori-tonlari)` *"ton paleti tasarımdan gelecek"* diyor — **çoktan geldi**.
+- [x] **6.9 — Kategori tonlarını bağla** ✅ *(veri zaten geliyor; hiçbir adım sahiplenmiyordu)*. `Category.tintArgb` **12 gerçek ton ile tohumlanıyor** ve **hiçbir yerde okunmuyor** — `CategoryTile`'ın `tint`'i her çağrı yerinde varsayılanda kalıyor, yani **12 kategori kutucuğunun hepsi aynı gri** çiziliyor. Tasarımın *"56dp sıcak tonlu squircle"*'ı uygulanmamış, halbuki palet **veritabanında yayında**. `TODO(kategori-tonlari)` *"ton paleti tasarımdan gelecek"* diyor — **çoktan geldi**.
+  **Çözüm: UI'da türetildi** (`CategoryTint`), maddenin kendi öngördüğü yol. Ham ton dolgu olamıyordu — orta-koyu ve doygun, üstelik iki tema için tek küme. Ton zeminle karıştırılıyor (ışıkta %22, karanlıkta %40), böylece hue korunuyor ama üzerine temanın normal metin rengi oturuyor. **Kontrast iddia değil ölçüm:** `CategoryTintTest` 12 tonun her birini iki temada da metne ve zemine karşı ölçüyor (4 test). Katalog yeniden tohumlaması (F2.7) gerekmedi.
   **İçinde iki gerçek karar saklı, tıkanmasının sebebi de bu:** (1) Bunlar orta-koyu doygun dolgular ve `contentColor` varsayılanı **koyu** — koyu zemin üstünde koyu harf. Tonu bağlamak **açık bir içerik rengini de** bağlamak demek, yani iki çağrı yerinde ikinci bir parametre. (2) **İki tema için tek ton kümesi var**: krem `#FBF7F2` üstünde sıcak aksan gibi okunuyorlar, koyu `#13100E` üstünde bazıları zeminden **neredeyse ayrışmıyor**. Referans tablosu ancak katalog yeniden tohumlamasıyla değişebildiği (F2.7) için doğru cevap büyük olasılıkla **UI'da türetmek** — ve bu yazılı olmalı.
   **Test ucuz:** F1.2'nin kontrast koşumu sRGB bağıl parlaklığı zaten hesaplıyor; iki-harf baş harfler kutucukların ~%80'inin **birincil içeriği** ve bugün **hiçbir test** onları kategori tonuna karşı ölçmüyor.
 
@@ -492,6 +517,37 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 - [ ] **10.3 — `graph.json` takip kararı** *(cihazsız)*. Mac'e geçişte yeniden değerlendir — merge driver kurulu ama graph.json gitignore'da olduğu için şu an atıl.
 
 - [ ] **10.4 — Araştırma güncellemesi** *(cihazsız)*. Faz 0 sonucunu `docs/03-arastirma-bulgulari.md`'ye işle; çürütülen varsayımları güncelle. **Bu adım koştuğu ana kadar o doküman aktif olarak yanlış bilgi veriyor** — en az on bir iddiası çürütüldü ve doküman hâlâ ilk hallerini yazıyor (görsel LLM'in birincil mimari olduğu, çevrimdışı OCR'ın kapsam dışı olduğu, TOPLAM'ın neredeyse kusursuz okunduğu, mağaza adının neredeyse kusursuz okunduğu, fiş başına ~20 kalem, tek native dikiş, barkod yolunun çalıştığı…). Tam liste bu dosyanın **Öğrenilenler** bölümünde.
+
+## Faz 11 — Tasarım sadakati *(15 Ağu 2026'da açıldı)*
+
+> **Tasarım kaynağı artık repoda:** `docs/tasarim/`. Devir paketinin *"Claude Design projesi burada YOK"* uyarısı geçersiz — proje `Neydi Tasarım.zip` içinde duruyormuş. Denetim: [05-tasarim-denetimi.md](05-tasarim-denetimi.md).
+>
+> **Mekanik kuralların hepsi zaten temizdi** (Fraunces 24sp altı yok, accent yalnızca `AccentSurface` içinde, `clickable` sıfır kullanım, `uppercase` yok, `0.5.dp` yok, blur/renkli gölge yok, dynamic color yok, dialog/badge/bottom-nav yok). Sapmalar **yapısal**.
+
+- [x] **11.1 — İkon seti.** ✅ Uygulamada **hiç ikon yoktu**; tasarım her ekranda kullanıyor. Sadakatin önündeki en büyük tekil engeldi.
+  **Sapma kayda geçti:** tasarım **Material Symbols Rounded** istiyor, o font paketlenmiş bir Compose artifact'i olarak yayınlanmıyor ve indirilemedi. `Icons.Rounded.*` kullanıldı — aynı çizim dili, aynı 24dp optik boyut. `NeydiIcon.kt` tasarımın **adlarını** taşıyor (`NeydiIcons.PushPin`), böylece çağrı yerleri tasarım dosyasıyla yan yana okunabiliyor ve set değişirse tek dosya değişiyor.
+  Artifact JetBrains tarafında 1.7.3'ten sonra yayınlanmadı; sürüm ayrı pinlendi (ikonlar salt veri, çalışma zamanında bir şey bağlamıyor).
+- [x] **11.2 — Ekran 1 yapısal sapmaları.** ✅ Çip şeridi → `more_vert` taşma menüsü + altta "Alışverişe çıkıyorum"; başlık alt satırı "N ürün" → "Son alışveriş: 8 gün önce · 642 TL"; başlık 24sp → 22sp/700; `size/header` token'ı eklendi; `push_pin`, girdide `add`, floating toolbar (pill + hairline + 3dp gölge + 56dp hedefler).
+- [x] **11.3 — Boş durumlar.** ✅ Sola hizalı, Fraunces başlık, tasarımın metinleri, ve **"Geçen sefer aldıklarını ekle"** (yeni yetenek: `addFromLastTrip`).
+
+- [ ] **11.4 — Tanımlı ama hiç kullanılmayan tasarım primitifleri.** *(`Category.tintArgb`/F6.9 ile aynı sınıf hata)*
+  Devir paketi bunları getirdi, hiçbir ekran bağlamadı: **`Modifier.focusRing`** (0 kullanım — tasarım *"ripple olmadığı için 2dp halka zorunlu"* diyor, yani klavye/erişilebilirlik odağı hiçbir yerde görünmüyor), **`AccentSurface`** ve **`AccentStrip`** (0 kullanım; şerit Ekran 3'ün *"geçen sefer unuttun"* satırı için), **`SafeArea`** (0 kullanım).
+  `SafeArea` için **karar verildi ve sapma bilinçli:** ekranlar sabit 44/34dp yerine gerçek `WindowInsets.safeDrawing` kullanıyor. Android'de doğrusu bu — tasarımın sabitleri iOS ölçüleri ve cihazdan cihaza değişen çentik/gezinme çubuğunu karşılamıyor. `SafeArea` sabitleri referans olarak duruyor.
+- [ ] **11.5 — Ekran 6 · 2 · 4 sadakat denetimi.** Yazılmış ama denetlenmemiş ekranlar.
+- [ ] **11.6 — Alışveriş modu satır container'ı.** Tasarım: ışıkta surface `#FFFFFF`'e çıkıyor, satırlar 1.5dp kenarlık kazanıyor, metadata tek bir `chevron_right` arkasına katlanıyor. Kodda kenarlık var, surface yükselmesi ve chevron katlaması yok.
+
+### ⚠️ Kullanıcıya sorulacak — iş bunlarsız ilerledi
+
+1. **Floating toolbar'ın `undo` ve `filter_list` düğmeleri.** Tasarımda üç ikon var (`add`, `undo`, `filter_list`); yalnızca `add` bağlandı. `undo`'nun davranışı çelişkili: Ekran 1 notu *"Geri alma 'Alındı' bölümünden tek dokunuş"* diyor, yani toolbar'daki `undo` neyi geri alıyor belirsiz. `filter_list` hiçbir yerde tanımlı değil (hangi ölçüte göre filtre?). **Hiçbir şey yapmayan buton çizmemek** için ikisi de atlandı.
+2. **İlk gün boş durumunun çipleri.** Tasarım 3×4 grid'de **12 başlangıç ÜRÜNÜ** gösteriyor (Ekmek, Süt, Yumurta…); kod **reyon** çipleri gösteriyor (F3.6'nın kararı). İkisi farklı iş: ürün çipi tek dokunuşta listeye düşüyor, reyon çipi sheet açıyor. Tasarıma dönmek F3.6'nın gerekçesini geçersiz kılıyor mu?
+3. **Başlıktaki avatar + varlık noktası.** Tasarımda her ekranın başlığında var (28dp daire, 6dp yeşil nokta). Kodda `avatarOnlyDrawnWhenPartnerAdded` testi var ama başlıkta çizilmiyor. Tek kullanıcılı hanede gösterilmeli mi?
+7. **Alışveriş modundan ÇIKIŞ YOLU YOK.** Moda girmek tek dokunuş ama çıkmak yalnızca *"Bitir"* ile mümkün — o da geziyi **kapatıyor**. Yanlışlıkla giren kullanıcı, yapmadığı bir alışverişi kapatmadan geri dönemiyor. Mod geziye kalıcı yazıldığı için (F4.1) uygulamayı kapatmak da işe yaramıyor.
+   **Tasarımda da çıkış yok** — ama tasarım moda *markette* girildiğini varsayıyor. 15 Ağu'da birincil buton alta taşınınca (F11.2) moda girmek belirgin biçimde kolaylaştı, yani maruziyet arttı. Tasarıma sadık kalarak çözmenin yolu ne: alışveriş modunda da `more_vert` açıp tek maddelik *"Alışverişi bırak"* mı, yoksa başlığa dokunma mı? **Bu bir tasarım kararı, kod kararı değil.**
+
+5. **"Verilerimi sil" (KVKK) nasıl onaylanacak?** Tasarım Ayarlar'da düz bir satır olarak gösteriyor (error rengi) ama uygulamanın **"sıfır modal dialog"** kuralı var. Geri alınamaz bir silmeyi onaysız çalıştırmak kabul edilemez, dialog ise tasarımın yasakladığı şey. Üçüncü bir yol gerekiyor (satır içi onay? iki aşamalı dokunuş?). Satır **hiç çizilmedi**.
+6. **Ayarlar'daki "Haneden çık" ve "Takip edilen zincirler" satırları.** İkisi de Faz 7'ye (senkron) ve Store yazımına bağlı; çizilmedi.
+
+4. **`PriceText` ayrımı.** Devir paketinin çözülmemiş tek token uyuşmazlığı: tasarım çipte 14sp / fiş satırında 17sp istiyor, kodda tek 15sp var. Paket *"ikiye ayır"* öneriyor.
 
 ## Şema sürüm planı — v2 → v3 ✅ **yapıldı ve cihazda doğrulandı**
 

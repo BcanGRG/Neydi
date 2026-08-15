@@ -18,6 +18,9 @@ composeMultiplatform = "1.11.1"          # Nav3 icin minimum 1.10
 # 1.11.1 diye bir surumu hic yok; stabil zinciri 1.9.0'da, sonrasi 1.12.0-alpha).
 # Dogrulama: compose-gradle-plugin-1.11.1.jar icindeki ComposeBuildConfig.kt.
 composeMaterial3 = "1.9.0"
+# Ikon seti JetBrains tarafinda 1.7.3 sonrasi YAYINLANMADI. Ikonlar salt veri
+# (ImageVector) oldugu icin surum farki calisma zamaninda bir sey baglamiyor.
+composeMaterialIcons = "1.7.3"
 ksp = "2.3.11"                            # KSP2 bagimsiz surumleme; Room baglanirken tekrar dogrula
 
 # --- Android ---
@@ -69,6 +72,9 @@ compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.re
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMaterial3" }
+# Tasarimin ikon seti (Material Symbols Rounded) paketlenmis halde yok;
+# en yakin karsiligi Icons.Rounded.* - ayni cizim dili, ayni 24dp optik boyut.
+compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "composeMaterialIcons" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 
 # Preview: IKI AYRI ARTIFACT VAR, ayni ismi tasiyan IKI AYRI anotasyonla.

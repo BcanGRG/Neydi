@@ -27,6 +27,12 @@ iosApp/*.xcodeproj/project.xcworkspace/xcuserdata/
 # `graphify export html` / `graphify update` ile saniyeler icinde yeniden uretilir.
 graphify-out/
 
+# Claude Code yerel ayarlari - graphify hook komutu makineye ozgu mutlak yol
+# (C:/Users/buroc/.local/bin/graphify.EXE) icerir, baska makinede kirilir.
+# Yeniden uretmek icin: graphify claude install
+.claude/settings.json
+.claude/settings.local.json
+
 # Gizli anahtarlar - Anthropic API anahtari ASLA repoya girmez.
 # Cagrilar Cloudflare Worker proxy uzerinden yapilacak, anahtar Worker secret'inda durur.
 secrets.properties
