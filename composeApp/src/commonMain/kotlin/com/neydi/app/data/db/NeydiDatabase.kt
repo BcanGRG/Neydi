@@ -94,6 +94,7 @@ abstract class NeydiDatabase : RoomDatabase() {
     abstract fun productAliasDao(): ProductAliasDao
     abstract fun storeDao(): StoreDao
     abstract fun dataWipeDao(): DataWipeDao
+    abstract fun appSettingsDao(): AppSettingsDao
     abstract fun priceObservationDao(): PriceObservationDao
     abstract fun productStatsDao(): ProductStatsDao
 }
