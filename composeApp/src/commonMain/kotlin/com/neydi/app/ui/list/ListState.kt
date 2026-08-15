@@ -2,6 +2,7 @@ package com.neydi.app.ui.list
 
 import com.neydi.app.data.db.ListRowProjection
 import com.neydi.app.ui.components.ListRow
+import com.neydi.app.data.repo.STAPLE_LIMIT
 import com.neydi.app.ui.components.turkishInitials
 
 /**
@@ -37,6 +38,14 @@ enum class EmptyKind {
     DONGU_ORTASI,
 }
 
+/**
+ * Sabit bolumunun basligi.
+ *
+ * Reyon adi DEGIL, o yuzden kategori gruplamasinin disinda: bir sabit hangi
+ * reyondan olursa olsun bu bolumde toplaniyor.
+ */
+const val STAPLE_SECTION_TITLE = "Her zamankiler"
+
 data class ListSection(
     val title: String,
     val rows: List<UiRow>,
@@ -51,6 +60,14 @@ data class ListSection(
  */
 data class UiRow(
     val id: String,
+    /**
+     * Urunun kimligi - satirin degil.
+     *
+     * Satir bir geziye ait, urun haneye. Urun Detayi sheet'i ve
+     * "her zamankiler"e ekleme URUNE bakiyor: sabitlik gezi degistiginde de
+     * gecerli kalmali. [id] ile karistirilmamali.
+     */
+    val productId: String,
     val row: ListRow,
 )
 
@@ -63,6 +80,7 @@ data class UiRow(
  */
 internal fun ListRowProjection.toUiRow(myMemberId: String?): UiRow = UiRow(
     id = rowId,
+    productId = productId,
     row = ListRow(
         name = name,
         quantity = quantityLabel(count, unit),
@@ -111,10 +129,34 @@ internal fun List<ListRowProjection>.toSections(
     // felaket.
     val (alinan, remaining) = if (shoppingMode) emptyList<ListRowProjection>() to this else partition { it.checked }
 
-    val sections = remaining
+    // "HER ZAMANKILER" EN USTE, VE YALNIZCA PLANLAMA MODUNDA (F6.8).
+    //
+    // Tasarim maketlerinde bolum planlama modunda en ustte, sayisiyla ve satir
+    // basina raptiyeyle duruyor; ALISVERIS MODU MAKETINDE HIC YOK. Sebebi
+    // ayni ekranin iki modunun farkli isi: reyonda sira DONUYOR ve sabit bir
+    // urun de sonucta bir reyondan alinacak, yani onu listenin basina cekmek
+    // market yuruyusunu bozardi. Planlamada ise "her zaman aldiklarimiz"
+    // ayri durmasi gereken bir kume.
+    val (staples, others) = if (shoppingMode) {
+        emptyList<ListRowProjection>() to remaining
+    } else {
+        remaining.partition { it.isStaple }
+    }
+
+    val categorySections = others
         .groupBy { it.categoryName }
         .map { (title, rows) -> ListSection(title, rows.map { it.toUiRow(myMemberId) }) }
         .filter { it.rows.isNotEmpty() }
+
+    // Sinir tasarimdan: en fazla 12 satir. Ustu, listeyi acan kullaniciya kendi
+    // yazmadigi 20 satir gostermek olurdu.
+    val stapleSection = staples
+        .take(STAPLE_LIMIT)
+        .map { it.toUiRow(myMemberId) }
+        .takeIf { it.isNotEmpty() }
+        ?.let { ListSection(STAPLE_SECTION_TITLE, it) }
+
+    val sections = listOfNotNull(stapleSection) + categorySections
     return ListState(
         sections = sections,
         taken = alinan.map { it.toUiRow(myMemberId) },

@@ -56,7 +56,7 @@ class OptimisticReconcileTest {
 
     /** Uc urunlu bir liste kurar; hicbiri isaretli degil. */
     private suspend fun threeItemList(db: NeydiDatabase, r: ListRepository): String {
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
         listOf("Ekmek", "Süt", "Domates").forEach { name ->
             val product = r.findOrCreateProduct(home, name, "temel-gida", "adet")
             r.add(home, trip.id, product, memberId = "m1")

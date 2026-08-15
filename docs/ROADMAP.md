@@ -1,10 +1,10 @@
 # Neydi — Yol Haritası
 
-Tek gerçek kaynak. 11 faz, **92 adım**. Her adım bir PR.
+Tek gerçek kaynak. 11 faz, **93 adım**. Her adım bir PR.
 
 *Sayı bu oturumda mekanik olarak yeniden sayıldı. Eskiden 67 yazıyordu; fark 0.0, 1.3b ve 4.10 gibi numaralandırma şemasının öngörmediği ama meşru adımlardan ve bu oturumda eklenen yeni maddelerden geliyor.*
 
-**İlerleme:** 35 / 92 — *35 kapandı · 4 kod tamam, cihaz doğrulaması bekliyor · 53 açık.* **Şema v3 yapıldı (F2.8)**, yani Faz 5/6 artık veri yazabilir. **Sırada Faz 6 (öneri motoru), ilk adım F6.8** (`isStaple` yazma yolu) — onsuz Ekran 3 hiç açılamaz.
+**İlerleme:** 36 / 93 — *36 kapandı · 4 kod tamam, cihaz doğrulaması bekliyor · 53 açık.* **Şema v3 yapıldı (F2.8)**, yani Faz 5/6 artık veri yazabilir. **F6.8 bitti**, yani "Her zamankiler" artık dolabiliyor ve Ekran 3 açılabilir hale geldi. **Sırada F6.1** (`ProductStats` hesabı) — ve ondan önce verilmesi gereken karar: istatistik yalnızca `trip_line`'dan mı kurulacak, yoksa eşleşmiş `receipt_line`'ları da sayacak mı (bkz. Açık kararlar #2).
 
 ---
 
@@ -283,10 +283,15 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 >
 > **Fazın durumu tek cümlede:** iki tablo (`product_stats`, `suggestion_event`) cihazda **var ama Kotlin'den erişilemiyor** — DAO'ları, accessor'ları ve Koin binding'leri yok. Öneri çipi bileşeni hazır ama **gerekçe yerine birim** gösteriyor. Üç ekran iskelet ve **ikisine hiçbir yerden gidilemiyor**.
 
-- [ ] **6.8 — `isStaple` yazma yolu** *(fazın ilk adımı; onsuz 6.4/6.5/6.7 ölü doğar)*.   **Ölçülmüş durum: `isStaple` beş yerde OKUNUYOR, sıfır yerde YAZILIYOR.** Okunduğu yerler: `ProductDao.observeStaples` (sorgu var, **çağıranı yok** — ölü kod), `observeList` projeksiyonu, `ListRowProjection`, `toUiRow`, ve `ListItemRow`'da %70 opaklık dalı + `StaplePin()`. Yazan: **hiçbir şey**. `findOrCreateProduct` onu hiç set etmiyor (varsayılan `false`), `ProductDao.update` tanımlı ama **hiç çağrılmıyor**, ve marklamak için tek bir UI yolu yok.
-  **Sonuç:** %70 opaklık dalı ve raptiye **çalışan uygulamada erişilemez**, yalnızca önizlemelerde görünüyor. Zincirleme etkisi: F6.4 Bölüm 2 *"Her zamankiler"* daima boş → "boş ise ekran açılmaz" kuralıyla **Ekran 3 hiç açılmaz**; F6.5 sabit terfi kartının terfi edecek bir şeyi yok; F6.7 *"Her zamankiler (9/12)"* listesi boş; tasarımın **Bölüm 0**'ı (listeye otomatik eklenen sabitler) hiç doğmaz.
-  **Kurala uyulmalı:** `Product.isStaple` KDoc'u nettir — bunu **kullanıcı elle** işaretler, *"öneri motoru kendi başına set ETMEZ"*. Yani bu adım bir UI affordance'ı, bir çıkarım değil.
-  **İş:** `ListRepository.setStaple(productId, Boolean)`; giriş noktası F5.3'teki Ürün Detayı sheet'indeki *"Her zamankilere ekle"* anahtarı (tasarımın öngördüğü yer) **veya** geçici olarak Ayarlar; `openOrGetActiveTrip`'e sabitleri yeni listeye ekleme adımı (bugün çıplak bir `Trip` yazıp dönüyor); `ListState`'e *"Her zamankiler"* bölümü — `toSections` yalnızca kategoriye göre gruplandığı için bu bölüm **açıkça başa** eklenmeli, en fazla 12 satır.
+- [x] **6.8 — `isStaple` yazma yolu.** ✅ *Cihazda uçtan uca doğrulandı: satıra uzun basıldı → sheet açıldı → anahtar açıldı → satır **"Her zamankiler"** bölümüne geçti (raptiye + %70 opaklık); gezi kapatıldı, yeni gezi açıldı ve **sabit kendiliğinden geri geldi**; alışveriş modunda ise kendi reyonunda göründü.*
+  **Sorun neydi:** `isStaple` **beş yerde okunuyordu, sıfır yerde yazılıyordu**. Yani %70 opaklık dalı ve raptiye çalışan uygulamada erişilemezdi, `ProductDao.observeStaples` çağıranı olmayan ölü koddu, Ekran 3'ün *"Her zamankiler"* bölümü daima boş kalırdı — ve *"boş ise ekran açılmaz"* kuralıyla birleşince **Ekran 3 hiç açılamazdı**.
+  **Yazma yolu:** `ProductDao.setStaple` + `ListRepository.setStaple`. `updatedAt` de yazılıyor (v3 kolonu) — LWW'nin karşılaştıracağı damga olmadan senkron bu yazmayı kaybedebilirdi.
+  **Otomatik ekleme `openOrGetActiveTrip`'in İÇİNDE, ayrı bir fonksiyonda değil.** Tasarım bunu özet kartında kullanıcıya açıktan söylüyor: *"Bir sonraki alışverişte her zamankiler yeniden eklenecek."* Gezinin doğduğu tek yer o ve KDoc'u da *"yeni gezi açmadan önce mutlaka buradan geçilmeli"* diyor; tohumlamayı çağıranın sorumluluğuna bırakmak bu projede defalarca yaşanan **"çağırmayı unut"** hatasını davet ederdi — ve unutulsa sessizce yalnızca boş liste görünürdü. Bu yüzden `memberId` parametresi **zorunlu ve varsayılansız** eklendi (sabit satırların da bir ekleyeni olmak zorunda) — 28 çağrı yeri güncellendi.
+  **"Her zamankiler" bölümü YALNIZCA planlama modunda.** Tasarım maketlerinde bölüm planlama modunda en üstte, sayısıyla ve satır başına raptiyeyle duruyor; **alışveriş modu maketinde hiç yok**. Sebebi aynı ekranın iki modunun farklı işi: reyonda sıra **donuyor** ve sabit bir ürün de sonuçta bir reyondan alınacak, yani onu listenin başına çekmek market yürüyüşünü bozardı. En fazla **12 satır** (`STAPLE_LIMIT`).
+  **Giriş noktası: Ürün Detayı sheet'inin sıfır-gözlem hali** — tasarımın kendi affordance'ı. Maketlerde *"Her zamankilere ekle"* ve *"Bunu önerme"* anahtarları sheet'in **üç veri halinin hepsinde** var, sıfır gözlemli halde bile; yani bu hal fiyat verisine hiç ihtiyaç duymuyor ve Faz 5'i beklemesi gerekmiyordu. Alternatif anahtarı geçici olarak Ayarlar'a koymaktı — tasarımın belirlediği yer yerine yeni bir yer icat etmek olurdu.
+  **⚠️ Açıcı hareket bir ara çözüm ve karar senin:** tasarım planlama modunda sheet'i **fiyat çipinden** açıyor, ama çip ancak F5.2 fiyat hafızasını bağlayınca görünecek (bugün `priceHint` hep `None`). Alışveriş modundaki chevron da ayrı bağlam — reyonda sabit işaretlenmiyor. O yüzden şimdilik **uzun basma**: yeni piksel eklemiyor ve geri alınabilir. F5.2 gelince çip asıl açıcı olur.
+  **Yeni bileşen: `NeydiSwitch`** (`Modifier.pressable` üzerine, önizlemeli). Material3 `Switch` de indication'ı sabit kodluyor; yeni bir Material3 kontrolü eklemek F1.5'te kaldırılan ripple'ı geri getirirdi. F6.7 Ayarlar da bunu kullanacak.
+  **13 test** (8 yazma yolu + 5 bölüm), aralarında "mevcut geziye tekrar eklemiyor" (adet artmamalı), "kapanıştan sonraki yeni gezide geri geliyor" ve "alışveriş modunda bölüm yok".
 
 - [ ] **6.1 — `ProductStats` hesabı.** Trip close'da tek Room transaction'ında **tam** yeniden kurulum. Asla incremental — türetilmiş cache.
   **Hazır olan:** entity `Product.kt:86` (`productId` PK, `purchaseCount`, `lastPurchasedAt`, `medianIntervalDays`, `updatedAt`), *"türetilmiş cache, senkron edilmez, tombstone taşımaz, bozulursa silinip yeniden üretilir"* muafiyeti KDoc'ta yazılı. **Eksik olan:** `ProductStatsDao` **yok**, `productStatsDao()` accessor **yok**, Koin binding **yok**. Tablo cihazda duruyor, daima boş, Kotlin'den erişilemez.
@@ -470,6 +475,8 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 - [ ] **10.13 — `androidHostTest` kaynak kümesi ve ölçümle kazanılmış iki fonksiyonu teste bağla** *(cihazsız)*. `composeApp/src` altında **androidHostTest dizini yok** — `commonTest`, `androidMain`, `commonMain`, `iosMain` var. Sonuç: `visualRows` ve `score` **test edilmiyor ve commonTest'ten edilemez** (ML Kit `Text` ve `android.graphics.Rect` bağımlı). Oysa bunlar projenin **en zor kazanılmış iki fonksiyonu**: görsel satır gruplaması satır sayısını 47'den 25'e indirdi ve kolon karışmasını çözdü; yön puanlayıcı 8 puan / 0 puan farkıyla ölçüldü. Bugün o bilgiyi koruyan tek şey **elle cihaz koşumu**.
   **Ucuz yarısı:** `score(rows: List<String>)` imzasında **hiç Android tipi yok** — commonMain'e taşınırsa mevcut `commonTest`'ten, elimizde zaten olan gerçek fiş satır listeleriyle test edilebilir ve 8-vs-0 ölçümü **regresyon testine** dönüşür. `visualRows` gerçekten androidHostTest + sahte bir ML Kit `Text` istiyor; asıl korunmaya değer kısmı `Rect` geometrisi (medyan yükseklik, 0,6 tolerans, `centerY` gruplaması).
   *Not: `androidHostTest` build modelinde **var** ve taşıyıcı — `commonTest` onun derlemesine giriyor ve JVM SQLite'ı oradan alıyor (F2.3). Eksik olan yalnızca kendi test dosyaları.*
+
+- [ ] **10.16 — `PriceText`'i ikiye ayır** *(cihazsız; tasarım handoff'undan)*. Tasarım fiyat metnini iki bağlamda ayrı istiyor: **çipte 14sp**, **fiş satırında 17sp**. Repoda tek stil **15sp** ve handoff'un kendi uyuşmazlık tablosu *"ayrılması öneriliyor — tek 15sp iki bağlamı da tam karşılamıyor"* diyor. Bugün görünür bir etkisi yok çünkü fiyat çipi hiç çizilmiyor (`priceHint` hep `None`); **F5.2 çipi bağladığı an** iki bağlam da aynı stille çizilecek. Aynı geçişte `PriceChip`'in 92dp sabit genişliğine `maxLines = 1` + `Ellipsis` eklenmeli (bkz. F10.5'teki kırpılma adayı).
 
 - [ ] **10.3 — `graph.json` takip kararı** *(cihazsız)*. Mac'e geçişte yeniden değerlendir — merge driver kurulu ama graph.json gitignore'da olduğu için şu an atıl.
 
@@ -658,6 +665,24 @@ Kalan tek madde **F0.4** (marketfiyati ile kanonik ürün kimliği) ve artık fi
 | `Sozlesme.kt` *(kod yorumlarında)* | `Conventions.kt` — madde numaraları aynı kaldı |
 
 **Bilerek Türkçe kalanlar, "düzeltilmemeli":** `EmptyKind.ILK_GUN` / `DONGU_ORTASI` (UI'da, hiç kalıcılaşmıyor) ve `SuggestionOutcome.GOSTERILDI/EKLENDI/REDDEDILDI/YOKSAYILDI` + `OpType.EKLE/GUNCELLE/SIL` — **ama son ikisi yayınlanmış şemada TEXT olarak duruyor ve yeniden adlandırma penceresi ilk yazmada kapanıyor** (bkz. **Şema sürüm planı**).
+
+## Tasarım devir paketi — 15 Ağu 2026
+
+**Claude Design handoff'u geldi** (`Neydi Tasarım.zip`) ve içinde `Dimens.kt`/`Motion.kt`'nin kaynak olarak gösterdiği `handoff/tokens.json` de var — o dosya daha önce repoda yoktu ve erişilemiyordu. Paket: `tokens.json`, `handoff/theme/{Dimens,Motion}.kt`, `handoff/ui/AccentChip.kt`, ve altı tasarım dosyası (Tasarım sistemi · Ekran 1 · Ekranlar 2–4 · Ekranlar 5–8 · Boş Durumlar · Compose Spec).
+
+**Handoff kendi uyuşmazlık kaydını taşıyor** ve iki karar zaten repo lehine verilmiş: `dark.hairline` (repo kazandı) ve `Spacing` 12dp adımı (eklendi). Üçüncüsü **hâlâ açık ve yeni bir madde gerektiriyor:** `PriceText` tasarımda çipte **14sp**, fiş satırında **17sp**; repoda tek stil **15sp**. Handoff *"ayrılması öneriliyor"* diyor — tek 15sp iki bağlamı da tam karşılamıyor. → **F10.16**
+
+**Bu oturumda kullanıldı:** F6.8'in üç kararı doğrudan maketlerden çıktı — bölümün en üstte olması, alışveriş modunda **hiç olmaması**, ve sabit satırın `%70 opaklık + 12dp raptiye` görünümü (repoda zaten doğruydu). Ekran 5'in üç veri halinin hepsinde iki anahtarın bulunması da F6.8'in giriş noktasını belirledi.
+
+**Henüz işlenmemiş, kalan fazları etkileyen bulgular:**
+
+- **Sepet tahmini eşikleri artık sayıyla belli** (F5.2/F3.8): *"Satırların %60'ından azının fiyatı biliniyorsa %40 opaklık ve `~` öneki; %30'un altında satır hiç gösterilmez."* Kod bugün yalnızca `pricedCount == 0` durumunu biliyor.
+- **Ekran 1 başlığı** eksikleri: *"Son alışveriş: 8 gün önce · 642 TL"*, eş avatarı, `more_vert` taşma menüsü, ve alışveriş modunda *"Migros Ataşehir · 12/18 alındı"*.
+- **Öneri şeridi gerekçe metinleri** maketlerde birebir yazıyor: *"Ekmek · her seferinde"*, *"Domates · genelde alıyorsun"*, *"Yumurta · 14 gün oldu"*, *"Çay · 21 gün oldu"* — F6.3'ün üreteceği metinlerin tonu bunlar.
+- **Alışveriş modu başlığı mağaza adı gösteriyor**, yani F5.9'un `Store` çözümlemesi yalnızca fiyat karşılaştırması için değil başlık için de gerekiyor.
+- Boş durumların üçünde de *"İllüstrasyon yok, üzgün yüz yok, sihirbaz yok"* — F6.6'nın 12 ürün çipi ve *"WhatsApp'tan listeni yapıştır"* butonu maketlerde duruyor.
+
+*Paket `docs/` altına konmadı: `tokens.json` tasarım tarafının kaynağı ve handoff README'si *"repoya konmaz"* diyor. Masaüstünde `Neydi-Tasarim/` klasöründe duruyor; repoya girecek olan tek şey ondan türetilen kod.*
 
 ## İlgili dokümanlar
 

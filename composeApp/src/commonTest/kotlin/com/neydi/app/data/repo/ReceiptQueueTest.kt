@@ -51,7 +51,7 @@ class ReceiptQueueTest {
     fun receiptEntersQueueAsPending() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         val receipt = r.enqueueReceipt(home, trip.id, "/veri/fis-1.jpg")
 
@@ -71,7 +71,7 @@ class ReceiptQueueTest {
     fun receiptAttachesToClosedTripWithoutReopeningIt() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
         assertTrue(r.closeTrip(trip.id, memberId = "m1"))
 
         r.enqueueReceipt(home, trip.id, "/veri/fis-1.jpg")
@@ -91,7 +91,7 @@ class ReceiptQueueTest {
     fun twoReceiptsCanBelongToOneTrip() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
-        val trip = r.openOrGetActiveTrip(home)
+        val trip = r.openOrGetActiveTrip(home, "m1")
 
         r.enqueueReceipt(home, trip.id, "/veri/fis-1.jpg")
         r.enqueueReceipt(home, trip.id, "/veri/fis-2.jpg")

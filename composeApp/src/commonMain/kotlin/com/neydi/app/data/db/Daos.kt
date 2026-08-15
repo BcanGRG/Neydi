@@ -65,6 +65,34 @@ interface ProductDao {
     @Query("SELECT * FROM product WHERE householdId = :householdId AND isStaple = 1 AND deletedAt IS NULL ORDER BY name")
     fun observeStaples(householdId: String): Flow<List<Product>>
 
+    /**
+     * Yeni listeye otomatik eklenecek sabitler.
+     *
+     * Flow surumu Ayarlar'in listesi icin; bu suspend surum yeni gezi acilirken
+     * TEK SEFER okunuyor. Flow'u orada toplamak gezi acmayi bir aboneligin
+     * ilk yayinina bagimli yapardi.
+     */
+    @Query("SELECT * FROM product WHERE householdId = :householdId AND isStaple = 1 AND deletedAt IS NULL ORDER BY name")
+    suspend fun staples(householdId: String): List<Product>
+
+    /**
+     * "Her zamankiler"e ekle / cikar (F6.8).
+     *
+     * `isStaple` BES YERDE OKUNUYORDU, SIFIR YERDE YAZILIYORDU - yani %70
+     * opaklik dali ve raptiye calisan uygulamada erisilemezdi, Ekran 3'un
+     * "Her zamankiler" bolumu daima bos kalirdi ve "bos ise ekran acilmaz"
+     * kuraliyla birlesince Ekran 3 **hic acilamazdi**.
+     *
+     * KULLANICI ISARETLER, MOTOR DEGIL: `Product.isStaple` KDoc'u bunu sart
+     * kosuyor - *"oneri motoru kendi basina set ETMEZ"*. Sabitlik bir cikarim
+     * degil, beyan.
+     *
+     * `updatedAt` de yaziliyor (v3 kolonu): LWW'nin karsilastiracagi damga
+     * olmadan senkron bu yazmayi kaybedebilirdi.
+     */
+    @Query("UPDATE product SET isStaple = :isStaple, updatedAt = :at WHERE id = :id")
+    suspend fun setStaple(id: String, isStaple: Boolean, at: Long)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(product: Product)
 

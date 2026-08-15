@@ -56,6 +56,17 @@ fun ListItemRow(
     modifier: Modifier = Modifier,
     shoppingMode: Boolean = false,
     onToggle: () -> Unit = {},
+    /**
+     * Uzun basma - Urun Detayi sheet'ini aciyor.
+     *
+     * NEDEN UZUN BASMA: tasarim planlama modunda sheet'i **fiyat cipinden**
+     * aciyor, ama fiyat cipi ancak F5.2 fiyat hafizasini bagladiginda gorunecek
+     * (bugun `priceHint` hep `None`). Alisveris modundaki chevron da ayri bir
+     * baglam - reyonda sabit isaretlenmiyor. Yani bugun tasarimin belirledigi
+     * acici mevcut degil ve uzun basma yeni piksel eklemeyen, geri alinabilir
+     * bir ara cozum. F5.2 gelince cip asil acici olur.
+     */
+    onLongPress: (() -> Unit)? = null,
     onPriceClick: (() -> Unit)? = null,
 ) {
     val styles = LocalNeydiTextStyles.current
@@ -97,7 +108,7 @@ fun ListItemRow(
                     )
                 } else Modifier,
             )
-            .pressable(onTap = onToggle)
+            .pressable(onLongPress = onLongPress, onTap = onToggle)
             .padding(horizontal = Spacing.md, vertical = Spacing.sm)
             .alpha(rowAlpha),
         verticalAlignment = Alignment.CenterVertically,
