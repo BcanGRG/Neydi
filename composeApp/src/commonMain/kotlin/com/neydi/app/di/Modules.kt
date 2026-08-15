@@ -59,7 +59,7 @@ val dataModule = module {
 
     viewModel {
         ListViewModel(
-            repo = get(), tripLineDao = get(), memberDao = get(),
+            repo = get(), tripDao = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
             statsRebuilder = get(),

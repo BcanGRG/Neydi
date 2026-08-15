@@ -29,6 +29,8 @@ object NeydiExtraShapes {
 }
 
 object SizesExtra {
+    /** Ekran basligi (tokens.json `size/header`). Baslik + alt satir bu yukseklikte. */
+    val header = 56.dp
     val checkbox = 24.dp
     val checkboxShopping = 28.dp
     val categoryTile = 56.dp

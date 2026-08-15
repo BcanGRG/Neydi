@@ -41,14 +41,18 @@ Palet, tipografi ve ölçü token'ları da `tokens.json` ile birebir (`Color.kt`
 
 Uygulamanın sürenin %90'ının geçtiği ekranı, ve sapmaların çoğu burada.
 
-| # | Tasarım | Kod | Not |
+| # | Tasarım | Kod | Durum |
 |---|---|---|---|
-| 1 | Gezinme `more_vert` taşma menüsünde | **yatay kaydırmalı çip şeridi** (`ListScreen.kt:459`) | Tasarımda böyle bir şerit **yok** |
-| 2 | Altta birincil buton **"Alışverişe çıkıyorum"** | yok | F6.4 notu da bunu yakalamış: *"başlıkta öyle bir düğme hiç yok"* |
-| 3 | Başlık alt satırı *"Son alışveriş: 8 gün önce · 642 TL"* | *"N ürün"* (`ListScreen.kt:444`) | Tasarım son alışverişi hatırlatıyor, sayı saymıyor |
-| 4 | Girdinin solunda `add` butonu | yok | |
-| 5 | "Her zamankiler" bölümünde `push_pin` ikonu | yeşil nokta | |
-| 6 | Öneri şeridi satırı: *"Yumurta · 14 gün oldu"* + *"+3 öneri"* | F6.3 yazıldı | Cihazda görünmedi — veri mi yok, bağlantı mı kopuk, ayrıca bakılmalı |
+| 1 | Gezinme `more_vert` taşma menüsünde | yatay kaydırmalı çip şeridi | ✅ **düzeltildi** — şerit kaldırıldı, taşma menüsü geldi |
+| 2 | Altta birincil buton **"Alışverişe çıkıyorum"** | yok | ✅ **düzeltildi** — girdinin altında, tasarımdaki sırada |
+| 3 | Başlık alt satırı *"Son alışveriş: 8 gün önce · 642 TL"* | *"N ürün"* | ✅ **düzeltildi** — `lastTripSummary`, 5 test |
+| 4 | Başlık 22sp/700 (`title22`) | `headlineMedium` = 24sp | ✅ **düzeltildi** — iki punto büyüktü |
+| 5 | `size/header = 56` token'ı | kodda yok | ✅ **eklendi** — `SizesExtra.header` |
+| 6 | Girdinin solunda `add` ikonu | yok | açık |
+| 7 | "Her zamankiler" bölümünde `push_pin` ikonu | yeşil nokta | açık |
+| 8 | Öneri şeridi: *"Yumurta · 14 gün oldu"* + *"+3 öneri"* | F6.3 yazıldı, şerit var | veri yokken çizilmiyor — doğru davranış, "+N öneri" çipi eksik |
+
+Cihazda doğrulandı: başlık *"Son alışveriş: bugün"* (tutar okunamadığı için yazılmıyor — dürüstlük kuralı), `⋮` menüsü `surfaceVariant` zemin + 24dp kart köşesiyle açılıyor, birincil buton en altta.
 
 **1 ve 2 aynı kararın iki yüzü.** Koddaki yorum çip şeridinin nasıl doğduğunu anlatıyor: *"üç buton ekrana sığmıyordu ve 'Ayarlar' sağ kenarda kesiliyordu… Geçmiş butonu eklenince dörde çıktı"*. Tasarımın **aynı soruna** cevabı zaten var ve farklı: birincil aksiyon (alışverişe çık) altta tek başına, ikincil gezinme `more_vert` içinde. Yani şerit bir çözüm değil, tasarımın çözdüğü sorunun yeniden çözülmüş hali.
 

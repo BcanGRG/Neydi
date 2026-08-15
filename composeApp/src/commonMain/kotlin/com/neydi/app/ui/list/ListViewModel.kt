@@ -13,6 +13,7 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
 import io.github.vinceglb.filekit.PlatformFile
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
  */
 class ListViewModel(
     private val repo: ListRepository,
+    private val tripDao: TripDao,
     private val tripLineDao: TripLineDao,
     private val memberDao: MemberDao,
     private val productDao: ProductDao,
@@ -102,6 +104,21 @@ class ListViewModel(
     private val emptyKind: Flow<EmptyKind> = productDao.observeAll(household)
         .map { if (it.isEmpty()) EmptyKind.ILK_GUN else EmptyKind.DONGU_ORTASI }
 
+    /**
+     * Basligin alt satirini besleyen son KAPANMIS gezi (Ekran 1 tasarimi).
+     *
+     * `observeHistory` zaten yalnizca kapanmis gezileri, `completedAt DESC`
+     * siralamasiyla donduruyor - ilki en sonuncusu.
+     */
+    private val lastTrip: Flow<LastTrip?> = tripDao.observeHistory(household, limit = 1)
+        .map { trips ->
+            trips.firstOrNull()?.let { trip ->
+                // completedAt burada asla null olamaz (sorgunun kendisi eliyor)
+                // ama sozlesmeyi kod seviyesinde de tutuyoruz.
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+            }
+        }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ListState> =
         combine(
@@ -111,7 +128,10 @@ class ListViewModel(
             myMemberId,
             shoppingMode,
             emptyKind,
-        ) { rows, memberId, mod, kind -> rows.toSections(memberId, mod, kind) }
+            lastTrip,
+        ) { rows, memberId, mod, kind, last ->
+            rows.toSections(memberId, mod, kind).copy(lastTrip = last)
+        }
             .stateIn(
                 scope = viewModelScope,
                 // 5 saniye: konfigurasyon degisiminde akis kopmasin, ama

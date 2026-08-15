@@ -1,9 +1,9 @@
 package com.neydi.app.ui.list
 
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,10 +16,13 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -40,7 +43,10 @@ import io.github.vinceglb.filekit.div
 import io.github.vinceglb.filekit.filesDir
 import kotlin.time.Clock
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -57,6 +63,10 @@ import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SectionHeader
 import com.neydi.app.ui.product.ProductSheetContent
 import com.neydi.app.ui.theme.Motion
+import com.neydi.app.ui.theme.NeydiExtraShapes
+import com.neydi.app.ui.theme.Sizes
+import com.neydi.app.ui.theme.SizesExtra
+import com.neydi.app.ui.theme.pressable
 import com.neydi.app.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -274,6 +284,13 @@ internal fun ListContent(
     onFinish: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    /**
+     * Simdiki an - basligin "8 gun once" hesabi icin.
+     *
+     * DISARIDAN GELIYOR ki preview ve test deterministik olsun; composable
+     * icinde saat okumak her yeniden cizimde farkli sonuc verirdi.
+     */
+    now: Long = Clock.System.now().toEpochMilliseconds(),
 ) {
     KeepScreenOn(state.shoppingMode)
     val haptics = LocalHapticFeedback.current
@@ -289,7 +306,7 @@ internal fun ListContent(
                 item {
                     ListHeader(
                         state = state,
-                        onShoppingMode = onShoppingMode,
+                        now = now,
                         onOpenSheet = onOpenSheet,
                         onHistory = onHistory,
                         onSettings = onSettings,
@@ -399,18 +416,40 @@ internal fun ListContent(
             // Alisveris modunda hizli ekleme YOK: reyonda liste yazilmaz,
             // okunur. Klavye ekranin yarisini yerdi.
             if (!state.shoppingMode) {
-                QuickAdd(
+                Column(
                     modifier = Modifier.windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
                     ),
-                    input = input,
-                    suggestions = suggestions,
-                    engineSuggestions = engineSuggestions,
-                    onInputChange = onInputChange,
-                    onAdd = onAdd,
-                    onSuggestionSelected = onSuggestionSelected,
-                    onEngineSuggestion = onEngineSuggestion,
-                )
+                ) {
+                    QuickAdd(
+                        input = input,
+                        suggestions = suggestions,
+                        engineSuggestions = engineSuggestions,
+                        onInputChange = onInputChange,
+                        onAdd = onAdd,
+                        onSuggestionSelected = onSuggestionSelected,
+                        onEngineSuggestion = onEngineSuggestion,
+                    )
+                    // BIRINCIL AKSIYON EN ALTTA (tasarim: "tum birincil
+                    // aksiyonlar ekranin alt %40'inda"). Onceden yalnizca
+                    // basliktaki cip seridinde vardi - yani tek elle tutulan
+                    // telefonda erisilmesi en zor yerde.
+                    //
+                    // BOS LISTEDE CIZILMIYOR: alinacak bir sey yokken
+                    // "Alisverise cikiyorum" demek, uygulamanin kendi bos
+                    // durumunu gormemesi olurdu; bos hal zaten kendi
+                    // yonlendirmesini gosteriyor.
+                    if (!state.isEmpty) {
+                        NeydiButton(
+                            text = "Alışverişe çıkıyorum",
+                            onClick = { onShoppingMode(true) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Spacing.md)
+                                .padding(bottom = Spacing.sm),
+                        )
+                    }
+                }
             } else {
                 ShoppingBottomBar(
                     remaining = state.remainingRow,
@@ -424,65 +463,122 @@ internal fun ListContent(
     }
 }
 
+/**
+ * Ekran 1 basligi (tasarim: 56dp, baslik 22sp/700, alt satir 14sp/400).
+ *
+ * GEZINME CIP SERIDI KALDIRILDI ve yerine tasarimin kendi cozumu kondu.
+ * Serit tasarimda HIC YOK; kodda su sekilde buyumustu: once uc buton, sonra
+ * "ekrana sigmiyor" olcumu, sonra yatay kaydirma, sonra dorduncu buton. Yani
+ * tasarimin coktan cozdugu bir sorun ikinci kez cozuluyordu.
+ *
+ * Tasarimin cozumu ikiye ayiriyor: BIRINCIL aksiyon (alisverise cik) ekranin
+ * ALTINDA tek basina - kurali "tum birincil aksiyonlar ekranin alt %40'inda",
+ * cunku tek elle tutulan telefonda ust kenar en zor erisilen yer. IKINCIL
+ * gezinme (reyonlardan ekle / gecmis / ayarlar) sag ustteki tasma menusunde.
+ */
 @Composable
 private fun ListHeader(
     state: ListState,
-    onShoppingMode: (Boolean) -> Unit,
+    now: Long,
     onOpenSheet: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
 ) {
-    Column(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = SizesExtra.header)
+            .padding(horizontal = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = if (state.shoppingMode) "Alışveriş" else "Liste",
+                // titleLarge = title22 (700/22sp) - tasarimdaki baslik bu.
+                // Onceki headlineMedium 24sp'ydi ve token esleme tablosunda
+                // headline24'e denk geliyor, yani iki punto buyuktu.
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = if (state.shoppingMode) {
+                    "${state.remainingRow} kaldı"
+                } else {
+                    lastTripSummary(state.lastTrip, now)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        // Alisveris modunda gezinme GIZLI: reyonda yanlislikla Ayarlar'a
+        // dusmek listeyi kaybetmek gibi hissettirir.
+        if (!state.shoppingMode) {
+            OverflowMenu(
+                onOpenSheet = onOpenSheet,
+                onHistory = onHistory,
+                onSettings = onSettings,
+            )
+        }
+    }
+}
+
+/**
+ * Sag ustteki `more_vert` tasma menusu - ikincil gezinmenin tamami.
+ *
+ * MENU OGELERI M3 `DropdownMenuItem` DEGIL: o da kendi ripple'ini getiriyor ve
+ * tema override'i ona ulasmiyor (bkz. calisma sozlesmesi "Material3 Surface"
+ * maddesi). Ogeler `Modifier.pressable` uzerine kuruldu, yani basili hal
+ * uygulamanin geri kalaniyla ayni: %6 tonal overlay + 0.97 olcek.
+ */
+@Composable
+private fun OverflowMenu(
+    onOpenSheet: () -> Unit,
+    onHistory: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Box(
+            modifier = Modifier
+                .clip(NeydiExtraShapes.pill)
+                .pressable(onTap = { open = true })
+                .size(Sizes.minTapTarget),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "⋮",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            shape = NeydiExtraShapes.card,
+        ) {
+            OverflowItem("Reyonlardan ekle") { open = false; onOpenSheet() }
+            OverflowItem("Geçmiş") { open = false; onHistory() }
+            OverflowItem("Ayarlar") { open = false; onSettings() }
+        }
+    }
+}
+
+@Composable
+private fun OverflowItem(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressable(onTap = onClick)
+            .heightIn(min = Sizes.minTapTarget)
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+        contentAlignment = Alignment.CenterStart,
+    ) {
         Text(
-            text = if (state.shoppingMode) "Alışveriş" else "Liste",
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Text(
-            text = when {
-                state.shoppingMode -> "${state.remainingRow} kaldı"
-                state.totalRows == 0 -> "Henüz bir şey yok"
-                else -> "${state.totalRows} ürün"
-            },
-            style = MaterialTheme.typography.bodySmall,
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        // Alisveris modunda gezinme butonlari GIZLI: reyonda yanlislikla
-        // Ayarlar'a dusmek listeyi kaybetmek gibi hissettirir.
-        if (!state.shoppingMode) {
-            // YATAY KAYDIRMA SART, sigdirma denemesi degil.
-            //
-            // Cihazda olculdu: uc buton ekrana sigmiyordu ve "Ayarlar" sag
-            // kenarda KESILIYORDU - Row tasan icerigi kirpiyor, kaydirmiyor.
-            // Gecmis butonu eklenince dorde cikti; kaydirma olmadan F4.9'un
-            // ekrani erisilemez kalirdi ve "yanlis okunmus fise donmenin tek
-            // yolu" hicbir yerden acilamazdi.
-            Row(
-                modifier = Modifier
-                    .padding(top = Spacing.sm)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            ) {
-                NeydiButton("Alışveriş modu", { onShoppingMode(true) })
-                NeydiButton(
-                    text = "Reyonlardan ekle",
-                    onClick = onOpenSheet,
-                    container = MaterialTheme.colorScheme.surfaceVariant,
-                    content = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                NeydiButton(
-                    text = "Geçmiş",
-                    onClick = onHistory,
-                    container = MaterialTheme.colorScheme.surfaceVariant,
-                    content = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                NeydiButton(
-                    text = "Ayarlar",
-                    onClick = onSettings,
-                    container = MaterialTheme.colorScheme.surfaceVariant,
-                    content = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
     }
 }
 

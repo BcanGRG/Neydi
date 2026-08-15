@@ -261,4 +261,67 @@ class ListStateTest {
         assertEquals(listOf("Süt"), state.sections.first().rows.map { it.row.name })
         assertEquals(listOf("Ekmek"), state.taken.map { it.row.name })
     }
+
+    // --- Baslik alt satiri (Ekran 1 tasarimi) --------------------------------
+
+    /** 15 Agu 2026 12:00 - gunler bu ana gore sayiliyor. */
+    private val now = 1786_000_000_000L
+
+    private fun daysAgo(days: Int) = now - days * 24L * 60 * 60 * 1000
+
+    /**
+     * TASARIM SAYI SAYMIYOR, HATIRLATIYOR.
+     *
+     * Onceki hal "N urun" idi ve ekranin kendisi zaten o satirlari
+     * gosteriyordu; baslik hicbir sey eklemiyordu.
+     */
+    @Test
+    fun headerRemindsOfLastTrip() {
+        assertEquals(
+            "Son alışveriş: 8 gün önce · 642,00 TL",
+            lastTripSummary(LastTrip(closedAt = daysAgo(8), totalMinor = 64200), now),
+        )
+    }
+
+    /** Bugun ve dun ozel yaziliyor - "0 gun once" kimsenin kurdugu cumle degil. */
+    @Test
+    fun headerUsesWordsForTodayAndYesterday() {
+        assertEquals(
+            "Son alışveriş: bugün · 12,50 TL",
+            lastTripSummary(LastTrip(closedAt = daysAgo(0), totalMinor = 1250), now),
+        )
+        assertEquals(
+            "Son alışveriş: dün · 12,50 TL",
+            lastTripSummary(LastTrip(closedAt = daysAgo(1), totalMinor = 1250), now),
+        )
+    }
+
+    /**
+     * TUTAR OKUNAMADIYSA HIC YAZILMIYOR.
+     *
+     * "0 TL" ya da "- TL" yazmak dogrulanmamis bir sayiyi manset yapmak olurdu;
+     * F4.11 ayni karari `Trip.totalMinor` icin vermisti.
+     */
+    @Test
+    fun headerOmitsAmountWhenUnread() {
+        assertEquals(
+            "Son alışveriş: 3 gün önce",
+            lastTripSummary(LastTrip(closedAt = daysAgo(3), totalMinor = null), now),
+        )
+    }
+
+    /** Hic alisveris yoksa sayi degil, durum yaziliyor. */
+    @Test
+    fun headerSaysNothingBoughtYet() {
+        assertEquals("Henüz alışveriş yok", lastTripSummary(null, now))
+    }
+
+    /** Cihaz saati geri alinmis: "-2 gun once" yerine bugune yuvarlaniyor. */
+    @Test
+    fun headerClampsFutureTripToToday() {
+        assertEquals(
+            "Son alışveriş: bugün",
+            lastTripSummary(LastTrip(closedAt = daysAgo(-2), totalMinor = null), now),
+        )
+    }
 }
