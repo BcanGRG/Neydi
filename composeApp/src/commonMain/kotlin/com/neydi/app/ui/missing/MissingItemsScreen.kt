@@ -55,7 +55,8 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 @Composable
 fun MissingItemsRoute(
-    onEnterShopping: () -> Unit,
+    /** @param skipped ekran hic gorunmeden atlandiysa true - cagiran taraf toast gosteriyor. */
+    onEnterShopping: (skipped: Boolean) -> Unit,
     onCancel: () -> Unit,
 ) {
     val vm: MissingItemsViewModel = koinViewModel()
@@ -65,13 +66,13 @@ fun MissingItemsRoute(
     // moduna geciliyor. Kullanici "Alisverise cikiyorum"a bastigini
     // hatirliyor, arada bos bir ekran gormuyor.
     LaunchedEffect(state.shouldSkip) {
-        if (state.shouldSkip) vm.skipToShopping(onEnterShopping)
+        if (state.shouldSkip) vm.skipToShopping { onEnterShopping(true) }
     }
 
     MissingItemsScreen(
         state = state,
         onToggle = vm::toggle,
-        onAdd = { vm.addSelected(onEnterShopping) },
+        onAdd = { vm.addSelected { onEnterShopping(false) } },
         onCancel = onCancel,
     )
 }

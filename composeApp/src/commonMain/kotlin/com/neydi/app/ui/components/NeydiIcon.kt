@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.ReceiptLong
@@ -67,6 +68,8 @@ object NeydiIcons {
     val ContentCopy: ImageVector get() = Icons.Rounded.ContentCopy
     val Search: ImageVector get() = Icons.Rounded.Search
     val LightMode: ImageVector get() = Icons.Rounded.LightMode
+    /** "Alisverisi birak" - moddan cikis (tasarim karari 1). */
+    val Logout: ImageVector get() = Icons.Rounded.Logout
     val DragIndicator: ImageVector get() = Icons.Rounded.DragIndicator
     val ReceiptLong: ImageVector get() = Icons.Rounded.ReceiptLong
     val HourglassTop: ImageVector get() = Icons.Rounded.HourglassTop
