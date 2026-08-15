@@ -6,6 +6,7 @@ import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.receipt.ReceiptProcessor
+import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
@@ -49,6 +50,7 @@ val dataModule = module {
     single { get<NeydiDatabase>().receiptLineDao() }
     single { get<NeydiDatabase>().productAliasDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
+    single { get<NeydiDatabase>().productStatsDao() }
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
     // App() bunlari kendi uretmek zorunda kalmasin.
@@ -59,6 +61,7 @@ val dataModule = module {
             repo = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
+            statsRebuilder = get(),
         )
     }
 
@@ -80,10 +83,13 @@ val dataModule = module {
             aliasDao = get(),
             catalogSeedDao = get(),
             repo = get(),
+            statsRebuilder = get(),
             clock = ::now,
             newId = ::newUuid,
         )
     }
+
+    single { ProductStatsRebuilder(statsDao = get(), clock = ::now) }
 
     single {
         ReceiptProcessor(
@@ -93,6 +99,7 @@ val dataModule = module {
             productDao = get(),
             aliasDao = get(),
             tripDao = get(),
+            statsRebuilder = get(),
             clock = ::now,
             newId = ::newUuid,
         )

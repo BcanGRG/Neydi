@@ -18,6 +18,7 @@ import com.neydi.app.data.receipt.TOLERANCE_MINOR
 import com.neydi.app.data.receipt.chainKey
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
+import com.neydi.app.data.stats.ProductStatsRebuilder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -62,6 +63,7 @@ class ReceiptCheckViewModel(
     private val aliasDao: ProductAliasDao,
     private val catalogSeedDao: CatalogSeedDao,
     private val repo: ListRepository,
+    private val statsRebuilder: ProductStatsRebuilder,
     // Saat ve id URETIMI disaridan: repository'de de boyle. Testte
     // deterministik olmasi icin sart.
     private val clock: () -> Long,
@@ -167,6 +169,9 @@ class ReceiptCheckViewModel(
                     createdAt = clock(),
                 ),
             )
+            // Kullanici bir fis satirini urune BAGLADI: bu yeni bir alim kaydi,
+            // yani istatistik yeniden kurulmali (F6.1). Kapanis coktan gecti.
+            statsRebuilder.rebuild(receipt.householdId)
             dismissEdit()
             reload()
         }
