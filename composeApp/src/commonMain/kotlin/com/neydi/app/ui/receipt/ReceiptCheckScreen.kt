@@ -1,6 +1,12 @@
 package com.neydi.app.ui.receipt
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
+import com.neydi.app.ui.theme.Sizes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -69,6 +75,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitCameraType
 import io.github.vinceglb.filekit.dialogs.compose.rememberCameraPickerLauncher
 import com.neydi.app.ui.components.OutcomePicker
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
+import com.neydi.app.ui.theme.LocalNeydiTextStyles
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
@@ -110,13 +117,40 @@ fun ReceiptCheckScreen(
     // daha kotu olurdu.
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(Spacing.md)) {
-        Text(
-            text = state.storeName ?: "Fiş",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        // BASLIK EKRANIN ADI, FISIN MAGAZASI DEGIL (tasarim karari 9).
+        // Magaza ve tarih alt satirda birlikte duruyor: kullanicinin
+        // "hangi fis" sorusunu ikisi birlikte cevapliyor, tek basina
+        // magaza adi degil.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .clip(NeydiExtraShapes.pill)
+                    .pressable(onTap = onBack)
+                    .size(Sizes.minTapTarget),
+                contentAlignment = Alignment.Center,
+            ) {
+                NeydiIcon(
+                    icon = NeydiIcons.ArrowBack,
+                    contentDescription = "Geri",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Spacer(Modifier.width(Spacing.sm))
+            Text(
+                text = "Fiş kontrol",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        state.subtitle?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         Spacer(Modifier.height(Spacing.sm))
 
         when {
@@ -124,6 +158,28 @@ fun ReceiptCheckScreen(
             state.failedMessage != null ->
                 UnreadableNotice(state.failedMessage, onReread, onNextPart)
             else -> {
+                // MANSET TUTAR (tasarim karari 9).
+                //
+                // Ekranin isi "bu fis dogru mu" sorusunu tek bakista
+                // kapatmak; satir sayisi degisken ve zaten kaydirmali, yani
+                // manset olacak sabit tek sey tutar. Fraunces'in dort
+                // kullanim yerinden biri "alisveris sonrasi buyuk tutar" -
+                // bu onun ayni ani, yeni bir istisna degil.
+                //
+                // Toplam okunamadiysa manset CIZILMIYOR: dogrulanmamis bir
+                // sayiyi 36sp'de manset yapmak, kullanicinin
+                // sorgulayamayacagi bir yerde tahmini gercek gibi sunmak.
+                state.totalMinor?.let { total ->
+                    Text(
+                        text = formatMinor(total),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(Modifier.height(Spacing.sm))
+                }
+                // CIP MANSETIN ALTINDA, yaninda DEGIL: amber hali
+                // ("Toplam 4,20 TL tutmuyor") yan yana dizilişte manseti
+                // sikistiriyordu.
                 GateChip(state)
                 state.notice?.let {
                     Spacer(Modifier.height(Spacing.xs))
@@ -152,7 +208,7 @@ fun ReceiptCheckScreen(
                 if (state.isPart) {
                     // Parca okundu; sonraki parca tek dokunus uzakta olmali.
                     NeydiButton(
-                        text = "Sonraki parçayı çek",
+                        text = "Bu fişin devamını çek",
                         onClick = onNextPart,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -160,7 +216,14 @@ fun ReceiptCheckScreen(
                 }
                 RotateRow(onReread)
                 Spacer(Modifier.height(Spacing.sm))
-                Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Tamam") }
+                NeydiButton(
+                    // "Tamam" bir kapatma; tasarim burada YAPILAN ISI
+                    // adlandiriyor - kullanici satirlari duzeltmis olabilir
+                    // ve o duzeltmelerin kaydedildigini gormeli.
+                    text = "Onayla ve kaydet",
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
@@ -290,8 +353,11 @@ private fun CheckRowItem(row: CheckRow, onClick: () -> Unit) {
             }
             Text(
                 text = formatMinor(row.amountMinor, currency = ""),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
+                // `priceRow`, `priceChip` DEGIL (tasarim karari 10). Fis
+                // satirindaki fiyat DOKUNULABILIR ve duzeltilebilir; bir
+                // kademe buyuk olmasi (17sp) dokunulabilirligin kendisi,
+                // sus degil. Stil zaten tanimliydi ama HIC KULLANILMIYORDU.
+                style = LocalNeydiTextStyles.current.priceRow,
                 modifier = Modifier.padding(start = Spacing.sm),
             )
         }

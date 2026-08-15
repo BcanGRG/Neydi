@@ -576,6 +576,15 @@ private fun ListHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        // AVATAR BASLIGIN SABIT PARCASI (tasarim karari 10). Tek kullanicili
+        // hanede de ciziliyor; es eklenince yalnizca NOKTA yesile donuyor,
+        // yerlesim degismiyor. Gizlemek, ikinci kisi eklendigi gun basligi
+        // yeniden ogretmek olurdu.
+        state.selfInitials?.let { initials ->
+            HeaderAvatar(initials = initials, hasPartner = state.hasPartner)
+            Spacer(Modifier.width(Spacing.sm))
+        }
+
         // ALISVERIS MODUNDA DA MENU VAR AMA TEK MADDELI (tasarim karari 1).
         //
         // Reyonda gezinme yine kapali - Ayarlar'a yanlislikla dusulemiyor,
@@ -592,6 +601,38 @@ private fun ListHeader(
             onHistory = onHistory,
             onSettings = onSettings,
             onLeaveShopping = onLeaveShopping,
+        )
+    }
+}
+
+/** Basliktaki 28dp avatar + 6dp varlik noktasi (tasarim karari 10). */
+@Composable
+private fun HeaderAvatar(initials: String, hasPartner: Boolean) {
+    val extras = LocalNeydiExtraColors.current
+    Box(contentAlignment = Alignment.BottomEnd) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(NeydiExtraShapes.pill)
+                .background(MaterialTheme.colorScheme.secondary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondary,
+            )
+        }
+        // NOKTA YESIL DEGIL GRI, es yokken: "birileri var" demek yanlis
+        // olurdu. Es eklendigi an ayni yerde yesile donuyor.
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(NeydiExtraShapes.pill)
+                .background(
+                    if (hasPartner) extras.success else MaterialTheme.colorScheme.outline,
+                ),
         )
     }
 }

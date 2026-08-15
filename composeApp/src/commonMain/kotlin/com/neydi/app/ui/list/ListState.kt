@@ -25,6 +25,17 @@ data class ListState(
     val emptyKind: EmptyKind = EmptyKind.ILK_GUN,
     /** Basligin alt satiri icin son kapanmis gezi; hic yoksa null. */
     val lastTrip: LastTrip? = null,
+    /**
+     * Basliktaki avatarin bas harfleri (tasarim karari 10).
+     *
+     * TEK KULLANICILI HANEDE DE CIZILIYOR - kendi bas harfi, nokta gri.
+     * Gizlemek, ikinci kisi eklendigi gun basligi yeniden ogretmek olurdu;
+     * avatar basligin sabit bir parcasi ve es eklenince yalnizca NOKTA
+     * yesile donuyor, yerlesim degismiyor.
+     */
+    val selfInitials: String? = null,
+    /** Hanede baska uye var mi - avatarin varlik noktasinin rengi. */
+    val hasPartner: Boolean = false,
 ) {
     val isEmpty: Boolean get() = !loading && sections.isEmpty() && taken.isEmpty()
     val totalRows: Int get() = sections.sumOf { it.rows.size } + taken.size
