@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@72,600,30,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#E4D8C9; font-family:'Plus Jakarta Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#B34418; text-decoration:none; }
+  a:hover { color:#8A5A00; }
+</style>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#B34418"></rect><rect x="30" y="30" width="40" height="40" rx="12" fill="#FBF7F2"></rect><rect x="38" y="42" width="24" height="4" rx="2" fill="#B34418"></rect><rect x="38" y="52" width="16" height="4" rx="2" fill="#E0A32E"></rect></svg></template>
+</helmet>
+
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:44px;color:#221A14;max-width:1500px">
+
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Neydi · Sıcak Kiler · Compose Multiplatform spec</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Token'lar, rol adlarıyla</div>
+    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:72ch">Bu sayfa Figma çıktısı değil, kod sözleşmesidir. Token adları Compose'a birebir taşınır: rol bazlı (surface, surfaceVariant, primary…), asla blue500 gibi değil. Material'ın ColorScheme'i kullanılmaz — Dynamic color Android-only olduğu için kimliğin parçası olamaz; sabit marka paleti kendi CompositionLocal'ı üzerinden dağıtılır.</div>
+    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45"><a href="Neydi - Tasarim Sistemi.dc.html">Görsel tasarım sistemi</a> · <a href="Neydi - Bos Durumlar.dc.html">Boş durum atlası</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
+  </div>
+
+  <!-- RENK ROLLERİ -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Renk rolleri</div>
+    </div>
+
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:8px 24px 16px">
+      <div style="display:grid;grid-template-columns:190px 76px 130px 76px 130px 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #E7DACB">
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">rol adı (Compose)</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">ışık</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">hex</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">karanlık</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">hex</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">kullanım kuralı</div>
+      </div>
+      <sc-for list="{{ roles }}" as="r" hint-placeholder-count="15">
+        <div style="display:grid;grid-template-columns:190px 76px 130px 76px 130px 1fr;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #E7DACB">
+          <div style="font:600 15px/1.3 'Plus Jakarta Sans'">{{ r.name }}</div>
+          <div style="height:32px;border-radius:10px;border:1px solid #E7DACB" data-swatch="{{ r.light }}"></div>
+          <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ r.light }}</div>
+          <div style="height:32px;border-radius:10px;border:1px solid #3A322C" data-swatch="{{ r.dark }}"></div>
+          <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ r.dark }}</div>
+          <div style="font:400 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">{{ r.rule }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background:#221A14;border-radius:24px;padding:24px 28px;overflow:auto">
+      <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#C6B6A9;padding-bottom:14px">commonMain/kotlin/theme/Color.kt</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.65;color:#F5EDE6;white-space:pre">{{ colorKt }}</div>
+    </div>
+
+    <div style="background:#F6E7D2;border:1.5px solid #8A5A00;border-radius:24px;padding:24px 28px;display:flex;flex-direction:column;gap:14px">
+      <div style="font:700 16px/1.28 'Plus Jakarta Sans';color:#3A2600">Amber sözleşmesi — derleme zamanında zorlanır</div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#3A2600;max-width:80ch;font-variant-numeric:tabular-nums">accent (#E0A32E) ışık modunda surface üzerinde 2.08:1. Tek başına sınırını taşıyamaz: her amber dolgu 1.5–2dp accentOutline kenarlık taşır ve amber ışık modunda asla metin rengi değildir. Bu yüzden amber yüzey elle değil tek bir composable üzerinden kurulur.</div>
+      <div style="background:#221A14;border-radius:16px;padding:20px 22px;overflow:auto">
+        <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.65;color:#F5EDE6;white-space:pre">{{ accentKt }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TİPOGRAFİ -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">02</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Tipografi ölçeği</div>
+    </div>
+
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:8px 24px 16px">
+      <div style="display:grid;grid-template-columns:150px 120px 200px 92px 108px 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #E7DACB">
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">token</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">boyut / lh</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">aile · ağırlık</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">harf aralığı</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">tnum</div>
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#8A7666">nerede</div>
+      </div>
+      <sc-for list="{{ type }}" as="t" hint-placeholder-count="12">
+        <div style="display:grid;grid-template-columns:150px 120px 200px 92px 108px 1fr;gap:14px;align-items:baseline;padding:12px 0;border-bottom:1px solid #E7DACB">
+          <div style="font:600 15px/1.3 'Plus Jakarta Sans'">{{ t.token }}</div>
+          <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ t.size }}</div>
+          <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">{{ t.family }}</div>
+          <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ t.tracking }}</div>
+          <div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">{{ t.tnum }}</div>
+          <div style="font:400 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">{{ t.use }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background:#221A14;border-radius:24px;padding:24px 28px;overflow:auto">
+      <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#C6B6A9;padding-bottom:14px">commonMain/kotlin/theme/Type.kt · font'lar bundle edilir, sistem fontu kullanılmaz</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.65;color:#F5EDE6;white-space:pre">{{ typeKt }}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Fraunces sınırı</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Tip ölçeğinde Fraunces yalnızca display ve headline token'larında var — 24sp altı için Fraunces stili tanımlı değil, yani yanlışlıkla satıra sokulamaz. Görev tanımı dört yer: Ürün Detayı manşeti, özet kartındaki tutar, Kurulum adım başlıkları, boş durum başlıkları.</div></div>
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Türkçe kuralı</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Hiçbir yerde <b>uppercase()</b> / <b>lowercase()</b> / <b>textAllCaps</b> yok — İ/i/I/ı bozulur. Locale gerektiğinde <b>Locale("tr")</b> ile açık verilir. Buton metinleri kaynakta yazıldığı gibi kalır ve %25 genişleme payıyla ölçülür.</div></div>
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Fiyat sütunu</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">tnum tek başına yeterli sayılmaz: fiyat sütunu ayrıca <b>Modifier.width(92.dp)</b> ve <b>TextAlign.End</b> ile sabitlenir. tnum herhangi bir sebeple uygulanmazsa da düzen bozulmaz.</div></div>
+    </div>
+  </div>
+
+  <!-- ŞEKİL, BOŞLUK, KATMAN -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">03</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Şekil, boşluk, katman</div>
+    </div>
+    <div style="background:#221A14;border-radius:24px;padding:24px 28px;overflow:auto">
+      <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#C6B6A9;padding-bottom:14px">commonMain/kotlin/theme/Shape.kt · Dimens.kt · Elevation.kt</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.65;color:#F5EDE6;white-space:pre">{{ shapeKt }}</div>
+    </div>
+  </div>
+
+  <!-- HAREKET VE ETKİLEŞİM -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">04</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Hareket ve basılı hal</div>
+    </div>
+    <div style="background:#221A14;border-radius:24px;padding:24px 28px;overflow:auto">
+      <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#C6B6A9;padding-bottom:14px">commonMain/kotlin/theme/Motion.kt · Interaction.kt</div>
+      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.65;color:#F5EDE6;white-space:pre">{{ motionKt }}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Platforma özgü bileşen yok</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">iOS date picker, UIKit alert, native segmented control, share sheet: hiçbiri kullanılmaz. v1'de sıfır modal dialog, sıfır push, sıfır badge.</div></div>
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Scrollbar yok</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Konum geri bildirimi yapışkan kategori başlıkları ve sayaçlarla verilir. LazyColumn'da scrollbar çizilmez.</div></div>
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Swipe yönü</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Sol kenar iOS'ta geri gitmeye ayrılmıştır. Satır jestleri yalnızca sağ kenardan başlar ve her yıkıcı işlemin taşma menüsünde jest olmayan bir eşi vardır.</div></div>
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">İkonografi</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Material Symbols Rounded, weight 400, opsz 24, rest fill 0 / seçili fill 1 — bundle edilmiş ikon seti olarak. Emoji ikonografi olarak kullanılmaz.</div></div>
+    </div>
+  </div>
+
+  <!-- DENETİM LİSTESİ -->
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">05</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Kod incelemesi denetim listesi</div>
+    </div>
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:8px 24px 16px">
+      <sc-for list="{{ checks }}" as="c" hint-placeholder-count="12">
+        <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid #E7DACB">
+          <div style="width:24px;height:24px;border-radius:12px;background:#3F6B54;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#fff;font-variation-settings:'FILL' 1">check</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+            <div style="font:600 15px/1.3 'Plus Jakarta Sans'">{{ c.title }}</div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">{{ c.detail }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() { this.paint(); }
+  componentDidUpdate() { this.paint(); }
+  paint() {
+    document.querySelectorAll('[data-swatch]').forEach(el => {
+      const v = el.getAttribute('data-swatch');
+      if (!v || v === 'undefined') return;
+      el.style.background = v;
+    });
+  }
+  renderVals() {
+    const colorKt = [
+      '@Immutable',
+      'data class NeydiColors(',
+      '    val surface: Color,',
+      '    val surfaceVariant: Color,',
+      '    val primary: Color,',
+      '    val onPrimary: Color,',
+      '    val secondary: Color,',
+      '    val accent: Color,',
+      '    val accentOutline: Color,   // ışık modunda accent dolgusunun ZORUNLU kenarlığı',
+      '    val onAccent: Color,',
+      '    val success: Color,',
+      '    val warning: Color,',
+      '    val error: Color,',
+      '    val outline: Color,',
+      '    val textPrimary: Color,',
+      '    val textSecondary: Color,',
+      '    val hairline: Color,',
+      '    val isLight: Boolean,',
+      ')',
+      '',
+      'val NeydiLightColors = NeydiColors(',
+      '    surface        = Color(0xFFFBF7F2),',
+      '    surfaceVariant = Color(0xFFF1E7DB),',
+      '    primary        = Color(0xFFB34418),',
+      '    onPrimary      = Color(0xFFFFFFFF),',
+      '    secondary      = Color(0xFF3F6B54),',
+      '    accent         = Color(0xFFE0A32E),',
+      '    accentOutline  = Color(0xFF8A5A00),',
+      '    onAccent       = Color(0xFF3A2600),',
+      '    success        = Color(0xFF2E6B45),',
+      '    warning        = Color(0xFF96560A),',
+      '    error          = Color(0xFFB3261E),',
+      '    outline        = Color(0xFF8A7666),',
+      '    textPrimary    = Color(0xFF221A14),',
+      '    textSecondary  = Color(0xFF5C4F45),',
+      '    hairline       = Color(0xFFE7DACB),',
+      '    isLight        = true,',
+      ')',
+      '',
+      'val NeydiDarkColors = NeydiColors(',
+      '    surface        = Color(0xFF13100E),',
+      '    surfaceVariant = Color(0xFF241E1A),',
+      '    primary        = Color(0xFFFF9166),',
+      '    onPrimary      = Color(0xFF3B1503),',
+      '    secondary      = Color(0xFF8FC7A2),',
+      '    accent         = Color(0xFFF2C14E),',
+      '    accentOutline  = Color(0xFFF2C14E),   // karanlıkta kenarlık gerekmez',
+      '    onAccent       = Color(0xFF2A1D00),',
+      '    success        = Color(0xFF7FD1A0),',
+      '    warning        = Color(0xFFF0B357),',
+      '    error          = Color(0xFFFF8A80),',
+      '    outline        = Color(0xFF8A7A6E),',
+      '    textPrimary    = Color(0xFFF5EDE6),',
+      '    textSecondary  = Color(0xFFC6B6A9),',
+      '    hairline       = Color(0xFF3A322C),',
+      '    isLight        = false,',
+      ')',
+      '',
+      'val LocalNeydiColors = staticCompositionLocalOf { NeydiLightColors }',
+      '',
+      '@Composable',
+      'fun NeydiTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {',
+      '    // Dynamic color / Material You KULLANILMAZ — iki platformda aynı palet.',
+      '    CompositionLocalProvider(',
+      '        LocalNeydiColors provides if (dark) NeydiDarkColors else NeydiLightColors,',
+      '        LocalNeydiTypography provides NeydiTypography,',
+      '        LocalIndication provides NoRippleIndication,   // ripple yok',
+      '        content = content,',
+      '    )',
+      '}'
+    ].join('\n');
+
+    const accentKt = [
+      '@Composable',
+      'fun AccentChip(text: String, modifier: Modifier = Modifier) {',
+      '    val c = LocalNeydiColors.current',
+      '    Box(',
+      '        modifier',
+      '            .heightIn(min = 24.dp)',
+      '            .clip(CircleShape)',
+      '            .background(c.accent)',
+      '            .then(if (c.isLight) Modifier.border(1.5.dp, c.accentOutline, CircleShape) else Modifier)',
+      '            .padding(horizontal = 10.dp),',
+      '        contentAlignment = Alignment.Center,',
+      '    ) {',
+      '        // metin onAccent, ışık modunda asla accent',
+      '        Text(text, style = NeydiTypography.label12, color = c.onAccent)',
+      '    }',
+      '}'
+    ].join('\n');
+
+    const typeKt = [
+      '// composeResources/font/ altında bundle: PlusJakartaSans, Fraunces. Sistem fontu kullanılmaz.',
+      'val PlusJakarta = FontFamily(',
+      '    Font(Res.font.PlusJakartaSans_Regular,   FontWeight.W400),',
+      '    Font(Res.font.PlusJakartaSans_Medium,    FontWeight.W500),',
+      '    Font(Res.font.PlusJakartaSans_SemiBold,  FontWeight.W600),',
+      '    Font(Res.font.PlusJakartaSans_Bold,      FontWeight.W700),',
+      '    Font(Res.font.PlusJakartaSans_ExtraBold, FontWeight.W800),',
+      ')',
+      '',
+      '// Fraunces: opsz 72, SOFT 30, WONK 0 — statik instance olarak export edilir,',
+      '// çünkü variation axis desteği iki platformda aynı davranmıyor.',
+      'val Fraunces = FontFamily(Font(Res.font.Fraunces_opsz72_SOFT30_WONK0_SemiBold, FontWeight.W600))',
+      '',
+      'private const val TNUM = "tnum"   // tüm fiyatlar sütun halinde hizalanır',
+      '',
+      '@Immutable',
+      'data class NeydiTypeScale(',
+      '    val display44: TextStyle, val display36: TextStyle, val display30: TextStyle,',
+      '    val headline28: TextStyle, val headline24: TextStyle,',
+      '    val title22: TextStyle, val title18: TextStyle, val title16: TextStyle,',
+      '    val body17: TextStyle, val body15: TextStyle, val body14: TextStyle,',
+      '    val label15: TextStyle, val label14: TextStyle, val label12: TextStyle,',
+      '    val itemName: TextStyle, val itemNameShopping: TextStyle, val qtyBadge: TextStyle,',
+      '    val price: TextStyle,',
+      ')',
+      '',
+      '// TextStyle\'ın ilk konumsal parametresi color olduğu için tüm argümanlar adlandırılmış verilir.',
+      'private fun fraunces(size: Int, lh: Double, tracking: Double = 0.0) = TextStyle(',
+      '    fontFamily = Fraunces, fontWeight = FontWeight.W600,',
+      '    fontSize = size.sp, lineHeight = lh.sp, letterSpacing = tracking.sp,',
+      ')',
+      '',
+      'private fun pjs(size: Int, lh: Double, weight: FontWeight, tnum: Boolean = false) = TextStyle(',
+      '    fontFamily = PlusJakarta, fontWeight = weight,',
+      '    fontSize = size.sp, lineHeight = lh.sp,',
+      '    fontFeatureSettings = if (tnum) TNUM else null,',
+      ')',
+      '',
+      'val NeydiTypography = NeydiTypeScale(',
+      '    // display + headline: SADECE Fraunces, sadece 24sp ve üstü',
+      '    display44  = fraunces(44, 48.4, -0.44),',
+      '    display36  = fraunces(36, 39.6, -0.36),',
+      '    display30  = fraunces(30, 33.0, -0.30),',
+      '    headline28 = fraunces(28, 33.6),',
+      '    headline24 = fraunces(24, 28.8),   // Fraunces\'in alt sınırı',
+      '    // buradan aşağısı asla Fraunces değil',
+      '    title22 = pjs(22, 28.2, FontWeight.W700),',
+      '    title18 = pjs(18, 23.0, FontWeight.W600),',
+      '    title16 = pjs(16, 20.5, FontWeight.W600),',
+      '    body17  = pjs(17, 24.7, FontWeight.W400),',
+      '    body15  = pjs(15, 21.8, FontWeight.W400),',
+      '    body14  = pjs(14, 20.3, FontWeight.W400),   // gövde minimumu 14sp, 13sp değil',
+      '    label15 = pjs(15, 19.5, FontWeight.W600),',
+      '    label14 = pjs(14, 18.2, FontWeight.W500),',
+      '    label12 = pjs(12, 15.6, FontWeight.W600),',
+      '    itemName         = pjs(17, 21.8, FontWeight.W500),',
+      '    itemNameShopping = pjs(20, 25.6, FontWeight.W700),',
+      '    qtyBadge         = pjs(20, 20.0, FontWeight.W800, tnum = true),',
+      '    price            = pjs(14, 18.2, FontWeight.W600, tnum = true),',
+      ')',
+      '',
+      'val LocalNeydiTypography = staticCompositionLocalOf { NeydiTypography }'
+    ].join('\n');
+
+    const shapeKt = [
+      'object NeydiShapes {',
+      '    val listRow      = RoundedCornerShape(20.dp)',
+      '    val categoryTile = RoundedCornerShape(24.dp)',
+      '    val sheetTop     = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)',
+      '    val textField    = RoundedCornerShape(18.dp)',
+      '    val pill         = CircleShape                 // çip ve buton',
+      '    val checkRest    = CircleShape                 // onay hedefi: daire',
+      '    val checkChecked = RoundedCornerShape(12.dp)   // işaretlendiğinde squircle',
+      '    val card         = RoundedCornerShape(24.dp)',
+      '}',
+      '',
+      'object Space {                     // 8dp grid',
+      '    val xxs = 4.dp    // yalnızca ikon-metin',
+      '    val xs  = 8.dp    // satır içi öğeler',
+      '    val s   = 12.dp   // onay kutusu ile ad arası',
+      '    val m   = 16.dp   // ekran kenarı',
+      '    val l   = 24.dp   // bölüm arası',
+      '    val xl  = 32.dp   // sheet iç üst',
+      '    val xxl = 48.dp   // boş durum blok arası',
+      '}',
+      '',
+      'object Size {',
+      '    val rowPlanning        = 56.dp   // ikinci satır varsa rowPlanningTwoLine',
+      '    val rowPlanningTwoLine = 68.dp',
+      '    val rowShopping        = 72.dp',
+      '    val header             = 56.dp',
+      '    val checkbox           = 24.dp   // alışveriş modunda 28.dp',
+      '    val categoryTile       = 56.dp',
+      '    val sparkline          = DpSize(24.dp, 16.dp)',
+      '    val minTouch           = 44.dp   // floating toolbar hedefleri 56.dp',
+      '    val hairline           = 1.dp    // 0.5dp YOK',
+      '    val rowBorderShopping  = 1.5.dp',
+      '    val safeTop            = 44.dp',
+      '    val safeBottom         = 34.dp   // iOS home indicator; alta yapışık aksiyon yok',
+      '}',
+      '',
+      '// Derinlik = ton, gölge değil. Blur / frosted glass / vibrancy YOK.',
+      '// surface -> surfaceVariant -> +1 ton. Kaydırılan içerikte gölge yok, ayrım hairline.',
+      'object Elevation {',
+      '    val floatingToolbar = 3.dp   // izinli iki yerden biri',
+      '    val addButton       = 4.dp   // izinli ikinci yer',
+      '    val everythingElse  = 0.dp',
+      '}'
+    ].join('\n');
+
+    const motionKt = [
+      'object Motion {',
+      '    // Kararlı oturur, görünür overshoot yok.',
+      '    fun <T> settle() = spring<T>(dampingRatio = 0.9f, stiffness = 400f)',
+      '    const val CHECK_MS   = 200   // daire -> squircle + 0.96 scale çukuru',
+      '    const val REORDER_MS = 260   // "Alındı" bölümüne kayma — ışınlanma yok',
+      '}',
+      '',
+      '// Material ripple YOK: her etkileşimli eleman basılı halini açıkça tanımlar.',
+      'object NoRippleIndication : Indication {',
+      '    @Composable override fun rememberUpdatedInstance(interactionSource: InteractionSource) =',
+      '        remember(interactionSource) { NoRippleInstance }',
+      '}',
+      '',
+      '@Composable',
+      'fun Modifier.pressable(enabled: Boolean = true, onTap: () -> Unit): Modifier {',
+      '    val src = remember { MutableInteractionSource() }',
+      '    val pressed by src.collectIsPressedAsState()',
+      '    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, Motion.settle())',
+      '    val c = LocalNeydiColors.current',
+      '    return this',
+      '        .graphicsLayer { scaleX = scale; scaleY = scale }',
+      '        .drawWithContent {',
+      '            drawContent()',
+      '            // %6 tonal overlay — ripple yerine',
+      '            if (pressed) drawRect(c.textPrimary.copy(alpha = 0.06f))',
+      '        }',
+      '        .alpha(if (enabled) 1f else 0.38f)              // devre dışı hali',
+      '        .clickable(',
+      '            interactionSource = src,',
+      '            indication = null,',
+      '            enabled = enabled,',
+      '            onClick = onTap,',
+      '        )',
+      '}',
+      '',
+      '// Odaklı hal: 2dp outline halkası, 2dp boşlukla — klavye ve erişilebilirlik için zorunlu.',
+      'fun Modifier.focusRing(focused: Boolean, shape: Shape, outline: Color) =',
+      '    if (focused) padding(2.dp).border(2.dp, outline, shape) else padding(4.dp)'
+    ].join('\n');
+
+    return {
+      colorKt, accentKt, typeKt, shapeKt, motionKt,
+      roles: [
+        { name: "surface", light: "#FBF7F2", dark: "#13100E", rule: "Zemin. Alışveriş modunda ışıkta #FFFFFF'e, karanlıkta satır dolgusu surfaceVariant'a çıkar." },
+        { name: "surfaceVariant", light: "#F1E7DB", dark: "#241E1A", rule: "Bir kademe yukarı: fiyat çipi, adet rozeti, giriş alanı, özet kartı." },
+        { name: "primary", light: "#B34418", dark: "#FF9166", rule: "Tek birincil aksiyon ve ekleme butonu. Metin rengi olarak yalnızca satır içi eylem bağlantılarında." },
+        { name: "onPrimary", light: "#FFFFFF", dark: "#3B1503", rule: "primary üzerindeki metin ve ikon. Elle beyaz yazılmaz." },
+        { name: "secondary", light: "#3F6B54", dark: "#8FC7A2", rule: "Onaylanmış hal: işaretli squircle, anahtar açık, \"Bitir\" butonu, eş avatarı." },
+        { name: "accent", light: "#E0A32E", dark: "#F2C14E", rule: "Yalnızca dolgu. Işıkta zorunlu 1.5dp accentOutline kenarlıkla ve asla metin rengi olarak değil." },
+        { name: "accentOutline", light: "#8A5A00", dark: "#F2C14E", rule: "Işıkta amber dolgunun kenarlığı; ayrıca ışıkta okunabilir amber-metin ihtiyacının tek karşılığı." },
+        { name: "onAccent", light: "#3A2600", dark: "#2A1D00", rule: "Amber dolgu üzerindeki metin." },
+        { name: "success", light: "#2E6B45", dark: "#7FD1A0", rule: "Fiyat düşüşü oku, \"Toplam tutuyor\" çipi, fiş var ikonu." },
+        { name: "warning", light: "#96560A", dark: "#F0B357", rule: "Emin değil satırının metni, \"kontrol bekliyor\" ikonu. Amber metnin ışıktaki yerine geçer." },
+        { name: "error", light: "#B3261E", dark: "#FF8A80", rule: "Fiyat artışı oku ve yıkıcı işlem metni. Hata dialogu yok, yüzey olarak kullanılmaz." },
+        { name: "outline", light: "#8A7666", dark: "#8A7A6E", rule: "Onay kutusu çevresi, ikincil buton kenarlığı, odak halkası, muted ikon." },
+        { name: "textPrimary", light: "#221A14", dark: "#F5EDE6", rule: "Ürün adı, tutar, başlık. Snackbar zemini olarak da ışıkta bu renk." },
+        { name: "textSecondary", light: "#5C4F45", dark: "#C6B6A9", rule: "Metadata, gerekçe, kategori başlığı. İkinci satırda %60 opaklıkla." },
+        { name: "hairline", light: "#E7DACB", dark: "#3A322C", rule: "1dp ayırıcı. Kaydırılan içerikte gölge yerine kullanılan tek ayrım aracı." }
+      ],
+      type: [
+        { token: "display44", size: "44 / 48.4", family: "Fraunces · W600", tracking: "−1%", tnum: "gerektiğinde", use: "Kanvas ve pazarlama ölçeği; üründe nadiren" },
+        { token: "display36", size: "36 / 39.6", family: "Fraunces · W600", tracking: "−1%", tnum: "açık", use: "Özet kartındaki tutar; Kurulum adım başlığı" },
+        { token: "display30", size: "30 / 33", family: "Fraunces · W600", tracking: "−1%", tnum: "kapalı", use: "Kurulum adım başlığı, geniş boş durum başlığı" },
+        { token: "headline28", size: "28 / 33.6", family: "Fraunces · W600", tracking: "0", tnum: "kapalı", use: "Bölüm başlığı (spec sayfaları)" },
+        { token: "headline24", size: "24 / 28.8", family: "Fraunces · W600", tracking: "0", tnum: "açık", use: "Ürün Detayı manşeti; boş durum başlığı — Fraunces'in alt sınırı" },
+        { token: "title22", size: "22 / 28.2", family: "Plus Jakarta · W700", tracking: "0", tnum: "kapalı", use: "Ekran başlığı (\"Liste\"), fiş toplamı" },
+        { token: "title18", size: "18 / 23", family: "Plus Jakarta · W600", tracking: "0", tnum: "kapalı", use: "Sheet başlığı, bölüm başlığı" },
+        { token: "title16", size: "16 / 20.5", family: "Plus Jakarta · W600", tracking: "0", tnum: "kapalı", use: "Alt bölüm başlığı, kart başlığı" },
+        { token: "body17 / itemName", size: "17 / 24.7 · 21.8", family: "Plus Jakarta · W400–500", tracking: "0", tnum: "kapalı", use: "Liste öğesi adı, ayar satırı, giriş metni" },
+        { token: "itemNameShopping", size: "20 / 25.6", family: "Plus Jakarta · W700", tracking: "0", tnum: "kapalı", use: "Alışveriş modunda ürün adı" },
+        { token: "body15 / body14", size: "15 · 14", family: "Plus Jakarta · W400", tracking: "0", tnum: "fiyat içerince", use: "Açıklama; ikinci satır 14sp (13sp değil), %60 opaklık" },
+        { token: "label15 / 14 / 12", size: "15 · 14 · 12", family: "Plus Jakarta · W500–600", tracking: "0", tnum: "fiyat içerince", use: "Buton, öneri çipi, kategori başlığı, ham OCR satırı" },
+        { token: "qtyBadge", size: "20", family: "Plus Jakarta · W800", tracking: "0", tnum: "açık", use: "Adet rozeti (\"2x\", \"3 kg\")" },
+        { token: "price", size: "14", family: "Plus Jakarta · W600", tracking: "0", tnum: "açık", use: "Tüm fiyatlar; sabit genişlik + TextAlign.End ile" }
+      ],
+      checks: [
+        { title: "Fraunces 24sp altında hiçbir yerde geçmiyor", detail: "Ölçekte 24sp altı Fraunces stili tanımlı değil; grep ile Fraunces araması yalnızca display/headline token tanımlarını döndürmeli." },
+        { title: "Amber dolgular AccentChip / AccentSurface üzerinden", detail: "background(c.accent) çağrısı bu iki composable dışında geçmiyor; ışık modunda kenarlıksız amber derlenmiş olsa bile incelemede reddedilir." },
+        { title: "Kaydırılan içerikte elevation 0", detail: "LazyColumn item'larında shadow / elevation yok; ayrım Divider(1.dp, hairline). Gölge yalnızca floating toolbar (3dp) ve ekleme butonunda (4dp)." },
+        { title: "LocalIndication = NoRippleIndication", detail: "Hiçbir clickable ripple almıyor; her etkileşimli eleman .pressable() ile scale 0.97 + %6 tonal overlay tanımlıyor." },
+        { title: "Sıfır uppercase / lowercase dönüşümü", detail: "String.uppercase(), lowercase(), capitalize() ve textAllCaps kullanımı yok — Türkçe İ/ı bozulmaz." },
+        { title: "Tüm fiyat Text'lerinde tnum + sabit genişlik", detail: "fontFeatureSettings = \"tnum\" ve Modifier.width(...) + TextAlign.End birlikte; biri eksikse düzen ilk üç haneli farkta kayar." },
+        { title: "Hairline minimum 1dp", detail: "0.5.dp hiçbir yerde geçmiyor; alışveriş modu satır kenarlığı 1.5.dp." },
+        { title: "Blur / renkli gölge / vibrancy yok", detail: "Modifier.blur, hazeChild, renkli shadow ambient/spot color kullanımı yok. Derinlik surface → surfaceVariant → +1 ton ile." },
+        { title: "Safe area asimetrik ve zorunlu", detail: "Üst 44dp, alt 34dp; alta yapışık birincil aksiyon yok. Floating toolbar alt safe area'nın üstünde." },
+        { title: "Dokunma hedefi minimum 44dp", detail: "Fiyat çipi kendi 44dp hedefine sahip; floating toolbar hedefleri 56dp." },
+        { title: "Sıfır dialog, sıfır push, sıfır badge", detail: "AlertDialog, Dialog, notification ve badge çağrısı yok. Geri bildirim snackbar veya satır içi hal değişimi." },
+        { title: "Dynamic color / Material You kapalı", detail: "dynamicColorScheme veya MaterialTheme.colorScheme kullanımı yok; palet yalnızca LocalNeydiColors üzerinden okunur." }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
