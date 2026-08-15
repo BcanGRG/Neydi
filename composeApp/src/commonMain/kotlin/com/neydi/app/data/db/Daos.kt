@@ -73,6 +73,16 @@ interface ProductDao {
     @Query("SELECT * FROM product WHERE id = :id AND deletedAt IS NULL")
     suspend fun byId(id: String): Product?
 
+    /**
+     * Hane hic urun gordu mu (tasarim karari 6).
+     *
+     * Kurulumun IKINCI kosulu: `setupCompletedAt` tek basina yetmiyor cunku
+     * mevcut kurulumlarda o alan bos ve dolu bir veritabaninin ustune
+     * onboarding acilirdi.
+     */
+    @Query("SELECT COUNT(*) FROM product WHERE householdId = :householdId AND deletedAt IS NULL")
+    suspend fun count(householdId: String): Int
+
     @Query("SELECT * FROM product WHERE householdId = :householdId AND isStaple = 1 AND deletedAt IS NULL ORDER BY name")
     fun observeStaples(householdId: String): Flow<List<Product>>
 

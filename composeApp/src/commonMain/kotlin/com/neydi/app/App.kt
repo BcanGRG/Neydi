@@ -26,7 +26,7 @@ import com.neydi.app.ui.settings.DeleteDataRoute
 import com.neydi.app.ui.settings.SettingsRoute
 import com.neydi.app.ui.missing.MissingItemsRoute
 import com.neydi.app.ui.history.HistoryRoute
-import com.neydi.app.ui.screens.SetupScreen
+import com.neydi.app.ui.setup.SetupRoute
 import com.neydi.app.ui.list.ListScreen
 import com.neydi.app.ui.receipt.ReceiptCheckRoute
 import com.neydi.app.ui.theme.NeydiTheme
@@ -37,7 +37,15 @@ fun App() {
     // Katalog tohumlamasi acilista bir kez. Idempotent, ekrani BLOKLAMIYOR -
     // ilk acilista 257 satir yazilirken kullanici bos ekrana bakmamali.
     val bootstrap = koinInject<AppBootstrap>()
-    LaunchedEffect(Unit) { bootstrap() }
+    // KURULUM TETIKLEYICISI (tasarim karari 6): `setupCompletedAt` bos VE hane
+    // hic urun gormemis. Tohumlama BITTIKTEN sonra sorulmali - katalog
+    // tohumlamasi urun yaratmiyor ama hane satirini yaratiyor ve sira
+    // karisirsa sorgu bos veritabaninda kosardi.
+    var showSetup by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        bootstrap()
+        showSetup = bootstrap.needsSetup()
+    }
 
     NeydiTheme(darkTheme = isSystemInDarkTheme()) {
         // Surec olumunu ve konfigurasyon degisimini asar. Serializer kaydi
@@ -63,6 +71,14 @@ fun App() {
 
         fun back() {
             if (backStack.size > 1) backStack.removeLastOrNull()
+        }
+
+        // Kurulum LISTENIN USTUNE biniyor, onun yerine gecmiyor: "Listeme geç"
+        // ve "Atla" ayni yere - Liste'ye - cikiyor, ve surec olumunden donunce
+        // ekran kaybolmuyor. Kosul her acilista veritabanindan okundugu icin
+        // kurulum tamamlaninca bir daha eklenmiyor.
+        LaunchedEffect(showSetup) {
+            if (showSetup && backStack.none { it is Setup }) backStack.add(Setup)
         }
 
         NavDisplay(
@@ -139,7 +155,14 @@ fun App() {
                         },
                     )
                 }
-                entry<Setup> { SetupScreen(onFinish = { back() }) }
+                entry<Setup> {
+                    SetupRoute(
+                        onFinish = {
+                            showSetup = false
+                            back()
+                        },
+                    )
+                }
             },
         )
     }

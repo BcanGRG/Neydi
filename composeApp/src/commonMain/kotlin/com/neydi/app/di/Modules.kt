@@ -2,6 +2,7 @@ package com.neydi.app.di
 
 import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.DataWipe
@@ -16,6 +17,7 @@ import com.neydi.app.ui.receipt.ReceiptCheckViewModel
 import com.neydi.app.ui.missing.MissingItemsViewModel
 import com.neydi.app.ui.settings.DeleteDataViewModel
 import com.neydi.app.ui.settings.SettingsViewModel
+import com.neydi.app.ui.setup.SetupViewModel
 // kotlinx.datetime.Clock artik kotlin.time.Clock'a deprecate typealias.
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -56,6 +58,7 @@ val dataModule = module {
     single { get<NeydiDatabase>().productAliasDao() }
     single { get<NeydiDatabase>().storeDao() }
     single { get<NeydiDatabase>().dataWipeDao() }
+    single { get<NeydiDatabase>().appSettingsDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
     single { get<NeydiDatabase>().productStatsDao() }
 
@@ -90,6 +93,13 @@ val dataModule = module {
     }
 
     viewModel { DeleteDataViewModel(wipe = get(), memberDao = get()) }
+
+    viewModel {
+        SetupViewModel(
+            catalogSeedDao = get(), settingsDao = get(),
+            memberDao = get(), repo = get(), clock = ::now,
+        )
+    }
 
     viewModel {
         HistoryViewModel(
@@ -190,6 +200,22 @@ class AppBootstrap(
     private val newId: () -> String,
 ) {
     suspend operator fun invoke() = db.bootstrap(newId = newId, clock = clock)
+
+    /**
+     * Kurulum (Ekran 8) acilacak mi (tasarim karari 6).
+     *
+     * IKI KOSUL VE IKISI DE SART. `setupCompletedAt` tek basina yetmiyor:
+     * mevcut kurulumlarda o alan bos ve dolu bir veritabaninin ustune
+     * onboarding acilirdi - kullanici uygulamayi aylardir kullaniyor olsa bile.
+     * "Hane hic urun gormedi" bunu tek sorguyla kesiyor.
+     *
+     * `bootstrap()` HANEYI HER ACILISTA KOSULSUZ YARATIYOR, yani "hane yoksa
+     * Kurulum'u goster" hicbir zaman dogru olamazdi - bu yuzden bayrak ayri bir
+     * tabloda (`app_settings`) duruyor.
+     */
+    suspend fun needsSetup(): Boolean =
+        db.appSettingsDao().byHousehold(DEFAULT_HOUSEHOLD_ID)?.setupCompletedAt == null &&
+            db.productDao().count(DEFAULT_HOUSEHOLD_ID) == 0
 }
 
 fun initKoin(extra: KoinApplication.() -> Unit = {}): KoinApplication = startKoin {
