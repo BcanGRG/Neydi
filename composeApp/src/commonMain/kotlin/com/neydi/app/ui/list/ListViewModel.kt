@@ -23,6 +23,8 @@ import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
+import com.neydi.app.data.suggest.Suggestion
+import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.product.ProductSheetState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -54,6 +56,7 @@ class ListViewModel(
     private val categoryDao: CategoryDao,
     private val priceObservationDao: PriceObservationDao,
     private val statsRebuilder: ProductStatsRebuilder,
+    private val suggestionEngine: SuggestionEngine,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -102,6 +105,44 @@ class ListViewModel(
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = ListState(),
             )
+
+    /**
+     * Motorun onerileri - TEK SERIT yaklasiminin veri yarisi (F6.3).
+     *
+     * Serit girdi BOSKEN bunlari, kullanici yazarken otomatik tamamlamayi
+     * gosteriyor. Iki ayri serit tasarimda ust uste binerdi; tek seridin modu
+     * girdinin bos olup olmamasi.
+     *
+     * `rows` akisina bagli: liste her degistiginde (ekleme, isaretleme, yeni
+     * gezi) yeniden hesaplaniyor - boylece cipten eklenen urun aninda seritten
+     * dusuyor, cunku motor aktif listedekini onermiyor.
+     */
+    val engineSuggestions: StateFlow<List<Suggestion>> =
+        repo.rows(household)
+            .map { suggestionEngine.suggestions(household) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Cipten ekleme - [Suggestion] urun kimligi tasiyor, katalog aramasi yok.
+     *
+     * `isFromSuggestion = true` YAZILIYOR: `TripLine.fromSuggestion` kolonu ve
+     * bu parametre en bastan vardi ama hicbir cagiran doldurmuyordu - yani
+     * oneri isabeti olculemiyordu. Artik olculuyor.
+     */
+    fun addFromEngine(suggestion: Suggestion) {
+        viewModelScope.launch {
+            val memberId = selfMemberId() ?: return@launch
+            val trip = repo.openOrGetActiveTrip(household, memberId)
+            val product = productDao.byId(suggestion.productId) ?: return@launch
+            repo.add(
+                householdId = household,
+                tripId = trip.id,
+                product = product,
+                memberId = memberId,
+                isFromSuggestion = true,
+            )
+        }
+    }
 
     /**
      * Bu cihazin uyesi.

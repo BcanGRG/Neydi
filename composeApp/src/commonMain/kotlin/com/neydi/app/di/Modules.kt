@@ -63,6 +63,7 @@ val dataModule = module {
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
             statsRebuilder = get(),
+            suggestionEngine = get(),
         )
     }
 
