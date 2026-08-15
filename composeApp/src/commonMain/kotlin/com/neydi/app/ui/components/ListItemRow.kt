@@ -195,11 +195,16 @@ private fun CheckTarget(checked: Boolean, shoppingMode: Boolean) {
 /** "Her zamankiler" raptiyesi - 12dp, satirin sabit oldugunu gosterir. */
 @Composable
 private fun StaplePin() {
-    Box(
-        modifier = Modifier
-            .size(12.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.35f)),
+    // TASARIMIN IKONU: push_pin, 12sp, textSecondary. Onceki hali 12dp'lik
+    // yesil bir NOKTAYDI - "sabit" anlamini tasimiyordu, yalnizca satirin
+    // farkli oldugunu soyluyordu. Raptiye ise ne oldugunu kendisi anlatiyor.
+    NeydiIcon(
+        icon = NeydiIcons.PushPin,
+        // Bolum basligi ("Her zamankiler") zaten ayni seyi soyluyor; ekran
+        // okuyucuya iki kez okutmak gurultu.
+        contentDescription = null,
+        size = 12.dp,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 

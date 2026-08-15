@@ -1,6 +1,8 @@
 package com.neydi.app.ui.list
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,7 +48,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -59,10 +64,14 @@ import com.neydi.app.data.looksLikeList
 import com.neydi.app.ui.components.ListItemRow
 import com.neydi.app.ui.components.ListRow
 import com.neydi.app.ui.components.NeydiButton
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SectionHeader
 import com.neydi.app.ui.product.ProductSheetContent
 import com.neydi.app.ui.theme.Motion
+import com.neydi.app.ui.theme.Elevation
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.SizesExtra
@@ -452,7 +461,9 @@ internal fun ListContent(
                 }
             } else {
                 ShoppingBottomBar(
-                    remaining = state.remainingRow,
+                    taken = state.totalRows - state.remainingRow,
+                    total = state.totalRows,
+                    onAdd = onOpenSheet,
                     onFinish = onFinish,
                     modifier = Modifier.windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
@@ -545,10 +556,11 @@ private fun OverflowMenu(
                 .size(Sizes.minTapTarget),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "⋮",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+            NeydiIcon(
+                icon = NeydiIcons.MoreVert,
+                contentDescription = "Menü",
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
         DropdownMenu(
@@ -607,17 +619,70 @@ private fun ClipboardChip(count: Int, onClipboard: () -> Unit) {
  * elinde cevirmek zorunda kalirdi.
  */
 @Composable
-private fun ShoppingBottomBar(remaining: Int, onFinish: () -> Unit, modifier: Modifier = Modifier) {
+private fun ShoppingBottomBar(
+    taken: Int,
+    total: Int,
+    onAdd: () -> Unit,
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val extras = LocalNeydiExtraColors.current
+    // TASARIMIN FLOATING TOOLBAR'I: pill kapsayici, surface zemin, 1dp hairline,
+    // 6dp ic bosluk ve 3dp golge. Golge uygulamada IZINLI IKI YERDEN BIRI
+    // (`Elevation.floatingToolbar`) - kaydirilan icerikte golge yok, ayrim
+    // hairline ile yapiliyor. Onceki hali duz bir butondu, kapsayici yoktu.
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            .padding(horizontal = Spacing.sm, vertical = Spacing.sm)
+            .shadow(Elevation.floatingToolbar, NeydiExtraShapes.pill)
+            .clip(NeydiExtraShapes.pill)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(Sizes.hairline, extras.hairline, NeydiExtraShapes.pill)
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        NeydiButton(
-            text = if (remaining == 0) "Hepsi tamam — bitir" else "Alışverişi bitir",
-            onClick = onFinish,
+        // Reyonda hizli ekleme alani GIZLI (F3.5: "reyonda liste yazilmaz,
+        // okunur, klavye ekranin yarisini yer") - ama tasarim ekleme yolunu
+        // kapatmiyor, klavyesiz bir hedefe donusturuyor: 56dp'lik buton Ekle
+        // sheet'ini aciyor.
+        ToolbarAction(
+            icon = NeydiIcons.Add,
+            description = "Ürün ekle",
+            onClick = onAdd,
+            container = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onPrimary,
         )
+        NeydiButton(
+            // Sayac tasarimdan: kac tanesi alindi / kac tane var.
+            text = "Bitir ($taken/$total)",
+            onClick = onFinish,
+            modifier = Modifier.weight(1f),
+            container = MaterialTheme.colorScheme.secondary,
+            content = MaterialTheme.colorScheme.onSecondary,
+        )
+    }
+}
+
+/** Floating toolbar'in 56dp'lik dairesel hedefi (tasarim: `size/toolbarAction`). */
+@Composable
+private fun ToolbarAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    container: Color = Color.Transparent,
+    tint: Color = MaterialTheme.colorScheme.onSurface,
+) {
+    Box(
+        modifier = Modifier
+            .size(Sizes.toolbarAction)
+            .clip(NeydiExtraShapes.pill)
+            .pressable(onTap = onClick)
+            .background(container),
+        contentAlignment = Alignment.Center,
+    ) {
+        NeydiIcon(icon = icon, contentDescription = description, size = 26.dp, tint = tint)
     }
 }
 
