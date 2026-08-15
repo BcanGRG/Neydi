@@ -94,6 +94,11 @@ kotlin {
             // Cihazda OCR. Model GOMULU (~4MB): Play Services varyanti daha
             // kucuk ama ilk kullanimda indirme bekletiyordu.
             implementation(libs.mlkit.text.recognition)
+            // Uygulama ici kamera (Ekran 4). Sistem kamerasi cerceve rehberi,
+            // kare sayaci ve arka kamera secimi veremiyordu.
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
         }
 
         commonTest.dependencies {

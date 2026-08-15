@@ -45,6 +45,16 @@ data class FinishShopping(val tripId: String? = null) : NeydiKey
 @Serializable
 data class ReceiptCheck(val receiptId: String) : NeydiKey
 
+/**
+ * Fis cekme oturumu (Ekran 4 · Kamera).
+ *
+ * KENDI HEDEFI OLMASI SART: sistem kamerasi bir "sonuc" doneni, uygulama ici
+ * kamera ise bir EKRAN. Ustelik oturum boyunca birden fazla kare cekiliyor ve
+ * geri tusunun bir yere donmesi gerekiyor.
+ */
+@Serializable
+data class Capture(val tripId: String) : NeydiKey
+
 @Serializable
 data object History : NeydiKey
 
@@ -89,6 +99,7 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
             subclass(MissingItems::class)
             subclass(FinishShopping::class)
             subclass(ReceiptCheck::class)
+            subclass(Capture::class)
             subclass(History::class)
             subclass(Settings::class)
             subclass(DeleteData::class)
@@ -116,6 +127,7 @@ private fun NeydiKey.hasSerializerRegistration(): Unit = when (this) {
     is MissingItems -> Unit
     is FinishShopping -> Unit
     is ReceiptCheck -> Unit
+    is Capture -> Unit
     is History -> Unit
     is Settings -> Unit
     is DeleteData -> Unit

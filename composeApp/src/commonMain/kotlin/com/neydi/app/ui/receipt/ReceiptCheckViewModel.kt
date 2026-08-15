@@ -146,6 +146,8 @@ data class CheckState(
      * yani parca ekraninda gorunen sayilar FISIN TAMAMINA ait.
      */
     val isPart: Boolean = false,
+    /** Fisin bagli oldugu gezi - "devamini cek" cekim oturumunu buna acıyor. */
+    val tripId: String? = null,
 ) {
     /** Butun parcalarin satirlari tek dizide - duzeltme akislari bunu kullaniyor. */
     val rows: List<CheckRow> get() = sections.flatMap { it.rows }
@@ -293,6 +295,7 @@ class ReceiptCheckViewModel(
                 ?.takeIf { receipt.status == ReceiptStatus.FAILED && lines.isEmpty() },
             notice = notice,
             isPart = isPart,
+            tripId = receipt?.tripId,
         )
     }
 
