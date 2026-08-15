@@ -6,6 +6,7 @@ import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.HouseholdDao
 import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.repo.STAPLE_LIMIT
 import com.neydi.app.ui.components.turkishInitials
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,14 @@ data class StapleRow(val productId: String, val name: String)
 data class MemberRow(val id: String, val initials: String, val isSelf: Boolean)
 
 /**
+ * Ayarlar'daki bir magaza satiri (tasarim karari 11).
+ *
+ * `receiptCount` YOK ve olmamali: bolumun isi "nerelerden alisveris ediyorsun"
+ * sorusuna cevap vermek, fis saymak degil - sayilar Gecmis'te duruyor.
+ */
+data class StoreRow(val id: String, val name: String)
+
+/**
  * Ayarlar ekraninin durumu (Ekran 7).
  *
  * BOS BOLUM CIZILMEZ kurali burada VERIYLE karsilaniyor: alanlar null ya da
@@ -34,12 +43,15 @@ data class SettingsState(
     val members: List<MemberRow> = emptyList(),
     val staples: List<StapleRow> = emptyList(),
     val stapleLimit: Int = STAPLE_LIMIT,
+    /** Bos ise Magazalar bolumu HIC cizilmiyor (tasarim karari 11). */
+    val stores: List<StoreRow> = emptyList(),
 )
 
 class SettingsViewModel(
     householdDao: HouseholdDao,
     memberDao: MemberDao,
     private val productDao: ProductDao,
+    storeDao: StoreDao,
     private val clock: () -> Long,
 ) : ViewModel() {
 
@@ -49,7 +61,8 @@ class SettingsViewModel(
         householdDao.observeActive(),
         memberDao.observeAll(household),
         productDao.observeStaples(household),
-    ) { home, members, staples ->
+        storeDao.observeAll(household),
+    ) { home, members, staples, stores ->
         SettingsState(
             householdName = home?.name,
             joinCode = home?.joinCode,
@@ -61,6 +74,7 @@ class SettingsViewModel(
                 )
             },
             staples = staples.map { StapleRow(productId = it.id, name = it.name) },
+            stores = stores.map { StoreRow(id = it.id, name = it.name) },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
 

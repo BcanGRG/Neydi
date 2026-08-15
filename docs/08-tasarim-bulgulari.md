@@ -46,3 +46,34 @@ yerine koyuyor.
 **Soru.** Ne barkod ne ad okunabilen satırın başlığı ne olmalı? Ham metnin
 kendisi mi, *"Tartı ürünü"* gibi bir tür adı mı, yoksa satır bambaşka mı
 çizilmeli (örneğin yalnız tutar ve "dokun, ürünü seç")?
+
+## 3. "Takip edilen zincirler" satırındaki chevron nereye gidiyor?
+
+**Nerede çıktı.** Karar 11 uygulanırken.
+
+**Tasarımın verdiği.** Ekran 7'de satır: *"Takip edilen zincirler · Migros,
+A101, BİM · `chevron_right`"*.
+
+**Gerçek.** Chevron bir destinasyon sözü veriyor ama o ekran hiç çizilmedi — ve
+karar 11 zaten "kullanıcı elle mağaza eklemiyor" diyor, yani açılacak ekranın
+yapacağı bir iş yok. Satır kendi başına tamam: adlar değerin içinde duruyor.
+
+Uygulama chevron'u **çizmedi**. Aynı tercih "Sabit ürünler" satırında da
+yapılmıştı (tasarımda chevron var, uygulama listeyi satırın altında açıyor).
+
+**Soru.** Chevron kalksın mı, yoksa bir mağaza ekranı mı gelecek? Gelecekse ne
+gösterecek — zincir başına fiş sayısı, son fiyatlar?
+
+## 4. Ekran 7'nin boş hali karar 11 ile çelişiyor
+
+**Nerede çıktı.** Karar 11 uygulanırken.
+
+**Tasarımın verdiği.** *"Ayarlar · boş hal (yeni hane)"* çerçevesinde Mağazalar
+bölümü **çiziliyor** ve değeri *"İlk fişten öğrenilecek"*.
+
+**Gerçek.** Karar 11 aynı bölüm için *"bölüm satır yokken hiç çizilmiyor"*
+diyor. İkisi aynı anda doğru olamaz; uygulama kararı esas aldı, çünkü karar
+mockup'tan sonra yazıldı.
+
+**Soru.** Boş hal çerçevesi güncellensin mi? (Aynı çerçevede "Katılma kodu"
+satırı da dolu görünüyor ama Faz 7'ye kadar üretilmiyor.)

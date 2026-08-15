@@ -46,13 +46,14 @@ import org.koin.compose.viewmodel.koinViewModel
  * yilda bir kez arayacagi yer.
  *
  * BOS BOLUM HIC CIZILMEZ ve bu ekranin en onemli kurali. Tasarimin gerekcesi:
- * *"Bos bir bolum basligi, olmayan bir isi varmis gibi gosterir."* Uc bolum
- * su an cizilmiyor cunku verileri YOK:
+ * *"Bos bir bolum basligi, olmayan bir isi varmis gibi gosterir."*
  *
+ * - **Magazalar**: ilk fiste market adi okununca KENDILIGINDEN doluyor
+ *   (tasarim karari 11) - satir yokken bolum cizilmiyor, elle magaza ekleme
+ *   yok.
  * - **Onerilmeyenler**: `suggestion_block` tablosu semada var (v3) ama hicbir
- *   yazan yok - F6.5 (bastirma) yazilinca dolacak.
- * - **Magazalar**: `store` tablosu var, hicbir yazan yok. Fis `storeNameRaw`
- *   yaziyor ama Store satiri uretmiyor.
+ *   yazan yok - F6.5 (bastirma) yazilinca dolacak; bolum o gune kadar
+ *   cizilmiyor.
  * - **Katilma kodu**: `Household.joinCode` alani var ama null; kod uretimi
  *   Faz 7'nin (senkron) isi.
  *
@@ -139,6 +140,24 @@ fun SettingsScreen(
                     state.staples.forEach { staple ->
                         StapleRowItem(staple) { onRemoveStaple(staple.productId) }
                     }
+                }
+
+                // MAGAZALAR SATIR VARKEN CIZILIYOR (tasarim karari 11).
+                //
+                // Tasarimin bos hali bu bolumu "Ilk fisten ogrenilecek"
+                // yaziyla ciziyordu; karar 11 onun yerine bolumun HIC
+                // cizilmemesini soyluyor - ilk fisten sonra kendiliginden
+                // gorunuyor, yani bos hal hic yasanmiyor.
+                if (state.stores.isNotEmpty()) {
+                    SectionHeader("Mağazalar")
+                    SettingRow(
+                        label = "Takip edilen zincirler",
+                        // Adlar DEGERIN kendisi: uc bes zincir tek satira
+                        // sigiyor ve ayri bir liste ekrani acmayi gereksiz
+                        // kiliyor.
+                        value = state.stores.joinToString(", ") { it.name },
+                    )
+                    Note("Mağazalar ilk fişte market adı okunduğunda kendiliğinden birikir; elle mağaza eklenmez.")
                 }
 
                 SectionHeader("Gizlilik")
@@ -292,13 +311,23 @@ private fun SettingsFilledPreview() = NeydiPreview {
                 StapleRow("p2", "Süt"),
                 StapleRow("p3", "Yumurta"),
             ),
+            stores = listOf(
+                StoreRow("s1", "MİGROS"),
+                StoreRow("s2", "A101"),
+                StoreRow("s3", "BİM"),
+            ),
         ),
         onBack = {},
         onRemoveStaple = {},
     )
 }
 
-/** Yeni hane: sabit yok, katilma kodu yok - iki bolum de kendi bos halinde. */
+/**
+ * Yeni hane: sabit yok, magaza yok, katilma kodu yok.
+ *
+ * Magazalar bolumu bu onizlemede HIC GORUNMEMELI - karar 11'in gorsel
+ * karsiligi tam olarak bu.
+ */
 @PreviewLightDark
 @Composable
 private fun SettingsEmptyPreview() = NeydiPreview {

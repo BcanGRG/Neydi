@@ -52,6 +52,7 @@ val dataModule = module {
     single { get<NeydiDatabase>().receiptDao() }
     single { get<NeydiDatabase>().receiptLineDao() }
     single { get<NeydiDatabase>().productAliasDao() }
+    single { get<NeydiDatabase>().storeDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
     single { get<NeydiDatabase>().productStatsDao() }
 
@@ -81,7 +82,7 @@ val dataModule = module {
     viewModel {
         SettingsViewModel(
             householdDao = get(), memberDao = get(),
-            productDao = get(), clock = ::now,
+            productDao = get(), storeDao = get(), clock = ::now,
         )
     }
 
@@ -126,6 +127,7 @@ val dataModule = module {
             productDao = get(),
             aliasDao = get(),
             tripDao = get(),
+            storeDao = get(),
             statsRebuilder = get(),
             clock = ::now,
             newId = ::newUuid,
