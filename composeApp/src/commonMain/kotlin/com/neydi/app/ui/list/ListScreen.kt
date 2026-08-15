@@ -122,6 +122,8 @@ fun ListScreen(
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
     val sheetQuery by vm.sheetQuery.collectAsStateWithLifecycle()
     val sheetResults by vm.sheetResults.collectAsStateWithLifecycle()
+    val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
+    val starters by vm.starterProducts.collectAsStateWithLifecycle()
 
     // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
     // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
@@ -146,6 +148,8 @@ fun ListScreen(
         onAdd = vm::add,
         onSuggestionSelected = vm::addFromSuggestion,
         onCategorySelected = vm::onCategorySelected,
+        onStarterSelected = vm::addFromSheet,
+        starters = starters,
         onToggleChecked = vm::toggleChecked,
         onRowLongPress = vm::openProductSheet,
         onClipboard = {
@@ -184,6 +188,7 @@ fun ListScreen(
                 query = sheetQuery,
                 onQueryChange = vm::onSheetQueryChanged,
                 results = sheetResults,
+                inList = listMatchKeys,
                 // Inset SHEET DISINDA okunup duz bosluk olarak geciliyor.
                 // ModalBottomSheet'in kendi contentWindowInsets'i bu agacta
                 // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);
@@ -300,6 +305,9 @@ internal fun ListContent(
     onAdd: (String) -> Unit,
     onSuggestionSelected: (CatalogSeed) -> Unit,
     onCategorySelected: (Category) -> Unit,
+    /** Ilk gun cipinden ekleme (tasarim karari 5). */
+    onStarterSelected: (CatalogSeed) -> Unit = {},
+    starters: List<CatalogSeed> = emptyList(),
     onToggleChecked: (String, Boolean) -> Unit,
     /** Satira uzun basma - Urun Detayi sheet'ini aciyor (F6.8). */
     onRowLongPress: (String) -> Unit,
@@ -361,9 +369,9 @@ internal fun ListContent(
                     item {
                         EmptyState(
                             kind = state.emptyKind,
-                            categories = categories,
+                            starters = starters,
                             hasClipboard = clipboardText != null,
-                            onCategory = onCategorySelected,
+                            onStarter = onStarterSelected,
                             onClipboard = onClipboard,
                             // Tasarimin metni: "Son alisveris 3 gun once, 642 TL."
                             lastTripLine = state.lastTrip?.let {

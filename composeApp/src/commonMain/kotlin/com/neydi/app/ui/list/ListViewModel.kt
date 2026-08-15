@@ -285,6 +285,43 @@ class ListViewModel(
     private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
     val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
 
+    /**
+     * Listedeki urunlerin `matchKey`leri - Ekle sheet'indeki isaret icin
+     * (tasarim karari 12).
+     *
+     * `matchKey` uzerinden, urun kimligi uzerinden DEGIL: katalog tohumu ile
+     * kullanicinin kendi ekledigi urun ayri satirlar olabilir ama ayni seyi
+     * anlatiyorlar - "Sut" iki kez isaretsiz gorunmemeli.
+     */
+    val listMatchKeys: StateFlow<Set<String>> =
+        repo.rows(household)
+            .map { rows ->
+                rows.mapNotNull { productDao.byId(it.productId)?.matchKey }.toSet()
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    /**
+     * Ilk gun bos durumunun 12 cipi (tasarim karari 5).
+     *
+     * URUN cipi, REYON cipi degil: urun cipi tek dokunusta listeye
+     * dusuruyor, reyon cipi bir adim daha ekliyor - ve bos durumun tek isi
+     * ilk satiri en kisa yoldan dogurmak.
+     */
+    private val _starterProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val starterProducts: StateFlow<List<CatalogSeed>> = _starterProducts
+
+    // YUKLEME BURADA, YUKARIDAKI init BLOGUNDA DEGIL.
+    //
+    // Kotlin ozellik baslaticilarini ve init bloklarini BILDIRIM SIRASINA
+    // gore kosturuyor: yukaridaki init calistiginda `_starterProducts` henuz
+    // null ve uygulama acilista NullPointerException ile cokuyordu. Derleme
+    // ve testler bunu goremedi - yalnizca cihazda goruldu.
+    init {
+        viewModelScope.launch {
+            _starterProducts.value = catalogSeedDao.mostCommon(limit = 12)
+        }
+    }
+
     /** Sheet ici arama (Ekran 2 tasarimi). */
     private val _sheetQuery = MutableStateFlow("")
     val sheetQuery: StateFlow<String> = _sheetQuery

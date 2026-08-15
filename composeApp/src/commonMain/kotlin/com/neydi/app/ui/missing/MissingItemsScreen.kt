@@ -120,13 +120,21 @@ fun MissingItemsScreen(
                     // BOS BOLUM CIZILMEZ.
                     if (rows.isEmpty()) return@forEach
                     item(key = "b-${section.name}") {
-                        Text(
-                            text = section.title,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = Spacing.md, bottom = 6.dp),
-                        )
+                        Column(Modifier.padding(top = Spacing.md, bottom = 6.dp)) {
+                            Text(
+                                text = section.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            // Not TEK SATIR ve muted: baslikla yarismiyor.
+                            Text(
+                                text = section.note,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                            )
+                        }
                     }
                     items(rows, key = { it.productId }) { row ->
                         MissingItemRow(row) { onToggle(row.productId) }

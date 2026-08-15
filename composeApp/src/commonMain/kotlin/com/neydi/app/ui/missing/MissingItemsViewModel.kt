@@ -25,15 +25,27 @@ private const val MAX_ROWS = 8
  * Gerekcesi: tahmin uygulamanin **kendi basina akil yurutttugu tek yer** ve
  * varsayilan-acik muamelesi gormez - kullanici onaylamadan listeye girmemeli.
  */
-enum class MissingSection(val title: String, val checkedByDefault: Boolean) {
+enum class MissingSection(
+    val title: String,
+    /**
+     * Bolumun NEDEN var oldugunu soyleyen tek satir (tasarim karari 7).
+     *
+     * Not bolumun ne YAPTIGINI degil neden var oldugunu soyluyor. Ucuncusu
+     * tek gercek is yapan: varsayilan kapali olmanin sebebini yaziyor,
+     * boylece kapali kutular bir ihmal gibi degil bir nezaket gibi
+     * okunuyor.
+     */
+    val note: String,
+    val checkedByDefault: Boolean,
+) {
     /** Olay tabanli: gecen gezide FORGOTTEN isaretlendi. */
-    FORGOTTEN("Geçen sefer unuttun", checkedByDefault = true),
+    FORGOTTEN("Geçen sefer unuttun", "listede vardı, alınmadı", checkedByDefault = true),
 
     /** Beyan tabanli: kullanici sabit ilan etti (F6.8). */
-    STAPLE("Her zamankiler", checkedByDefault = true),
+    STAPLE("Her zamankiler", "listede olmayan sabitleriniz", checkedByDefault = true),
 
     /** Cikarim tabanli: yalnizca skor. Varsayilan KAPALI. */
-    PREDICTED("Bitmiş olabilir", checkedByDefault = false),
+    PREDICTED("Bitmiş olabilir", "tahmin — sen onaylamadan eklenmez", checkedByDefault = false),
 }
 
 data class MissingRow(
