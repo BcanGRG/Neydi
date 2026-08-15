@@ -36,6 +36,28 @@ data class Receipt(
     val receiptDate: Long? = null,
     /** Fisin ustunde yazan ham magaza adi - Store eslemesi ayri is. */
     val storeNameRaw: String? = null,
+    /**
+     * OCR'in okudugu GORSEL SATIRLARIN tamami, satir basina bir satir (F4.14).
+     *
+     * NEDEN SAKLANIYOR: ayristiriciyi degistirmek, eskiden **fotografi yeniden
+     * OCR'lamayi** gerektiriyordu - yani bir duzen hatasini duzeltmek icin
+     * once cihazda bir fis bulmak, sonra onu yeniden cektirmek gerekiyordu.
+     * F4.14 tam olarak buna takildi: AKYURT'un iki satirli duzeni cihazda
+     * goruldu ama ham satirlar hicbir yere yazilmadigi icin **kurgu
+     * alinamadi**, ve bu projede sentetik fis kurgusu iki kez bosa cikti.
+     *
+     * F5.7 (ambalaj boyu cikarimi) de ayni seyi istiyor: *"yeniden ayristirma
+     * OCR gerektirmesin"*.
+     *
+     * BICIM: `\n` ile birlestirilmis duz metin, JSON degil. Gorsel satirlar
+     * gruplama asamasinda zaten satir sonlarindan arindirilmis oluyor (bkz.
+     * `visualRows`), yani ayirici capraz konusamiyor. TypeConverter eklemek
+     * semaya kalici bir bagimlilik sokardi; bu alan bir **dokum**, sorgulanan
+     * bir yapi degil.
+     *
+     * Null = eski kayit (v4 oncesi) ya da hic basarili okuma olmadi.
+     */
+    val rawOcrText: String? = null,
     /** Fisin TOPLAM'i, kurus. Aritmetik kontrolun referansi. */
     val totalMinor: Long? = null,
     val extractedAt: Long? = null,

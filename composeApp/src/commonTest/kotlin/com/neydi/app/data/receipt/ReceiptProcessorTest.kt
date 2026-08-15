@@ -125,6 +125,40 @@ class ReceiptProcessorTest {
         assertTrue(db.receiptLineDao().forReceipt("r1").isNotEmpty())
     }
 
+    // --- F4.14 · ham satirlar kalici -----------------------------------------
+
+    /**
+     * HAM SATIRLAR SAKLANIYOR ve bu bir onkosul, sus degil.
+     *
+     * Ayristiriciyi degistirmek eskiden fotografi yeniden OCR'lamayi
+     * gerektiriyordu; F4.14 tam olarak buna takildi - AKYURT'un iki satirli
+     * duzeni cihazda goruldu ama ham satirlar hicbir yere yazilmadigi icin
+     * KURGU ALINAMADI.
+     */
+    @Test
+    fun keepsRawOcrLines() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+
+        assertEquals(bimLines, db.receiptDao().byId("r1")?.rawOcrText?.lines())
+    }
+
+    /**
+     * BASARISIZ OKUMA ONCEKI HAM SATIRLARI EZMIYOR.
+     *
+     * Ezseydi, "baska yonde oku" bir kez yanlis acida kosunca elde olan tek
+     * kurgu kaybolurdu - tam olarak bu alanin var olma sebebi.
+     */
+    @Test
+    fun failedRereadKeepsPreviousRawLines() = runTest {
+        val db = db(); prepare(db)
+        processor(db, FakeReader(bimLines)).process("r1")
+        // Esigin altinda kalan okuma: "fis okundu ama bos" degil, OKUNAMADI.
+        processor(db, FakeReader(listOf("AKYURT", "*12.50"))).process("r1")
+
+        assertEquals(bimLines, db.receiptDao().byId("r1")?.rawOcrText?.lines())
+    }
+
     // --- Karar 11 · magaza satiri fisten doguyor ----------------------------
 
     /**

@@ -144,6 +144,11 @@ class ReceiptProcessor(
         // kullanacak. Okunamadiysa null kaliyor - capturedAt'e dusmek okuyan
         // tarafin isi, uydurmak bizim isimiz degil.
         receiptDao.setReceiptDate(receiptId, reading.receiptDate)
+        // HAM SATIRLAR SAKLANIYOR (F4.14). Ayristirici degistiginde fotografi
+        // yeniden OCR'lamak gerekmesin - ve bir duzen hatasi cihazda
+        // gorulunce KURGUSU elde olsun. Yalnizca BASARILI okumada yaziliyor;
+        // giveUp yolu buraya hic ugramiyor.
+        receiptDao.setRawOcrText(receiptId, reading.rawLines.joinToString("\n"))
         rememberStore(receipt.householdId, receipt.tripId, reading.storeName)
         rollUpTripTotal(receipt.tripId)
         // ISTATISTIK YENIDEN KURULUYOR (F6.1).

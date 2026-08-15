@@ -40,7 +40,7 @@ import androidx.room3.RoomDatabaseConstructor
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
     //
@@ -75,9 +75,20 @@ import androidx.room3.RoomDatabaseConstructor
     // `app_settings`) ve yeni kolonlarin okuyucularini kendi fazlari yaziyor
     // (F5.1, F6.1, F6.5, F6.6). Sema ile erisim ayri isler; burada yalnizca
     // tablolar bosken sekli dogru olsun diye sema tasiniyor.
+    // v3 -> v4: TEK NULLABLE KOLON, `Receipt.rawOcrText` (F4.14).
+    //
+    // Toplu bump kurali burada UYGULANMIYOR ve sebebi var: v2->v3 dokuz
+    // ihtiyaci topladi cunku hepsi biliniyordu ve tablolar bostu. Bu kolon ise
+    // bir ONKOSUL - ayristirici duzeltmesi ancak ham satirlar saklanmaya
+    // baslayinca dogrulanabiliyor, yani beklemek isin kendisini bloklar.
+    //
+    // Tamamen otomatik kalma kurali korunuyor: kolon nullable, veri
+    // geri-doldurmasi GEREKMIYOR. Eski fislerde null kaliyor ve bu dogru -
+    // onlarin ham satirlari gercekten bilinmiyor.
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
     ],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)
