@@ -285,8 +285,30 @@ class ListViewModel(
     private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
     val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
 
+    /** Sheet ici arama (Ekran 2 tasarimi). */
+    private val _sheetQuery = MutableStateFlow("")
+    val sheetQuery: StateFlow<String> = _sheetQuery
+
+    private val _sheetResults = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val sheetResults: StateFlow<List<CatalogSeed>> = _sheetResults
+
+    fun onSheetQueryChanged(text: String) {
+        _sheetQuery.value = text
+        viewModelScope.launch {
+            _sheetResults.value = if (text.isBlank()) {
+                emptyList()
+            } else {
+                // matchKey uzerinden: kullanici "sut" yazinca "Sut" bulunmali
+                // (bkz. MatchKey.kt'nin Turkce buyuk/kucuk harf tuzagi).
+                catalogSeedDao.search(matchKey(text), limit = 20)
+            }
+        }
+    }
+
     fun openSheet() {
         _sheetOpen.value = true
+        _sheetQuery.value = ""
+        _sheetResults.value = emptyList()
         // Sayac her acilista SIFIRLANIYOR: "3 urun eklendi" bu oturumun
         // sayisi, hanenin toplam gecmisi degil.
         _sheetAddedCount.value = 0
@@ -294,6 +316,8 @@ class ListViewModel(
 
     fun closeSheet() {
         _sheetOpen.value = false
+        _sheetQuery.value = ""
+        _sheetResults.value = emptyList()
         _sheetCategory.value = null
         _sheetProducts.value = emptyList()
     }

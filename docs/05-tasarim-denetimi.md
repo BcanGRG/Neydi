@@ -97,12 +97,12 @@ Ekran 5'in tasarımı özellikle değerli: F5.7'nin (ambalaj küçülmesi) görs
 | Başlık **"Ekle"** 18sp/700 | "Ne ekleyelim?" | ✅ düzeltildi |
 | **"N ürün eklendi"** sayacı | yok | ✅ eklendi (sheet oturumu başına) |
 | Grid **3 sütun sabit** | `GridCells.Adaptive(84dp)` | ✅ düzeltildi |
-| Sheet içinde **arama alanı** (`search` + "Ürün ara", 48dp/18dp) | yok | açık |
+| Sheet içinde **arama alanı** (`search` + "Ürün ara", 48dp/18dp) | yok | ✅ **eklendi** |
 | Eklenmiş ürünlerde **`check_circle`** | yok | açık |
 | **"Nadir aldıkların"** bölümü | yok | açık |
-| Kaçış satırı: `add` + *"'kuru kayısı' ekle"* | "Listede yok, kendim yazayım" (buton) | açık — tasarım aranan kelimeyi metnin içine koyuyor |
+| Kaçış satırı: *"'kuru kayısı' ekle"* | "Listede yok, kendim yazayım" | ✅ **düzeltildi** — arama varken aranan kelime metne giriyor |
 
-Arama alanı işlevsel bir eksik: bugün arama yalnızca alttaki hızlı ekleme çubuğunda var, yani kullanıcı sheet'i kapatmadan arayamıyor.
+Arama alanı **işlevsel bir eksikti** ve kapatıldı: arama yalnızca alttaki hızlı ekleme çubuğundaydı, yani kullanıcı aradığı ürünü bulmak için sheet'i **kapatmak** zorundaydı — sheet'in bütün amacı *"dokunma = ekle, sheet açık kalır"* olduğu hâlde. Cihazda doğrulandı: "sut" → **Süt**, **Sütlaç**.
 
 ## Ekran 4 — Alışverişi bitir · Fiş kontrol
 
