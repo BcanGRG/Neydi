@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -56,6 +57,8 @@ internal fun AddSheetContent(
     onProduct: (CatalogSeed) -> Unit,
     onFreeText: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Bu sheet acik kalirken eklenen urun sayisi (tasarim: "3 urun eklendi"). */
+    addedCount: Int = 0,
 ) {
     // GRID YUKSEKLIGI EKRANA ORANLI, sabit dp DEGIL.
     //
@@ -83,9 +86,25 @@ internal fun AddSheetContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = selected?.name ?: "Ne ekleyelim?",
+                // KOKTE "Ekle" - tasarimin basligi bu. "Ne ekleyelim?" bir
+                // soru soruyordu; sheet zaten kullanicinin actigi bir sey,
+                // sormasi gereken bir sey yok. Reyona girildiginde reyon adi
+                // basliga geciyor: orada kullanicinin NEREDE oldugu bilgisi
+                // sorudan daha degerli.
+                text = selected?.name ?: "Ekle",
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
             )
+            if (selected == null && addedCount > 0) {
+                // "N urun eklendi" - sheet acik kalirken kac tane eklendigini
+                // sayiyor. Tasarimin karari ve dogru: sheet kapanmadigi icin
+                // kullanici listeye bakamiyor, sayac tek geri bildirim.
+                Text(
+                    text = "$addedCount ürün eklendi",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (selected != null) {
                 Text(
                     text = "← Reyonlar",
@@ -98,7 +117,10 @@ internal fun AddSheetContent(
 
         if (selected == null) {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 84.dp),
+                // UC SUTUN SABIT, uyarlanabilir DEGIL: tasarim 3x4 grid
+                // istiyor ve kutucuk boyutu (56dp) zaten sabit. Adaptive
+                // genis ekranda dorde cikip tasarimin ritmini bozuyordu.
+                columns = GridCells.Fixed(3),
                 modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),

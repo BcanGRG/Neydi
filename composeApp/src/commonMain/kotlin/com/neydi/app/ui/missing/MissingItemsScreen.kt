@@ -86,14 +86,32 @@ fun MissingItemsScreen(
     val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = Spacing.md)) {
-            Text(
-                // CANLI SAYI basliкta: kullanici kac tanesini listeye
-                // alacagini butona bakmadan biliyor.
-                text = "Eksik olabilir (${state.selectedCount})",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = Spacing.sm),
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(NeydiExtraShapes.pill)
+                        .pressable(onTap = onCancel)
+                        .size(Sizes.minTapTarget),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    NeydiIcon(
+                        icon = NeydiIcons.ArrowBack,
+                        contentDescription = "Geri",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Spacer(Modifier.width(Spacing.sm))
+                Text(
+                    // CANLI SAYI baslikta: kullanici kac tanesini listeye
+                    // alacagini butona bakmadan biliyor.
+                    text = "Eksik olabilir (${state.selectedCount})",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
 
             LazyColumn(Modifier.weight(1f)) {
                 MissingSection.entries.forEach { section ->

@@ -163,6 +163,10 @@ class ListViewModel(
      * bu parametre en bastan vardi ama hicbir cagiran doldurmuyordu - yani
      * oneri isabeti olculemiyordu. Artik olculuyor.
      */
+    /** Sheet acik kalirken eklenen urun sayisi (Ekran 2 tasarimi). */
+    private val _sheetAddedCount = MutableStateFlow(0)
+    val sheetAddedCount: StateFlow<Int> = _sheetAddedCount
+
     fun addFromEngine(suggestion: Suggestion) {
         viewModelScope.launch {
             val memberId = selfMemberId() ?: return@launch
@@ -281,7 +285,12 @@ class ListViewModel(
     private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
     val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
 
-    fun openSheet() { _sheetOpen.value = true }
+    fun openSheet() {
+        _sheetOpen.value = true
+        // Sayac her acilista SIFIRLANIYOR: "3 urun eklendi" bu oturumun
+        // sayisi, hanenin toplam gecmisi degil.
+        _sheetAddedCount.value = 0
+    }
 
     fun closeSheet() {
         _sheetOpen.value = false
@@ -305,6 +314,7 @@ class ListViewModel(
     /** Sheet'ten urun eklemek sheet'i KAPATMAZ: pes pese ekleme normal. */
     fun addFromSheet(seed: CatalogSeed) {
         addInternal(seed.name, seed.categoryId, seed.defaultUnit, 1.0)
+        _sheetAddedCount.value += 1
     }
 
     // --- Sepet tahmini + ozet (F3.8) ---------------------------------------

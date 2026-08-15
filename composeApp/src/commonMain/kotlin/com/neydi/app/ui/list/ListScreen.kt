@@ -113,6 +113,7 @@ fun ListScreen(
     val sheetProducts by vm.sheetProducts.collectAsStateWithLifecycle()
     val summary by vm.summary.collectAsStateWithLifecycle()
     val productSheet by vm.productSheet.collectAsStateWithLifecycle()
+    val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
 
     // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
     // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
@@ -169,6 +170,7 @@ fun ListScreen(
             // BottomSheetDefaults.windowInsets alt kenari kapsamiyor.
         ) {
             AddSheetContent(
+                addedCount = sheetAddedCount,
                 // Inset SHEET DISINDA okunup duz bosluk olarak geciliyor.
                 // ModalBottomSheet'in kendi contentWindowInsets'i bu agacta
                 // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);

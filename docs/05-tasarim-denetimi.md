@@ -83,3 +83,44 @@ Ekran 5'in tasarımı özellikle değerli: F5.7'nin (ambalaj küçülmesi) görs
 2. `Motion.kt` / `AccentChip.kt` / `Dimens.kt` fark incelemesi
 3. Ekran 2 · 4 · 6 sadakat denetimi (yazılmış ekranlar)
 4. Ekran 3 / 5 / 7 / 8 — artık gerçek tasarımdan üretilebilir
+
+## Ekran 2 — Ekle sheet
+
+| Tasarım | Kod | Durum |
+|---|---|---|
+| Başlık **"Ekle"** 18sp/700 | "Ne ekleyelim?" | ✅ düzeltildi |
+| **"N ürün eklendi"** sayacı | yok | ✅ eklendi (sheet oturumu başına) |
+| Grid **3 sütun sabit** | `GridCells.Adaptive(84dp)` | ✅ düzeltildi |
+| Sheet içinde **arama alanı** (`search` + "Ürün ara", 48dp/18dp) | yok | açık |
+| Eklenmiş ürünlerde **`check_circle`** | yok | açık |
+| **"Nadir aldıkların"** bölümü | yok | açık |
+| Kaçış satırı: `add` + *"'kuru kayısı' ekle"* | "Listede yok, kendim yazayım" (buton) | açık — tasarım aranan kelimeyi metnin içine koyuyor |
+
+Arama alanı işlevsel bir eksik: bugün arama yalnızca alttaki hızlı ekleme çubuğunda var, yani kullanıcı sheet'i kapatmadan arayamıyor.
+
+## Ekran 4 — Alışverişi bitir · Fiş kontrol
+
+**Adım 0 (seçim sheet'i + kamera):**
+
+| Tasarım | Kod |
+|---|---|
+| Başlık "Alışverişi bitir" + açıklama *"Fiş fotoğrafı fiyat geçmişini besler. Elle fiyat yazman gerekmez."* | açıklama yok |
+| `photo_camera` + **"Fiş çek"** birincil | var, ikon yok |
+| **"Fişsiz bitir"** ikincil · **"Vazgeç"** | var |
+| Kamera overlay rehberi: *"Fişin tamamı kadraja girsin. Uzunsa 2 kare çek."* + "1. kare" sayacı | sistem kamerası kullanıldığı için overlay **konamıyor** — F4.13 bunu çekimden önceki metne taşımış (bilinçli sapma) |
+
+**Mod A (Fiş kontrol):**
+
+| Tasarım | Kod | Not |
+|---|---|---|
+| `arrow_back` + "Fiş kontrol" başlığı | mağaza adı başlık | tasarım ekranın adını, kod fişin mağazasını yazıyor |
+| Alt satır: *"Migros Ataşehir · 12 Ağustos 15:31"* | yok | mağaza + basılı tarih birlikte |
+| **Büyük toplam** (Fraunces 36sp) + `check_circle` "Toplam tutuyor" | pill çip, küçük | tasarım tutarı manşet yapıyor |
+| Satır sonunda `chevron_right` | yok | |
+| *"Listede vardı, fişte yok (3)"* + `expand_more` katlanır | var, katlanır değil | |
+| `add` **"Eksik satır ekle"** | yok | fişte olmayan satırı elle eklemek |
+| **"Onayla ve kaydet"** | "Tamam" | |
+| Yanlış eşleşme için **aday sheet'i** (*"Bu satır hangi ürün?"* + "en olası" + `search`) | 3-dokunuş düzeltme sheet'i var | tasarımın 2 dokunuşu hedefliyor |
+
+Fiş kontrol ekranı bugün **çalışıyor ve cihazda doğrulanmış** (F4.6); yukarıdakiler sadakat farkları, işlev kaybı değil.
+
