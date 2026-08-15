@@ -104,6 +104,15 @@ data class NeydiExtraColors(
     val priceDown: Color,
     /** Isik modunda accent dolgusu kenarlik gerektirir mi */
     val accentNeedsOutline: Boolean,
+    /**
+     * Tema isik modunda mi (tasarimin `NeydiColors.isLight` alani).
+     *
+     * `accentNeedsOutline` ile ayni degeri tasiyor ama ANLAMI farkli:
+     * biri amber sozlesmesinin kurali, digeri temanin kimligi. Ikisini
+     * tek alanda birlestirmek, amber kurali bir gun degistiginde
+     * temayi soran her yeri sessizce bozardi.
+     */
+    val isLight: Boolean,
 )
 
 val LightExtraColors = NeydiExtraColors(
@@ -116,6 +125,7 @@ val LightExtraColors = NeydiExtraColors(
     priceUp = LightError,
     priceDown = LightSuccess,
     accentNeedsOutline = true,
+    isLight = true,
 )
 
 val DarkExtraColors = NeydiExtraColors(
@@ -129,6 +139,7 @@ val DarkExtraColors = NeydiExtraColors(
     priceDown = DarkSuccess,
     // Karanlik modda accent surface uzerinde 11.29:1 - kenarlik gerekmez.
     accentNeedsOutline = false,
+    isLight = false,
 )
 
 val LocalNeydiExtraColors = staticCompositionLocalOf { LightExtraColors }

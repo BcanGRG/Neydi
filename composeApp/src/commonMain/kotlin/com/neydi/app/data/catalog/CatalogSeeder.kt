@@ -35,7 +35,7 @@ suspend fun NeydiDatabase.seedCatalog(): CatalogSeedResult {
                     st.bindText(1, k.id)
                     st.bindText(2, k.name)
                     st.bindInt(3, k.order)
-                    st.bindLong(4, k.tonArgb)
+                    st.bindLong(4, k.tintArgb)
                     st.step()
                     st.reset()
                 }

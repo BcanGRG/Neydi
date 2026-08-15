@@ -28,6 +28,8 @@ import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.SuggestionChip
 import com.neydi.app.ui.components.turkishInitials
+import com.neydi.app.ui.theme.CategoryTint
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
 
@@ -107,7 +109,20 @@ internal fun AddSheetContent(
                         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                         modifier = Modifier.pressable(onTap = { onCategory(category) }),
                     ) {
-                        CategoryTile(turkishInitials(category.name))
+                        // TON TOHUMDAN GELIYOR (F6.9). Onceden 12 kategori
+                        // de ayni griydi: `Category.tintArgb` tohumlaniyor ama
+                        // hicbir yerde okunmuyordu. Ham ton dogrudan dolgu
+                        // olamaz (orta-koyu ve doygun); zeminle karistirmasi
+                        // ve kontrast olcumu CategoryTint'te.
+                        CategoryTile(
+                            initials = turkishInitials(category.name),
+                            tint = CategoryTint.fill(
+                                tintArgb = category.tintArgb,
+                                surface = MaterialTheme.colorScheme.surface,
+                                isLight = LocalNeydiExtraColors.current.isLight,
+                            ),
+                            contentColor = CategoryTint.content(MaterialTheme.colorScheme.onSurface),
+                        )
                         Text(
                             text = category.name,
                             style = MaterialTheme.typography.labelSmall,
