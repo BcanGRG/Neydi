@@ -61,10 +61,15 @@ import org.koin.compose.viewmodel.koinViewModel
  * olarak yasakladigi sey olurdu.
  */
 @Composable
-fun SettingsRoute(onBack: () -> Unit) {
+fun SettingsRoute(onBack: () -> Unit, onDeleteData: () -> Unit) {
     val vm: SettingsViewModel = koinViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
-    SettingsScreen(state = state, onBack = onBack, onRemoveStaple = vm::removeStaple)
+    SettingsScreen(
+        state = state,
+        onBack = onBack,
+        onRemoveStaple = vm::removeStaple,
+        onDeleteData = onDeleteData,
+    )
 }
 
 @Composable
@@ -72,6 +77,7 @@ fun SettingsScreen(
     state: SettingsState,
     onBack: () -> Unit,
     onRemoveStaple: (String) -> Unit,
+    onDeleteData: () -> Unit = {},
 ) {
     val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -165,6 +171,11 @@ fun SettingsScreen(
                     "Fiş fotoğrafları cihazında kalır; yalnızca ürün adı, fiyatı ve " +
                         "market adı hane içinde paylaşılır.",
                 )
+                Spacer(Modifier.height(10.dp))
+                // SATIR CHEVRON KAZANDI ve tam ekran onaya gidiyor (tasarim
+                // karari 2). Dialog yasagi bozulmuyor, silme de onaysiz
+                // calismiyor.
+                DangerRow(label = "Verilerimi sil", onClick = onDeleteData)
                 Spacer(Modifier.height(Spacing.xl))
             }
         }
@@ -220,6 +231,41 @@ private fun SettingRow(
             }
         }
         Hairline()
+    }
+}
+
+/**
+ * Yikici satir: metin ve chevron error renginde, ustunde hairline.
+ *
+ * `SettingRow` DEGIL: o satirin bir degeri var ve dokunulamaz. Bu satirin isi
+ * dokunulmak - ve renk, dokunmanin bedelini soyleyen tek isaret.
+ */
+@Composable
+private fun DangerRow(label: String, onClick: () -> Unit) {
+    Column {
+        Hairline()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(NeydiExtraShapes.pill)
+                .pressable(onTap = onClick)
+                .heightIn(min = 56.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.weight(1f),
+            )
+            NeydiIcon(
+                icon = NeydiIcons.ChevronRight,
+                contentDescription = null,
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        }
     }
 }
 
