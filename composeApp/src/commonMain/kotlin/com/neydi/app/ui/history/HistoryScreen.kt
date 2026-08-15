@@ -137,8 +137,12 @@ private fun TripBlock(trip: HistoryTrip, onOpenReceipt: (String) -> Unit) {
 @Composable
 private fun ReceiptRow(receipt: HistoryReceipt, onClick: () -> Unit) {
     val extras = LocalNeydiExtraColors.current
-    val sorunlu = receipt.status == ReceiptStatus.FAILED ||
-        receipt.status == ReceiptStatus.MISMATCHED
+    // Parca SORUNLU DEGIL: toplam son parcada basili, kullanici hata yapmadi.
+    // Amber ton giydirmek durust ama yanlis yonlendiriciydi.
+    val sorunlu = !receipt.isPart && (
+        receipt.status == ReceiptStatus.FAILED ||
+            receipt.status == ReceiptStatus.MISMATCHED
+        )
     Surface(
         onClick = onClick,
         shape = NeydiExtraShapes.card,
@@ -163,8 +167,18 @@ private fun ReceiptRow(receipt: HistoryReceipt, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            statusLabel(receipt.status)?.let {
-                AccentChip(text = it, modifier = Modifier.padding(end = Spacing.xs))
+            if (receipt.isPart) {
+                // Notr metin, amber cip degil: parca bir istisna, bir hata degil.
+                Text(
+                    text = "parça",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = Spacing.xs),
+                )
+            } else {
+                statusLabel(receipt.status)?.let {
+                    AccentChip(text = it, modifier = Modifier.padding(end = Spacing.xs))
+                }
             }
             Text(
                 text = receipt.totalMinor?.let { formatMinor(it, currency = "") } ?: "—",

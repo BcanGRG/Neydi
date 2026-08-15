@@ -20,6 +20,8 @@ data class HistoryReceipt(
     val totalMinor: Long?,
     val storeName: String?,
     val capturedAt: Long,
+    /** Cok parcali cekimin parcasi mi - bkz. ReceiptCheckViewModel.isPart. */
+    val isPart: Boolean = false,
 )
 
 /** Kapanmis bir gezi ve fisleri. */
@@ -68,14 +70,21 @@ internal fun combineTrips(trips: List<Trip>, receipts: List<Receipt>): List<Hist
             // dusuyoruz ki liste bir sira anahtari kaybetmesin.
             closedAt = trip.completedAt ?: trip.startedAt,
             totalMinor = trip.totalMinor,
-            receipts = fisHaritasi[trip.id].orEmpty().map {
-                HistoryReceipt(
-                    id = it.id,
-                    status = it.status,
-                    totalMinor = it.totalMinor,
-                    storeName = it.storeNameRaw,
-                    capturedAt = it.capturedAt,
-                )
+            receipts = fisHaritasi[trip.id].orEmpty().let { tripReceipts ->
+                tripReceipts.map {
+                    HistoryReceipt(
+                        id = it.id,
+                        status = it.status,
+                        totalMinor = it.totalMinor,
+                        storeName = it.storeNameRaw,
+                        capturedAt = it.capturedAt,
+                        // Parca: toplami okunamamis (MISMATCHED + null) bir fis,
+                        // ayni gezide baska fisler varken buyuk olasilikla uzun
+                        // fisin parcasi - toplam yalnizca son parcada basili.
+                        isPart = it.status == ReceiptStatus.MISMATCHED &&
+                            it.totalMinor == null && tripReceipts.size > 1,
+                    )
+                }
             },
         )
     }

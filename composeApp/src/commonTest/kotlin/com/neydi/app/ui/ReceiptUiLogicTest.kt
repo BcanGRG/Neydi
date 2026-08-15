@@ -8,6 +8,8 @@ import com.neydi.app.ui.finish.quantityBadge
 import com.neydi.app.ui.history.combineTrips
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.test.assertNull
 
 /**
@@ -148,5 +150,53 @@ class ReceiptUiLogicTest {
         val result = combineTrips(trips = listOf(trip("t1", null, null)), receipts = emptyList())
 
         assertEquals(100, result.single().closedAt)
+    }
+
+    // --- Parca tespiti (F4.13) ----------------------------------------------
+
+    /**
+     * Toplami okunamamis fis, ayni gezide BASKA fisler varken PARCA sayilir -
+     * toplam yalnizca son parcada basili, kullanici hata yapmadi. Amber
+     * "toplam tutmuyor" giydirmek durust ama yanlis yonlendiriciydi.
+     */
+    @Test
+    fun middlePartIsLabelledAsPart() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = listOf(
+                receipt("parca", "t1", ReceiptStatus.MISMATCHED),
+                receipt("son", "t1", ReceiptStatus.VERIFIED).copy(totalMinor = 48458),
+            ),
+        )
+
+        val rows = result.single().receipts
+        assertEquals(2, rows.size)
+        assertTrue(rows.single { it.id == "parca" }.isPart)
+        assertFalse(rows.single { it.id == "son" }.isPart)
+    }
+
+    /** TEK fisli gezide toplami okunamamis fis parca DEGIL - gercek bir sorun. */
+    @Test
+    fun soloUnreadableTotalIsNotAPart() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = listOf(receipt("r1", "t1", ReceiptStatus.MISMATCHED)),
+        )
+
+        assertFalse(result.single().receipts.single().isPart)
+    }
+
+    /** Toplami OKUNMUS ama tutmayan fis parca degil - o gercekten tutmuyor. */
+    @Test
+    fun genuineMismatchIsNotAPart() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = listOf(
+                receipt("r1", "t1", ReceiptStatus.MISMATCHED).copy(totalMinor = 10000),
+                receipt("r2", "t1", ReceiptStatus.VERIFIED).copy(totalMinor = 48458),
+            ),
+        )
+
+        assertFalse(result.single().receipts.single { it.id == "r1" }.isPart)
     }
 }

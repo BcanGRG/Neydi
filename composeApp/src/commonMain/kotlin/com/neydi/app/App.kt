@@ -42,6 +42,14 @@ fun App() {
             backStack.add(key)
         }
 
+        // Ust ogeyi DEGISTIR, ustune ekleme: uzun fisin parca gecisinde geri
+        // tusu onceki parcanin ekranina degil Liste/Gecmis'e donmeli - uc
+        // parcalik fiste uc kontrol ekrani istiflemek geri tusunu bozar.
+        fun replaceTop(key: NavKey) {
+            backStack.removeLastOrNull()
+            backStack.add(key)
+        }
+
         fun back() {
             if (backStack.size > 1) backStack.removeLastOrNull()
         }
@@ -75,7 +83,11 @@ fun App() {
                     )
                 }
                 entry<ReceiptCheck> { key ->
-                    ReceiptCheckRoute(receiptId = key.receiptId, onBack = { back() })
+                    ReceiptCheckRoute(
+                        receiptId = key.receiptId,
+                        onBack = { back() },
+                        onOpenPart = { replaceTop(ReceiptCheck(it)) },
+                    )
                 }
                 entry<History> {
                     HistoryRoute(

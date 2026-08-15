@@ -15,12 +15,14 @@ import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.data.receipt.ReceiptProcessor
+import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.receipt.ReceiptReadOutcome
 import com.neydi.app.data.receipt.TOLERANCE_MINOR
 import com.neydi.app.data.receipt.chainKey
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
+import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +73,16 @@ data class CheckState(
     val failedMessage: String? = null,
     /** Tek seferlik bilgi: "bu yonde okunamadi, eski okuma korundu" gibi. */
     val notice: String? = null,
+    /**
+     * Bu fis cok parcali bir cekimin PARCASI mi (F4.13).
+     *
+     * Turetiliyor, saklanmiyor: toplami okunamamis (null) bir fis, ayni gezide
+     * baska fisler varken buyuk olasilikla uzun fisin bir parcasi - toplam
+     * yalnizca son parcada basili. Bu ayrim olmadan ara parcalar amber
+     * "toplam tutmuyor" giyiyordu: durust ama yanlis yonlendirici, cunku
+     * kullanici hata yapmadi.
+     */
+    val isPart: Boolean = false,
 )
 
 class ReceiptCheckViewModel(
@@ -137,6 +149,7 @@ class ReceiptCheckViewModel(
         // ayni hesap artik veritabanindan yeniden kurulabiliyor.
         val sum = lines.sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
         val total = receipt?.totalMinor
+        val tripReceiptCount = receipt?.let { receiptDao.countForTrip(it.tripId) } ?: 0
         _state.value = CheckState(
             loading = false,
             storeName = receipt?.storeNameRaw,
@@ -154,6 +167,7 @@ class ReceiptCheckViewModel(
             failedMessage = receipt?.errorMessage
                 ?.takeIf { receipt.status == ReceiptStatus.FAILED && lines.isEmpty() },
             notice = notice,
+            isPart = total == null && tripReceiptCount > 1,
         )
     }
 
@@ -172,6 +186,40 @@ class ReceiptCheckViewModel(
             // Oneriler ham metinden aranıyor: fis "TURŞU KORNI ŞON" yaziyor,
             // kullanicinin gormek istedigi "Turşu".
             _suggestions.value = catalogSeedDao.search(row.rawText.take(12), limit = 8)
+        }
+    }
+
+    /**
+     * Sonraki parcanin fisi hazir - Route bunu yakalayip ekrani YENI fise
+     * degistiriyor. Tek seferlik olay.
+     */
+    private val _nextPartId = MutableStateFlow<String?>(null)
+    val nextPartId: StateFlow<String?> = _nextPartId
+
+    fun consumeNextPart() {
+        _nextPartId.value = null
+    }
+
+    /**
+     * Uzun fisin SONRAKI PARCASINI ayni geziye ekler (F4.13).
+     *
+     * "Parca parca cek" tavsiyesi tek dokunusluk bir yol olmadan yarim
+     * kaliyordu: kullanici Liste'ye donup ozet kartini yeniden bulmak
+     * zorundaydi. Ayni ekleme yardimcisi kullaniliyor ([attachReceiptToTrip]) -
+     * `content://` ve kucultme dersleri orada tek yerde duruyor.
+     */
+    fun attachNextPart(source: PlatformFile, destPath: String, rawPath: String) {
+        viewModelScope.launch {
+            val receipt = receiptDao.byId(receiptId) ?: return@launch
+            val next = attachReceiptToTrip(
+                repo = repo,
+                householdId = receipt.householdId,
+                tripId = receipt.tripId,
+                source = source,
+                destPath = destPath,
+                rawPath = rawPath,
+            )
+            _nextPartId.value = next.id
         }
     }
 

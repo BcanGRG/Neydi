@@ -407,6 +407,10 @@ interface ReceiptDao {
     @Query("SELECT * FROM receipt WHERE id = :id")
     suspend fun byId(id: String): Receipt?
 
+    /** Gezideki fis sayisi - "bu bir parca mi" sorusunun yarisi (F4.13). */
+    @Query("SELECT COUNT(*) FROM receipt WHERE tripId = :tripId AND deletedAt IS NULL")
+    suspend fun countForTrip(tripId: String): Int
+
     @Query("UPDATE receipt SET status = :status, errorMessage = :error WHERE id = :id")
     suspend fun setStatus(id: String, status: ReceiptStatus, error: String? = null)
 
