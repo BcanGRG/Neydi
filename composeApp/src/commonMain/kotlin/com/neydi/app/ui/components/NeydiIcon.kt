@@ -15,6 +15,7 @@ import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.Functions
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Logout
@@ -67,6 +68,8 @@ object NeydiIcons {
     val ExpandMore: ImageVector get() = Icons.Rounded.ExpandMore
     val Undo: ImageVector get() = Icons.Rounded.Undo
     val FilterList: ImageVector get() = Icons.Rounded.FilterList
+    /** "Satirlardan hesaplandi" - toplam okunamadiginda (tasarim karari 15). */
+    val Functions: ImageVector get() = Icons.Rounded.Functions
     val ContentPaste: ImageVector get() = Icons.Rounded.ContentPaste
     val ContentCopy: ImageVector get() = Icons.Rounded.ContentCopy
     val Search: ImageVector get() = Icons.Rounded.Search

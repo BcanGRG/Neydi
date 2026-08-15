@@ -20,6 +20,7 @@ import com.neydi.app.data.receipt.ReceiptReadOutcome
 import com.neydi.app.data.receipt.TOLERANCE_MINOR
 import com.neydi.app.data.formatDayMonthTime
 import com.neydi.app.data.receipt.chainKey
+import com.neydi.app.data.receipt.storeDisplayName
 import com.neydi.app.data.receipt.samePhysicalReceipt
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
@@ -40,6 +41,13 @@ data class CheckRow(
     /** Fiste YAZAN hali. Gri alt satir olarak gosteriliyor. */
     val rawText: String,
     val needsReview: Boolean,
+    /**
+     * Fisin verdigi tek kimlik: barkod (tasarim karari 14).
+     *
+     * Ad okunamadiginda baslik slotunda BU duruyor - hata mesaji degil.
+     * Yoksa null.
+     */
+    val barcode: String? = null,
 )
 
 /** "Listede vardi, fiste yok" satiri (F4.12). */
@@ -60,10 +68,18 @@ data class CheckState(
     val loading: Boolean = true,
     val storeName: String? = null,
     /**
-     * Baslik alt satiri: *"Migros Ataşehir · 12 Ağustos 15:31 · 2 parça"*
-     * (tasarim karari 9). Hicbiri okunamadiysa null ve satir cizilmiyor.
+     * Baslik alt satirinin ESNEYEN yarisi: magaza adi (tasarim karari 13).
+     * Sigmazsa uc nokta aliyor.
      */
-    val subtitle: String? = null,
+    val subtitleStore: String? = null,
+    /**
+     * Baslik alt satirinin SABIT yarisi: *"· 12 Ağustos 15:31 · 2 parça"*.
+     *
+     * ASLA KIRPILMIYOR. Uzun ticari unvan cihazda tam olarak bunu ekran
+     * disina itiyordu - halbuki satirin asil ayirt edici bilgisi tarih:
+     * ayni marketten iki fis varsa onlari tarih ayiriyor.
+     */
+    val subtitleMeta: String? = null,
     val totalMinor: Long? = null,
     val sumMinor: Long = 0,
     val gateHolds: Boolean? = null,
@@ -196,8 +212,8 @@ class ReceiptCheckViewModel(
         _state.value = CheckState(
             loading = false,
             storeName = receipt?.storeNameRaw,
-            subtitle = receiptSubtitle(
-                store = receipt?.storeNameRaw,
+            subtitleStore = storeDisplayName(receipt?.storeNameRaw),
+            subtitleMeta = receiptMeta(
                 receiptDate = receipt?.receiptDate ?: receipt?.capturedAt,
                 partCount = group.size,
             ),
@@ -226,6 +242,7 @@ class ReceiptCheckViewModel(
         count = quantity,
         rawText = rawText,
         needsReview = needsReview,
+        barcode = barcodeOf(rawText),
     )
 
     fun edit(row: CheckRow) {
@@ -380,20 +397,34 @@ class ReceiptCheckViewModel(
 }
 
 /**
- * Fis Kontrol'un baslik alt satiri (tasarim karari 9).
- *
- * BOLUMLER TEK TEK OPSIYONEL: magaza okunamadiysa yalnizca tarih, tarih de
- * okunamadiysa yalnizca parca sayisi yaziliyor. Okunamayan bir seyin yerine
- * "-" ya da "Bilinmiyor" koymak, satiri bilgi tasimayan bir sey yapardi.
+ * Baslik alt satirinin SABIT yarisi (tasarim karari 13).
  *
  * PARCA SAYISI YALNIZCA BIRDEN COKSA: "1 parca" diye bir sey yok, tek
  * parcali fis zaten fisin kendisi.
  */
-internal fun receiptSubtitle(store: String?, receiptDate: Long?, partCount: Int): String? {
+internal fun receiptMeta(receiptDate: Long?, partCount: Int): String? {
     val parts = buildList {
-        store?.takeIf { it.isNotBlank() }?.let { add(it) }
         receiptDate?.let { add(formatDayMonthTime(it)) }
         if (partCount > 1) add("$partCount parça")
     }
     return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
+
+/**
+ * Ham fis satirindan barkodu cikarir (tasarim karari 14).
+ *
+ * AKYURT duzeninde tutar satiri `3 8683206511079 1 Adet 189,90 %20 189,90`
+ * gibi basiliyor: sira no, barkod, adet, birim fiyat, KDV, tutar. Barkod
+ * bunlarin arasindaki EN UZUN rakam dizisi - EAN-13 on uc hane, sira no ve
+ * adet bir iki hane, tutarlar ise ondalik ayirici tasiyor.
+ *
+ * SEKIZ HANE ESIGI: daha kisa bir rakam dizisi barkod degil (EAN-8 en kisa
+ * standart). Esik olmasaydi "189" gibi bir tutar parcasi barkod sanilirdi.
+ *
+ * @return barkod, ya da satirda oyle bir sey yoksa null.
+ */
+internal fun barcodeOf(rawText: String): String? =
+    rawText.split(" ", "\t")
+        .map { it.trim() }
+        .filter { it.length >= 8 && it.all(Char::isDigit) }
+        .maxByOrNull { it.length }

@@ -10,6 +10,7 @@ import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.receipt.physicalReceipts
+import com.neydi.app.data.receipt.storeDisplayName
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -91,9 +92,11 @@ internal fun combineTrips(
             totalMinor = trip.totalMinor,
             // Ilk okunabilmis magaza adi: cok parcali fiste kunye yalnizca
             // ilk parcada basili (bkz. samePhysicalReceipt).
+            // ZINCIR ADI, ticari unvan DEGIL (tasarim karari 13) - ayni
+            // kural Gecmis satirinda da gecerli.
             storeName = fisHaritasi[trip.id].orEmpty()
                 .sortedBy { it.capturedAt }
-                .firstNotNullOfOrNull { it.storeNameRaw?.takeIf(String::isNotBlank) },
+                .firstNotNullOfOrNull { storeDisplayName(it.storeNameRaw) },
             itemCount = lineCounts[trip.id] ?: 0,
             receipts = fisHaritasi[trip.id].orEmpty().let { tripReceipts ->
                 // Fiziksel fis gruplari: parca olup olmadigini gezideki fis
