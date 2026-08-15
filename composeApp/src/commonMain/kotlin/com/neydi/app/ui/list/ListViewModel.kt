@@ -22,6 +22,7 @@ import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
+import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.ui.product.ProductSheetState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,6 +53,7 @@ class ListViewModel(
     private val catalogSeedDao: CatalogSeedDao,
     private val categoryDao: CategoryDao,
     private val priceObservationDao: PriceObservationDao,
+    private val statsRebuilder: ProductStatsRebuilder,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -276,6 +278,13 @@ class ListViewModel(
                 if (reconciled > 0) {
                     _summary.value = _summary.value?.copy(takenCount = rows.size)
                 }
+                // ISTATISTIK YENIDEN KURULUMU MUTABAKATTAN SONRA (F6.1).
+                //
+                // Sira onemli: once cagrilsaydi yeni kapanan gezinin iyimser
+                // mutabakatla alindi yazilan satirlari, o kapanisin tetikledigi
+                // yeniden kurulumun DISINDA kalirdi. `closed` dalinda olmasi da
+                // cift kapanis korumasini miras aliyor.
+                statsRebuilder.rebuild(household)
             }
         }
     }

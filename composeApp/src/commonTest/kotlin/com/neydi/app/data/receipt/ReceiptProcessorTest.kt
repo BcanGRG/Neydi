@@ -11,6 +11,7 @@ import com.neydi.app.data.db.Receipt
 import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.matchKey
+import com.neydi.app.data.stats.ProductStatsRebuilder
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -84,6 +85,7 @@ class ReceiptProcessorTest {
             productDao = db.productDao(),
             aliasDao = db.productAliasDao(),
             tripDao = db.tripDao(),
+            statsRebuilder = ProductStatsRebuilder(db.productStatsDao(), clock = { 500L }),
             clock = { 500L },
             newId = { "line-${++n}" },
         )

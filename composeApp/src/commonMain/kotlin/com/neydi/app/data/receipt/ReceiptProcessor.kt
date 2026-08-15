@@ -8,6 +8,7 @@ import com.neydi.app.data.db.ReceiptLineDao
 import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.matchKey
+import com.neydi.app.data.stats.ProductStatsRebuilder
 
 /**
  * OKUNAMAYAN FIS ESIGI.
@@ -68,6 +69,7 @@ class ReceiptProcessor(
     private val productDao: ProductDao,
     private val aliasDao: ProductAliasDao,
     private val tripDao: TripDao,
+    private val statsRebuilder: ProductStatsRebuilder,
     private val clock: () -> Long,
     private val newId: () -> String,
 ) {
@@ -129,6 +131,13 @@ class ReceiptProcessor(
         receiptDao.setStatus(receiptId, durum)
         receiptDao.setTotal(receiptId, reading.totalMinor, reading.storeName, clock())
         rollUpTripTotal(receipt.tripId)
+        // ISTATISTIK YENIDEN KURULUYOR (F6.1).
+        //
+        // Kapanista da kosuyor ama BURADA DA kosmak zorunda: fis gezi
+        // kapandiktan SONRA cekiliyor, yani yalnizca kapanista hesaplasaydik
+        // fisten gelen alimlar daima bir gezi geride kalirdi - "listeye
+        // yazmadan aldigim ekmek" bu gezide degil bir sonrakinde sayilirdi.
+        statsRebuilder.rebuild(receipt.householdId)
         return ReceiptReadOutcome.PARSED
     }
 
