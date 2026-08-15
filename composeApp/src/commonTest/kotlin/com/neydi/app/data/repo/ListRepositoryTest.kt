@@ -140,4 +140,87 @@ class ListRepositoryTest {
         // Mezardan cikan satir adedi SIFIRDAN baslar, eski adedi tasimaz.
         assertEquals(1.0, again.quantity)
     }
+
+    // --- "Gecen sefer aldiklarini ekle" (Ekran 1 bos durumu) -----------------
+
+    /** Onceki gezide ALINAN urunler bugunun listesine geciyor. */
+    @Test
+    fun addsTakenItemsFromLastTrip() = runTest {
+        val db = db(); prepare(db)
+        val r = repo(db)
+        val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
+        val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
+        val past = r.openOrGetActiveTrip(home, "m1")
+        val breadLine = r.add(home, past.id, bread, memberId = "m1")
+        val milkLine = r.add(home, past.id, milk, memberId = "m1")
+        r.toggleChecked(breadLine.id, true)
+        r.toggleChecked(milkLine.id, true)
+        r.closeTrip(past.id, "m1")
+
+        val added = r.addFromLastTrip(home, "m1")
+
+        assertEquals(2, added)
+        assertEquals(setOf("Ekmek", "Süt"), r.rows(home).first().map { line ->
+            db.productDao().byId(line.productId)?.name
+        }.toSet())
+    }
+
+    /**
+     * ALINMAYAN URUN GERI GELMIYOR.
+     *
+     * Uc-sonuc secici (F4.12) "gerekmedi" ve "unuttum" satirlarini isaretsiz
+     * birakiyor. Kullanicinin acikca "gerekmedi" dedigi bir urunu bir sonraki
+     * listeye geri koymak, verdigi karari yok saymak olurdu.
+     *
+     * Test isiriyor: sorgudan `checked = 1` kosulu kaldirilirsa burasi kirilir.
+     */
+    @Test
+    fun skipsItemsThatWereNotTaken() = runTest {
+        val db = db(); prepare(db)
+        val r = repo(db)
+        val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
+        val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
+        val past = r.openOrGetActiveTrip(home, "m1")
+        val breadLine = r.add(home, past.id, bread, memberId = "m1")
+        r.add(home, past.id, milk, memberId = "m1")
+        r.toggleChecked(breadLine.id, true)
+        r.closeTrip(past.id, "m1")
+
+        val added = r.addFromLastTrip(home, "m1")
+
+        assertEquals(1, added)
+        assertEquals("Ekmek", db.productDao().byId(r.rows(home).first().single().productId)?.name)
+    }
+
+    /**
+     * ZATEN LISTEDE OLAN IKI KEZ EKLENMIYOR.
+     *
+     * `add` mevcut satirin adedini artiriyor; filtre olmasaydi butona iki kez
+     * dokunan kullanici her urunden iki tane ister hale gelirdi.
+     */
+    @Test
+    fun doesNotDuplicateWhatIsAlreadyOnTheList() = runTest {
+        val db = db(); prepare(db)
+        val r = repo(db)
+        val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
+        val past = r.openOrGetActiveTrip(home, "m1")
+        val line = r.add(home, past.id, bread, memberId = "m1")
+        r.toggleChecked(line.id, true)
+        r.closeTrip(past.id, "m1")
+
+        assertEquals(1, r.addFromLastTrip(home, "m1"))
+        assertEquals(0, r.addFromLastTrip(home, "m1"))
+
+        val rows = r.rows(home).first()
+        assertEquals(1, rows.size)
+        assertEquals(1.0, rows.single().quantity)
+    }
+
+    /** Hic kapanmis gezi yoksa sessizce sifir - hata degil, yapacak is yok. */
+    @Test
+    fun addsNothingWhenNoClosedTripExists() = runTest {
+        val db = db(); prepare(db)
+
+        assertEquals(0, repo(db).addFromLastTrip(home, "m1"))
+    }
 }

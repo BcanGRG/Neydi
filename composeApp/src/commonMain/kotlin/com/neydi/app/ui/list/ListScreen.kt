@@ -149,6 +149,7 @@ fun ListScreen(
         onFinish = vm::finishShopping,
         onHistory = onHistory,
         onSettings = onSettings,
+        onAddFromLastTrip = vm::addFromLastTrip,
     )
 
     // Sheet, EKRAN DEGIL: liste arkada gorunur kaliyor.
@@ -293,6 +294,7 @@ internal fun ListContent(
     onFinish: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onAddFromLastTrip: () -> Unit = {},
     /**
      * Simdiki an - basligin "8 gun once" hesabi icin.
      *
@@ -342,6 +344,16 @@ internal fun ListContent(
                             hasClipboard = clipboardText != null,
                             onCategory = onCategorySelected,
                             onClipboard = onClipboard,
+                            // Tasarimin metni: "Son alisveris 3 gun once, 642 TL."
+                            lastTripLine = state.lastTrip?.let {
+                                lastTripSummary(it, now).removePrefix("Son alışveriş: ")
+                                    .let { text -> "Son alışveriş $text." }
+                            },
+                            // Hic kapanmis gezi yoksa buton HIC CIZILMIYOR -
+                            // dokunuldugunda hicbir sey yapmayacak bir butonu
+                            // gostermek tasarimin "bos bolum cizilmez"
+                            // kuralinin ayni sinifi.
+                            onAddFromLastTrip = if (state.lastTrip != null) onAddFromLastTrip else null,
                         )
                     }
                 } else if (clipboardText != null && !state.shoppingMode) {

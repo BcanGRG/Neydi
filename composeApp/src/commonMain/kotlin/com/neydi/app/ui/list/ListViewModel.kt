@@ -238,6 +238,18 @@ class ListViewModel(
         viewModelScope.launch { repo.toggleChecked(rowId, checked) }
     }
 
+    /**
+     * Dongu ortasi bos durumunun hayalet butonu (Ekran 1 tasarimi).
+     *
+     * Zaten listede olan urun ATLANIYOR - bkz. `ListRepository.addFromLastTrip`.
+     */
+    fun addFromLastTrip() {
+        viewModelScope.launch {
+            val memberId = selfMemberId() ?: return@launch
+            repo.addFromLastTrip(household, memberId)
+        }
+    }
+
     fun setShoppingMode(enabled: Boolean) {
         viewModelScope.launch {
             val memberId = selfMemberId() ?: return@launch

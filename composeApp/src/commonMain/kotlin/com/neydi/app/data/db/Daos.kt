@@ -132,6 +132,16 @@ interface TripDao {
     @Query("SELECT * FROM trip WHERE householdId = :householdId AND completedAt IS NOT NULL AND deletedAt IS NULL ORDER BY completedAt DESC LIMIT :limit")
     fun observeHistory(householdId: String, limit: Int = 50): Flow<List<Trip>>
 
+    /** En son kapanan gezi - "Gecen sefer aldiklarini ekle" bunun uzerinden calisiyor. */
+    @Query(
+        """
+        SELECT * FROM trip
+        WHERE householdId = :householdId AND completedAt IS NOT NULL AND deletedAt IS NULL
+        ORDER BY completedAt DESC LIMIT 1
+        """,
+    )
+    suspend fun lastClosed(householdId: String): Trip?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(trip: Trip)
 
@@ -189,6 +199,29 @@ interface TripDao {
 interface TripLineDao {
     @Query("SELECT * FROM trip_line WHERE tripId = :tripId AND deletedAt IS NULL ORDER BY createdAt")
     fun observeLines(tripId: String): Flow<List<TripLine>>
+
+    /**
+     * Bir gezide GERCEKTEN ALINAN satirlar - "Gecen sefer aldiklarini ekle"
+     * bos durum butonunun kaynagi (Ekran 1 tasarimi).
+     *
+     * `checked = 1` tek olcut ve yeterli: uc-sonuc secici (F4.12)
+     * NOT_NEEDED ve FORGOTTEN satirlarini isaretsiz birakiyor, iyimser
+     * mutabakat (F4.8) ise kapanista alinanlari isaretliyor. Yani
+     * "gerekmedi" dedigi bir urunu bir sonraki listeye geri koymuyoruz -
+     * kullanicinin acikca reddettigi seyi tekrar onune surmek olurdu.
+     */
+    @Query(
+        """
+        SELECT * FROM trip_line
+        WHERE tripId = :tripId AND checked = 1 AND deletedAt IS NULL
+        ORDER BY createdAt
+        """,
+    )
+    suspend fun takenForTrip(tripId: String): List<TripLine>
+
+    /** Gezideki CANLI satirlarin urun kimlikleri - iki kez eklemeyi onlemek icin. */
+    @Query("SELECT productId FROM trip_line WHERE tripId = :tripId AND deletedAt IS NULL")
+    suspend fun productIdsForTrip(tripId: String): List<String>
 
     /**
      * Liste ekraninin tek sorgusu. JOIN Kotlin tarafinda birlestirmekten iyi:
