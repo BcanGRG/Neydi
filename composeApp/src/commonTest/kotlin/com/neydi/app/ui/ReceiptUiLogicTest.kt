@@ -255,4 +255,58 @@ class ReceiptUiLogicTest {
 
         assertFalse(result.single().receipts.single { it.id == "okunamadi" }.isPart)
     }
+
+    // --- Gecmis satiri (Ekran 6 tasarimi) -----------------------------------
+
+    /**
+     * TASARIM MAGAZAYI BASLIK YAPIYOR. Ad ilk OKUNABILMIS fisten geliyor: cok
+     * parcali fiste kunye yalnizca ilk parcada basili, sonrakiler tasimiyor.
+     */
+    @Test
+    fun tripRowTakesStoreFromFirstReadableReceipt() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, 22550)),
+            receipts = listOf(
+                receipt("parca2", "t1", ReceiptStatus.MISMATCHED).copy(capturedAt = 300),
+                receipt("ilk", "t1", ReceiptStatus.VERIFIED)
+                    .copy(capturedAt = 100, storeNameRaw = "BIM BIRLESIK MAGAZALAR"),
+            ),
+            lineCounts = mapOf("t1" to 18),
+        )
+
+        val row = result.single()
+        assertEquals("BIM BIRLESIK MAGAZALAR", row.storeName)
+        assertEquals(18, row.itemCount)
+    }
+
+    /**
+     * Hic fis yoksa magaza adi null - satir "Fis eklenmedi" yaziyor.
+     *
+     * Ekran ayrica FIS VAR AMA MAGAZA OKUNAMADI halini ayri gosteriyor:
+     * ikisini birlestirmek okunamamis bir fisi hic cekilmemis gibi
+     * gosterirdi. Bu ayrimin verisi `receipts` listesinin bos olup olmamasi.
+     */
+    @Test
+    fun tripRowHasNoStoreWhenNoReceipt() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = emptyList(),
+        )
+
+        assertEquals(null, result.single().storeName)
+        assertEquals(0, result.single().itemCount)
+        assertEquals(emptyList(), result.single().receipts)
+    }
+
+    /** Fis VAR ama magaza okunamadi: ad yine null ama fis listesi DOLU. */
+    @Test
+    fun tripRowKeepsReceiptWhenStoreUnreadable() {
+        val result = combineTrips(
+            trips = listOf(trip("t1", 500, null)),
+            receipts = listOf(receipt("r1", "t1", ReceiptStatus.FAILED)),
+        )
+
+        assertEquals(null, result.single().storeName)
+        assertEquals(1, result.single().receipts.size)
+    }
 }

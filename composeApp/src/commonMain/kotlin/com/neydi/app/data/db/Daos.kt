@@ -224,6 +224,23 @@ interface TripLineDao {
     suspend fun productIdsForTrip(tripId: String): List<String>
 
     /**
+     * Gezi basina satir sayisi - Gecmis satirindaki *"14 Agu · 18 urun"*.
+     *
+     * TEK SORGU, gezi basina bir sorgu DEGIL: elli gezilik bir gecmiste N+1
+     * sorgu acmak listeyi acilirken kilitlerdi.
+     */
+    @Query(
+        """
+        SELECT tl.tripId AS tripId, COUNT(*) AS lineCount
+        FROM trip_line tl
+        JOIN trip t ON t.id = tl.tripId
+        WHERE t.householdId = :householdId AND tl.deletedAt IS NULL AND t.deletedAt IS NULL
+        GROUP BY tl.tripId
+        """,
+    )
+    fun observeLineCounts(householdId: String): Flow<List<TripLineCount>>
+
+    /**
      * Liste ekraninin tek sorgusu. JOIN Kotlin tarafinda birlestirmekten iyi:
      * ucu ayri Flow'u combine etmek her degisimde uc yeniden yayin uretir ve
      * satirlar bir kare bosluklu gorunur.

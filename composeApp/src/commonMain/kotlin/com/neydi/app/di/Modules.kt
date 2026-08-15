@@ -69,7 +69,7 @@ val dataModule = module {
         )
     }
 
-    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get()) }
+    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get(), tripLineDao = get()) }
 
     viewModel { (tripId: String?) ->
         FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())

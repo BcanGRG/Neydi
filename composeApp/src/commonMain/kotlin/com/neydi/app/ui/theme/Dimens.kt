@@ -20,6 +20,8 @@ object SpacingExtra {
 }
 
 object NeydiExtraShapes {
+    /** Gecmis'teki harcama cubugu: yalnizca UST koseler yuvarlak. */
+    val barTop = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
     val categoryTile = RoundedCornerShape(24.dp)   // 56dp squircle kutucuk
     val textField = RoundedCornerShape(18.dp)
     val pill = CircleShape                         // cip ve buton

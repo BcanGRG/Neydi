@@ -8,6 +8,7 @@ import com.neydi.app.data.db.ReceiptDao
 import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripDao
+import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.receipt.physicalReceipts
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,15 @@ data class HistoryTrip(
     val closedAt: Long,
     val totalMinor: Long?,
     val receipts: List<HistoryReceipt>,
+    /**
+     * Gezinin magaza adi - tasarimin satirindaki BASLIK.
+     *
+     * Fisten geliyor; hic fis yoksa ya da okunamadiysa null ve satir
+     * "Magaza okunamadi" yerine tarihi baslik yapiyor.
+     */
+    val storeName: String? = null,
+    /** *"14 Agu · 18 urun"* satirindaki adet. */
+    val itemCount: Int = 0,
 )
 
 /**
@@ -42,6 +52,7 @@ data class HistoryTrip(
 class HistoryViewModel(
     tripDao: TripDao,
     receiptDao: ReceiptDao,
+    tripLineDao: TripLineDao,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -57,11 +68,18 @@ class HistoryViewModel(
         combine(
             tripDao.observeHistory(household),
             receiptDao.observeForHousehold(household),
-        ) { geziler, fisler -> combineTrips(geziler, fisler) }
+            tripLineDao.observeLineCounts(household),
+        ) { geziler, fisler, sayilar ->
+            combineTrips(geziler, fisler, sayilar.associate { it.tripId to it.lineCount })
+        }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
 
-internal fun combineTrips(trips: List<Trip>, receipts: List<Receipt>): List<HistoryTrip> {
+internal fun combineTrips(
+    trips: List<Trip>,
+    receipts: List<Receipt>,
+    lineCounts: Map<String, Int> = emptyMap(),
+): List<HistoryTrip> {
     val fisHaritasi = receipts.groupBy { it.tripId }
     return trips.map { trip ->
         HistoryTrip(
@@ -71,6 +89,12 @@ internal fun combineTrips(trips: List<Trip>, receipts: List<Receipt>): List<Hist
             // dusuyoruz ki liste bir sira anahtari kaybetmesin.
             closedAt = trip.completedAt ?: trip.startedAt,
             totalMinor = trip.totalMinor,
+            // Ilk okunabilmis magaza adi: cok parcali fiste kunye yalnizca
+            // ilk parcada basili (bkz. samePhysicalReceipt).
+            storeName = fisHaritasi[trip.id].orEmpty()
+                .sortedBy { it.capturedAt }
+                .firstNotNullOfOrNull { it.storeNameRaw?.takeIf(String::isNotBlank) },
+            itemCount = lineCounts[trip.id] ?: 0,
             receipts = fisHaritasi[trip.id].orEmpty().let { tripReceipts ->
                 // Fiziksel fis gruplari: parca olup olmadigini gezideki fis
                 // SAYISI degil, ayni fisin parcasi olup olmadigi belirliyor

@@ -27,3 +27,9 @@ data class ListRowProjection(
     /** Kullanicinin beyan ettigi akibet; null = bir sey soylemedi (F4.12). */
     val takeOutcome: TakeOutcome?,
 )
+
+/** Gezi basina satir sayisi (Gecmis ekrani). */
+data class TripLineCount(
+    val tripId: String,
+    val lineCount: Int,
+)
