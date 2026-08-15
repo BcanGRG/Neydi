@@ -106,6 +106,13 @@ class ReceiptProcessor(
                 rawText = line.rawText,
                 rawTextNormalized = normalized,
                 quantity = line.count,
+                // Olculen birim ve indirim bayragi artik KALICI (v3 kolonlari).
+                // Eskiden ikisi de burada atiliyordu: birim olmadan fiyatin
+                // neyin basina oldugu bilinemiyor (F5.1), bayrak olmadan ekran
+                // kapisi indirimli fiste ayristiricidan farkli karar veriyordu
+                // (F5.6).
+                unit = line.unit,
+                isDiscount = line.discount,
                 unitPriceMinor = line.unitPriceMinor,
                 lineTotalMinor = line.amountMinor,
                 matchedProductId = eslesme?.first,
@@ -130,6 +137,10 @@ class ReceiptProcessor(
         }
         receiptDao.setStatus(receiptId, durum)
         receiptDao.setTotal(receiptId, reading.totalMinor, reading.storeName, clock())
+        // Basili tarih kaliciliga (F5.8): fiyat gecmisinin observedAt'i bunu
+        // kullanacak. Okunamadiysa null kaliyor - capturedAt'e dusmek okuyan
+        // tarafin isi, uydurmak bizim isimiz degil.
+        receiptDao.setReceiptDate(receiptId, reading.receiptDate)
         rollUpTripTotal(receipt.tripId)
         // ISTATISTIK YENIDEN KURULUYOR (F6.1).
         //

@@ -24,4 +24,6 @@ data class ListRowProjection(
     val addedByMemberId: String,
     /** `not` SQL'de ayrilmis kelime - alan adi bilerek `note`. */
     val note: String?,
+    /** Kullanicinin beyan ettigi akibet; null = bir sey soylemedi (F4.12). */
+    val takeOutcome: TakeOutcome?,
 )

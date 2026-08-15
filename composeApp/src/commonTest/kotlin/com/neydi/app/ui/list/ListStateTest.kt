@@ -31,6 +31,7 @@ class ListStateTest {
         categoryName = categoryName,
         categoryOrder = categoryOrder,
         addedByMemberId = addedBy,
+        takeOutcome = null,
         note = null,
     )
 

@@ -68,7 +68,7 @@ val dataModule = module {
     viewModel { HistoryViewModel(tripDao = get(), receiptDao = get()) }
 
     viewModel { (tripId: String?) ->
-        FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get())
+        FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())
     }
 
     // receiptId parametreyle geliyor: hangi fisi kontrol ettigimiz hedefin
@@ -80,6 +80,7 @@ val dataModule = module {
             receiptDao = get(),
             receiptLineDao = get(),
             productDao = get(),
+            tripLineDao = get(),
             aliasDao = get(),
             catalogSeedDao = get(),
             repo = get(),

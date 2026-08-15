@@ -212,7 +212,8 @@ interface TripLineDao {
             c.name           AS categoryName,
             c.sortOrder      AS categoryOrder,
             tl.addedByMemberId AS addedByMemberId,
-            tl.note          AS note
+            tl.note          AS note,
+            tl.takeOutcome   AS takeOutcome
         FROM trip_line tl
         JOIN product p  ON p.id = tl.productId
         JOIN category c ON c.id = p.categoryId
@@ -279,6 +280,23 @@ interface TripLineDao {
         """,
     )
     suspend fun markAllTaken(tripId: String, at: Long): Int
+
+    /**
+     * UC SONUCU TEK YAZMADA (F4.12).
+     *
+     * `checked` ve `takeOutcome` AYNI ifadede yaziliyor cunku ikisi tek bir
+     * gercegin iki yuzu: "gerekmedi" ya da "unuttum" demek **alinmadi** demek.
+     * Iki ayri yazma, arada kesilirse "alindi ama unuttum" gibi kendisiyle
+     * celisen bir satir birakirdi - ve o satir hem `ProductStats`'a alim olarak
+     * girer hem skorda unutulmus sayilirdi.
+     */
+    @Query(
+        """
+        UPDATE trip_line SET checked = :checked, checkedAt = :at, takeOutcome = :outcome
+        WHERE id = :id
+        """,
+    )
+    suspend fun setOutcome(id: String, checked: Boolean, at: Long?, outcome: TakeOutcome)
 
     @Query("UPDATE trip_line SET checked = :checked, checkedAt = :at WHERE id = :id")
     suspend fun setChecked(id: String, checked: Boolean, at: Long?)
@@ -376,6 +394,9 @@ interface ReceiptDao {
 
     @Query("UPDATE receipt SET totalMinor = :total, storeNameRaw = :store, extractedAt = :at WHERE id = :id")
     suspend fun setTotal(id: String, total: Long?, store: String?, at: Long)
+
+    @Query("UPDATE receipt SET receiptDate = :date WHERE id = :id")
+    suspend fun setReceiptDate(id: String, date: Long?)
 
     /**
      * Bir gezinin fislerinde OKUNABILMIS toplamlarin toplami.

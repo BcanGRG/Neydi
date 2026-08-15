@@ -48,14 +48,17 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import androidx.compose.ui.unit.dp
 import com.neydi.app.data.db.CatalogSeed
+import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.data.formatMinor
 import com.neydi.app.data.receipt.UNREADABLE_MESSAGE
 import com.neydi.app.data.parseMinorInput
 import com.neydi.app.ui.components.AccentChip
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.OutcomePicker
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.Spacing
+import com.neydi.app.ui.theme.pressable
 import androidx.compose.foundation.text.KeyboardOptions
 
 /**
@@ -79,6 +82,7 @@ fun ReceiptCheckScreen(
     onDismissEdit: () -> Unit,
     onConfirm: (CheckRow, String) -> Unit,
     onFixAmount: (CheckRow, Long) -> Unit,
+    onOutcome: (String, TakeOutcome) -> Unit,
     onReread: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -121,6 +125,10 @@ fun ReceiptCheckScreen(
                     items(state.rows, key = { it.id }) { row ->
                         CheckRowItem(row) { onEdit(row) }
                     }
+                }
+                if (state.unaccounted.isNotEmpty()) {
+                    Spacer(Modifier.height(Spacing.sm))
+                    UnaccountedSection(state.unaccounted, onOutcome)
                 }
                 Spacer(Modifier.height(Spacing.sm))
                 // Yon dogru bulunmus olsa bile buton duruyor: otomatik secim iki
@@ -243,6 +251,68 @@ private fun CheckRowItem(row: CheckRow, onClick: () -> Unit) {
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = Spacing.sm),
             )
+        }
+    }
+}
+
+/**
+ * "Listede vardi, fiste yok (N)" (F4.12, Ekran 4).
+ *
+ * VARSAYILAN KAPALI (tasarimda `expand_more` ile katlanmis): fisin isi bitmis
+ * satirlari gostermek degil, kapanmamis hesabi sormak - ama cogu gezide bu
+ * kume bos ya da kucuk ve ekrani devralmamali.
+ *
+ * Uc sonucun ayri olmasi F6.2'nin sarti: "gerekmedi" oneriyi bastirir,
+ * "unuttum" yukseltir. Tek onay kutusu ikisini ayni sinyal yapiyordu.
+ */
+@Composable
+private fun UnaccountedSection(
+    rows: List<UnaccountedRow>,
+    onOutcome: (String, TakeOutcome) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(Spacing.sm)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 44.dp)
+                    .pressable { expanded = !expanded },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Listede vardı, fişte yok (${rows.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = if (expanded) "▲" else "▼",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (expanded) {
+                rows.forEach { row ->
+                    Column(Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
+                        Text(
+                            text = row.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        OutcomePicker(
+                            selected = row.outcome,
+                            onSelect = { onOutcome(row.rowId, it) },
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -413,6 +483,7 @@ fun ReceiptCheckRoute(receiptId: String, onBack: () -> Unit) {
         onDismissEdit = vm::dismissEdit,
         onConfirm = vm::confirm,
         onFixAmount = vm::fixAmount,
+        onOutcome = vm::setOutcome,
         onReread = vm::rereadNextRotation,
         onBack = onBack,
     )
@@ -450,7 +521,7 @@ private fun ReceiptCheckHoldsPreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
     )
 }
 
@@ -469,7 +540,7 @@ private fun ReceiptCheckMismatchPreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
     )
 }
 
@@ -481,7 +552,7 @@ private fun ReceiptCheckUnreadablePreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
     )
 }
 
@@ -500,7 +571,7 @@ private fun ReceiptCheckLoadingPreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
     )
 }
 
@@ -520,7 +591,7 @@ private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
         editing = null,
         suggestions = emptyList(),
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
     )
 }
 
@@ -543,6 +614,6 @@ private fun ReceiptCheckCorrectionPreview() = NeydiPreview {
             )
         },
         onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
-        onFixAmount = { _, _ -> }, onReread = {}, onBack = {},
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onBack = {},
     )
 }

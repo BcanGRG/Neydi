@@ -2,6 +2,7 @@ package com.neydi.app.ui.finish
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,13 +16,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neydi.app.ui.components.ListItemRow
-import com.neydi.app.ui.components.ListRow
 import com.neydi.app.ui.components.NeydiButton
+import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.OutcomePicker
 import com.neydi.app.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -30,7 +33,7 @@ import org.koin.core.parameter.parametersOf
 fun FinishShoppingRoute(tripId: String?, onDone: () -> Unit) {
     val vm: FinishShoppingViewModel = koinViewModel { parametersOf(tripId) }
     val rows by vm.rows.collectAsStateWithLifecycle()
-    FinishShoppingScreen(rows = rows, onToggle = vm::setTaken, onDone = onDone)
+    FinishShoppingScreen(rows = rows, onOutcome = vm::setOutcome, onDone = onDone)
 }
 
 /**
@@ -51,18 +54,20 @@ fun FinishShoppingRoute(tripId: String?, onDone: () -> Unit) {
 @Composable
 fun FinishShoppingScreen(
     rows: List<FinishRow>,
-    onToggle: (String, Boolean) -> Unit,
+    onOutcome: (String, TakeOutcome) -> Unit,
     onDone: () -> Unit,
 ) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(Spacing.md)) {
+            // Baslik tasarimdan: "Listede vardi, isaretlemedin". Uc sonucun ayri
+            // olmasi F6.2'nin sarti - "gerekmedi" bastirir, "unuttum" yukseltir.
             Text(
-                text = "Almadıklarını işaretle",
+                text = "Listede vardı, işaretlemedin",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "Hepsi alındı sayıldı. Bulamadıklarının işaretini kaldır.",
+                text = "Hepsi alındı sayıldı — değilse söyle.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -74,14 +79,29 @@ fun FinishShoppingScreen(
             ) {
                 items(rows.size, key = { rows[it].id }) { i ->
                     val row = rows[i]
-                    ListItemRow(
-                        row = ListRow(
-                            name = row.name,
-                            quantity = quantityBadge(row.count, row.unit),
-                            checked = row.taken,
-                        ),
-                        onToggle = { onToggle(row.id, !row.taken) },
-                    )
+                    Column(Modifier.fillMaxWidth().padding(vertical = Spacing.xs)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = row.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            quantityBadge(row.count, row.unit)?.let {
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        OutcomePicker(
+                            selected = row.outcome,
+                            onSelect = { onOutcome(row.id, it) },
+                            modifier = Modifier.padding(top = Spacing.xs),
+                        )
+                    }
                 }
             }
 
@@ -109,19 +129,19 @@ internal fun quantityBadge(count: Double, unit: String): String? {
 // --- Onizlemeler ------------------------------------------------------------
 
 private val sampleRows = listOf(
-    FinishRow("1", "Ekmek", 1.0, "adet", true),
-    FinishRow("2", "Süt", 2.0, "L", true),
-    FinishRow("3", "Domates", 0.5, "kg", false),
+    FinishRow("1", "Ekmek", 1.0, "adet", true, TakeOutcome.TAKEN),
+    FinishRow("2", "Süt", 2.0, "L", false, TakeOutcome.NOT_NEEDED),
+    FinishRow("3", "Domates", 0.5, "kg", false, TakeOutcome.FORGOTTEN),
 )
 
 @PreviewLightDark
 @Composable
 private fun FinishShoppingPreview() = NeydiPreview {
-    FinishShoppingScreen(rows = sampleRows, onToggle = { _, _ -> }, onDone = {})
+    FinishShoppingScreen(rows = sampleRows, onOutcome = { _, _ -> }, onDone = {})
 }
 
 @PreviewLightDark
 @Composable
 private fun FinishShoppingEmptyPreview() = NeydiPreview {
-    FinishShoppingScreen(rows = emptyList(), onToggle = { _, _ -> }, onDone = {})
+    FinishShoppingScreen(rows = emptyList(), onOutcome = { _, _ -> }, onDone = {})
 }
