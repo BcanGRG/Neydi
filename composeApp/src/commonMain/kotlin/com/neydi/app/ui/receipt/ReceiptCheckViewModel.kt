@@ -34,6 +34,15 @@ import kotlinx.coroutines.launch
 /** Bir fis satirinin kullaniciya gorunen hali. */
 data class CheckRow(
     val id: String,
+    /**
+     * Satirin geldigi fis (tasarim karari 4).
+     *
+     * TEK AKISTA SART: ekran artik butun parcalarin satirlarini birlikte
+     * ciziyor, yani duzeltme yazilirken "hangi fis" sorusunun cevabi ekranin
+     * kimliginden gelemez. Alias magaza zinciri bazinda yaziliyor ve zincir
+     * satirin kendi fisinden okunuyor.
+     */
+    val receiptId: String,
     /** Eslesen urunun adi; null ise henuz baglanmadi. */
     val productName: String?,
     val amountMinor: Long,
@@ -48,6 +57,23 @@ data class CheckRow(
      * Yoksa null.
      */
     val barcode: String? = null,
+)
+
+/**
+ * Bir parcanin bolumu (tasarim karari 4).
+ *
+ * PARCA HATA HALI DEGIL, NORMAL HAL. 60 kalemlik bir fis tek kareye
+ * sigdirilinca satir basina 4,7 piksel dusuyor - cok kare fiziksel bir
+ * zorunluluk, kolaylik degil. O yuzden parcalar ayri ekranlara degil, ayni
+ * akisin bolum basliklarina donusuyor.
+ */
+data class CheckSection(
+    val receiptId: String,
+    /** *"Parça 1"*. Tek parcali fiste null ve baslik HIC cizilmiyor. */
+    val title: String?,
+    /** *"18 satır · 1 satır kontrol bekliyor"*. */
+    val meta: String?,
+    val rows: List<CheckRow>,
 )
 
 /** "Listede vardi, fiste yok" satiri (F4.12). */
@@ -83,7 +109,14 @@ data class CheckState(
     val totalMinor: Long? = null,
     val sumMinor: Long = 0,
     val gateHolds: Boolean? = null,
-    val rows: List<CheckRow> = emptyList(),
+    /**
+     * Fisin TAMAMI, parca parca (tasarim karari 4).
+     *
+     * Tek parcali fiste tek bolum ve basligi null. Ekran bu listeyi sirayla
+     * ciziyor; parca ayri bir hedef DEGIL - parcayi ayri ekran yapmak toplami
+     * iki yere bolerdi.
+     */
+    val sections: List<CheckSection> = emptyList(),
     /**
      * Fiste GORUNMEYEN liste satirlari (F4.12) - tasarimdaki *"Listede vardi,
      * fiste yok (N)"* bolumu.
@@ -113,7 +146,10 @@ data class CheckState(
      * yani parca ekraninda gorunen sayilar FISIN TAMAMINA ait.
      */
     val isPart: Boolean = false,
-)
+) {
+    /** Butun parcalarin satirlari tek dizide - duzeltme akislari bunu kullaniyor. */
+    val rows: List<CheckRow> get() = sections.flatMap { it.rows }
+}
 
 class ReceiptCheckViewModel(
     private val receiptId: String,
@@ -155,10 +191,21 @@ class ReceiptCheckViewModel(
 
     private suspend fun reload(notice: String? = null) {
         val receipt = receiptDao.byId(receiptId)
-        val lines = receiptLineDao.forReceipt(receiptId)
+        // KAPSAM FIZIKSEL FIS, FOTOGRAF DEGIL (tasarim karari 4). Gruplama
+        // `samePhysicalReceipt` icinde ve cekim sirasina gore sirali.
+        val group = receipt?.let { samePhysicalReceipt(receiptDao.forTrip(it.tripId), it.id) }
+            .orEmpty()
+        val isPart = group.size > 1
+        val linesByReceipt = group.associateWith { receiptLineDao.forReceipt(it.id) }
+        val lines = linesByReceipt.values.flatten().ifEmpty { receiptLineDao.forReceipt(receiptId) }
         // Fark kumesi: gezideki satirlardan, urunu fiste eslesmis olanlar
         // dusuluyor. Eslesmemis fis satirlari kimseyi aklayamaz - urunu belli
         // degil.
+        //
+        // BUTUN PARCALAR SAYILIYOR: tek akista "listede vardi, fiste yok"
+        // sorusunun cevabi fisin tamamindan gelmeli. Yalnizca acik parcanin
+        // satirlarina bakmak, ilk parcada okunmus urunleri ikinci parcaya
+        // gecince "eksik" gosterirdi.
         val matched = lines.mapNotNull { it.matchedProductId }.toSet()
         val unaccounted = receipt?.tripId?.let { tripId ->
             tripLineDao.observeList(tripId).first()
@@ -177,7 +224,11 @@ class ReceiptCheckViewModel(
         // indirimli fiste islemcinin yazdigi durum (VERIFIED) ile ekrandaki
         // cip (tutmuyor) CELISIYORDU. `isDiscount` v3'te kalici oldugu icin
         // ayni hesap artik veritabanindan yeniden kurulabiliyor.
-        val ownSum = lines.sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
+        val ownLines = linesByReceipt[group.firstOrNull { it.id == receiptId }]
+            ?: receiptLineDao.forReceipt(receiptId)
+        val ownSum = ownLines.sumOf {
+            if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor
+        }
         // KAPI FIZIKSEL FIS KAPSAMINDA HESAPLANIYOR (F4.13 duzeltmesi).
         //
         // Aritmetik degismez fiziksel fise ait, FOTOGRAFA degil. Uzun fis parca
@@ -193,9 +244,6 @@ class ReceiptCheckViewModel(
         // okunmus File Market fisini BIM'in ayristirma hatasiyla amber'a
         // ceviriyordu - duzeltilmek istenen hatanin yer degistirmis hali.
         // Gruplama `samePhysicalReceipt` icinde, gerekcesiyle birlikte.
-        val group = receipt?.let { samePhysicalReceipt(receiptDao.forTrip(it.tripId), it.id) }
-            .orEmpty()
-        val isPart = group.size > 1
         val sum = if (isPart) {
             // null = grupta hic satir yok; kendi toplamimiz (0) dogru cevap.
             receiptLineDao.sumLinesForReceipts(group.map { it.id }) ?: ownSum
@@ -220,7 +268,7 @@ class ReceiptCheckViewModel(
             totalMinor = total,
             sumMinor = sum,
             gateHolds = total?.let { kotlin.math.abs(sum - it) <= TOLERANCE_MINOR },
-            rows = lines.map { it.toRow() },
+            sections = buildSections(group, linesByReceipt, receipt, lines),
             unaccounted = unaccounted,
             // SATIR VARSA hata mesaji GOSTERILMEZ.
             //
@@ -235,8 +283,42 @@ class ReceiptCheckViewModel(
         )
     }
 
-    private suspend fun ReceiptLine.toRow(): CheckRow = CheckRow(
+    /**
+     * Satirlari bolumlere ayirir (tasarim karari 4).
+     *
+     * TEK PARCADA BASLIK YOK: "Parça 1" diye bir sey yok, tek parcali fis zaten
+     * fisin kendisi - `subtitleMeta`daki parca sayisi da ayni kurali izliyor.
+     */
+    private suspend fun buildSections(
+        group: List<Receipt>,
+        linesByReceipt: Map<Receipt, List<ReceiptLine>>,
+        current: Receipt?,
+        fallbackLines: List<ReceiptLine>,
+    ): List<CheckSection> {
+        if (group.size <= 1) {
+            return listOf(
+                CheckSection(
+                    receiptId = current?.id ?: receiptId,
+                    title = null,
+                    meta = null,
+                    rows = fallbackLines.map { it.toRow(current?.id ?: receiptId) },
+                ),
+            )
+        }
+        return group.mapIndexed { index, part ->
+            val partLines = linesByReceipt[part].orEmpty()
+            CheckSection(
+                receiptId = part.id,
+                title = "Parça ${index + 1}",
+                meta = sectionMeta(partLines),
+                rows = partLines.map { it.toRow(part.id) },
+            )
+        }
+    }
+
+    private suspend fun ReceiptLine.toRow(owner: String): CheckRow = CheckRow(
         id = id,
+        receiptId = owner,
         productName = matchedProductId?.let { productDao.byId(it)?.name },
         amountMinor = lineTotalMinor,
         count = quantity,
@@ -303,8 +385,12 @@ class ReceiptCheckViewModel(
      */
     fun confirm(row: CheckRow, productName: String) {
         viewModelScope.launch {
-            val receipt = receiptDao.byId(receiptId) ?: return@launch
-            val line = receiptLineDao.forReceipt(receiptId).firstOrNull { it.id == row.id }
+            // SATIRIN KENDI FISI, ekranin fisi DEGIL (tasarim karari 4). Tek
+            // akista ekranda baska parcalarin satirlari da duruyor; alias
+            // zinciri o satirin geldigi fisten okunmali, yoksa ikinci parcada
+            // yapilan duzeltme birinci parcanin zincirine yazilirdi.
+            val receipt = receiptDao.byId(row.receiptId) ?: return@launch
+            val line = receiptLineDao.forReceipt(row.receiptId).firstOrNull { it.id == row.id }
                 ?: return@launch
             val product = resolveProduct(
                 repo = repo,
@@ -402,6 +488,22 @@ class ReceiptCheckViewModel(
  * PARCA SAYISI YALNIZCA BIRDEN COKSA: "1 parca" diye bir sey yok, tek
  * parcali fis zaten fisin kendisi.
  */
+/**
+ * Parca bolum basliginin sag yarisi (tasarim karari 4).
+ *
+ * SATIR SAYISI HER ZAMAN, KONTROL SAYISI VARSA. Tasarimin ornegi:
+ * *"16 satır · 1 satır kontrol bekliyor"* - ikinci parca bunu tasiyor, birinci
+ * parca yalnizca *"18 satır"*. Bekleyen satir yokken o cumleyi yazmak, olmayan
+ * bir isi varmis gibi gostermek olurdu.
+ */
+internal fun sectionMeta(lines: List<ReceiptLine>): String {
+    val review = lines.count { it.needsReview }
+    return buildString {
+        append("${lines.size} satır")
+        if (review > 0) append(" · $review satır kontrol bekliyor")
+    }
+}
+
 internal fun receiptMeta(receiptDate: Long?, partCount: Int): String? {
     val parts = buildList {
         receiptDate?.let { add(formatDayMonthTime(it)) }

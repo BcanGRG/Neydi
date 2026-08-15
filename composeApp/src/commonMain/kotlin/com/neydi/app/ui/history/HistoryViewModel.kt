@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.Receipt
 import com.neydi.app.data.db.ReceiptDao
+import com.neydi.app.data.db.ReceiptLineCount
+import com.neydi.app.data.db.ReceiptLineDao
 import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripDao
@@ -25,6 +27,15 @@ data class HistoryReceipt(
     val capturedAt: Long,
     /** Cok parcali cekimin parcasi mi - bkz. ReceiptCheckViewModel.isPart. */
     val isPart: Boolean = false,
+    /**
+     * Fiziksel fis icindeki sirasi, 1'den baslar (tasarim karari 4).
+     *
+     * Null ise bu fis tek basina bir fis - satirda "Parça 2" yerine durumu
+     * yaziliyor. Ayni gezideki IKI AYRI MAGAZA fisi tam olarak bu hal.
+     */
+    val partIndex: Int? = null,
+    val lineCount: Int = 0,
+    val reviewCount: Int = 0,
 )
 
 /** Kapanmis bir gezi ve fisleri. */
@@ -54,6 +65,7 @@ class HistoryViewModel(
     tripDao: TripDao,
     receiptDao: ReceiptDao,
     tripLineDao: TripLineDao,
+    receiptLineDao: ReceiptLineDao,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -70,8 +82,14 @@ class HistoryViewModel(
             tripDao.observeHistory(household),
             receiptDao.observeForHousehold(household),
             tripLineDao.observeLineCounts(household),
-        ) { geziler, fisler, sayilar ->
-            combineTrips(geziler, fisler, sayilar.associate { it.tripId to it.lineCount })
+            receiptLineDao.observeLineCounts(household),
+        ) { geziler, fisler, sayilar, fisSatirlari ->
+            combineTrips(
+                trips = geziler,
+                receipts = fisler,
+                lineCounts = sayilar.associate { it.tripId to it.lineCount },
+                receiptLines = fisSatirlari.associateBy { it.receiptId },
+            )
         }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }
@@ -80,6 +98,7 @@ internal fun combineTrips(
     trips: List<Trip>,
     receipts: List<Receipt>,
     lineCounts: Map<String, Int> = emptyMap(),
+    receiptLines: Map<String, ReceiptLineCount> = emptyMap(),
 ): List<HistoryTrip> {
     val fisHaritasi = receipts.groupBy { it.tripId }
     return trips.map { trip ->
@@ -103,16 +122,32 @@ internal fun combineTrips(
                 // SAYISI degil, ayni fisin parcasi olup olmadigi belirliyor
                 // (bkz. samePhysicalReceipt - iki ayri magaza fisi tek gezide
                 // olabiliyor ve cihazda oyleydi).
-                val groupSize = physicalReceipts(tripReceipts)
+                val groups = physicalReceipts(tripReceipts)
+                val groupSize = groups
                     .flatMap { grup -> grup.map { it.id to grup.size } }
                     .toMap()
-                tripReceipts.map {
+                // Fiziksel fis icindeki sira - "Parça 1", "Parça 2"
+                // (tasarim karari 4). Tek fisli grupta null: "Parça 1" diye
+                // bir sey yok, tek parcali fis zaten fisin kendisi.
+                val partIndexes = groups
+                    .filter { it.size > 1 }
+                    .flatMap { grup -> grup.mapIndexed { i, r -> r.id to i + 1 } }
+                    .toMap()
+                // CEKIM SIRASI (tasarim karari 4): "Parça 1" ustte olmali.
+                // Siralamasiz halde DAO'nun donus sirasi geciyordu ve cihazda
+                // "Parça 2 / Parça 1" diye ters listelendi - numarali bir liste
+                // ters siralanınca numaralar okunmaz hale geliyor.
+                tripReceipts.sortedBy { it.capturedAt }.map {
+                    val counts = receiptLines[it.id]
                     HistoryReceipt(
                         id = it.id,
                         status = it.status,
                         totalMinor = it.totalMinor,
                         storeName = it.storeNameRaw,
                         capturedAt = it.capturedAt,
+                        partIndex = partIndexes[it.id],
+                        lineCount = counts?.lineCount ?: 0,
+                        reviewCount = counts?.reviewCount ?: 0,
                         // Parca: AYNI FIZIKSEL FISIN baska parcalari da var.
                         //
                         // `totalMinor == null` KOSULU KALDIRILDI ve sebebi

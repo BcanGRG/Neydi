@@ -561,6 +561,26 @@ interface ReceiptLineDao {
     suspend fun clearForReceipt(receiptId: String)
 
     /**
+     * Fis basina satir ve onay bekleyen satir sayisi (tasarim karari 4).
+     *
+     * TEK SORGU, fis basina bir sorgu DEGIL: `observeLineCounts` ile ayni
+     * gerekce - elli gezilik bir gecmiste N+1 sorgu listeyi acilirken
+     * kilitlerdi.
+     */
+    @Query(
+        """
+        SELECT rl.receiptId AS receiptId,
+               COUNT(*) AS lineCount,
+               SUM(CASE WHEN rl.needsReview THEN 1 ELSE 0 END) AS reviewCount
+        FROM receipt_line rl
+        JOIN receipt r ON r.id = rl.receiptId
+        WHERE r.householdId = :householdId AND rl.deletedAt IS NULL AND r.deletedAt IS NULL
+        GROUP BY rl.receiptId
+        """,
+    )
+    fun observeLineCounts(householdId: String): Flow<List<ReceiptLineCount>>
+
+    /**
      * VERILEN FISLERIN satirlarinin toplami, kurus (F4.13 duzeltmesi).
      *
      * ARITMETIK DEGISMEZ FIZIKSEL FISE AIT, FOTOGRAFA DEGIL. Uzun fis parca

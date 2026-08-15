@@ -219,12 +219,29 @@ fun ReceiptCheckScreen(
                     )
                 }
                 Spacer(Modifier.height(Spacing.sm))
+                // TEK AKIS (tasarim karari 4): parcalar ayri ekran degil, ayni
+                // listenin bolum basliklari. Parcayi ayri satir yapmak toplami
+                // iki yere bolerdi; parcayi hic gostermemek ise yanlis okunan
+                // parcaya erisimi kapatirdi - Gecmis tam olarak o yuzden var.
                 LazyColumn(
                     modifier = Modifier.weight(1f, fill = false),
                     verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                 ) {
-                    items(state.rows, key = { it.id }) { row ->
-                        CheckRowItem(row) { onEdit(row) }
+                    state.sections.forEach { section ->
+                        // Tek parcali fiste baslik null ve HIC cizilmiyor.
+                        section.title?.let { title ->
+                            item(key = "part-${section.receiptId}") {
+                                PartHeader(title = title, meta = section.meta)
+                            }
+                        }
+                        items(section.rows, key = { it.id }) { row ->
+                            CheckRowItem(row) { onEdit(row) }
+                        }
+                    }
+                    // "DEVAMINI CEK" LISTENIN SONUNDA, alt butonlarin arasinda
+                    // DEGIL: yaptigi is son satirin devami, onay degil.
+                    if (state.isPart) {
+                        item(key = "next-part") { NextPartRow(onNextPart) }
                     }
                 }
                 if (state.unaccounted.isNotEmpty()) {
@@ -234,15 +251,6 @@ fun ReceiptCheckScreen(
                 Spacer(Modifier.height(Spacing.sm))
                 // Yon dogru bulunmus olsa bile buton duruyor: otomatik secim iki
                 // fiste dogru bildi, ucuncude yanlis bilirse kullanici tikanmasin.
-                if (state.isPart) {
-                    // Parca okundu; sonraki parca tek dokunus uzakta olmali.
-                    NeydiButton(
-                        text = "Bu fişin devamını çek",
-                        onClick = onNextPart,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(Spacing.xs))
-                }
                 RotateRow(onReread)
                 Spacer(Modifier.height(Spacing.sm))
                 NeydiButton(
@@ -365,6 +373,73 @@ private fun GateChip(state: CheckState) {
  * duzeltilebiliyor - "emin degil" icin ayri bir onay akisi kurmak kullaniciyi
  * iki farkli sey ogrenmeye zorlardi.
  */
+/**
+ * Parca bolum basligi (tasarim karari 4).
+ *
+ * Bir SATIR DEGIL: dokunulamiyor, zemini yok, kart gibi cizilmiyor. Isi
+ * satirlari birbirinden ayirmak - girinti ya da kutu eklemek yeni bir bilesen
+ * gerektirirdi, halbuki hiyerarsi tek bir tipografi farkiyla soyleniyor.
+ */
+@Composable
+private fun PartHeader(title: String, meta: String?) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 2.dp, start = 4.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        meta?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
+ * *"Bu fişin devamını çek"* (tasarim karari 4).
+ *
+ * DOLGULU BUTON DEGIL: dolgulu hali "Onayla ve kaydet" ile ayni agirliktaydi
+ * ve iki farkli isi ayni sesle soyluyordu. Burada yapilan is son satirin
+ * devami - metin ve ikon, primary renginde.
+ */
+@Composable
+private fun NextPartRow(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(NeydiExtraShapes.pill)
+            .pressable(onTap = onClick)
+            .padding(horizontal = 4.dp, vertical = 10.dp)
+            .heightIn(min = Sizes.minTapTarget),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NeydiIcon(
+            icon = NeydiIcons.PhotoCamera,
+            contentDescription = null,
+            size = 20.dp,
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.width(Spacing.xs))
+        Text(
+            text = "Bu fişin devamını çek",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
 @Composable
 private fun CheckRowItem(row: CheckRow, onClick: () -> Unit) {
     val extras = LocalNeydiExtraColors.current
@@ -751,9 +826,14 @@ private val SHEET_MAX_HEIGHT = 520.dp
 // --- Onizlemeler ------------------------------------------------------------
 
 private val sampleRows = listOf(
-    CheckRow("1", "Krema", 10600, 2.0, "KREMA 18YAĞLI 200ML %1. *106.00", false),
-    CheckRow("2", null, 8450, 1.0, "TURŞU KORNI ŞON 670G 21. *84.50", true),
-    CheckRow("3", "Poşet", 100, 1.0, "ALIŞVERIŞ POŞETi BiM 220 *1.00", false),
+    CheckRow("1", "r1", "Krema", 10600, 2.0, "KREMA 18YAĞLI 200ML %1. *106.00", false),
+    CheckRow("2", "r1", null, 8450, 1.0, "TURŞU KORNI ŞON 670G 21. *84.50", true),
+    CheckRow("3", "r1", "Poşet", 100, 1.0, "ALIŞVERIŞ POŞETi BiM 220 *1.00", false),
+)
+
+/** Tek parcali fis: baslik yok, tek bolum. */
+private val sampleSections = listOf(
+    CheckSection(receiptId = "r1", title = null, meta = null, rows = sampleRows),
 )
 
 @PreviewLightDark
@@ -766,7 +846,7 @@ private fun ReceiptCheckHoldsPreview() = NeydiPreview {
             totalMinor = 19150,
             sumMinor = 19150,
             gateHolds = true,
-            rows = sampleRows,
+            sections = sampleSections,
         ),
         editing = null,
         suggestions = emptyList(),
@@ -785,7 +865,7 @@ private fun ReceiptCheckMismatchPreview() = NeydiPreview {
             totalMinor = 22550,
             sumMinor = 19150,
             gateHolds = false,
-            rows = sampleRows,
+            sections = sampleSections,
         ),
         editing = null,
         suggestions = emptyList(),
@@ -825,6 +905,49 @@ private fun ReceiptCheckLoadingPreview() = NeydiPreview {
     )
 }
 
+/**
+ * COK PARCALI FIS TEK AKISTA (tasarim karari 4).
+ *
+ * Onizlemesi olmadan bu hal cihazda ancak iki kare cekilerek gorulebilir -
+ * yani pratikte hic gorulmezdi. Bolum basliklari, "devamini cek" satiri ve
+ * fisin TAMAMINA ait manset burada bir arada.
+ */
+@PreviewLightDark
+@Composable
+private fun ReceiptCheckMultiPartPreview() = NeydiPreview {
+    ReceiptCheckScreen(
+        state = CheckState(
+            loading = false,
+            subtitleStore = "MİGROS",
+            subtitleMeta = "12 Ağustos 15:31 · 2 parça",
+            totalMinor = 64250,
+            sumMinor = 64250,
+            gateHolds = true,
+            isPart = true,
+            sections = listOf(
+                CheckSection(
+                    receiptId = "r1",
+                    title = "Parça 1",
+                    meta = "2 satır",
+                    rows = sampleRows.take(2),
+                ),
+                CheckSection(
+                    receiptId = "r2",
+                    title = "Parça 2",
+                    meta = "1 satır · 1 satır kontrol bekliyor",
+                    rows = listOf(
+                        CheckRow("9", "r2", null, 16400, 1.0, "KSR PYNR 400G *164.00", true),
+                    ),
+                ),
+            ),
+        ),
+        editing = null,
+        suggestions = emptyList(),
+        onEdit = {}, onDismissEdit = {}, onConfirm = { _, _ -> },
+        onFixAmount = { _, _ -> }, onOutcome = { _, _ -> }, onReread = {}, onNextPart = {}, onBack = {},
+    )
+}
+
 /** Kapinin UCUNCU hali: toplam okunamadi - "tutmadi" ile ayni sey DEGIL. */
 @PreviewLightDark
 @Composable
@@ -836,7 +959,7 @@ private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
             totalMinor = null,
             sumMinor = 19150,
             gateHolds = null,
-            rows = sampleRows,
+            sections = sampleSections,
         ),
         editing = null,
         suggestions = emptyList(),
@@ -855,7 +978,7 @@ private fun ReceiptCheckTotalUnreadablePreview() = NeydiPreview {
 @Composable
 private fun ReceiptCheckCorrectionPreview() = NeydiPreview {
     ReceiptCheckScreen(
-        state = CheckState(loading = false, storeName = "FiLE MARKET", rows = sampleRows),
+        state = CheckState(loading = false, storeName = "FiLE MARKET", sections = sampleSections),
         editing = sampleRows[1],
         suggestions = List(8) { i ->
             CatalogSeed(

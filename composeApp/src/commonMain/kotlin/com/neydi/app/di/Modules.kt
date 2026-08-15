@@ -91,7 +91,12 @@ val dataModule = module {
 
     viewModel { DeleteDataViewModel(wipe = get(), memberDao = get()) }
 
-    viewModel { HistoryViewModel(tripDao = get(), receiptDao = get(), tripLineDao = get()) }
+    viewModel {
+        HistoryViewModel(
+            tripDao = get(), receiptDao = get(),
+            tripLineDao = get(), receiptLineDao = get(),
+        )
+    }
 
     viewModel { (tripId: String?) ->
         FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())

@@ -77,3 +77,40 @@ mockup'tan sonra yazıldı.
 
 **Soru.** Boş hal çerçevesi güncellensin mi? (Aynı çerçevede "Katılma kodu"
 satırı da dolu görünüyor ama Faz 7'ye kadar üretilmiyor.)
+
+## 5. Tek akışta "Parça fişi · toplam son parçada" çipi artık ekranı anlatmıyor
+
+**Nerede çıktı.** Karar 4 uygulanırken.
+
+**Tasarımın verdiği.** Çok parçalı çerçevede çip: *"Fişin tamamı tutuyor"* —
+yani aritmetik tuttuğunda ne yazacağı belli.
+
+**Gerçek.** Üçüncü hal — **hiçbir parçanın toplamı okunamadı** — hâlâ eski
+cümleyi taşıyor: *"Parça fişi · toplam son parçada"*. Bu cümle karar 4'ten önce
+doğruydu, çünkü ekran o zaman tek bir parçayı gösteriyordu. Artık ekran fişin
+tamamını gösteriyor, yani "bu bir parça fişi" demek ekranın kendisiyle
+çelişiyor.
+
+Cihazda görüldü: iki parçalı AKYURT fişinde ikinci parça hiç okunamadı, manşet
+`~229,05 TL` (satırlardan hesaplandı) ama çip hâlâ "toplam son parçada" diyor —
+oysa son parça okunamadı ve kullanıcının yapması gereken şey onu yeniden
+çekmek.
+
+**Soru.** Bu halde çip ne demeli? *"Son parça okunamadı"* gibi eksiği söyleyen
+bir şey mi, yoksa karar 15'in çipiyle mi ("Satırlardan hesaplandı")
+birleşmeli?
+
+## 6. "Bu fişin devamını çek" listenin dibinde kalıyor
+
+**Nerede çıktı.** Karar 4 cihazda doğrulanırken.
+
+**Tasarımın verdiği.** Satır, kaydırılan içeriğin **sonunda** duruyor — son
+parçanın satırlarından hemen sonra.
+
+**Gerçek.** Tasarımın çerçevesinde altı satır var; gerçek fişte altmış olabilir.
+Cihazda satır listesi kaydırılmadan bu satır görünmüyor — yani "devamını çek"
+tam da uzun fişte, en çok gerektiği anda gizli kalıyor.
+
+**Soru.** Satır listenin sonunda mı kalsın (tasarımdaki yer), yoksa alt buton
+bloğuna mı sabitlensin? Sabitlenirse "Onayla ve kaydet" ile aynı görsel
+ağırlığa gelmemesi gerekir.

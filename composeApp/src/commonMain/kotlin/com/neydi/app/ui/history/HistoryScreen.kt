@@ -40,6 +40,7 @@ import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.formatDayMonthTime
 import com.neydi.app.data.formatDayMonthYear
 import com.neydi.app.data.formatMinor
+import com.neydi.app.data.receipt.storeDisplayName
 import com.neydi.app.ui.components.AccentChip
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
@@ -263,30 +264,67 @@ private fun TripRow(trip: HistoryTrip, onOpenReceipt: (String) -> Unit) {
     }
 }
 
-/** Cok parcali fisin tek parcasi - girintili, sonuk, ama dokunulabilir. */
+/**
+ * Cok parcali fisin tek parcasi - GIRINTILI (tasarim karari 4).
+ *
+ * TOPLAM GEZIDE, SATIRLAR PARCALARDA. Parca satiri tutar TASIMIYOR: toplam
+ * fisin tamamina ait ve gezi satirinda duruyor; her parcaya ayri bir rakam
+ * yazmak toplami iki yere bolerdi. Parcanin soyledigi sey kac satir tasidigi
+ * ve kacinin onay bekledigi.
+ *
+ * Girinti hiyerarsiyi TEK bir gorsel isaretle soyluyor ve yeni bir bilesen
+ * gerektirmiyor.
+ */
 @Composable
 private fun PartRow(receipt: HistoryReceipt, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .pressable(onTap = onClick)
-            .heightIn(min = Sizes.minTapTarget)
-            .padding(start = Spacing.md, bottom = Spacing.xs),
+            .heightIn(min = 56.dp)
+            .padding(start = 20.dp, bottom = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = if (receipt.isPart) "parça" else statusLabel(receipt.status) ?: "fiş",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = receipt.totalMinor?.let { formatMinor(it) } ?: "",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.width(Spacing.sm))
+        Column(Modifier.weight(1f)) {
+            Text(
+                // Parca degilse - ayni gezideki AYRI bir magaza fisi - adi
+                // "Parça 2" olamaz; o zaman magaza adi ya da "Fiş" yaziyor.
+                text = receipt.partIndex?.let { "Parça $it" }
+                    ?: receipt.storeName?.let { storeDisplayName(it) }
+                    ?: "Fiş",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = partMeta(receipt),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         SingleStatusIcon(receipt)
+        Spacer(Modifier.width(Spacing.xs))
+        NeydiIcon(icon = NeydiIcons.ChevronRight, contentDescription = null, size = 20.dp)
+    }
+}
+
+/**
+ * Parca satirinin ikinci satiri: *"16 satır · 1 satır kontrol bekliyor"*.
+ *
+ * ONAY BEKLEYEN SATIR VARSA ONU SOYLUYOR, yoksa durumu. Ikisini birden yazmak
+ * ayni seyi iki kez soylemek olurdu - bekleyen satir zaten "kontrol bekliyor"
+ * demek.
+ */
+private fun partMeta(receipt: HistoryReceipt): String {
+    val lines = "${receipt.lineCount} satır"
+    return when {
+        receipt.reviewCount > 0 -> "$lines · ${receipt.reviewCount} satır kontrol bekliyor"
+        receipt.status == ReceiptStatus.VERIFIED -> "$lines · okundu"
+        else -> statusLabel(receipt.status)?.let { "$lines · $it" } ?: "$lines · okundu"
     }
 }
 
@@ -387,6 +425,51 @@ private fun HistoryPreview() = NeydiPreview {
 @Composable
 private fun HistoryEmptyPreview() = NeydiPreview {
     HistoryScreen(trips = emptyList(), onBack = {}, onOpenReceipt = {})
+}
+
+/**
+ * PARCALI GEZI (tasarim karari 4): toplam gezide, satirlar parcalarda.
+ *
+ * Gezi ikonu EN KOTU hali gosteriyor - ikinci parcada onay bekleyen satir var,
+ * yani gezi satiri amber giyiyor, birinci parca okunmus olsa bile.
+ */
+@PreviewLightDark
+@Composable
+private fun HistoryMultiPartPreview() = NeydiPreview {
+    HistoryScreen(
+        trips = listOf(
+            HistoryTrip(
+                id = "t1",
+                closedAt = 1_755_100_000_000,
+                totalMinor = 64250,
+                storeName = "MİGROS",
+                itemCount = 34,
+                receipts = listOf(
+                    HistoryReceipt(
+                        id = "p1",
+                        status = ReceiptStatus.VERIFIED,
+                        totalMinor = null,
+                        storeName = "MİGROS TİCARET A.Ş.",
+                        capturedAt = 1_755_099_000_000,
+                        partIndex = 1,
+                        lineCount = 18,
+                    ),
+                    HistoryReceipt(
+                        id = "p2",
+                        status = ReceiptStatus.MISMATCHED,
+                        totalMinor = 64250,
+                        storeName = null,
+                        capturedAt = 1_755_100_000_000,
+                        partIndex = 2,
+                        lineCount = 16,
+                        reviewCount = 1,
+                    ),
+                ),
+            ),
+        ),
+        onBack = {},
+        onOpenReceipt = {},
+    )
 }
 
 /**
