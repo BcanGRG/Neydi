@@ -100,6 +100,15 @@ fun SuggestionChip(
     label: String,
     reason: String,
     modifier: Modifier = Modifier,
+    /**
+     * Bu urun ZATEN LISTEDE mi (tasarim karari 12).
+     *
+     * "Bu oturumda eklendi" DEGIL, "bu listede var" demek. Ikisi cakismiyor
+     * (oturumda eklenen zaten listede) ama listenin durumunu gostermek
+     * sheet'i kapatip acmaya karsi dayanikli: ayni urun ikinci kez
+     * isaretsiz gorunmuyor. Oturumun kendi sayaci zaten baslikta.
+     */
+    checked: Boolean = false,
     onClick: () -> Unit,
 ) {
     Row(
@@ -107,11 +116,21 @@ fun SuggestionChip(
             .heightIn(min = SizesExtra.suggestionChip)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .pressable(onTap = onClick)
+            // ISARETLI CIP PASIF: ayni satiri iki kez eklemek bir is degil,
+            // ve pasiflik bunu dokunmadan once soyluyor.
+            .pressable(enabled = !checked, onTap = onClick)
             .padding(horizontal = Spacing.md, vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        if (checked) {
+            NeydiIcon(
+                icon = NeydiIcons.CheckCircle,
+                contentDescription = "listede var",
+                size = 18.dp,
+                tint = MaterialTheme.colorScheme.secondary,
+            )
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,

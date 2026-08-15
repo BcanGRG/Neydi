@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@72,600,30,0&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#E4D8C9; font-family:'Plus Jakarta Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#B34418; text-decoration:none; }
+  a:hover { color:#8A5A00; }
+</style>
+</helmet>
+
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;color:#221A14">
+
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">15 Ağustos 2026 · karar defteri</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Açık kalan on iki madde</div>
+    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Kodun ölçtüğü on iki yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var; üç yüzey ilk kez burada çiziliyor.</div>
+    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">İlk kez çizilen üç yüzey</div>
+    </div>
+
+    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Verilerimi sil · onay</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">dialog değil, destinasyon</div></div>
+        <div data-screen-label="7 Silme onayı" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>19:11</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Verilerimi sil</div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:16px;padding:24px 20px 0">
+            <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Bunlar geri gelmez</div>
+            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45">Silme hanenin tamamı için çalışır ve anında yapılır. Geri alma yok, yedek yok.</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ deleteRows }}" as="d" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;min-height:56px;border-top:1px solid #E7DACB">
+                  <div style="flex:1;font:500 17px/1.28 'Plus Jakarta Sans'">{{ d.name }}</div>
+                  <div style="font:600 15px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ d.count }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;border-top:1px solid #E7DACB;padding-top:14px">Fiş fotoğrafları cihazdan da silinir. Hane iki kişilikse eşinin cihazındaki veri de silinir; hane dağılır.</div>
+          </div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 16px 34px;border-top:1px solid #E7DACB">
+            <div style="height:52px;border-radius:999px;background:#B3261E;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#FFFFFF">Verileri sil</div>
+            <div style="height:52px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Vazgeç</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Fiş kontrol · çok parçalı</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">parça hata hali değil, normal hal</div></div>
+        <div data-screen-label="4 Çok parçalı" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>15:36</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:0 16px 12px;border-bottom:1px solid #E7DACB">
+            <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Fiş kontrol</div></div>
+            <div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">Migros Ataşehir · 12 Ağustos 15:31 · 2 parça</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:36px;line-height:1.1;letter-spacing:-0.01em;font-variant-numeric:tabular-nums">642,50 TL</div>
+              <div style="height:32px;align-self:flex-start;padding:0 12px;border-radius:999px;background:#E3EFE7;display:flex;align-items:center;gap:6px;font:600 14px/1 'Plus Jakarta Sans';color:#2E6B45"><span style="font-family:'Material Symbols Rounded';font-size:18px;font-variation-settings:'FILL' 1">check_circle</span>Fişin tamamı tutuyor</div>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:12px 16px 0">
+            <sc-for list="{{ multiRows }}" as="r" hint-placeholder-count="8">
+              <sc-if value="{{ r.isPart }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px 2px">
+                  <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">{{ r.title }}</div>
+                  <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">{{ r.meta }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.isRow }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:stretch;gap:10px;padding:10px 14px 10px 10px;border-radius:16px;background:#FFFFFF;border:1px solid #E7DACB">
+                  <sc-if value="{{ r.unsure }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:4px;flex:none;border-radius:2px;background:#E0A32E"></div>
+                  </sc-if>
+                  <sc-if value="{{ r.plain }}" hint-placeholder-val="{{ true }}">
+                    <div style="width:4px;flex:none"></div>
+                  </sc-if>
+                  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0">
+                    <div style="font:500 17px/1.28 'Plus Jakarta Sans'">{{ r.name }}</div>
+                    <div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">{{ r.ocr }}</div>
+                  </div>
+                  <div style="width:86px;flex:none;text-align:right;font:600 17px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ r.price }}</div>
+                  <sc-if value="{{ r.hasChevron }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666;flex:none;align-self:center">chevron_right</span>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </sc-for>
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 4px;font:600 15px/1 'Plus Jakarta Sans';color:#B34418"><span style="font-family:'Material Symbols Rounded';font-size:20px">photo_camera</span>Bu fişin devamını çek</div>
+          </div>
+          <div style="flex:none;padding:12px 16px 34px;border-top:1px solid #E7DACB">
+            <div style="height:52px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff">Onayla ve kaydet</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Geçmiş · parçalı gezi</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">gezi ikonu en kötü hali gösterir</div></div>
+        <div data-screen-label="6 Parçalı gezi" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>19:02</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px">
+            <div style="display:flex;align-items:center;gap:12px;height:72px;flex:none;border-bottom:1px solid #E7DACB">
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Migros Ataşehir</div><div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">12 Ağustos · 34 ürün</div></div>
+              <div style="width:92px;flex:none;text-align:right;font:600 17px/1.28 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">642,50 TL</div>
+              <span style="font-family:'Material Symbols Rounded';font-size:22px;flex:none;color:#96560A">error_outline</span>
+            </div>
+            <sc-for list="{{ tripParts }}" as="p" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;height:56px;flex:none;border-bottom:1px solid #E7DACB;padding-left:20px">
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45">{{ p.title }}</div><div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">{{ p.meta }}</div></div>
+                <sc-if value="{{ p.warn }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-family:'Material Symbols Rounded';font-size:20px;flex:none;color:#96560A">error_outline</span>
+                </sc-if>
+                <sc-if value="{{ p.ok }}" hint-placeholder-val="{{ true }}">
+                  <span style="font-family:'Material Symbols Rounded';font-size:20px;flex:none;color:#5C4F45">receipt_long</span>
+                </sc-if>
+                <span style="font-family:'Material Symbols Rounded';font-size:20px;flex:none;color:#8A7666">chevron_right</span>
+              </div>
+            </sc-for>
+            <sc-for list="{{ otherTrips }}" as="h" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;height:72px;flex:none;border-bottom:1px solid #E7DACB">
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">{{ h.store }}</div><div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ h.date }} · {{ h.count }}</div></div>
+                <div style="width:92px;flex:none;text-align:right;font:600 17px/1.28 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ h.total }}</div>
+                <span style="font-family:'Material Symbols Rounded';font-size:22px;flex:none;color:#8A7666">{{ h.icon }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:none;padding:12px 20px 34px"><div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#8A7666">Toplam gezide, satırlar parçalarda. Parça satırı yalnızca gezi iki parçadan oluşuyorsa çizilir.</div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px;flex:1;min-width:340px;max-width:460px">
+        <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Toast — yeni bileşen</div>
+          <div style="display:flex;align-items:center;background:#221A14;border-radius:18px;padding:14px 16px"><div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6">Liste hazır, eksik görünmüyor</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ toastSpec }}" as="t" hint-placeholder-count="5">
+              <div style="display:flex;gap:10px;font:400 14px/1.45 'Plus Jakarta Sans';border-top:1px solid #E7DACB;padding-top:8px">
+                <div style="width:96px;flex:none;font:600 14px/1.45 'Plus Jakarta Sans';color:#8A5A00">{{ t.k }}</div>
+                <div style="flex:1;color:#5C4F45">{{ t.v }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Floating toolbar · iki hedef</div>
+          <div style="display:flex;align-items:center;gap:6px;background:#FFFFFF;border:1px solid #E7DACB;border-radius:999px;padding:6px;box-shadow:0 3px 4px rgba(0,0,0,.18)">
+            <div style="width:56px;height:56px;border-radius:999px;background:#B34418;display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-size:26px;color:#fff">add</span></div>
+            <div style="flex:1;height:56px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 16px/1 'Plus Jakarta Sans';color:#fff;font-variant-numeric:tabular-nums">Bitir (12/18)</div>
+          </div>
+          <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Çıkış artık toolbar'da değil, başlıktaki <span style="font-family:'Material Symbols Rounded';font-size:15px">more_vert</span> menüsünde tek madde olarak duruyor: "Alışverişi bırak". Menü tek madde taşıdığı için reyonda gezinme yine kapalı.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">02</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Karar defteri</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">On iki madde, on iki karar. Her karar bir gerekçe taşıyor.</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:20px;max-width:1400px">
+      <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="12">
+        <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:28px;height:28px;border-radius:999px;background:#221A14;display:flex;align-items:center;justify-content:center;font:700 13px/1 'Plus Jakarta Sans';color:#F5EDE6;flex:none;font-variant-numeric:tabular-nums">{{ d.no }}</div>
+            <div style="font:700 18px/1.28 'Plus Jakarta Sans'">{{ d.title }}</div>
+          </div>
+          <div style="display:flex;gap:10px;border-top:1px solid #E7DACB;padding-top:12px">
+            <div style="width:64px;flex:none;font:600 13px/1.45 'Plus Jakarta Sans';color:#8A7666">kural</div>
+            <div style="flex:1;font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ d.rule }}</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="width:64px;flex:none;font:600 13px/1.45 'Plus Jakarta Sans';color:#8A5A00">karar</div>
+            <div style="flex:1;font:500 15px/1.5 'Plus Jakarta Sans';color:#221A14">{{ d.decision }}</div>
+          </div>
+          <sc-if value="{{ showWhy }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px">
+              <div style="width:64px;flex:none;font:600 13px/1.45 'Plus Jakarta Sans';color:#8A7666">gerekçe</div>
+              <div style="flex:1;font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ d.why }}</div>
+            </div>
+          </sc-if>
+          <div style="display:flex;gap:10px;border-top:1px solid #E7DACB;padding-top:12px">
+            <div style="width:64px;flex:none;font:600 13px/1.45 'Plus Jakarta Sans';color:#8A7666">nerede</div>
+            <div style="flex:1;font:500 14px/1.5 'Plus Jakarta Sans'"><a href="{{ d.href }}">{{ d.where }}</a></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ showOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:32px;padding:32px;display:flex;flex-direction:column;gap:12px;max-width:1400px">
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Açık soru kalmadı</div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Mağazalar ve Ekle sheet'indeki işaret de kapandı (11 ve 12). İkisi de veri sahipliği sorusuydu; ikisinde de daha az iş yapan cevap kazandı — mağaza satırı fişten doğuyor, işaret listenin durumunu söylüyor.</div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showWhy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sunum&quot;},&quot;showOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sunum&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const part = (title, meta) => ({ isPart: true, isRow: false, title, meta });
+    const row = (name, ocr, price, o) => Object.assign({
+      isRow: true, isPart: false, name, ocr, price, unsure: false, plain: true, hasChevron: false
+    }, o || {});
+    return {
+      showWhy: this.props.showWhy ?? true,
+      showOpen: this.props.showOpen ?? true,
+      deleteRows: [
+        { name: "Alışveriş ve fişler", count: "18" },
+        { name: "Fiş fotoğrafı", count: "12" },
+        { name: "Ürün ve fiyat geçmişi", count: "214" },
+        { name: "Her zamankiler, önerilmeyenler", count: "9 + 2" }
+      ],
+      multiRows: [
+        part("Parça 1", "18 satır"),
+        row("Yumurta 10'lu", "YMRT KLS 10LU", "89,90 TL"),
+        row("Pınar Süt 1 L", "PNR SUT 1L X2", "84,00 TL"),
+        row("Tam Buğday Ekmek", "TM BGDY EKMK", "18,00 TL"),
+        part("Parça 2", "16 satır"),
+        row("Ayçiçek Yağı 5 L", "AYCCK YAG 5LT", "369,90 TL"),
+        row("Kaşar Peyniri 400 g", "KSR PYNR 400G", "164,00 TL", { unsure: true, plain: false, hasChevron: true }),
+        row("Bulgur 1 kg", "BULGUR 1KG", "54,00 TL")
+      ],
+      tripParts: [
+        { title: "Parça 1", meta: "18 satır · okundu", warn: false, ok: true },
+        { title: "Parça 2", meta: "16 satır · 1 satır kontrol bekliyor", warn: true, ok: false }
+      ],
+      otherTrips: [
+        { store: "A101 Ataşehir", date: "2 Ağustos", count: "18 ürün", total: "601,00 TL", icon: "receipt_long" },
+        { store: "Migros Ataşehir", date: "23 Temmuz", count: "21 ürün", total: "688,40 TL", icon: "receipt_long" },
+        { store: "BİM", date: "14 Temmuz", count: "9 ürün", total: "212,60 TL", icon: "receipt_long" },
+        { store: "Migros Ataşehir", date: "3 Temmuz", count: "17 ürün", total: "574,00 TL", icon: "receipt_long" }
+      ],
+      toastSpec: [
+        { k: "zemin", v: "textPrimary #221A14, metin surface #F5EDE6, 14sp / 500" },
+        { k: "şekil", v: "köşe 18dp, gölge yok, kenarlık yok" },
+        { k: "konum", v: "floating toolbar'ın 12dp üstü; toolbar yoksa safe area + 12dp" },
+        { k: "süre", v: "2 sn, aksiyon yok, dokunma hedefi yok, kuyruk yok" },
+        { k: "nerede", v: "Ekran 3 atlandığında; başka olay eklenirse önce buraya yazılır" }
+      ],
+      decisions: [
+        {
+          no: "1",
+          title: "Alışveriş modundan çıkış",
+          rule: "Reyonda gezinme gizli: başlıkta more_vert yok, geri oku yok. Tek çıkış \"Bitir (12/18)\".",
+          decision: "Alışveriş modunda da more_vert açılır ve içinde tek madde vardır: \"Alışverişi bırak\". Gezi kapanmaz, mutabakat çalışmaz, liste ve işaretlemeler olduğu gibi kalır.",
+          why: "Mod ekranın değil gezinin durumu, yani kalıcı: uygulamayı kapatmak da geri tuşu da çıkarmıyordu. Tek çıkışı \"Bitir\" olan bir moddan çıkmak, yapılmamış bir alışverişi kapatmak demekti. Menü tek madde taşıdığı için reyonda gezinme hâlâ kapalı — Ayarlar'a yanlışlıkla düşülemiyor. Moda girmek onaysız kalıyor: ucuz hatanın karşılığı ucuz geri dönüş, ikinci bir onay ekranı değil.",
+          where: "Ekran 1 · alışveriş modu",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "2",
+          title: "\"Verilerimi sil\" ile sıfır dialog",
+          rule: "Gizlilik bölümünde düz bir satır, error renginde · v1'de sıfır modal dialog.",
+          decision: "Satır chevron kazandı ve tam ekran bir onay destinasyonuna gidiyor. Dialog yasağı bozulmuyor, silme onaysız da çalışmıyor.",
+          why: "Geri alınamaz bir işi snackbar süresine sıkıştırmak olmazdı; satır içi iki aşamalı dokunuş ise kazayı yalnızca bir dokunuş uzağa taşıyor. Destinasyon üç şeyi birden yapıyor: geri tuşu doğal bir vazgeçme yolu oluyor, ekran neyin gideceğini sayıyla yazıyor, ve \"Sil\" tek başına duruyor. Kapsam hanenin tamamı: alışverişler, fişler, fiyat geçmişi ve cihazdaki fiş fotoğrafları.",
+          where: "Bu dosya · yeni ekran",
+          href: "Neydi - Kararlar.dc.html"
+        },
+        {
+          no: "3",
+          title: "Toolbar'ın undo ve filter_list'i",
+          rule: "Alışveriş modu toolbar'ında dört hedef: add, undo, filter_list, \"Bitir (0/18)\".",
+          decision: "Toolbar iki hedefe indi: add (Ekle sheet'i) ve Bitir (n/n). undo ile filter_list kaldırıldı.",
+          why: "Geri almayı tasarım zaten \"Alındı\" bölümüne veriyor ve orada tek dokunuş; ikinci bir geri alma yolu ikinci bir zihinsel model demekti. filter_list'in tanımlı bir işi yok: liste reyona göre gruplu, başlık kaç kaldığını yazıyor. Hiçbir şey yapmayan buton çizmek, \"boş bölüm çizilmez\" ilkesinin aynı sınıfı. İki hedef kalınca Bitir de genişledi.",
+          where: "Ekran 1 · Tasarım sistemi",
+          href: "Neydi - Tasarim Sistemi.dc.html"
+        },
+        {
+          no: "4",
+          title: "Çok parçalı fiş",
+          rule: "Bir alışveriş = bir fiş. Kamera \"uzunsa 2 kare çek\" diyor ama sonraki ekranların hiçbiri iki kareyi göstermiyor.",
+          decision: "Parça normal bir hal, hata hali değil. Fiş Kontrol tek akış: parça başlıkları bölüm başlığı gibi çiziliyor, manşet tutar fişin tamamı, aritmetik çipi \"Fişin tamamı tutuyor\" diyor. Geçmiş'te gezi satırı toplamı taşıyor, parçalar altında girintili duruyor, gezi ikonu en kötü hali gösteriyor.",
+          why: "60 kalemlik bir fiş tek kareye sığdırılınca satır başına 4,7 piksel düşüyor — çok kare fiziksel bir zorunluluk, kolaylık değil. Parçayı ayrı satır yapmak toplamı iki yere bölerdi; parçayı hiç göstermemek yanlış okunan parçaya erişimi kapatır, ki Geçmiş tam olarak o yüzden var. Girinti hiyerarşiyi tek bir görsel işaretle söylüyor ve yeni bir bileşen gerektirmiyor.",
+          where: "Bu dosya · iki yeni ekran",
+          href: "Neydi - Kararlar.dc.html"
+        },
+        {
+          no: "5",
+          title: "İlk gün: ürün çipi mi, reyon çipi mi",
+          rule: "Boş durum 08: 3×4 grid, 12 başlangıç ürünü, \"Dokun, listeye düşsün.\"",
+          decision: "Ürün çipi kazanıyor: 12 çip, ama sabit liste değil — katalogdaki commonalityRank ilk 12'si.",
+          why: "Ürün çipi tek dokunuşta listeye düşürüyor, reyon çipi bir adım daha ekliyor; boş durumun tek işi ilk satırı en kısa yoldan doğurmak. Sıra katalogdan geldiği için katalog büyüdükçe grid kendiliğinden tazeleniyor ve aynı bilginin iki ayrı kopyası olmuyor. Sıralama katalogdan gelse de metin kısa kalıyor: \"Ekmek\", \"Süt\" — çipte marka ve gramaj yok.",
+          where: "Ekran 1 · kurulum atlandı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "6",
+          title: "Kurulum kaç adım, ne zaman açılıyor",
+          rule: "Üç adım: hane, her zamankiler, tempo. Adım 2 ve 3'te \"Atla\" var. \"Bir daha görünmez.\"",
+          decision: "Kurulum şimdilik iki adım: her zamankiler (1 / 2) ve tempo (2 / 2). Hane adımı auth ile birlikte Faz 7'de ekleniyor ve o gün kurulum yeniden üç adım oluyor. Tetikleyici: setupCompletedAt boş VE hane hiç ürün görmemiş.",
+          why: "Var olmayan bir auth için adım çizmek, tutulamayacak bir söz vermek olurdu — e-posta alanı çalışmazsa ilk ekran ilk hayal kırıklığı olur. İkinci koşul olmadan mevcut kurulumlarda dolu bir veritabanının üstüne onboarding açılıyor; \"hane hiç ürün görmedi\" bunu tek bir sorguyla kesiyor.",
+          where: "Ekran 8 · kurulum",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "7",
+          title: "Ekran 3'ün bölüm notları",
+          rule: "Her bölüm bir title ve bir note taşıyor; note tasarımda örneklenmemiş.",
+          decision: "Üç not: \"listede vardı, alınmadı\" · \"listede olmayan sabitleriniz\" · \"tahmin — sen onaylamadan eklenmez\".",
+          why: "Not bölümün ne yaptığını değil neden var olduğunu söylüyor. Üçüncüsü tek gerçek iş yapan: varsayılan kapalı olmanın sebebini yazıyor, böylece kapalı kutular bir ihmal gibi değil bir nezaket gibi okunuyor. Notlar 14sp, muted ve tek satır — başlıkla yarışmıyorlar.",
+          where: "Ekran 3 · eksik olabilir",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "8",
+          title: "\"Liste hazır, eksik görünmüyor\"",
+          rule: "Ekran 3 boşsa açılmıyor, doğrudan alışveriş moduna giriliyor ve 2 saniyelik koyu bir pill görünüyor.",
+          decision: "Yeni bir toast bileşeni: aksiyonsuz, 2 sn, zemin #221A14, köşe 18dp, gölge yok, floating toolbar'ın 12dp üstünde. Snackbar ayrı kalıyor.",
+          why: "Snackbar aksiyon taşıyor ve uygulamada tek bir yerde kullanılıyor: alışveriş kendiliğinden kapandığında \"Fişi gör\". Bu mesajda dokunulacak bir şey yok — olan bitti bilgisi. İkisini aynı bileşene bindirmek, işaretlemede snackbar yasağını da bulanıklaştırırdı. Toast'ın kuyruğu yok: iki mesaj çakışırsa ikincisi hiç çizilmiyor.",
+          where: "Tasarım sistemi · bileşenler",
+          href: "Neydi - Tasarim Sistemi.dc.html"
+        },
+        {
+          no: "9",
+          title: "Fiş Kontrol'de manşet",
+          rule: "Fiş Kontrol'de 642,50 TL Fraunces 36sp manşet, yanında aritmetik çipi.",
+          decision: "Manşet tutar. 36sp Fraunces 600, altında 32dp aritmetik çipi sola dayalı; satırlar manşetin altından başlıyor.",
+          why: "Ekranın işi \"bu fiş doğru mu\" sorusunu tek bakışta kapatmak; satır sayısı değişken ve zaten kaydırmalı, yani manşet olacak sabit tek şey tutar. Fraunces'in dört kullanım yerinden biri alışveriş sonrası büyük tutar — bu onun aynı anı, yeni bir istisna değil. Çip alta indi çünkü amber hali (\"Toplam 4,20 TL tutmuyor\") yan yana dizilişte manşeti sıkıştırıyordu.",
+          where: "Ekran 4 · Mod A",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "10",
+          title: "Avatar ve PriceText",
+          rule: "Başlıkta 28dp avatar + 6dp varlık noktası · tasarım çipte 14sp, fiş satırında 17sp fiyat istiyor.",
+          decision: "Avatar tek kullanıcılı hanede de çiziliyor: kendi baş harfi, nokta gri. PriceText ikiye ayrılıyor — priceChip 14sp/600, priceRow 17sp/600.",
+          why: "Avatar başlığın sabit bir parçası; eş eklendiğinde yerleşim değişmiyor, yalnızca nokta yeşile dönüyor. Tek kullanıcıda gizlemek, ikinci kişi eklendiği gün başlığı yeniden öğretmek olurdu. Fiyat ikiye ayrılıyor çünkü fiş satırındaki fiyat dokunulabilir ve düzeltilebilir: bir kademe büyük olması dokunulabilirliğin kendisi, süs değil.",
+          where: "Ekran 1 · Compose spec",
+          href: "Neydi - Compose Spec.dc.html"
+        },
+        {
+          no: "11",
+          title: "Mağazalar bölümü ne zaman doluyor",
+          rule: "Ayarlar'da Mağazalar bölümü var; store tablosu şemada duruyor ama hiçbir yazan yok.",
+          decision: "Mağaza satırı ilk fişte market adı okunduğunda kendiliğinden doğuyor. Kullanıcı elle mağaza eklemiyor; bölüm satır yokken hiç çizilmiyor.",
+          why: "Elle eklenen bir mağaza fiyat karşılaştırmasına hiçbir veri katmıyor — karşılaştırmayı besleyen şey fişin kendisi. Kullanıcıya iş verip karşılığında hiçbir şey döndürmeyen bir form, uygulamanın \"her ekran varlığını ispat eder\" kuralına takılıyor. Bölüm ilk fişten sonra kendiliğinden görünüyor, yani boş hal hiç yaşanmıyor.",
+          where: "Ekran 7 · Ayarlar",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "12",
+          title: "Ekle sheet'indeki işaret",
+          rule: "Tasarım eklenmiş ürünleri işaretli ve pasif gösteriyor; \"eklenmiş\"in tanımı yazılmamış.",
+          decision: "İşaret \"bu listede var\" demek — bu oturumda eklendi demek değil. İşaretli çip pasif kalıyor.",
+          why: "Oturumda eklenen ürün zaten listede, yani iki tanım çakışmıyor; oturumun kendi sayacı da başlıkta duruyor (\"3 ürün eklendi\"). Listenin durumunu göstermek sheet'i kapatıp açmaya karşı dayanıklı: aynı ürün ikinci kez işaretsiz görünmüyor. Pasif olması da aynı şeyi söylüyor — aynı satırı iki kez eklemek bir iş değil.",
+          where: "Ekran 2 · Ekle sheet'i",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

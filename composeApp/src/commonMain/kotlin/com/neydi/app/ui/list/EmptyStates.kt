@@ -1,21 +1,30 @@
 package com.neydi.app.ui.list
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import com.neydi.app.data.db.CatalogSeed
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
+import com.neydi.app.ui.theme.pressable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.neydi.app.data.db.Category
 import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiPreview
-import com.neydi.app.ui.components.SuggestionChip
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
@@ -34,9 +43,10 @@ import com.neydi.app.ui.theme.SpacingExtra
 @Composable
 internal fun EmptyState(
     kind: EmptyKind,
-    categories: List<Category>,
+    /** Ilk gunun 12 cipi - katalogdaki en yaygin urunler (tasarim karari 5). */
+    starters: List<CatalogSeed>,
     hasClipboard: Boolean,
-    onCategory: (Category) -> Unit,
+    onStarter: (CatalogSeed) -> Unit,
     onClipboard: () -> Unit,
     modifier: Modifier = Modifier,
     /** *"Son alışveriş 3 gün önce, 642 TL."* - yoksa null. */
@@ -95,21 +105,24 @@ internal fun EmptyState(
             )
         }
 
-        // Kategori cipleri YALNIZCA ilk gun: dongu ortasinda kullanici zaten
-        // ne yapacagini biliyor, 12 cip gostermek gurultu olur.
-        if (kind == EmptyKind.ILK_GUN && categories.isNotEmpty()) {
-            LazyRow(
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = Spacing.md,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        // URUN CIPLERI YALNIZCA ilk gun: dongu ortasinda kullanici zaten ne
+        // yapacagini biliyor, 12 cip gostermek gurultu olur.
+        //
+        // REYON DEGIL URUN (tasarim karari 5): urun cipi tek dokunusta
+        // listeye dusuruyor, reyon cipi bir adim daha ekliyor. Bos durumun
+        // tek isi ilk satiri en kisa yoldan dogurmak.
+        //
+        // 3x4 GRID, yatay serit degil: 12 cipin hepsi ayni anda gorunmeli -
+        // seritte kaydirmayan kullanici yalnizca ucunu gorurdu.
+        if (kind == EmptyKind.ILK_GUN && starters.isNotEmpty()) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.heightIn(max = 240.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(categories, key = { it.id }) { category ->
-                    SuggestionChip(
-                        label = category.name,
-                        reason = "reyon",
-                        onClick = { onCategory(category) },
-                    )
+                items(starters, key = { it.id }) { seed ->
+                    StarterChip(seed.name) { onStarter(seed) }
                 }
             }
         }
@@ -139,16 +152,19 @@ internal fun EmptyState(
 
 // --- Preview ---------------------------------------------------------------
 
-private fun fold(id: String, name: String) = Category(id, name, 0, 0xFF6E8B3D)
+private fun seed(id: String, name: String) = CatalogSeed(
+    id = id, name = name, matchKey = name.lowercase(),
+    categoryId = "temel-gida", commonalityRank = 1, defaultUnit = "adet",
+)
 
 @PreviewLightDark
 @Composable
 private fun EmptyFirstDayPreview() = NeydiPreview {
     EmptyState(
         kind = EmptyKind.ILK_GUN,
-        categories = listOf(fold("1", "Meyve-Sebze"), fold("2", "Fırın-Ekmek"), fold("3", "Süt-Kahvaltılık")),
+        starters = listOf(seed("1", "Ekmek"), seed("2", "Süt"), seed("3", "Yumurta")),
         hasClipboard = true,
-        onCategory = {},
+        onStarter = {},
         onClipboard = {},
     )
 }
@@ -158,9 +174,37 @@ private fun EmptyFirstDayPreview() = NeydiPreview {
 private fun EmptyMidCyclePreview() = NeydiPreview {
     EmptyState(
         kind = EmptyKind.DONGU_ORTASI,
-        categories = emptyList(),
+        starters = emptyList(),
         hasClipboard = false,
-        onCategory = {},
+        onStarter = {},
         onClipboard = {},
     )
+}
+
+/**
+ * Baslangic cipi - 48dp pill, tek dokunusta listeye.
+ *
+ * `SuggestionChip` DEGIL: onun gerekce alani var ("14 gun oldu") ve burada
+ * gerekce yok - ilk gun hicbir sey olculmemis. Tasarimin metni de kisa
+ * tutuyor: "Ekmek", "Sut" - markasiz, gramajsiz.
+ */
+@Composable
+private fun StarterChip(name: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .fillMaxWidth()
+            .clip(NeydiExtraShapes.pill)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .pressable(onTap = onClick)
+            .border(Sizes.hairline, LocalNeydiExtraColors.current.hairline, NeydiExtraShapes.pill),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+    }
 }

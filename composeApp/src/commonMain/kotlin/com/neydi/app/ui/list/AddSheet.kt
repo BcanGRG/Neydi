@@ -76,6 +76,8 @@ internal fun AddSheetContent(
     onQueryChange: (String) -> Unit = {},
     /** Aramanin sonuclari; bos sorguda bos liste. */
     results: List<CatalogSeed> = emptyList(),
+    /** Zaten listede olan urunlerin `matchKey`leri (tasarim karari 12). */
+    inList: Set<String> = emptySet(),
 ) {
     // GRID YUKSEKLIGI EKRANA ORANLI, sabit dp DEGIL.
     //
@@ -192,6 +194,7 @@ internal fun AddSheetContent(
                     SuggestionChip(
                         label = seed.name,
                         reason = seed.defaultUnit,
+                        checked = seed.matchKey in inList,
                         onClick = { onProduct(seed) },
                     )
                 }
@@ -243,6 +246,7 @@ internal fun AddSheetContent(
                     SuggestionChip(
                         label = product.name,
                         reason = product.defaultUnit,
+                        checked = product.matchKey in inList,
                         onClick = { onProduct(product) },
                     )
                 }

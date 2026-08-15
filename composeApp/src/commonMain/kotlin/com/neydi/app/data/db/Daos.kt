@@ -47,6 +47,17 @@ interface CatalogSeedDao {
     @Query("SELECT * FROM catalog_seed WHERE categoryId = :categoryId ORDER BY commonalityRank LIMIT :limit")
     suspend fun byCategory(categoryId: String, limit: Int = 8): List<CatalogSeed>
 
+    /**
+     * Katalogdaki EN YAYGIN N urun - ilk gun bos durumunun cipleri
+     * (tasarim karari 5).
+     *
+     * Sabit bir liste DEGIL: sira katalogdan geldigi icin katalog buyudukce
+     * grid kendiliginden tazeleniyor ve ayni bilginin iki ayri kopyasi
+     * olmuyor.
+     */
+    @Query("SELECT * FROM catalog_seed ORDER BY commonalityRank LIMIT :limit")
+    suspend fun mostCommon(limit: Int = 12): List<CatalogSeed>
+
     @Query("SELECT COUNT(*) FROM catalog_seed")
     suspend fun count(): Int
 }

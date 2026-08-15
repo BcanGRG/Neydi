@@ -55,7 +55,8 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 @Composable
 fun MissingItemsRoute(
-    onEnterShopping: () -> Unit,
+    /** @param skipped ekran hic gorunmeden atlandiysa true - cagiran taraf toast gosteriyor. */
+    onEnterShopping: (skipped: Boolean) -> Unit,
     onCancel: () -> Unit,
 ) {
     val vm: MissingItemsViewModel = koinViewModel()
@@ -65,13 +66,13 @@ fun MissingItemsRoute(
     // moduna geciliyor. Kullanici "Alisverise cikiyorum"a bastigini
     // hatirliyor, arada bos bir ekran gormuyor.
     LaunchedEffect(state.shouldSkip) {
-        if (state.shouldSkip) vm.skipToShopping(onEnterShopping)
+        if (state.shouldSkip) vm.skipToShopping { onEnterShopping(true) }
     }
 
     MissingItemsScreen(
         state = state,
         onToggle = vm::toggle,
-        onAdd = { vm.addSelected(onEnterShopping) },
+        onAdd = { vm.addSelected { onEnterShopping(false) } },
         onCancel = onCancel,
     )
 }
@@ -119,13 +120,21 @@ fun MissingItemsScreen(
                     // BOS BOLUM CIZILMEZ.
                     if (rows.isEmpty()) return@forEach
                     item(key = "b-${section.name}") {
-                        Text(
-                            text = section.title,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = Spacing.md, bottom = 6.dp),
-                        )
+                        Column(Modifier.padding(top = Spacing.md, bottom = 6.dp)) {
+                            Text(
+                                text = section.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            // Not TEK SATIR ve muted: baslikla yarismiyor.
+                            Text(
+                                text = section.note,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                            )
+                        }
                     }
                     items(rows, key = { it.productId }) { row ->
                         MissingItemRow(row) { onToggle(row.productId) }

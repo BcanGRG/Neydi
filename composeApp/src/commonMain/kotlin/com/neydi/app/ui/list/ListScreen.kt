@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,6 +69,7 @@ import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.NeydiToast
 import com.neydi.app.ui.components.SectionHeader
 import com.neydi.app.ui.product.ProductSheetContent
 import com.neydi.app.ui.theme.Motion
@@ -84,6 +87,9 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
+    /** Gecici bildirim; gosterildikten sonra [onToastShown] cagriliyor. */
+    toast: String? = null,
+    onToastShown: () -> Unit = {},
     onGoShopping: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
@@ -116,6 +122,8 @@ fun ListScreen(
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
     val sheetQuery by vm.sheetQuery.collectAsStateWithLifecycle()
     val sheetResults by vm.sheetResults.collectAsStateWithLifecycle()
+    val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
+    val starters by vm.starterProducts.collectAsStateWithLifecycle()
 
     // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
     // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
@@ -140,6 +148,8 @@ fun ListScreen(
         onAdd = vm::add,
         onSuggestionSelected = vm::addFromSuggestion,
         onCategorySelected = vm::onCategorySelected,
+        onStarterSelected = vm::addFromSheet,
+        starters = starters,
         onToggleChecked = vm::toggleChecked,
         onRowLongPress = vm::openProductSheet,
         onClipboard = {
@@ -154,6 +164,8 @@ fun ListScreen(
         onHistory = onHistory,
         onSettings = onSettings,
         onAddFromLastTrip = vm::addFromLastTrip,
+        toast = toast,
+        onToastShown = onToastShown,
     )
 
     // Sheet, EKRAN DEGIL: liste arkada gorunur kaliyor.
@@ -176,6 +188,7 @@ fun ListScreen(
                 query = sheetQuery,
                 onQueryChange = vm::onSheetQueryChanged,
                 results = sheetResults,
+                inList = listMatchKeys,
                 // Inset SHEET DISINDA okunup duz bosluk olarak geciliyor.
                 // ModalBottomSheet'in kendi contentWindowInsets'i bu agacta
                 // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);
@@ -292,6 +305,9 @@ internal fun ListContent(
     onAdd: (String) -> Unit,
     onSuggestionSelected: (CatalogSeed) -> Unit,
     onCategorySelected: (Category) -> Unit,
+    /** Ilk gun cipinden ekleme (tasarim karari 5). */
+    onStarterSelected: (CatalogSeed) -> Unit = {},
+    starters: List<CatalogSeed> = emptyList(),
     onToggleChecked: (String, Boolean) -> Unit,
     /** Satira uzun basma - Urun Detayi sheet'ini aciyor (F6.8). */
     onRowLongPress: (String) -> Unit,
@@ -305,6 +321,8 @@ internal fun ListContent(
     onHistory: () -> Unit,
     onSettings: () -> Unit,
     onAddFromLastTrip: () -> Unit = {},
+    toast: String? = null,
+    onToastShown: () -> Unit = {},
     /**
      * Simdiki an - basligin "8 gun once" hesabi icin.
      *
@@ -331,6 +349,7 @@ internal fun ListContent(
                         onOpenSheet = onOpenSheet,
                         onHistory = onHistory,
                         onSettings = onSettings,
+                        onLeaveShopping = { onShoppingMode(false) },
                     )
                 }
 
@@ -350,9 +369,9 @@ internal fun ListContent(
                     item {
                         EmptyState(
                             kind = state.emptyKind,
-                            categories = categories,
+                            starters = starters,
                             hasClipboard = clipboardText != null,
-                            onCategory = onCategorySelected,
+                            onStarter = onStarterSelected,
                             onClipboard = onClipboard,
                             // Tasarimin metni: "Son alisveris 3 gun once, 642 TL."
                             lastTripLine = state.lastTrip?.let {
@@ -444,6 +463,15 @@ internal fun ListContent(
                 }
             }
 
+            // TOAST TOOLBAR'IN USTUNDE (tasarim: "floating toolbar'in 12dp
+            // ustu; toolbar yoksa safe area + 12dp"). Alt blogun disinda
+            // duruyor ki iki modda da ayni yere dussun.
+            NeydiToast(
+                message = toast,
+                onShown = onToastShown,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+
             // Alisveris modunda hizli ekleme YOK: reyonda liste yazilmaz,
             // okunur. Klavye ekranin yarisini yerdi.
             if (!state.shoppingMode) {
@@ -520,6 +548,7 @@ private fun ListHeader(
     onOpenSheet: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onLeaveShopping: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -547,15 +576,64 @@ private fun ListHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // Alisveris modunda gezinme GIZLI: reyonda yanlislikla Ayarlar'a
-        // dusmek listeyi kaybetmek gibi hissettirir.
-        if (!state.shoppingMode) {
-            OverflowMenu(
-                onOpenSheet = onOpenSheet,
-                onHistory = onHistory,
-                onSettings = onSettings,
+        // AVATAR BASLIGIN SABIT PARCASI (tasarim karari 10). Tek kullanicili
+        // hanede de ciziliyor; es eklenince yalnizca NOKTA yesile donuyor,
+        // yerlesim degismiyor. Gizlemek, ikinci kisi eklendigi gun basligi
+        // yeniden ogretmek olurdu.
+        state.selfInitials?.let { initials ->
+            HeaderAvatar(initials = initials, hasPartner = state.hasPartner)
+            Spacer(Modifier.width(Spacing.sm))
+        }
+
+        // ALISVERIS MODUNDA DA MENU VAR AMA TEK MADDELI (tasarim karari 1).
+        //
+        // Reyonda gezinme yine kapali - Ayarlar'a yanlislikla dusulemiyor,
+        // ki kural buydu. Ama moddan CIKIS yolu yoktu: mod ekranin degil
+        // GEZININ durumu, yani kalici; geri tusu da uygulamayi kapatmak da
+        // cikarmiyordu. Tek cikis "Bitir"di, o da YAPILMAMIS bir alisverisi
+        // kapatmak demekti.
+        //
+        // Moda girmek onaysiz kaliyor: ucuz hatanin karsiligi ucuz geri
+        // donus, ikinci bir onay ekrani degil.
+        OverflowMenu(
+            shoppingMode = state.shoppingMode,
+            onOpenSheet = onOpenSheet,
+            onHistory = onHistory,
+            onSettings = onSettings,
+            onLeaveShopping = onLeaveShopping,
+        )
+    }
+}
+
+/** Basliktaki 28dp avatar + 6dp varlik noktasi (tasarim karari 10). */
+@Composable
+private fun HeaderAvatar(initials: String, hasPartner: Boolean) {
+    val extras = LocalNeydiExtraColors.current
+    Box(contentAlignment = Alignment.BottomEnd) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(NeydiExtraShapes.pill)
+                .background(MaterialTheme.colorScheme.secondary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondary,
             )
         }
+        // NOKTA YESIL DEGIL GRI, es yokken: "birileri var" demek yanlis
+        // olurdu. Es eklendigi an ayni yerde yesile donuyor.
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(NeydiExtraShapes.pill)
+                .background(
+                    if (hasPartner) extras.success else MaterialTheme.colorScheme.outline,
+                ),
+        )
     }
 }
 
@@ -569,9 +647,11 @@ private fun ListHeader(
  */
 @Composable
 private fun OverflowMenu(
+    shoppingMode: Boolean,
     onOpenSheet: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onLeaveShopping: () -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
     Box {
@@ -595,27 +675,44 @@ private fun OverflowMenu(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             shape = NeydiExtraShapes.card,
         ) {
-            OverflowItem("Reyonlardan ekle") { open = false; onOpenSheet() }
-            OverflowItem("Geçmiş") { open = false; onHistory() }
-            OverflowItem("Ayarlar") { open = false; onSettings() }
+            if (shoppingMode) {
+                // TEK MADDE. Gezi KAPANMIYOR, mutabakat kosmuyor, liste ve
+                // isaretlemeler oldugu gibi kaliyor - yalnizca mod birakiliyor.
+                OverflowItem("Alışverişi bırak", NeydiIcons.Logout) {
+                    open = false
+                    onLeaveShopping()
+                }
+            } else {
+                OverflowItem("Reyonlardan ekle") { open = false; onOpenSheet() }
+                OverflowItem("Geçmiş") { open = false; onHistory() }
+                OverflowItem("Ayarlar") { open = false; onSettings() }
+            }
         }
     }
 }
 
 @Composable
-private fun OverflowItem(text: String, onClick: () -> Unit) {
-    Box(
+private fun OverflowItem(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onClick: () -> Unit,
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .pressable(onTap = onClick)
-            .heightIn(min = Sizes.minTapTarget)
-            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-        contentAlignment = Alignment.CenterStart,
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        icon?.let {
+            NeydiIcon(icon = it, contentDescription = null, size = 20.dp)
+            Spacer(Modifier.width(10.dp))
+        }
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

@@ -2,6 +2,10 @@ package com.neydi.app
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -38,6 +42,11 @@ fun App() {
         // Destinations.kt'de; oradaki `when` kaydi unutmayi derleme hatasina cevirir.
         val backStack = rememberNavBackStack(NeydiSavedStateConfig, Liste)
 
+        // TOAST BURADA DURUYOR, ekranin icinde degil: mesaji URETEN yer
+        // (Ekran 3'un atlama yolu) ile GOSTEREN yer (Liste) farkli
+        // destinasyonlar. Gezinme ikisini de goren tek katman.
+        var toast by remember { mutableStateOf<String?>(null) }
+
         fun go(key: NavKey) {
             backStack.add(key)
         }
@@ -60,6 +69,8 @@ fun App() {
             entryProvider = entryProvider {
                 entry<Liste> {
                     ListScreen(
+                        toast = toast,
+                        onToastShown = { toast = null },
                         onGoShopping = { go(MissingItems) },
                         onHistory = { go(History) },
                         onSettings = { go(Settings) },
@@ -79,7 +90,12 @@ fun App() {
                     MissingItemsRoute(
                         // Mod gecisini ViewModel yapiyor (gezinin durumu,
                         // ekranin degil); burada yalnizca geri donuluyor.
-                        onEnterShopping = { back() },
+                        onEnterShopping = { skipped ->
+                            // Ekran hic gorunmediyse kullaniciya NE OLDUGUNU
+                            // soyleyen tek sey bu toast (tasarim karari 8).
+                            if (skipped) toast = "Liste hazır, eksik görünmüyor"
+                            back()
+                        },
                         onCancel = { back() },
                     )
                 }

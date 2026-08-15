@@ -6,6 +6,7 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.ReceiptLong
@@ -56,6 +58,8 @@ object NeydiIcons {
     val Add: ImageVector get() = Icons.Rounded.Add
     val ChevronRight: ImageVector get() = Icons.Rounded.ChevronRight
     val Check: ImageVector get() = Icons.Rounded.Check
+    /** "Bu listede var" - Ekle sheet'indeki isaret (tasarim karari 12). */
+    val CheckCircle: ImageVector get() = Icons.Rounded.CheckCircle
     val Close: ImageVector get() = Icons.Rounded.Close
     val ArrowBack: ImageVector get() = Icons.Rounded.ArrowBack
     val ArrowUpward: ImageVector get() = Icons.Rounded.ArrowUpward
@@ -67,6 +71,8 @@ object NeydiIcons {
     val ContentCopy: ImageVector get() = Icons.Rounded.ContentCopy
     val Search: ImageVector get() = Icons.Rounded.Search
     val LightMode: ImageVector get() = Icons.Rounded.LightMode
+    /** "Alisverisi birak" - moddan cikis (tasarim karari 1). */
+    val Logout: ImageVector get() = Icons.Rounded.Logout
     val DragIndicator: ImageVector get() = Icons.Rounded.DragIndicator
     val ReceiptLong: ImageVector get() = Icons.Rounded.ReceiptLong
     val HourglassTop: ImageVector get() = Icons.Rounded.HourglassTop

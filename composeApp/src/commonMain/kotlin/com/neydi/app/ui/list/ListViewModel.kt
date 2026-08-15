@@ -25,6 +25,7 @@ import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.suggest.SuggestionEngine
+import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.product.ProductSheetState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -110,6 +111,27 @@ class ListViewModel(
      * `observeHistory` zaten yalnizca kapanmis gezileri, `completedAt DESC`
      * siralamasiyla donduruyor - ilki en sonuncusu.
      */
+    /**
+     * Basligin TAMAMINI besleyen tek akis: son gezi + avatar.
+     *
+     * TEK AKISTA BIRLESTIRILDI cunku `combine` bes akistan sonra tipli
+     * asiri yukleme sunmuyor ve vararg surumu her seyi `Any?` yapiyor -
+     * yani tip guvenligi sessizce kayboluyordu.
+     */
+    private val header: Flow<HeaderData> = combine(
+        tripDao.observeHistory(household, limit = 1),
+        memberDao.observeSelf(household),
+        memberDao.observeAll(household),
+    ) { trips, self, all ->
+        HeaderData(
+            lastTrip = trips.firstOrNull()?.let { trip ->
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+            },
+            selfInitials = self?.displayName?.let { turkishInitials(it) },
+            hasPartner = all.size > 1,
+        )
+    }
+
     private val lastTrip: Flow<LastTrip?> = tripDao.observeHistory(household, limit = 1)
         .map { trips ->
             trips.firstOrNull()?.let { trip ->
@@ -128,9 +150,13 @@ class ListViewModel(
             myMemberId,
             shoppingMode,
             emptyKind,
-            lastTrip,
-        ) { rows, memberId, mod, kind, last ->
-            rows.toSections(memberId, mod, kind).copy(lastTrip = last)
+            header,
+        ) { rows, memberId, mod, kind, head ->
+            rows.toSections(memberId, mod, kind).copy(
+                lastTrip = head.lastTrip,
+                selfInitials = head.selfInitials,
+                hasPartner = head.hasPartner,
+            )
         }
             .stateIn(
                 scope = viewModelScope,
@@ -284,6 +310,43 @@ class ListViewModel(
 
     private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
     val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
+
+    /**
+     * Listedeki urunlerin `matchKey`leri - Ekle sheet'indeki isaret icin
+     * (tasarim karari 12).
+     *
+     * `matchKey` uzerinden, urun kimligi uzerinden DEGIL: katalog tohumu ile
+     * kullanicinin kendi ekledigi urun ayri satirlar olabilir ama ayni seyi
+     * anlatiyorlar - "Sut" iki kez isaretsiz gorunmemeli.
+     */
+    val listMatchKeys: StateFlow<Set<String>> =
+        repo.rows(household)
+            .map { rows ->
+                rows.mapNotNull { productDao.byId(it.productId)?.matchKey }.toSet()
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    /**
+     * Ilk gun bos durumunun 12 cipi (tasarim karari 5).
+     *
+     * URUN cipi, REYON cipi degil: urun cipi tek dokunusta listeye
+     * dusuruyor, reyon cipi bir adim daha ekliyor - ve bos durumun tek isi
+     * ilk satiri en kisa yoldan dogurmak.
+     */
+    private val _starterProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val starterProducts: StateFlow<List<CatalogSeed>> = _starterProducts
+
+    // YUKLEME BURADA, YUKARIDAKI init BLOGUNDA DEGIL.
+    //
+    // Kotlin ozellik baslaticilarini ve init bloklarini BILDIRIM SIRASINA
+    // gore kosturuyor: yukaridaki init calistiginda `_starterProducts` henuz
+    // null ve uygulama acilista NullPointerException ile cokuyordu. Derleme
+    // ve testler bunu goremedi - yalnizca cihazda goruldu.
+    init {
+        viewModelScope.launch {
+            _starterProducts.value = catalogSeedDao.mostCommon(limit = 12)
+        }
+    }
 
     /** Sheet ici arama (Ekran 2 tasarimi). */
     private val _sheetQuery = MutableStateFlow("")
@@ -589,4 +652,11 @@ data class ShoppingSummary(
     val totalCount: Int,
     val amountMinor: Long?,
     val durationMinutes: Int?,
+)
+
+/** Basligin uc parcasi: son gezi, avatar bas harfleri, es var mi. */
+private data class HeaderData(
+    val lastTrip: LastTrip?,
+    val selfInitials: String?,
+    val hasPartner: Boolean,
 )

@@ -18,6 +18,7 @@ import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.receipt.ReceiptReadOutcome
 import com.neydi.app.data.receipt.TOLERANCE_MINOR
+import com.neydi.app.data.formatDayMonthTime
 import com.neydi.app.data.receipt.chainKey
 import com.neydi.app.data.receipt.samePhysicalReceipt
 import com.neydi.app.data.repo.ListRepository
@@ -58,6 +59,11 @@ data class UnaccountedRow(
 data class CheckState(
     val loading: Boolean = true,
     val storeName: String? = null,
+    /**
+     * Baslik alt satiri: *"Migros Ataşehir · 12 Ağustos 15:31 · 2 parça"*
+     * (tasarim karari 9). Hicbiri okunamadiysa null ve satir cizilmiyor.
+     */
+    val subtitle: String? = null,
     val totalMinor: Long? = null,
     val sumMinor: Long = 0,
     val gateHolds: Boolean? = null,
@@ -190,6 +196,11 @@ class ReceiptCheckViewModel(
         _state.value = CheckState(
             loading = false,
             storeName = receipt?.storeNameRaw,
+            subtitle = receiptSubtitle(
+                store = receipt?.storeNameRaw,
+                receiptDate = receipt?.receiptDate ?: receipt?.capturedAt,
+                partCount = group.size,
+            ),
             totalMinor = total,
             sumMinor = sum,
             gateHolds = total?.let { kotlin.math.abs(sum - it) <= TOLERANCE_MINOR },
@@ -366,4 +377,23 @@ class ReceiptCheckViewModel(
         /** Denenecek aci sirasi. 0 EN SONDA: otomatik secim onu zaten denedi. */
         val ROTATION_ORDER = listOf(90, 270, 180, 0)
     }
+}
+
+/**
+ * Fis Kontrol'un baslik alt satiri (tasarim karari 9).
+ *
+ * BOLUMLER TEK TEK OPSIYONEL: magaza okunamadiysa yalnizca tarih, tarih de
+ * okunamadiysa yalnizca parca sayisi yaziliyor. Okunamayan bir seyin yerine
+ * "-" ya da "Bilinmiyor" koymak, satiri bilgi tasimayan bir sey yapardi.
+ *
+ * PARCA SAYISI YALNIZCA BIRDEN COKSA: "1 parca" diye bir sey yok, tek
+ * parcali fis zaten fisin kendisi.
+ */
+internal fun receiptSubtitle(store: String?, receiptDate: Long?, partCount: Int): String? {
+    val parts = buildList {
+        store?.takeIf { it.isNotBlank() }?.let { add(it) }
+        receiptDate?.let { add(formatDayMonthTime(it)) }
+        if (partCount > 1) add("$partCount parça")
+    }
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
