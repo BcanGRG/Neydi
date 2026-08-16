@@ -19,7 +19,15 @@ package com.neydi.app.data.receipt
 const val MAX_LONG_EDGE = 4096
 
 /**
- * Fis fotografini OCR icin kucultup hedefe yazar.
+ * Fis fotografini OCR icin kucultup, YONUNU DUZELTIP hedefe yazar.
+ *
+ * YON SOZLESMENIN PARCASI (F4.20): yazilan dosya dik durmak zorunda, yani
+ * kaynaktaki EXIF/`imageOrientation` bilgisi PIKSELE islenmeli ve cikti bir yon
+ * etiketi TASIMAMALI. Bedeli olculdu: CameraX yonu yalnizca EXIF'e yaziyor,
+ * eski kod da etiketi okumadan cozup etiketsiz yazdigi icin bilgi tam burada
+ * kayboluyordu; fis yan haliyle okunuyor ve gorsel satir gruplamasi butun fisi
+ * birkac dev satira cokuruyordu. Diskteki dosyayi OCR, `BitmapRegionDecoder` ve
+ * ekran ayri ayri tuketiyor - etiketi tasimak sozlesmeyi hepsine yuklerdi.
  *
  * PLATFORM TARAFINDA yapiliyor, ortak kodda degil: goruntu kod cozme her iki
  * platformda da yerel API gerektiriyor ve iOS'ta UIImage/kamera karesi bellek

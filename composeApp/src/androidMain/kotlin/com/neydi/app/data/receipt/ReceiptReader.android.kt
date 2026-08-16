@@ -1,8 +1,11 @@
 package com.neydi.app.data.receipt
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapRegionDecoder
 import android.graphics.Rect
+import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
@@ -27,8 +30,8 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
     /**
      * TEK CEKIM, ICERIDE SERITLERE BOLUNUYOR (F4.17).
      *
-     * Once kaba bir kopyayla YON seciliyor, sonra fotograf KENDI cozunurlugunde
-     * ust uste binen seritlere bolunup her serit ayri okunuyor.
+     * Fotograf KENDI cozunurlugunde ust uste binen seritlere bolunup her serit
+     * ayri okunuyor; yon de bu seritlerden birinde, tam cozunurlukte seciliyor.
      *
      * NEDEN ISE YARIYOR - ve neden "kirpmak piksel uretmiyor" itirazi buraya
      * GECMIYOR: piksel zaten sensorde vardi, BIZ atiyorduk. Fotograf OCR'dan
@@ -58,23 +61,45 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
         BitmapFactory.decodeFile(imagePath, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) error("gorsel cozulemedi: $imagePath")
 
-        // YON KABA KOPYADAN seciliyor: uc yonu tam cozunurlukte denemek uc kat
-        // is demek olurdu ve yon secimi ayrinti gerektirmiyor - olculen sey
-        // satirlarin BIRLESIP birlesmedigi, harflerin okunup okunmadigi degil.
-        val rotation = forceRotation ?: pickRotation(imagePath)
-
-        val decoder = openRegionDecoder(imagePath) ?: return singlePassRead(imagePath, rotation)
+        val decoder = openRegionDecoder(imagePath)
+            ?: return singlePassRead(imagePath, forceRotation)
         try {
             val bands = bandsFor(bounds.outWidth, bounds.outHeight)
-            if (bands.size <= 1) return singlePassRead(imagePath, rotation)
-            val rows = ArrayList<String>()
-            for (band in bands) {
+
+            // YON SECEN SERIT ORTADAN (cift sayida seritte alt-orta): kalem
+            // satirlarinin bulundugu yer orasi. Puanlayici ayristirici ciktisina
+            // baktigi icin (bkz. ReadingScore) yalnizca kunye tasiyan bas serit
+            // yaniltirdi - hicbir yonde urun bulamaz, uc puan da esitlenirdi.
+            val probeIndex = bands.size / 2
+            val perBand = arrayOfNulls<List<String>>(bands.size)
+
+            // Yon secimi zaten bu seridi okuyor; ayni geciste cikan satirlar da
+            // kullaniliyor, yani serit ikinci kez cozulmuyor.
+            val probe = decoder.decodeRegion(bands[probeIndex], BitmapFactory.Options())
+            val pick = if (probe == null) {
+                RotationPick(forceRotation ?: 0, emptyList())
+            } else {
+                try {
+                    readWithRotation(probe, forceRotation)
+                } finally {
+                    probe.recycle()
+                }
+            }
+            perBand[probeIndex] = pick.rows
+
+            for ((index, band) in bands.withIndex()) {
+                if (index == probeIndex) continue
                 val piece = decoder.decodeRegion(band, BitmapFactory.Options()) ?: continue
-                rows += visualRows(recognize(piece, rotation), rotation)
+                perBand[index] = visualRows(recognize(piece, pick.degrees), pick.degrees)
                 piece.recycle()
             }
+
             // Seritler bilerek bindigi icin ayni kalem birden fazla seritte
-            // okunuyor; mukerrerler burada eleniyor (F4.17).
+            // okunuyor; mukerrerler burada eleniyor (F4.17). Tek seritte de
+            // zararsiz: kimlik SIRA NUMARASI tasiyor, yani ayni fisteki iki
+            // ozdes urun ayri kimlik aliyor.
+            val rows = perBand.filterNotNull().flatten()
+            logMeasurement(bounds, bands.size, pick.degrees, rows.size)
             return dedupeRepeatedItems(rows)
         } finally {
             decoder.recycle()
@@ -82,31 +107,71 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
     }
 
     /** Serit yolu kullanilamadiginda eski davranis - tek gecis. */
-    private suspend fun singlePassRead(imagePath: String, rotation: Int): List<String> {
+    private suspend fun singlePassRead(imagePath: String, forceRotation: Int?): List<String> {
         val bitmap = BitmapFactory.decodeFile(imagePath) ?: error("gorsel cozulemedi: $imagePath")
-        val rows = visualRows(recognize(bitmap, rotation), rotation)
-        bitmap.recycle()
-        return rows
+        return try {
+            // AYNI BITMAP hem yon secimine hem okumaya gidiyor: bolgesel cozucu
+            // yokken gorseli ikinci kez cozmek bellekte ikinci bir tam boy kopya
+            // demek olurdu ve kacindigimiz sey tam olarak o.
+            readWithRotation(bitmap, forceRotation).rows
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     /**
-     * Yonu KUCULTULMUS kopyayla secer.
+     * Bir gorseli okur; yon verilmemisse ayni geciste secer.
      *
-     * `inSampleSize` ile kod cozme sirasinda seyreltiliyor, yani tam boy bitmap
-     * hic ayrilmiyor - `downscaleForOcr`daki ayni ders.
+     * Iki cagiran da (serit yolu ve tek gecis yolu) ayni sozu tasiyor: yon
+     * secimi FAZLADAN bir kod cozme yapmaz, elindeki bitmap'i kullanir.
      */
-    private suspend fun pickRotation(imagePath: String): Int {
-        val small = BitmapFactory.decodeFile(
-            imagePath,
-            BitmapFactory.Options().apply { inSampleSize = ROTATION_SAMPLE },
-        ) ?: return 0
-        val best = listOf(0, 90, 270).maxByOrNull { score(visualRows(recognize(small, it), it)) } ?: 0
-        small.recycle()
+    private suspend fun readWithRotation(bitmap: Bitmap, forceRotation: Int?): RotationPick =
+        if (forceRotation == null) {
+            pickRotation(bitmap)
+        } else {
+            RotationPick(forceRotation, visualRows(recognize(bitmap, forceRotation), forceRotation))
+        }
+
+    /**
+     * Yonu TAM COZUNURLUKLU BIR SERITTEN secer.
+     *
+     * ONCEDEN KUCULTULMUS KOPYADAN seciliyordu (`inSampleSize = 4`) ve gerekcesi
+     * *"yon secimi ayrinti gerektirmiyor"*du. O gerekce F4.14b'de gecersiz oldu:
+     * puanlayici artik satirin SEKLINE degil, o okumadan kac URUN cikacagina
+     * bakiyor - yani AYRISTIRICIYI calistiriyor, ve ayristirici harflerin
+     * okunmasini gerektiriyor. Sonuc: puanlayici okuma geciginin dortte bir
+     * boyunda, yani onaltida bir pikselle ayni soruyu cevaplamaya calisiyordu.
+     *
+     * Uzun fiste hicbir yonde hicbir sey okunamiyor, uc puan da sifir cikiyor,
+     * `maxByOrNull` esitlikte ILK elemani donduruyor ve cevap her seferinde 0
+     * derece oluyordu - yan cekilmis kare icin tam olarak yanlis cevap. Hata
+     * fis KISALDIKCA kayboldugu icin de uzun sure gorunmedi: yon secimi tam da
+     * serit yonteminin var olma sebebi olan fislerde bozuluyordu.
+     *
+     * 180 DE DENENIYOR: eskiden yoktu, yani ters cekilmis fisin otomatik yolda
+     * dogru cevabi bulunmuyordu. Fis Kontrol'deki elle listede 180 zaten vardi.
+     *
+     * ILK YETERLI ADAYDA DURULUYOR: tek seritten bu kadar urun cikiyorsa yon
+     * dogrudur ve uc gecis daha yapmanin kazanci yok. 0 basta cunku dogru
+     * yazilmis fotograflarin cogunda cevap o.
+     */
+    private suspend fun pickRotation(probe: Bitmap): RotationPick {
+        var best = RotationPick(0, emptyList())
+        var bestScore = -1
+        for (degrees in ROTATION_CANDIDATES) {
+            val rows = visualRows(recognize(probe, degrees), degrees)
+            val puan = score(rows)
+            if (puan > bestScore) {
+                bestScore = puan
+                best = RotationPick(degrees, rows)
+            }
+            if (puan >= CONFIDENT_SCORE) break
+        }
         return best
     }
 
     private suspend fun recognize(
-        bitmap: android.graphics.Bitmap,
+        bitmap: Bitmap,
         rotationDegrees: Int,
     ): Text = suspendCancellableCoroutine { devam ->
         // rotationDegrees ML Kit'e veriliyor, bitmap DONDURULMUYOR: donmus kopya
@@ -119,86 +184,45 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
     }
 }
 
-/**
- * Fisin bir gorsel satirinda okunan parca.
- */
-private data class Parca(val text: String, val kutu: Rect)
+/** Bir yon denemesinin sonucu: secilen aci ve o acida okunan satirlar. */
+private data class RotationPick(val degrees: Int, val rows: List<String>)
 
 /**
- * OCR satirlarini GORSEL SATIRLARA gruplar; her grubu soldan saga birlestirir.
+ * ML Kit ciktisini gorsel satirlara cevirir.
  *
- * NEDEN SIRAYA GUVENILMIYOR: fis iki kolon - solda aciklama, sagda tutar - ve
- * ikisi AYNI gorsel satirda. ML Kit onlari ayri "line" olarak donduruyor,
- * dikey konumlari da neredeyse ayni. Dolayisiyla dizilis rastgele bozuluyor;
- * gercek fiste olculdu:
+ * ISIN TAMAMI `groupVisualRows`da (commonMain) - burada yalnizca ML Kit'in
+ * sekli ortak sekle donuyor. Geometri oraya tasindi cunku `androidMain`de
+ * TEST EDILEMIYORDU ve bu katman projenin en pahali sessiz hatasini uretmisti;
+ * `score`un ayni sebeple tasinmasinin (F10.13) devami.
  *
- *     *125.58
- *     *47.00                     <- tutar, adindan ONCE
- *     HARRAS SUTLU CIK.80G %1.   <- adi, tutarindan SONRA
- *
- * Yani sirayi duzeltmeye calisan hicbir sezgi ise yaramaz, cunku SIRANIN KENDISI
- * guvenilir degil. Dogru islem eslestirmeyi dikey ORTUSMEDEN yapmak: ayni satira
- * dusen parcalar birlesir, grup icinde X'e gore sıralanır. Sonuc ayristiricinin
- * bekledigi bicim:
- *
- *     KREMA 18YAGLI 200ML %1.      *106.00
- *     Odenecek KDV Dahil Tutar     *225.50
- *
- * Geometri platforma ozgu veri oldugu icin bu is BURADA yapiliyor; ayristirici
- * dizgi uzerinde calismaya devam ediyor ve cihazsiz test edilebilir kaliyor.
+ * KUTULAR DONDURULMEMIS KOORDINATTA GELIYOR: ML Kit metni `rotationDegrees` ile
+ * dogru okuyor ama koordinatlari HAM bitmap eksenlerinde veriyor. Kose noktalari
+ * ise metnin KENDI yonunde sirali geldigi icin okuma yonunu dogrudan tasiyorlar
+ * - gruplama ekseninin `rotationDegrees`den tahmin edilmesi bu sayede bitti.
  */
-internal fun visualRows(text: Text, rotationDegrees: Int = 0): List<String> {
-    val parcalar = text.textBlocks
-        .flatMap { blok -> blok.lines }
-        .mapNotNull { satir -> satir.boundingBox?.let { Parca(satir.text, it) } }
-    if (parcalar.isEmpty()) return emptyList()
+internal fun visualRows(text: Text, rotationDegrees: Int = 0): List<String> =
+    groupVisualRows(text.textBlocks.flatMap { it.lines }.mapNotNull { it.toOcrPiece() })
 
-    // KUTULAR DONDURULMEMIS KOORDINATTA GELIYOR ve bu, bu projenin en pahali
-    // sessiz hatasiydi.
-    //
-    // ML Kit metni `rotationDegrees` ile DOGRU okuyor ama `boundingBox`
-    // degerlerini HAM bitmap eksenlerinde veriyor. Fis yan cekildiginde (90 ya
-    // da 270) satirlar ham bitmap'te DIKEY kolonlara donuyor, yani hepsinin
-    // merkez-Y'si birbirine yakin. Y ekseninde gruplayan eski kod bu yuzden
-    // butun fisi TEK satir sayiyordu.
-    //
-    // Cihazda olculdu: tek karede fisin TAMAMI okundu - otuz dokuz kalemin
-    // adi, barkodu, tutari hepsi metinde vardi - ama sekiz dev satira
-    // cokmustu ve ayristirici hicbirini goremedi. Uzun sure "OCR fisi
-    // okuyamiyor" sanilan sey aslinda buydu.
-    //
-    // Duzeltme: gruplama eksenini YONE gore secmek. Bitmap'i dondurmek ikinci
-    // bir tam boy kopya demek olurdu ve kacindigimiz sey tam olarak o.
-    val yatay = rotationDegrees == 90 || rotationDegrees == 270
-    val satirEkseni: (Rect) -> Int = if (yatay) Rect::centerX else Rect::centerY
-    val kolonEkseni: (Rect) -> Int = if (yatay) Rect::top else Rect::left
-    val kalinlik: (Rect) -> Int = if (yatay) Rect::width else Rect::height
-
-    // Tolerans satir yuksekliginin ORANI: sabit piksel degeri farkli
-    // cozunurluklerde ya da cok kucuk ya da cok buyuk olurdu.
-    val ortaYukseklik = parcalar.map { kalinlik(it.kutu) }.sorted()[parcalar.size / 2]
-    val tolerans = (ortaYukseklik * 0.6f).toInt().coerceAtLeast(1)
-
-    val siralı = parcalar.sortedBy { satirEkseni(it.kutu) }
-    val gruplar = mutableListOf<MutableList<Parca>>()
-    for (p in siralı) {
-        val grup = gruplar.lastOrNull()
-        val ayniSatir = grup != null &&
-            kotlin.math.abs(satirEkseni(p.kutu) - satirEkseni(grup.last().kutu)) <= tolerans
-        if (ayniSatir && grup != null) grup.add(p) else gruplar.add(mutableListOf(p))
+private fun Text.Line.toOcrPiece(): OcrPiece? {
+    val koseler = cornerPoints
+    if (koseler != null && koseler.size == 4) {
+        return OcrPiece(text, koseler.map { OcrPoint(it.x, it.y) })
     }
-
-    // 270'te okuma yonu ters: satir icindeki parcalar sagdan sola diziliyor.
-    val tersYon = rotationDegrees == 270
-    return gruplar.map { grup ->
-        val sirali = grup.sortedBy { kolonEkseni(it.kutu) }
-        val yon = if (tersYon) sirali.reversed() else sirali
-        yon.joinToString(" ") { it.text.trim() }
-    }
+    // YEDEK: kose noktasi gelmezse eksen-hizali kutu kullaniliyor. Parca
+    // konumuyla sayilir ama `orientationKnown = false` ile yon oyununa
+    // KATILMAZ - yoksa tek eksik parca butun okumayi yatay sanabilirdi.
+    val kutu = boundingBox ?: return null
+    return OcrPiece(
+        text = text,
+        corners = listOf(
+            OcrPoint(kutu.left, kutu.top),
+            OcrPoint(kutu.right, kutu.top),
+            OcrPoint(kutu.right, kutu.bottom),
+            OcrPoint(kutu.left, kutu.bottom),
+        ),
+        orientationKnown = false,
+    )
 }
-
-// Yon puanlayicisi commonMain'e tasindi (ReadingScore.kt) - artik AYRISTIRICIYI
-// calistirarak puanliyor ve bu sayede test edilebilir hale geldi.
 
 /**
  * Bir seridin hedef uzunlugu, piksel.
@@ -216,8 +240,16 @@ private const val TARGET_BAND = 2400
  */
 private const val BAND_OVERLAP = 0.15f
 
-/** Yon secerken kullanilan seyreltme - ayrinti gerekmiyor, hiz gerekiyor. */
-private const val ROTATION_SAMPLE = 4
+/** Denenecek acilar. 0 BASTA: dogru yazilmis fotografta cevap o. */
+private val ROTATION_CANDIDATES = listOf(0, 90, 270, 180)
+
+/**
+ * Bir yonu tartismasiz kabul etmeye yeten puan.
+ *
+ * TEK SERITTEN cikan urun sayisi bu; `MIN_USABLE_LINES` (6) butun fis icin
+ * konmus bir tabandi, bir seritten bu kadar urun cikiyorsa yon dogrudur.
+ */
+private const val CONFIDENT_SCORE = 10
 
 /**
  * Fotografi UZUN EKSENI boyunca ust uste binen seritlere boler.
@@ -244,7 +276,30 @@ internal fun bandsFor(width: Int, height: Int): List<Rect> {
  * Bolgesel kod cozucu - seridi TAM COZUNURLUKTE, tam boy bitmap ayirmadan
  * okur. Bu yontemin bellek tarafindaki butun degeri burada.
  */
-private fun openRegionDecoder(path: String): android.graphics.BitmapRegionDecoder? = runCatching {
+private fun openRegionDecoder(path: String): BitmapRegionDecoder? = runCatching {
     @Suppress("DEPRECATION")
-    android.graphics.BitmapRegionDecoder.newInstance(path, false)
+    BitmapRegionDecoder.newInstance(path, false)
 }.getOrNull()
+
+/**
+ * OLCUM KAYDI (gecici, F4.20 olcumu icin).
+ *
+ * Tarayici ciktisiyla kendi kameramizin karesini karsilastirabilmek icin okuma
+ * basina bir satir yaziyor. KISISEL VERI YAZILMIYOR - dosya adi da dahil hicbir
+ * icerik degil, yalnizca olculer. Olcum bitince silinecek.
+ */
+private fun logMeasurement(
+    bounds: BitmapFactory.Options,
+    bandCount: Int,
+    rotation: Int,
+    rowCount: Int,
+) {
+    Log.i(
+        MEASUREMENT_TAG,
+        "okuma ${bounds.outWidth}x${bounds.outHeight} " +
+            "serit=$bandCount yon=$rotation satir=$rowCount",
+    )
+}
+
+/** Olcum satirlarinin ortak etiketi: `adb logcat -s NeydiOlcum`. */
+internal const val MEASUREMENT_TAG = "NeydiOlcum"

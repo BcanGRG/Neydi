@@ -2,6 +2,8 @@ package com.neydi.app.ui.capture
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,9 +18,7 @@ import java.io.File
 /**
  * ML Kit Belge Tarayicisi (F4.18).
  *
- * SCANNER_MODE_FULL: golge, leke ve parmak temizligini de yapan mod. Termal
- * fis zaten dusuk kontrastli; kagidin uzerindeki golge OCR'in en cok
- * takildigi seylerden biri ve bunu bedavaya alabiliyoruz.
+ * MOD SECIMI OLCULMEDI - bkz. [SCANNER_MODE].
  *
  * GALERIDEN SECIM KAPALI: bu ekranin isi FIS CEKMEK. Galeriden secim, fisin
  * ne zaman cekildigi bilgisini (F5.8'in fiyat gozlemi icin kullandigi tarih)
@@ -44,7 +44,7 @@ actual fun rememberReceiptScanner(
                 .setGalleryImportAllowed(false)
                 .setPageLimit(PAGE_LIMIT)
                 .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
-                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                .setScannerMode(SCANNER_MODE)
                 .build(),
         )
     }
@@ -92,9 +92,30 @@ private fun GmsDocumentScanningResult?.copyPagesInto(context: Context): List<Str
             context.contentResolver.openInputStream(page.imageUri)?.use { input ->
                 dest.outputStream().use { output -> input.copyTo(output) }
             } ?: return@runCatching null
+            logPageMeasurement(dest)
             dest.absolutePath
         }.getOrNull()
     }
+}
+
+/**
+ * OLCUM KAYDI (gecici, F4.20 olcumu icin).
+ *
+ * BURADA, cunku tek sansimiz burasi: `attachReceiptToTrip` sayfayi AYNI yola
+ * yeniden yaziyor (`destPath == path`), yani tarayicinin verdigi orijinal bu
+ * satirdan sonra kayboluyor. Karsilastirilacak sayi ham piksel degil, SATIR
+ * BASINA piksel - okuma tarafindaki kayit (`NeydiOlcum okuma ...`) ile birlikte
+ * okunmali.
+ *
+ * KISISEL VERI YAZILMIYOR: yalnizca olculer, dosya adi ya da icerik degil.
+ */
+private fun logPageMeasurement(dest: File) {
+    val boyut = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(dest.absolutePath, boyut)
+    Log.i(
+        "NeydiOlcum",
+        "tarayici mod=$SCANNER_MODE ${boyut.outWidth}x${boyut.outHeight} bayt=${dest.length()}",
+    )
 }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
@@ -105,3 +126,28 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 
 /** Tek oturumda cekilebilecek en fazla sayfa. */
 private const val PAGE_LIMIT = 6
+
+/**
+ * Tarayici modu. **OLCULMEDI** - olcum icin degistirilecek tek yer burasi.
+ *
+ * SECILDIGINDE GEREKCE SUYDU: `SCANNER_MODE_FULL` golge, leke ve parmak
+ * temizligini de yapiyor; termal fis zaten dusuk kontrastli ve kagidin
+ * uzerindeki golge OCR'in en cok takildigi seylerden biri, "bunu bedavaya
+ * alabiliyoruz" denmisti. Iki tarafi da olculmedi:
+ *
+ *  1. **Bedava degil.** FULL, ek ML modeli INDIRMESI gereken tek mod. Bu,
+ *     `MlKitReceiptReader`da yazili karara dogrudan zit: metin modeli bilerek
+ *     GOMULU secildi cunku *"kasa kuyrugunda 'model indiriliyor' gormek
+ *     istemiyoruz"*. Ayni odunlesme, iki dosyada ters karar.
+ *  2. **Temizlik zarar da verebilir.** FULL'un leke/parmak silmesi bir
+ *     doldurma (inpainting) modeli, ve termal fisin ince, soluk, noktali
+ *     glifleri bir temizleyiciye lekeye BENZER. Silinen sey harf olabilir.
+ *
+ * Uc mod da ayni fiziksel fisle denenmeli; karsilastirilacak sayi ham piksel
+ * degil, **satir basina piksel** ve **ayristirilan kalem sayisi**. Cikti
+ * cozunurlugunu Google mod basina belgelemiyor - bakilacak bir cevap yok,
+ * gercekten olculmesi gerekiyor.
+ *
+ * Kayitlar: `adb logcat -s NeydiOlcum`.
+ */
+private const val SCANNER_MODE = GmsDocumentScannerOptions.SCANNER_MODE_FULL

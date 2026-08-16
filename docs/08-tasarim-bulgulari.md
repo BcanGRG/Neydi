@@ -154,6 +154,23 @@ Geçmiş'teki girintili parça satırları duruyor.
 okuduğumuz henüz görülmedi. Sonuç "hepsi" değilse bu maddenin cevabı değişir —
 o yüzden tasarıma verilecek prompt bu ölçümden **sonra** yazılmalı.
 
+**Ölçüm neden bugüne kadar yapılamadı (F4.20).** Ölçülecek olsaydı şerit
+yöntemi değil, **silinmiş bir EXIF etiketi** ölçülmüş olurdu. Zincir şuydu:
+CameraX yönü yalnızca EXIF'e yazıyor, pikselleri döndürmüyor; `downscaleForOcr`
+etiketi okumadan çözüp etiketsiz yazdığı için yön bilgisi diske yazarken
+kayboluyordu; okuma tarafı onu tahmin etmeye çalışıyor ama tahmini dörtte bir
+boyunda bir kopyaya bakarak yapıyordu ve uzun fişte hiçbir şey okuyamayıp her
+seferinde 0 dereceye düşüyordu; görsel satır gruplaması da o yanlış açıya
+güvendiği için fişi birkaç dev satıra çöküyordu. Yani "tek kare yetmiyor"
+sonucu, ölçüm yapılsaydı **yanlış nedenle** çıkacaktı ve karar 4'ün öncülü
+yanlışlıkla geri alınacaktı.
+
+Üçü de kapatıldı: yön artık piksele işleniyor, gruplama ekseni OCR'ın kendi
+köşe noktalarından ölçülüyor (dört yönde de aynı satırları verdiği testle
+tutuluyor) ve yön seçimi tam çözünürlüklü bir şeritten yapılıyor. Ölçüm artık
+anlamlı — ve tarayıcı modu ölçümüyle (`adb logcat -s NeydiOlcum`) aynı koşumda
+alınabilir.
+
 ## 8. Kamera rehberi artık ikinci kare istemiyor
 
 **Nerede çıktı.** F4.17 (tek çekim) uygulanırken.
