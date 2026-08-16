@@ -2,15 +2,12 @@ package com.neydi.app.ui.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextAlign
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.theme.Sizes
-import com.neydi.app.ui.theme.SizesExtra
 import com.neydi.app.ui.theme.pressable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,12 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neydi.app.data.db.ReceiptStatus
-import com.neydi.app.data.formatDayMonthTime
 import com.neydi.app.data.formatDayMonthYear
-import com.neydi.app.data.formatMinor
-import com.neydi.app.data.store.storeDisplayName
-import com.neydi.app.ui.components.AccentChip
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.NeydiExtraShapes
@@ -116,7 +107,6 @@ fun HistoryScreen(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            SpendBars(trips)
         }
         Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
 
@@ -131,43 +121,6 @@ fun HistoryScreen(
             }
         }
     }
-    }
-}
-
-/**
- * Son alti alisverisin toplami - EKSENSIZ, ACIKLAMASIZ, ETKILESIMSIZ.
- *
- * Tasarimin kendi tanimi bu. Bir grafik degil, bir RITIM: harcamanin son
- * birkac alisverisde nereye gittigini tek bakista veriyor; sayilari zaten
- * altindaki liste yaziyor.
- *
- * IKI ALISVERISTEN AZSA HIC CIZILMIYOR - tasarimin kurali: *"tek cubuklu
- * grafik grafik degildir"*. Toplami okunamamis geziler de disarida: null bir
- * tutari sifir cubuk olarak cizmek "bedava alisveris" demek olurdu.
- */
-@Composable
-private fun SpendBars(trips: List<HistoryTrip>) {
-    val totals = trips.take(6).mapNotNull { it.totalMinor }.reversed()
-    if (totals.size < 2) return
-
-    val max = totals.max().coerceAtLeast(1)
-    Row(
-        modifier = Modifier.fillMaxWidth().height(96.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        totals.forEach { total ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    // En kucuk cubuk bile GORUNUR kalsin: oransal yukseklik
-                    // sifira yaklastiginda cubuk kaybolur ve grafik eksik
-                    // veri varmis gibi okunur.
-                    .fillMaxHeight(fraction = (total.toFloat() / max).coerceAtLeast(0.06f))
-                    .clip(NeydiExtraShapes.barTop)
-                    .background(MaterialTheme.colorScheme.primary),
-            )
-        }
     }
 }
 
@@ -195,226 +148,54 @@ private fun EmptyHistory(modifier: Modifier = Modifier) {
 /**
  * Bir gezinin Gecmis satiri (tasarim: 72dp, altinda hairline).
  *
- * TASARIM MAGAZAYI BASLIK YAPIYOR, tarihi degil: kullanicinin bir alisverisi
- * hatirlama bicimi "gecen carsamba" degil "File Market'teki". Tarih ve urun
- * sayisi ikinci satirda birlikte duruyor.
+ * BASLIK ARTIK TARIH. Tasarim magazayi baslik yapiyordu ve gerekcesi
+ * dogruydu - kullanici bir alisverisi "File Market'teki" diye hatirliyor -
+ * ama o adin TEK kaynagi fis kunyesiydi ve pivotla kalmadi. Gozlemlerden
+ * gezi-magaza cikarimi yapmak (o gun cekilen etiketlerin marketi) mumkun
+ * ama TAHMIN; tasarima soruldu (10-tasarima-pivot.md, "Ekran 6") ve cevap
+ * gelene kadar uydurmuyoruz.
  *
- * COK PARCALI FISTE PARCALAR ALTTA LISTELENIYOR - tasarim bu durumu
- * kapsamiyor cunku parca parca cekim (F4.13) tasarimdan SONRA geldi. Tek
- * satira indirmek her parcayi erisilemez yapardi ve bu ekranin varlik sebebi
- * tam olarak "yanlis okunmus fise donmenin tek yolu" olmak.
+ * TUTAR DA GECICI OLARAK YOK - bkz. HistoryTrip KDoc'u. E18 gozlemlerden
+ * hesaplanan `~` tahminini getirecek.
  */
 @Composable
 private fun TripRow(trip: HistoryTrip) {
     val extras = LocalNeydiExtraColors.current
-    val single = trip.receipts.singleOrNull()
     Column(Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                // Fis Kontrol pivotla oldu (E5); satir dokunussuz. E8 bu
-                // ekrani gezi-duzeyine indirecek.
-                .heightIn(min = 72.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    // UC AYRI HAL, IKI DEGIL: fis yok / fis var ama magaza
-                    // okunamadi / magaza okundu. Ikisini "Fis eklenmedi"de
-                    // birlestirmek, okunamamis bir fisi HIC CEKILMEMIS gibi
-                    // gosterirdi - kullanici fotografi cektigini biliyor ve
-                    // uygulamaya guvenini tam orada kaybederdi.
-                    text = trip.storeName
-                        ?: if (trip.receipts.isEmpty()) "Fiş eklenmedi" else "Mağaza okunamadı",
+                    text = formatDayMonthYear(trip.closedAt),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "${formatDayMonthYear(trip.closedAt)} · ${trip.itemCount} ürün",
+                    text = "${trip.itemCount} ürün",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-            Text(
-                // null ise "-": fis okunmadigi icin BILMIYORUZ. Sifir yazmak
-                // "bedava alisveris" demek olurdu.
-                text = trip.totalMinor?.let { formatMinor(it) } ?: "—",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.End,
-                // Sabit genislik: tnum uygulanmasa da sutun kaymasin.
-                modifier = Modifier.width(SizesExtra.priceColumn),
-            )
-            Spacer(Modifier.width(Spacing.sm))
-            ReceiptStatusIcon(trip.receipts)
-        }
-        // Parcalar: yalnizca birden fazla fis varsa.
-        if (trip.receipts.size > 1) {
-            trip.receipts.forEach { receipt ->
-                PartRow(receipt)
             }
         }
         Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
     }
 }
 
-/**
- * Cok parcali fisin tek parcasi - GIRINTILI (tasarim karari 4).
- *
- * TOPLAM GEZIDE, SATIRLAR PARCALARDA. Parca satiri tutar TASIMIYOR: toplam
- * fisin tamamina ait ve gezi satirinda duruyor; her parcaya ayri bir rakam
- * yazmak toplami iki yere bolerdi. Parcanin soyledigi sey kac satir tasidigi
- * ve kacinin onay bekledigi.
- *
- * Girinti hiyerarsiyi TEK bir gorsel isaretle soyluyor ve yeni bir bilesen
- * gerektirmiyor.
- */
-@Composable
-private fun PartRow(receipt: HistoryReceipt) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            // Fis Kontrol pivotla oldu (E5); parca satiri dokunussuz, E8'de
-            // tamamen kalkacak.
-            .heightIn(min = 56.dp)
-            .padding(start = 20.dp, bottom = Spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                // Parca degilse - ayni gezideki AYRI bir magaza fisi - adi
-                // "Parça 2" olamaz; o zaman magaza adi ya da "Fiş" yaziyor.
-                text = receipt.partIndex?.let { "Parça $it" }
-                    ?: receipt.storeName?.let { storeDisplayName(it) }
-                    ?: "Fiş",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = partMeta(receipt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        SingleStatusIcon(receipt)
-        Spacer(Modifier.width(Spacing.xs))
-        NeydiIcon(icon = NeydiIcons.ChevronRight, contentDescription = null, size = 20.dp)
-    }
-}
-
-/**
- * Parca satirinin ikinci satiri: *"16 satır · 1 satır kontrol bekliyor"*.
- *
- * ONAY BEKLEYEN SATIR VARSA ONU SOYLUYOR, yoksa durumu. Ikisini birden yazmak
- * ayni seyi iki kez soylemek olurdu - bekleyen satir zaten "kontrol bekliyor"
- * demek.
- */
-private fun partMeta(receipt: HistoryReceipt): String {
-    val lines = "${receipt.lineCount} satır"
-    return when {
-        receipt.reviewCount > 0 -> "$lines · ${receipt.reviewCount} satır kontrol bekliyor"
-        receipt.status == ReceiptStatus.VERIFIED -> "$lines · okundu"
-        else -> statusLabel(receipt.status)?.let { "$lines · $it" } ?: "$lines · okundu"
-    }
-}
-
-/**
- * Gezinin fis durumu, TEK IKONLA (tasarim: dort hal).
- *
- * IYI DURUM SESSIZ OLMALI ilkesi burada da gecerli - ama tasarim "fis var"i
- * yine de gosteriyor, cunku yoklugu ("fis yok") anlamli bir bilgi ve ikisi
- * ancak yan yana okunabiliyor. Ayrim renkte: dolgulu yesil vs sonuk kontur.
- *
- * Cok parcali gezide EN KOTU hal kazaniyor: bir parca okunamadiysa gezinin
- * durumu odur, digerleri okunmus olsa bile.
- */
-@Composable
-private fun ReceiptStatusIcon(receipts: List<HistoryReceipt>) {
-    if (receipts.isEmpty()) {
-        NeydiIcon(
-            icon = NeydiIcons.ReceiptLong,
-            contentDescription = "Fiş yok",
-            size = 22.dp,
-            tint = MaterialTheme.colorScheme.outline,
-        )
-        return
-    }
-    val worst = receipts.minByOrNull { severity(it.status) } ?: receipts.first()
-    SingleStatusIcon(worst)
-}
-
-@Composable
-private fun SingleStatusIcon(receipt: HistoryReceipt) {
-    val extras = LocalNeydiExtraColors.current
-    val (icon, tint, label) = when (receipt.status) {
-        ReceiptStatus.VERIFIED ->
-            Triple(NeydiIcons.ReceiptLong, extras.success, "Fiş okundu")
-        ReceiptStatus.PENDING, ReceiptStatus.READING ->
-            Triple(NeydiIcons.HourglassTop, MaterialTheme.colorScheme.onSurfaceVariant, "İşleniyor")
-        // Parca amber giymiyor: toplam son parcada basili, kullanici hata
-        // yapmadi (bkz. F4.13b).
-        ReceiptStatus.MISMATCHED -> if (receipt.isPart) {
-            Triple(NeydiIcons.ReceiptLong, MaterialTheme.colorScheme.outline, "Parça fişi")
-        } else {
-            Triple(NeydiIcons.Error, extras.warning, "Kontrol bekliyor")
-        }
-        ReceiptStatus.FAILED ->
-            Triple(NeydiIcons.Error, extras.warning, "Okunamadı")
-    }
-    NeydiIcon(icon = icon, contentDescription = label, size = 22.dp, tint = tint)
-}
-
-/** Kucuk = daha kotu. Cok parcali gezide gosterilecek hali secer. */
-private fun severity(status: ReceiptStatus): Int = when (status) {
-    ReceiptStatus.FAILED -> 0
-    ReceiptStatus.MISMATCHED -> 1
-    ReceiptStatus.PENDING, ReceiptStatus.READING -> 2
-    ReceiptStatus.VERIFIED -> 3
-}
-
-/**
- * Sorunlu durumlar ETIKET ALIR, saglikli olanlar ALMAZ.
- *
- * VERIFIED'a "tamam" cipi koymak listeyi gurultuye cevirirdi: iyi durum
- * sessiz olmali, gozun aradigi sey istisna.
- */
-private fun statusLabel(status: ReceiptStatus): String? = when (status) {
-    ReceiptStatus.PENDING -> "bekliyor"
-    ReceiptStatus.READING -> "okunuyor"
-    ReceiptStatus.MISMATCHED -> "toplam tutmuyor"
-    ReceiptStatus.FAILED -> "okunamadı"
-    ReceiptStatus.VERIFIED -> null
-}
-
 // --- Onizlemeler ------------------------------------------------------------
-
-private val sampleTrip = HistoryTrip(
-    id = "t1",
-    closedAt = 1_755_100_000_000,
-    totalMinor = 22550,
-    receipts = listOf(
-        HistoryReceipt("r1", ReceiptStatus.VERIFIED, 22550, "BIM BIRLESIK MAGAZALAR", 1_755_100_000_000),
-        HistoryReceipt("r2", ReceiptStatus.FAILED, null, null, 1_755_099_000_000),
-    ),
-)
 
 @PreviewLightDark
 @Composable
 private fun HistoryPreview() = NeydiPreview {
     HistoryScreen(
         trips = listOf(
-            sampleTrip,
-            HistoryTrip("t2", 1_754_900_000_000, null, emptyList()),
+            HistoryTrip(id = "t1", closedAt = 1_755_100_000_000, itemCount = 18),
+            HistoryTrip(id = "t2", closedAt = 1_754_900_000_000, itemCount = 3),
         ),
         onBack = {},
-
     )
 }
 
@@ -422,77 +203,4 @@ private fun HistoryPreview() = NeydiPreview {
 @Composable
 private fun HistoryEmptyPreview() = NeydiPreview {
     HistoryScreen(trips = emptyList(), onBack = {})
-}
-
-/**
- * PARCALI GEZI (tasarim karari 4): toplam gezide, satirlar parcalarda.
- *
- * Gezi ikonu EN KOTU hali gosteriyor - ikinci parcada onay bekleyen satir var,
- * yani gezi satiri amber giyiyor, birinci parca okunmus olsa bile.
- */
-@PreviewLightDark
-@Composable
-private fun HistoryMultiPartPreview() = NeydiPreview {
-    HistoryScreen(
-        trips = listOf(
-            HistoryTrip(
-                id = "t1",
-                closedAt = 1_755_100_000_000,
-                totalMinor = 64250,
-                storeName = "MİGROS",
-                itemCount = 34,
-                receipts = listOf(
-                    HistoryReceipt(
-                        id = "p1",
-                        status = ReceiptStatus.VERIFIED,
-                        totalMinor = null,
-                        storeName = "MİGROS TİCARET A.Ş.",
-                        capturedAt = 1_755_099_000_000,
-                        partIndex = 1,
-                        lineCount = 18,
-                    ),
-                    HistoryReceipt(
-                        id = "p2",
-                        status = ReceiptStatus.MISMATCHED,
-                        totalMinor = 64250,
-                        storeName = null,
-                        capturedAt = 1_755_100_000_000,
-                        partIndex = 2,
-                        lineCount = 16,
-                        reviewCount = 1,
-                    ),
-                ),
-            ),
-        ),
-        onBack = {},
-
-    )
-}
-
-/**
- * Gorulmeyen durumlar: bekliyor / okunuyor / toplam tutmuyor.
- *
- * Ilk onizlemeler yalnizca VERIFIED ve FAILED tasiyordu, yani amber tonlu
- * MISMATCHED satiri ve iki gecici durum hic cizilmemisti.
- */
-@PreviewLightDark
-@Composable
-private fun HistoryAllStatusesPreview() = NeydiPreview {
-    HistoryScreen(
-        trips = listOf(
-            HistoryTrip(
-                id = "t9",
-                closedAt = 1_755_100_000_000,
-                totalMinor = 48458,
-                receipts = listOf(
-                    HistoryReceipt("a", ReceiptStatus.PENDING, null, null, 1_755_100_000_000),
-                    HistoryReceipt("b", ReceiptStatus.READING, null, "FiLE MARKET", 1_755_099_000_000),
-                    HistoryReceipt("c", ReceiptStatus.MISMATCHED, 48458, "FiLE OVACIK / KEÇiÖREN", 1_755_098_000_000),
-                    HistoryReceipt("d", ReceiptStatus.VERIFIED, 22550, "BIM", 1_755_097_000_000),
-                ),
-            ),
-        ),
-        onBack = {},
-
-    )
 }

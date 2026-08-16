@@ -10,7 +10,7 @@ listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe **ürün ba
 fiyat hafızası biriktiren. Döngü: *liste → markette işaretle → etiket çek →
 ürün+marka+market+tarih+fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**İlerleme:** 7 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
+**İlerleme:** 8 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
 "Pivot sonrası" bölümünde.
 
 ---
@@ -116,7 +116,7 @@ kapsamında fiş fotoğrafı kalmadı). Tasarıma bildirim: `10-tasarima-pivot.m
 - [~] **E7 — ListViewModel temizliği.** `receiptDao`/`processor`/
   `attachReceiptToTrip` + pending-işleme init bloğu çıkar.
   **Bitti:** `ListViewModel.kt` sıfır fiş importu.
-- [ ] **E8 — Geçmiş ameliyatı.** Parça satırları, durum ikonları,
+- [~] **E8 — Geçmiş ameliyatı.** Parça satırları, durum ikonları,
   `physicalReceipts`, tutar okuması çıkar; `LastTrip` tutarsız kalır (geçici,
   E18 geri getirir). **Bitti:** Geçmiş = tarih + kalem sayısı.
 - [ ] **E9 — ListRepository temizliği.** `receiptDao` + `enqueueReceipt` çıkar.

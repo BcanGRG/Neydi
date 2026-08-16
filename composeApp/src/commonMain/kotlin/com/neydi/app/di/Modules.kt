@@ -99,10 +99,7 @@ val dataModule = module {
     }
 
     viewModel {
-        HistoryViewModel(
-            tripDao = get(), receiptDao = get(),
-            tripLineDao = get(), receiptLineDao = get(),
-        )
+        HistoryViewModel(tripDao = get(), tripLineDao = get())
     }
 
     viewModel { (tripId: String?) ->
