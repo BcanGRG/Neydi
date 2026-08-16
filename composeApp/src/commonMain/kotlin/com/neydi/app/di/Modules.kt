@@ -72,8 +72,6 @@ val dataModule = module {
             priceObservationDao = get(),
             statsRebuilder = get(),
             suggestionEngine = get(),
-            receiptDao = get(),
-            processor = get(),
         )
     }
 
