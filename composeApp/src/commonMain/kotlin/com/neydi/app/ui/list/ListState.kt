@@ -46,7 +46,9 @@ data class ListState(
  * Basligin alt satirindaki son alisveris hatirlatmasi (Ekran 1 tasarimi).
  *
  * @property closedAt gezinin kapandigi an, epoch millis.
- * @property totalMinor fisten okunmus tutar, kurus; okunamadiysa null.
+ * @property totalMinor gozlemlerden hesaplanan TAHMIN, kurus; `~` ile
+ *   gosterilir. E18'e kadar her zaman null - fis toplami E11'de silindi ve
+ *   yerine gecen hesap henuz yazilmadi.
  */
 data class LastTrip(val closedAt: Long, val totalMinor: Long?)
 

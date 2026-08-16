@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PushPin
-import androidx.compose.material.icons.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.foundation.layout.size
@@ -78,7 +77,6 @@ object NeydiIcons {
     /** "Alisverisi birak" - moddan cikis (tasarim karari 1). */
     val Logout: ImageVector get() = Icons.Rounded.Logout
     val DragIndicator: ImageVector get() = Icons.Rounded.DragIndicator
-    val ReceiptLong: ImageVector get() = Icons.Rounded.ReceiptLong
     /** "Bu fisin devamini cek" - cok parcali fis (tasarim karari 4). */
     val PhotoCamera: ImageVector get() = Icons.Rounded.PhotoCamera
     val HourglassTop: ImageVector get() = Icons.Rounded.HourglassTop

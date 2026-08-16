@@ -77,10 +77,7 @@ class DeleteDataViewModel(
  * cizilmez.
  */
 internal fun rowsOf(counts: WipeCounts): List<DeleteRow> = buildList {
-    if (counts.trips + counts.receipts > 0) {
-        add(DeleteRow("Alışveriş ve fişler", "${counts.trips} + ${counts.receipts}"))
-    }
-    if (counts.photos > 0) add(DeleteRow("Fiş fotoğrafı", "${counts.photos}"))
+    if (counts.trips > 0) add(DeleteRow("Alışveriş", "${counts.trips}"))
     if (counts.products + counts.prices > 0) {
         add(DeleteRow("Ürün ve fiyat geçmişi", "${counts.products} + ${counts.prices}"))
     }

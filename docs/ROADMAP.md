@@ -10,7 +10,7 @@ listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe **ürün ba
 fiyat hafızası biriktiren. Döngü: *liste → markette işaretle → etiket çek →
 ürün+marka+market+tarih+fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**İlerleme:** 10 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
+**İlerleme:** 11 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
 "Pivot sonrası" bölümünde.
 
 ---
@@ -124,7 +124,7 @@ kapsamında fiş fotoğrafı kalmadı). Tasarıma bildirim: `10-tasarima-pivot.m
 - [x] **E10 — purchaseEvents tek kaynak.** *(cihazsız)* UNION'ın fiş kolu
   silinir — liste kanıtı belgelenmiş fallback. **Bitti:** stats testleri
   fikstürsüz yeşil.
-- [ ] **E11 — `data/receipt/` yıkımı + şema v5.** Bilinçli büyük commit
+- [x] **E11 — `data/receipt/` yıkımı + şema v5.** Bilinçli büyük commit
   (Room DAO SQL'i entity listesine karşı derler, bölünemez): yedi pipeline
   dosyası + `ReceiptReader.*` + kalan fiş testleri; `Receipt`+`ReceiptLine`
   entity+DAO; DataWipe fiş sorguları; `Trip.totalMinor`;

@@ -1,7 +1,6 @@
 package com.neydi.app.data.repo
 
 import com.neydi.app.data.db.DataWipeDao
-import com.neydi.app.data.image.deleteFileAt
 
 /**
  * Silme ekraninin sayfa sayfa okudugu rakamlar (tasarim karari 2).
@@ -13,8 +12,6 @@ import com.neydi.app.data.image.deleteFileAt
  */
 data class WipeCounts(
     val trips: Int = 0,
-    val receipts: Int = 0,
-    val photos: Int = 0,
     val products: Int = 0,
     val prices: Int = 0,
     val staples: Int = 0,
@@ -22,7 +19,7 @@ data class WipeCounts(
 ) {
     /** Hicbir sey yoksa ekran sayilari degil, "silinecek bir sey yok" halini cizer. */
     val isEmpty: Boolean
-        get() = trips + receipts + photos + products + prices + staples + blocks == 0
+        get() = trips + products + prices + staples + blocks == 0
 }
 
 /**
@@ -45,8 +42,6 @@ class DataWipe(
 
     suspend fun counts(householdId: String): WipeCounts = WipeCounts(
         trips = dao.countTrips(householdId),
-        receipts = dao.countReceipts(householdId),
-        photos = dao.countPhotos(householdId),
         products = dao.countProducts(householdId),
         prices = dao.countPrices(householdId),
         staples = dao.countStaples(householdId),
@@ -54,11 +49,8 @@ class DataWipe(
     )
 
     suspend fun wipe(householdId: String) {
-        dao.photoPaths(householdId).forEach { deleteFileAt(it) }
 
         dao.deleteTripLines(householdId)
-        dao.deleteReceiptLines(householdId)
-        dao.deleteReceipts(householdId)
         dao.deleteTrips(householdId)
         dao.deletePrices(householdId)
         dao.deleteAliases(householdId)

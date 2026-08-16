@@ -3,8 +3,11 @@ package com.neydi.app.data.db
 import androidx.room3.AutoMigration
 import androidx.room3.ConstructedBy
 import androidx.room3.Database
+import androidx.room3.DeleteColumn
+import androidx.room3.DeleteTable
 import androidx.room3.RoomDatabase
 import androidx.room3.RoomDatabaseConstructor
+import androidx.room3.migration.AutoMigrationSpec
 
 /**
  * Neydi'nin yerel veritabani. OFFLINE-FIRST: bu dosya kaynak, bulut kopya.
@@ -31,8 +34,6 @@ import androidx.room3.RoomDatabaseConstructor
         Store::class,
         Trip::class,
         TripLine::class,
-        Receipt::class,
-        ReceiptLine::class,
         PriceObservation::class,
         SuggestionEvent::class,
         SuggestionBlock::class,
@@ -40,7 +41,7 @@ import androidx.room3.RoomDatabaseConstructor
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
     //
@@ -85,10 +86,28 @@ import androidx.room3.RoomDatabaseConstructor
     // Tamamen otomatik kalma kurali korunuyor: kolon nullable, veri
     // geri-doldurmasi GEREKMIYOR. Eski fislerde null kaliyor ve bu dogru -
     // onlarin ham satirlari gercekten bilinmiyor.
+    // v4 -> v5: PIVOT. Fis tablolari dusuyor, `brand` giriyor (E11).
+    //
+    // Silme de tamamen otomatik: `@DeleteTable`/`@DeleteColumn` birer
+    // ANNOTASYON, icinde SQL yok - yani commonMain'de `execSQL` olmamasi engel
+    // degil. Room tabloyu yeniden yaratip veriyi kopyalarken silinenleri
+    // disarida birakiyor.
+    //
+    // DORT SILME, DORT AYRI GEREKCE:
+    //  - `receipt`, `receipt_line`: kaynak akis yok, yazan kod yok.
+    //  - `price_observation.receiptLineId`: fis donemi izi. Tablo BOS oldugu
+    //    icin bedava; dolu olsaydi da anlami kalmazdi.
+    //  - `trip.totalMinor`: tek yazani `ReceiptProcessor.rollUpTripTotal`di.
+    //    Ayni bump'a alindi cunku okuyanlari E8'de temizlendi ve ayri bir v6
+    //    yalnizca ikinci bir cihaz dansi demek olurdu.
+    //
+    // `brand` NULLABLE, yani veri geri-doldurmasi gerekmiyor - toplu bump
+    // kuralinin sartı korunuyor.
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5, spec = Migration4To5Spec::class),
     ],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)
@@ -100,8 +119,6 @@ abstract class NeydiDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun tripDao(): TripDao
     abstract fun tripLineDao(): TripLineDao
-    abstract fun receiptDao(): ReceiptDao
-    abstract fun receiptLineDao(): ReceiptLineDao
     abstract fun productAliasDao(): ProductAliasDao
     abstract fun storeDao(): StoreDao
     abstract fun dataWipeDao(): DataWipeDao
@@ -119,5 +136,15 @@ abstract class NeydiDatabase : RoomDatabase() {
 expect object NeydiDatabaseConstructor : RoomDatabaseConstructor<NeydiDatabase> {
     override fun initialize(): NeydiDatabase
 }
+
+/**
+ * v4 -> v5 silme listesi. Govdesi BOS ve oyle kalmali: `onPostMigrate`
+ * gerekmiyor cunku hicbir veri tasinmiyor, yalnizca birakiliyor.
+ */
+@DeleteTable(tableName = "receipt")
+@DeleteTable(tableName = "receipt_line")
+@DeleteColumn(tableName = "price_observation", columnName = "receiptLineId")
+@DeleteColumn(tableName = "trip", columnName = "totalMinor")
+class Migration4To5Spec : AutoMigrationSpec
 
 internal const val NEYDI_DB_FILE = "neydi.db"

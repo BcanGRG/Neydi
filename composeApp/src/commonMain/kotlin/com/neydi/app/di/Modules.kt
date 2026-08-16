@@ -7,7 +7,6 @@ import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.DataWipe
 import com.neydi.app.data.repo.ListRepository
-import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.finish.FinishShoppingViewModel
@@ -52,8 +51,6 @@ val dataModule = module {
     single { get<NeydiDatabase>().productDao() }
     single { get<NeydiDatabase>().tripDao() }
     single { get<NeydiDatabase>().tripLineDao() }
-    single { get<NeydiDatabase>().receiptDao() }
-    single { get<NeydiDatabase>().receiptLineDao() }
     single { get<NeydiDatabase>().productAliasDao() }
     single { get<NeydiDatabase>().storeDao() }
     single { get<NeydiDatabase>().dataWipeDao() }
@@ -112,21 +109,6 @@ val dataModule = module {
         SuggestionEngine(
             statsDao = get(), productDao = get(), tripDao = get(),
             tripLineDao = get(), clock = ::now,
-        )
-    }
-
-    single {
-        ReceiptProcessor(
-            reader = get(),
-            receiptDao = get(),
-            receiptLineDao = get(),
-            productDao = get(),
-            aliasDao = get(),
-            tripDao = get(),
-            storeDao = get(),
-            statsRebuilder = get(),
-            clock = ::now,
-            newId = ::newUuid,
         )
     }
 

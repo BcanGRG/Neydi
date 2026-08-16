@@ -112,7 +112,7 @@ class ListViewModel(
     ) { trips, self, all ->
         HeaderData(
             lastTrip = trips.firstOrNull()?.let { trip ->
-                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = null) }
             },
             selfInitials = self?.displayName?.let { turkishInitials(it) },
             hasPartner = all.size > 1,
@@ -124,7 +124,7 @@ class ListViewModel(
             trips.firstOrNull()?.let { trip ->
                 // completedAt burada asla null olamaz (sorgunun kendisi eliyor)
                 // ama sozlesmeyi kod seviyesinde de tutuyoruz.
-                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = null) }
             }
         }
 
@@ -425,8 +425,9 @@ class ListViewModel(
             _summary.value = ShoppingSummary(
                 takenCount = rows.count { it.checked },
                 totalCount = rows.size,
-                // Tutar fisten gelecek (Faz 4); simdilik bilinmiyor.
-                amountMinor = trip.totalMinor,
+                // TUTAR E18'DE GELECEK: gozlemlerden hesaplanan `~` tahmini.
+                // Fis toplami olan `Trip.totalMinor` E11'de kolonuyla silindi.
+                amountMinor = null,
                 durationMinutes = null,
             )
             // TEK CIHAZ KAPATIR. Donen deger onemli: false ise gezi baska bir
