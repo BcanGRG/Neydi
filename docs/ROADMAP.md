@@ -202,9 +202,18 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       `packSize`/`packUnit` çıkarıyor; kalan iş `PriceHint.PackChanged`'i
       besleyip shrinkflation'ı gerçekten yakalamak. *Bu olmadan 1 L → 900 ml
       düşüşü "fiyat sabit" diye raporlanır.*
-- [ ] **F5.10 — Mükerrer gözlem koruması** *(cihazsız)*. **Kural tasarımdan
-      geldi:** aynı market + ürün + fiyat **60 saniye** içinde tekrarlanırsa
-      ikinci gözlem yazılmaz. Eşitlemede aynı dakika = tek gözlem.
+- **F5.10 ✅ (yerel yarısı) — Mükerrer gözlem koruması.** Tasarımın kuralı:
+      *"aynı market + ürün + fiyat 60 sn içinde tekrarlanırsa ikinci gözlem
+      yazılmaz"*. `countRecentDuplicates` + `insertUnlessRecentDuplicate`,
+      10 test. **E15'ten ÖNCE yazıldı** ve bu kasıtlı: kural yazma yolundan
+      önce var olursa çağıran ona uymak zorunda kalır, sonra eklenirse
+      "zaten çalışıyordu" sanılan bir şey için ısırdığı hiç görülmeyen bir
+      test yazılır.
+      SQL `storeId IS :storeId` kullanıyor, `=` değil: `NULL = NULL` yanlıştır,
+      yani `=` ile marketi seçilmemiş çekimler **sessizce** korumasız kalırdı.
+      Testin ısırdığı kanıtlandı — `=`'e çevirince yalnızca o vaka düştü.
+      **Kalan yarı:** "eşitlemede aynı dakika = tek gözlem" senkron motoru
+      gelince (Faz 7); bugün `pending_op`'a yazan kod yok.
 - [x] **F5.11 — İki biçimlendirici.** `formatEstimate` (`~642 TL`, tilde
       bitişik, kuruşsuz, en yakına yuvarlar) ve `formatRelativeDay` (altı
       basamaklı tarih merdiveni). Başlık, sepet tahmini ve özet manşeti
