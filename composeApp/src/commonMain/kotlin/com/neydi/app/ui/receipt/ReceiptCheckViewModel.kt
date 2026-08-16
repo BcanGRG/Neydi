@@ -22,6 +22,7 @@ import com.neydi.app.data.formatDayMonthTime
 import com.neydi.app.data.receipt.chainKey
 import com.neydi.app.data.receipt.storeDisplayName
 import com.neydi.app.data.receipt.samePhysicalReceipt
+import com.neydi.app.data.receipt.stitchParts
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
@@ -148,6 +149,13 @@ data class CheckState(
     val isPart: Boolean = false,
     /** Fisin bagli oldugu gezi - "devamini cek" cekim oturumunu buna acıyor. */
     val tripId: String? = null,
+    /**
+     * Fisin kendi sira numaralarinda ATLANMIS kalemler (F4.15).
+     *
+     * Bos = eksik yok ya da fis sira numarasi basmiyor. Ekran bunu ancak
+     * dolu oldugunda ciziyor - "0 kalem eksik" diye bir sey yok.
+     */
+    val missingSequences: List<Int> = emptyList(),
 ) {
     /** Butun parcalarin satirlari tek dizide - duzeltme akislari bunu kullaniyor. */
     val rows: List<CheckRow> get() = sections.flatMap { it.rows }
@@ -211,7 +219,9 @@ class ReceiptCheckViewModel(
         val group = receipt?.let { samePhysicalReceipt(receiptDao.forTrip(it.tripId), it.id) }
             .orEmpty()
         val isPart = group.size > 1
-        val linesByReceipt = group.associateWith { receiptLineDao.forReceipt(it.id) }
+        // PARCA DIKISI (F4.15): bindiren satirlar bir kez sayiliyor.
+        val stitched = stitchParts(group.associateWith { receiptLineDao.forReceipt(it.id) })
+        val linesByReceipt = stitched.kept
         val lines = linesByReceipt.values.flatten().ifEmpty { receiptLineDao.forReceipt(receiptId) }
         // Fark kumesi: gezideki satirlardan, urunu fiste eslesmis olanlar
         // dusuluyor. Eslesmemis fis satirlari kimseyi aklayamaz - urunu belli
@@ -259,16 +269,27 @@ class ReceiptCheckViewModel(
         // okunmus File Market fisini BIM'in ayristirma hatasiyla amber'a
         // ceviriyordu - duzeltilmek istenen hatanin yer degistirmis hali.
         // Gruplama `samePhysicalReceipt` icinde, gerekcesiyle birlikte.
-        val sum = if (isPart) {
-            // null = grupta hic satir yok; kendi toplamimiz (0) dogru cevap.
-            receiptLineDao.sumLinesForReceipts(group.map { it.id }) ?: ownSum
-        } else {
-            ownSum
-        }
+        //
+        // TOPLAM SQL'DEN DEGIL DIKILMIS SATIRLARDAN (F4.15). `sumLinesForReceipts`
+        // veritabanindaki HER satiri topluyordu; parcalar birbirine bindiginde
+        // ayni kalem iki kez sayiliyor ve fisin toplamini asiyordu. Cihazda
+        // olculdu: dort parcalik bir cekimde altmis kalemin kirk ikisi iki
+        // parcada birden okunmustu, yani kapi yapisal olarak "tutmuyor"
+        // diyordu. Kotlin tarafinda toplamak dikisin sonucunu kullanabilmenin
+        // tek yolu - SQL bindirmeyi bilmiyor.
+        val sum = lines.sumOf { if (it.isDiscount) -it.lineTotalMinor else it.lineTotalMinor }
         val total = if (isPart) {
             // Hicbir parcanin toplami okunamadiysa null kaliyor ve kapi
             // "dogrulanamadi" diyor - parca cipi bunu notr gosteriyor.
-            group.mapNotNull { it.totalMinor }.takeIf { it.isNotEmpty() }?.sum()
+            //
+            // TEKILLESTIRILIYOR (F4.15): fisin basili toplami TEK bir sayi ve
+            // yalnizca fisin sonunda duruyor. Bindirme artik ISTENDIGI icin
+            // ayni kuyruk iki karede birden okunabiliyor - o zaman ayni toplam
+            // iki kez toplanip kapiyi ters yonde bozardi. Satirlari
+            // tekillestirip toplami tekillestirmemek, duzeltilen hatanin yer
+            // degistirmis hali olurdu.
+            group.mapNotNull { it.totalMinor }.distinct()
+                .takeIf { it.isNotEmpty() }?.sum()
         } else {
             receipt?.totalMinor
         }
@@ -283,7 +304,7 @@ class ReceiptCheckViewModel(
             totalMinor = total,
             sumMinor = sum,
             gateHolds = total?.let { kotlin.math.abs(sum - it) <= TOLERANCE_MINOR },
-            sections = buildSections(group, linesByReceipt, receipt, lines),
+            sections = buildSections(group, linesByReceipt, receipt, lines, stitched.overlapCount),
             unaccounted = unaccounted,
             // SATIR VARSA hata mesaji GOSTERILMEZ.
             //
@@ -296,6 +317,7 @@ class ReceiptCheckViewModel(
             notice = notice,
             isPart = isPart,
             tripId = receipt?.tripId,
+            missingSequences = stitched.missingSequences,
         )
     }
 
@@ -310,6 +332,7 @@ class ReceiptCheckViewModel(
         linesByReceipt: Map<Receipt, List<ReceiptLine>>,
         current: Receipt?,
         fallbackLines: List<ReceiptLine>,
+        overlap: Map<String, Int>,
     ): List<CheckSection> {
         if (group.size <= 1) {
             return listOf(
@@ -326,7 +349,7 @@ class ReceiptCheckViewModel(
             CheckSection(
                 receiptId = part.id,
                 title = "Parça ${index + 1}",
-                meta = sectionMeta(partLines),
+                meta = sectionMeta(partLines, overlap[part.id] ?: 0),
                 rows = partLines.map { it.toRow(part.id) },
             )
         }
@@ -519,10 +542,16 @@ class ReceiptCheckViewModel(
  * parca yalnizca *"18 satır"*. Bekleyen satir yokken o cumleyi yazmak, olmayan
  * bir isi varmis gibi gostermek olurdu.
  */
-internal fun sectionMeta(lines: List<ReceiptLine>): String {
+internal fun sectionMeta(lines: List<ReceiptLine>, overlap: Int = 0): String {
     val review = lines.count { it.needsReview }
     return buildString {
-        append("${lines.size} satır")
+        // HAM SAYI YAZILIYOR, elenmis degil (F4.15). Tamamen bindiren bir
+        // parca aksi halde "Parça 3 · 0 satır" olurdu ve bu "cekim basarisiz"
+        // diye okunup kullaniciyi tam da kacinmak istedigimiz seye - yeniden
+        // cekmeye - iterdi. O kare bosa gitmedi; ustuste bindi.
+        append("${lines.size + overlap} satır")
+        // Bindirme GIZLENMIYOR ama bir uyari da degil: artik ISTENEN sey.
+        if (overlap > 0) append(" · $overlap'i önceki parçayla ortak")
         if (review > 0) append(" · $review satır kontrol bekliyor")
     }
 }

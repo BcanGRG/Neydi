@@ -145,8 +145,8 @@ private val AMOUNT_SUFFIX =
  */
 private val ITEMISED_LINE = Regex(
     """^\s*[0-9OSIl]{1,4}\s+[0-9OSIl]{5,}\s+(\d+(?:[.,]\d+)?)\s*""" +
-        """(adet|ad|kg|ka|gr|g|lt|l|ml|pkt|paket|kutu)\s+""" +
-        """(\d+[.,]\d{2})\s*[%o0]\s?\d{1,2}\s+""" +
+        """(adet|ad|kg|ka|kq|gr|g|lt|l|ml|pkt|paket|kutu)\s+""" +
+        """(\d+[.,]\d{2})\s*[%o0]{1,2}\s?\d{1,2}\s+""" +
         """(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*\S{0,2}\s*$""",
     RegexOption.IGNORE_CASE,
 )
@@ -208,6 +208,35 @@ private fun nameCandidate(line: String): Boolean {
         !contains(key, PAYMENT_WORDS) &&
         !contains(key, HEADER_WORDS)
 }
+
+/**
+ * Satir bir URUN KALEMI gibi mi duruyor - `ITEMISED_LINE`den DAHA GEVSEK.
+ *
+ * NEDEN IKINCI BIR OLCUT: kati desen OCR varyantlarina takiliyor ve
+ * takildiginda satir MAGAZA ADI adayina dusuyordu. Cihazda uc parcada birden
+ * oldu: Ayarlar'a "15 8690530066359 2 Adet 29,50 %%20 59,00 t" (cift yuzde),
+ * "46 2902885 0,886 Kq 169,90%01 150,53 t" (g yerine q) diye zincir adlari
+ * yazilacakti. Desen genisletildi ama BIR SONRAKI varyant yine kaciracak;
+ * bu olcut o kacisin bedelini ucuzlatiyor.
+ *
+ * OLCUT BARKOD: magaza adinda alti haneli bir rakam dizisi olmaz, urun
+ * kaleminde HER ZAMAN olur.
+ */
+private fun looksLikeItemLine(raw: String): Boolean =
+    raw.trim().firstOrNull()?.isDigit() == true &&
+        LONG_DIGIT_RUN.containsMatchIn(raw)
+
+private val LONG_DIGIT_RUN = Regex("""\d{6,}""")
+
+/**
+ * Kunyenin bitmis sayildigi satir - yedek magaza adayi bundan sonra
+ * aranmiyor.
+ *
+ * Gercek fislerde kunye (unvan, adres, vergi no) ilk bes-alti gorsel satiri
+ * kapliyor; sekiz bol bir pay. Daha genis tutmak orta parcalarda fisin
+ * govdesinden ad uydurmaya geri donerdi.
+ */
+private const val STORE_HEADER_ROWS = 8
 
 /**
  * Metinde YAN YANA en az iki harf var mi.
@@ -360,10 +389,12 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
         ) {
             if (contains(key, COMPANY_WORDS)) {
                 storeCompany = raw
-            } else if (storeFallback == null && !isDateLine) {
-                storeFallback = raw
+                continue
             }
-            continue
+            // YEDEK ADAY BURADA SECILMIYOR ARTIK - asagiya, eleme dallarindan
+            // SONRAYA tasindi. Kunye satiri ise burada kalmak ZORUNDA cunku
+            // HEADER_WORDS da "market"/"sirket"/"magazalar" tasiyor ve
+            // asagiya inseydi kunyeyi kendisi yerdi.
         }
 
         QUANTITY_LINE.matchEntire(raw)?.let { m ->
@@ -385,6 +416,38 @@ fun parseReceipt(rawLines: List<String>): ReceiptReading {
         }
         if (contains(key, VAT_WORDS)) continue
         if (contains(key, PAYMENT_WORDS) || contains(key, HEADER_WORDS)) continue
+
+        // YEDEK MAGAZA ADAYI - ELEME DALLARINDAN SONRA (F4.15 onkosulu).
+        //
+        // Once yukarida seciliyordu ve gercek fiste OLCULDU: kunyesiz bir
+        // parcada aday `"KDV % Matrah KDV Tutar"` oluyordu, cunku o satir
+        // TOPLAM/KDV/ODEME/KUNYE elemelerinden ONCE aday kutusuna dusuyordu.
+        //
+        // Bedeli tek bir yanlis ad degildi: `chainKey` "kdv" cikiyor,
+        // `physicalReceipts` bunu FARKLI ZINCIR sayip yeni grup aciyor ve
+        // parcalar birbirinden koparak parca dikisini tamamen devre disi
+        // birakiyordu. Ustelik Ayarlar'a "KDV" adinda kalici bir magaza
+        // yazilacakti (karar 11).
+        //
+        // Bugune kadar gorunmemesinin tek sebebi son parcanin hic
+        // okunamamasiydi - yani gruplama, okuma BASARISIZ oldugu icin
+        // calisiyordu.
+        // YEDEK ADAY YALNIZCA FISIN BASINDA. Magaza adi kunyede, yani ilk
+        // birkac satirda basili. Sinir olmadan orta parcalarda fisin
+        // GOVDESINDEN ad uyduruluyordu - olculdu: "YALNIZ BEŞBİNYEDİYÜZ...",
+        // "KDV % Matrah KDV Tutar". Uydurma ad `chainKey`i degistirip parcalari
+        // ayri gruplara bolüyor ve dikisi devre disi birakiyor.
+        //
+        // KUNYESIZ PARCADA AD OLMAMASI DOGRU DAVRANIS: `physicalReceipts`
+        // "zincir okunamadi" halini onceki gruba katilmak diye yorumluyor -
+        // uzun fisin devam parcasinin beklenen hali tam olarak bu.
+        if (storeCompany == null && storeFallback == null && amount == null &&
+            index < STORE_HEADER_ROWS && key.isNotBlank() && raw.length > 6 &&
+            !isDateLine && !looksLikeItemLine(raw) && hasWord(raw)
+        ) {
+            storeFallback = raw
+            continue
+        }
 
         if (contains(key, DISCOUNT_WORDS)) {
             if (amount != null) {

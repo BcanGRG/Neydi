@@ -235,6 +235,12 @@ fun ReceiptCheckScreen(
                             CheckRowItem(row) { onEdit(row) }
                         }
                     }
+                    // EKSIK KALEMLER (F4.15): fisin kendi sira numaralarindaki
+                    // bosluk. "Devamini cek"in HEMEN USTUNDE duruyor cunku
+                    // cevabi o dugme.
+                    if (state.missingSequences.isNotEmpty()) {
+                        item(key = "missing") { MissingItemsNotice(state.missingSequences) }
+                    }
                     // "DEVAMINI CEK" LISTENIN SONUNDA, alt butonlarin arasinda
                     // DEGIL: yaptigi is son satirin devami, onay degil.
                     if (state.isPart) {
@@ -403,6 +409,50 @@ private fun PartHeader(title: String, meta: String?) {
         }
     }
 }
+
+/**
+ * *"6 kalem eksik görünüyor"* (F4.15).
+ *
+ * FISIN KENDI NUMARALARINDAN geliyor, bizim tahminimizden degil: AKYURT her
+ * kalemi kesintisiz numaralandiriyor, yani okunanlarin arasindaki bosluk
+ * dogrudan "bu kalem hicbir karede gorunmedi" demek. Bunu soylemeyen bir ekran
+ * kullaniciyi fisi elle saymaya birakirdi.
+ *
+ * SUCLAYICI DEGIL: eksik kalem kullanicinin hatasi degil, uzun fisin dogasi.
+ * Amber ve kisa; cozumu bir alttaki "devamini cek".
+ */
+@Composable
+private fun MissingItemsNotice(missing: List<Int>) {
+    val extras = LocalNeydiExtraColors.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NeydiIcon(
+            icon = NeydiIcons.Error,
+            contentDescription = null,
+            size = 18.dp,
+            tint = extras.warning,
+        )
+        Spacer(Modifier.width(Spacing.xs))
+        Text(
+            // SAYI ONDE, numaralar arkada: kullanicinin ihtiyaci "kac tane
+            // eksik", numaralar yalnizca fise bakip dogrulamak isteyene.
+            text = "${missing.size} kalem eksik görünüyor · sıra " +
+                missing.take(MISSING_PREVIEW).joinToString(", ") +
+                if (missing.size > MISSING_PREVIEW) "…" else "",
+            style = MaterialTheme.typography.bodySmall,
+            color = extras.warning,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** Kac sira numarasi yazilacak - gerisi ekranda gurultu. */
+private const val MISSING_PREVIEW = 6
 
 /**
  * *"Bu fişin devamını çek"* (tasarim karari 4).

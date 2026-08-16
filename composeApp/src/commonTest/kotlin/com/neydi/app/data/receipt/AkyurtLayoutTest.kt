@@ -1,8 +1,12 @@
 package com.neydi.app.data.receipt
 
+import com.neydi.app.data.matchKey
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+
+private fun matchKeyOf(text: String) = matchKey(text)
 
 /**
  * AKYURT'un IKI SATIRLI DUZENI (F4.14).
@@ -176,6 +180,40 @@ class AkyurtLayoutTest {
             store == null || !store.startsWith("42 "),
             "magaza adi tutar satirindan gelmemeliydi, gelen: $store",
         )
+    }
+
+    /**
+     * KDV DOKUM BASLIGI MAGAZA ADI OLAMAZ - ve bedeli tek bir yanlis ad
+     * degildi.
+     *
+     * Bu parcada kunye yok (fisin ortasi), ve yedek aday secimi eleme
+     * dallarindan ONCE kostugu icin `"KDV % Matrah KDV Tutar"` satirini
+     * aliyordu. Sonucu zincir: `chainKey` "kdv" cikiyor, `physicalReceipts`
+     * bunu FARKLI ZINCIR sayip yeni grup aciyor, parcalar birbirinden
+     * kopuyor ve parca dikisi (F4.15) hic calismiyor. Ustelik Ayarlar'a
+     * "KDV" adinda kalici bir magaza yaziliyor.
+     *
+     * Bugune kadar gorunmemesinin tek sebebi son parcanin hic okunamamasiydi.
+     */
+    @Test
+    fun vatTableHeaderIsNotMistakenForStoreName() {
+        val store = reading().storeName
+        assertTrue(
+            store == null || !matchKeyOf(store).contains("kdv"),
+            "magaza adi KDV dokumunden gelmemeliydi, gelen: $store",
+        )
+    }
+
+    /**
+     * KUNYESIZ PARCADA MAGAZA ADI HIC OLMAMALI.
+     *
+     * `physicalReceipts` "zincir okunamadi" halini onceki gruba katilmak diye
+     * yorumluyor - uzun fisin devam parcasinin beklenen hali tam olarak bu.
+     * Uydurma bir ad o birlesmeyi bozar.
+     */
+    @Test
+    fun middlePartHasNoStoreName() {
+        assertNull(reading().storeName, "orta parca magaza adi uretmemeliydi")
     }
 
     // --- Toplam --------------------------------------------------------------
