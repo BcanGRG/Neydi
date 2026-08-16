@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.ocr
 
 import kotlin.math.abs
 import kotlin.math.sqrt

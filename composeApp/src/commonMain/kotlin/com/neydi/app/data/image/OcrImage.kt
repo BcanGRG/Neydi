@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.image
 
 /**
  * Fis gorseli icin ust sinir: uzun kenar bu kadar piksel.

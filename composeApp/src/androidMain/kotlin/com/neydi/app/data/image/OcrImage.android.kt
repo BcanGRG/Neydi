@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

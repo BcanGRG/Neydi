@@ -1,7 +1,7 @@
 package com.neydi.app.data.repo
 
 import com.neydi.app.data.db.DataWipeDao
-import com.neydi.app.data.receipt.deleteFileAt
+import com.neydi.app.data.image.deleteFileAt
 
 /**
  * Silme ekraninin sayfa sayfa okudugu rakamlar (tasarim karari 2).

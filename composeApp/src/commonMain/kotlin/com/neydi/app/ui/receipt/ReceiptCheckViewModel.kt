@@ -203,9 +203,14 @@ class ReceiptCheckViewModel(
             //
             // Satiri OLAN fise dokunulmuyor: yeniden okuma ancak elde hicbir
             // sey yokken bedava.
-            val failedWithNothing = receipt?.status == ReceiptStatus.FAILED &&
-                receiptLineDao.forReceipt(receiptId).isEmpty()
-            if (receipt?.status == ReceiptStatus.PENDING || failedWithNothing) {
+            //
+            // KOSUL DURUM DEGIL, ELDE SATIR OLUP OLMADIGI. Once yalnizca
+            // FAILED fisler yeniden deneniyordu ama satirsiz bir fis
+            // MISMATCHED de olabiliyor (toplam okundu, satir okunmadi) - ve o
+            // hal de kaybedecek hicbir sey tasimiyor. Etiket degil, icerik
+            // onemli.
+            val nothingToLose = receiptLineDao.forReceipt(receiptId).isEmpty()
+            if (receipt?.status == ReceiptStatus.PENDING || nothingToLose) {
                 processor.process(receiptId)
             }
             reload()
@@ -508,12 +513,12 @@ class ReceiptCheckViewModel(
                     // cunku kullanici acisindan sonuc ayni: ekran degismedi ve
                     // elindeki kayip degil.
                     ReceiptReadOutcome.KEPT_PREVIOUS ->
-                        "$degrees° daha iyisini vermedi, önceki okuma duruyor."
+                        "${label(degrees)} daha iyisini vermedi, önceki okuma duruyor."
                     // SATIR SAYISI YAZILIYOR. "Okundu" tek basina hicbir sey
                     // soylemiyordu: kullanici ekranin degisip degismedigini
                     // ancak satirlari sayarak anlayabiliyordu.
                     ReceiptReadOutcome.PARSED ->
-                        "$degrees° yönünde okundu · ${_state.value.rows.size} satır"
+                        "${label(degrees)} okundu · ${_state.value.rows.size} satır"
                     else -> null
                 },
             )
@@ -522,9 +527,21 @@ class ReceiptCheckViewModel(
 
     private var rotationIndex = 0
 
+    private fun label(degrees: Int?): String = degrees?.let { "$it° yönünde" } ?: "Yeniden"
+
     private companion object {
-        /** Denenecek aci sirasi. 0 EN SONDA: otomatik secim onu zaten denedi. */
-        val ROTATION_ORDER = listOf(90, 270, 180, 0)
+        /**
+         * Denenecek sira. ILK DENEME OTOMATIK (null), elle acilar sonra.
+         *
+         * Once dogrudan 90 dereceye atliyordu ve bu, otomatik secim
+         * duzeldikce yanlis hale geldi: yon puanlayicisi (F4.14b) ve gorsel
+         * satir gruplamasi (F4.19) duzeltildikten sonra otomatik yol cogu
+         * fiste zaten dogruyu buluyor. Kullanicinin "yanlis gorunuyor"
+         * dediginde istedigi ilk sey bir aci degil, DUZGUN bir yeniden okuma.
+         *
+         * 0 en sonda: otomatik secim onu zaten deniyor.
+         */
+        val ROTATION_ORDER = listOf(null, 90, 270, 180, 0)
     }
 }
 

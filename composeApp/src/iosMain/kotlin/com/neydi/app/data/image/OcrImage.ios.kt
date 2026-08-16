@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.image
 
 /**
  * iOS kucultmesi Faz 8'de gelecek (UIImage + CGImage).
