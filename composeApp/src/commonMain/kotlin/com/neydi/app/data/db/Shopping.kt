@@ -73,8 +73,6 @@ data class Trip(
      */
     val ownerMemberId: String? = null,
     val completedAt: Long? = null,
-    /** Kurus. Fis okunmadiysa null - 0 DEGIL, "bilmiyorum" ile "bedava" ayri seyler. */
-    val totalMinor: Long? = null,
     val createdAt: Long,
     /** LWW icin; null = hic guncellenmedi, `createdAt` gecerli (bkz. Conventions madde 7). */
     val updatedAt: Long? = null,

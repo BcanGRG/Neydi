@@ -29,22 +29,6 @@ interface DataWipeDao {
     @Query("SELECT COUNT(*) FROM trip WHERE householdId = :householdId AND deletedAt IS NULL")
     suspend fun countTrips(householdId: String): Int
 
-    @Query("SELECT COUNT(*) FROM receipt WHERE householdId = :householdId AND deletedAt IS NULL")
-    suspend fun countReceipts(householdId: String): Int
-
-    /**
-     * Fotografi olan fisler. Fis sayisindan AYRI: kuyruga alinmis ama fotografi
-     * silinmis bir fis kaydi olabilir ve o satirda "cihazdan silinecek dosya"
-     * sayisi yaziyor, "kayit" sayisi degil.
-     */
-    @Query(
-        """
-        SELECT COUNT(*) FROM receipt
-        WHERE householdId = :householdId AND deletedAt IS NULL AND imagePath <> ''
-        """,
-    )
-    suspend fun countPhotos(householdId: String): Int
-
     @Query("SELECT COUNT(*) FROM product WHERE householdId = :householdId AND deletedAt IS NULL")
     suspend fun countProducts(householdId: String): Int
 
@@ -62,15 +46,6 @@ interface DataWipeDao {
     @Query("SELECT COUNT(*) FROM suggestion_block WHERE householdId = :householdId AND deletedAt IS NULL")
     suspend fun countBlocks(householdId: String): Int
 
-    /** Silinecek fotograf yollari - dosyalari SILEN taraf bunlari okuyor. */
-    @Query(
-        """
-        SELECT imagePath FROM receipt
-        WHERE householdId = :householdId AND imagePath <> ''
-        """,
-    )
-    suspend fun photoPaths(householdId: String): List<String>
-
     // --- Silme --------------------------------------------------------------
     //
     // Sira COCUKTAN EBEVEYNE: bugun sema yabanci anahtar tasimasa da satirlari
@@ -79,12 +54,6 @@ interface DataWipeDao {
 
     @Query("DELETE FROM trip_line WHERE householdId = :householdId")
     suspend fun deleteTripLines(householdId: String)
-
-    @Query("DELETE FROM receipt_line WHERE householdId = :householdId")
-    suspend fun deleteReceiptLines(householdId: String)
-
-    @Query("DELETE FROM receipt WHERE householdId = :householdId")
-    suspend fun deleteReceipts(householdId: String)
 
     @Query("DELETE FROM trip WHERE householdId = :householdId")
     suspend fun deleteTrips(householdId: String)

@@ -33,13 +33,3 @@ data class TripLineCount(
     val tripId: String,
     val lineCount: Int,
 )
-
-/**
- * Fis basina satir sayilari - Gecmis'teki parca satirinin meta'si
- * (tasarim karari 4): *"16 satır · 1 satır kontrol bekliyor"*.
- */
-data class ReceiptLineCount(
-    val receiptId: String,
-    val lineCount: Int,
-    val reviewCount: Int,
-)

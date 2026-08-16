@@ -1,7 +1,23 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.store
+
+import com.neydi.app.data.matchKey
 
 /**
- * Fisin kunyesinden EKRANDA GOSTERILECEK magaza adi (tasarim karari 13).
+ * Magaza adindan zincir anahtari.
+ *
+ * SUBE DEGIL ZINCIR: alias "BIM"e baglanmali, "BIM BADEMLIK SUBESI"ne degil -
+ * yoksa her sube icin ayni duzeltmeyi tekrar yapmak gerekirdi. Ilk kelime
+ * pratikte zinciri veriyor (BIM, FILE, AKYURT, MIGROS).
+ *
+ * Fis doneminde girdisi kunyeden okunuyordu; etiket doneminde (E13) magaza
+ * tohumlarinin `chain` kolonunu ve "+ Yeni market" tekillestirmesini ayni
+ * fonksiyon uretiyor - anahtar vokabuler DEGISMEDI, alias'lar gecerli kaliyor.
+ */
+internal fun chainKey(storeName: String?): String =
+    storeName?.let { matchKey(it).split(" ").firstOrNull { p -> p.length > 1 } } ?: "bilinmiyor"
+
+/**
+ * EKRANDA GOSTERILECEK magaza adi (tasarim karari 13).
  *
  * TICARI UNVAN HICBIR YERDE CIZILMIYOR. Fiste basili olan
  * `AKYURT SÜPERMARKET GIDA İNS.SAN.VE TİC. A.Ş.` kullaniciya hicbir sey

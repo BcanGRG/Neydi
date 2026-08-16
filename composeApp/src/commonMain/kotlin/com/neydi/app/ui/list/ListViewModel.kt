@@ -9,14 +9,10 @@ import com.neydi.app.data.db.Category
 import com.neydi.app.data.db.CategoryDao
 import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
-import com.neydi.app.data.db.ReceiptDao
-import com.neydi.app.data.receipt.ReceiptProcessor
-import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
-import io.github.vinceglb.filekit.PlatformFile
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
@@ -59,23 +55,14 @@ class ListViewModel(
     private val priceObservationDao: PriceObservationDao,
     private val statsRebuilder: ProductStatsRebuilder,
     private val suggestionEngine: SuggestionEngine,
-    private val receiptDao: ReceiptDao,
-    private val processor: ReceiptProcessor,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
 
-    init {
-        // TAKILI KALAN FISLERI ISLE (F4.13). Cihazda yasandi: cekimden sonra
-        // Fis Kontrol ekrani acilmadan surec olurse fis PENDING'de sonsuza
-        // kadar takiliyor ve kullanici "parca parca cek" mesajini HIC gormuyor
-        // - iki fis boyle bulundu. Isleme zaten idempotent (satirlar silinip
-        // yeniden yaziliyor), o yuzden burada sessizce kosmak guvenli; sonuc
-        // Gecmis'te "bekliyor" yerine gercek durum olarak gorunuyor.
-        viewModelScope.launch {
-            receiptDao.pending().forEach { processor.process(it.id) }
-        }
-    }
+    // TAKILI FIS KUYRUGU E7'DE OLDU. Bu ekranin init'i arka planda OCR
+    // kosturuyordu; etiket modelinde boyle bir kuyruk YOK - gozlem cekim
+    // aninda, kullanici onaylayarak yaziliyor, yani sonradan islenecek bir sey
+    // birakmiyor. Liste ekrani artik yalnizca listenin isini yapiyor.
 
     /**
      * FLOW, tek seferlik okuma DEGIL: uyeyi bootstrap yaratiyor ve bu ekran
@@ -125,7 +112,7 @@ class ListViewModel(
     ) { trips, self, all ->
         HeaderData(
             lastTrip = trips.firstOrNull()?.let { trip ->
-                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = null) }
             },
             selfInitials = self?.displayName?.let { turkishInitials(it) },
             hasPartner = all.size > 1,
@@ -137,7 +124,7 @@ class ListViewModel(
             trips.firstOrNull()?.let { trip ->
                 // completedAt burada asla null olamaz (sorgunun kendisi eliyor)
                 // ama sozlesmeyi kod seviyesinde de tutuyoruz.
-                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = trip.totalMinor) }
+                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = null) }
             }
         }
 
@@ -438,8 +425,9 @@ class ListViewModel(
             _summary.value = ShoppingSummary(
                 takenCount = rows.count { it.checked },
                 totalCount = rows.size,
-                // Tutar fisten gelecek (Faz 4); simdilik bilinmiyor.
-                amountMinor = trip.totalMinor,
+                // TUTAR E18'DE GELECEK: gozlemlerden hesaplanan `~` tahmini.
+                // Fis toplami olan `Trip.totalMinor` E11'de kolonuyla silindi.
+                amountMinor = null,
                 durationMinutes = null,
             )
             // TEK CIHAZ KAPATIR. Donen deger onemli: false ise gezi baska bir
@@ -473,53 +461,7 @@ class ListViewModel(
         }
     }
 
-    /**
-     * Okunacak fis hazir - kimligi Fis Kontrol ekranini acmak icin.
-     *
-     * TEK SEFERLIK OLAY, kalici state DEGIL: tuketilmezse konfigurasyon
-     * degisiminde ayni ekran tekrar acilir.
-     */
-    private val _openReceiptId = MutableStateFlow<String?>(null)
-    val openReceiptId: StateFlow<String?> = _openReceiptId
-
-    fun consumeOpenReceipt() {
-        _openReceiptId.value = null
-    }
-
-    /**
-     * Cekilen fisi kuyruga alir. OCR BURADA KOSMUYOR.
-     *
-     * Sira onemli: gezi zaten kapanmis (ozet karti gorunuyor demek ki
-     * kapandi), yani bu is hicbir seyi bekletmiyor. Kucultme basarisiz olursa
-     * ORIJINAL yol saklaniyor - fotograf kullanicinin tek kaniti.
-     */
-    fun attachReceipt(source: PlatformFile, destPath: String, rawPath: String) {
-        // Gezi kimligi ozet kartindan geliyor, openOrGetActiveTrip'ten DEGIL.
-        // O cagri burada YENI bir gezi acardi - gezi kapali cunku - ve fis bos,
-        // yeni acilmis yanlis geziye baglanirdi. Ustelik her fis ekleme hayalet
-        // bir gezi dogururdu.
-        val tripId = _summaryTripId ?: return
-        viewModelScope.launch {
-            val receipt = attachReceiptToTrip(
-                repo = repo,
-                householdId = household,
-                tripId = tripId,
-                source = source,
-                destPath = destPath,
-                rawPath = rawPath,
-            )
-            _openReceiptId.value = receipt.id
-        }
-    }
-
-    /**
-     * Ozet kartinin ait oldugu gezi. Fis ONA baglanmali.
-     *
-     * `openOrGetActiveTrip` KULLANILAMAZ: gezi kapandigi icin o cagri YENI bir
-     * gezi acar ve fis yanlis geziye - bos, yeni acilmis olana - baglanirdi.
-     * Sessiz bir yanlis eslesme; fis dogru okunur ama yanlis alisverisin
-     * ustune yazilir.
-     */
+    /** Ozet kartinin ait oldugu gezi - "Hepsini almadim" duzeltmesi buna gidiyor. */
     private var _summaryTripId: String? = null
 
     /**

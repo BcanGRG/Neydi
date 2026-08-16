@@ -37,13 +37,18 @@ class MatchKeyTest {
         assertEquals("incir", matchKey("ıncır"))
     }
 
-    /** Fisin yazdigi ile kullanicinin yazdigi bulusmali - uygulamanin asil derdi. */
+    /**
+     * Etiketin yazdigi ile kullanicinin yazdigi bulusmali - uygulamanin asil
+     * derdi. Raf etiketi urun adini BUYUK HARFLE basiyor, kullanici ise dogal
+     * yaziyor; ikisi ayni anahtara inmezse alias ogrenmesi hicbir zaman
+     * tutmaz.
+     */
     @Test
-    fun receiptTextAndUserTextShareKey() {
-        val receipt = matchKey("AYCICEK YAGI 5 L")
+    fun tagTextAndUserTextShareKey() {
+        val tag = matchKey("AYCICEK YAGI 5 L")
         val user = matchKey("Ayçiçek Yağı 5 L")
-        assertEquals(receipt, user)
-        assertEquals("aycicek yagi 5 l", receipt)
+        assertEquals(tag, user)
+        assertEquals("aycicek yagi 5 l", tag)
     }
 
     @Test

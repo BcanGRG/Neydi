@@ -38,6 +38,11 @@ class SchemaBaselineTest {
         3 to "9a25da10097f10bb5f49f777e7a8c9ae",
         // v4: Receipt.rawOcrText (F4.14). Tek nullable kolon.
         4 to "c49e177df81931853a48b5fd6acc4bcb",
+        // v5: PIVOT (E11). `receipt` + `receipt_line` tablolari,
+        // `price_observation.receiptLineId` ve `trip.totalMinor` DUSTU;
+        // `price_observation.brand` GIRDI. Silmeler `Migration4To5Spec`
+        // uzerinden, tamamen otomatik.
+        5 to "f3f49c1da71c866c63044e4bd2ccde9a",
     )
 
     private val schemaDir: File by lazy {

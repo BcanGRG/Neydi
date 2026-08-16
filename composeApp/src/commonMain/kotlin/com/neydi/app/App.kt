@@ -14,15 +14,12 @@ import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.di.AppBootstrap
 import com.neydi.app.nav.FinishShopping
 import com.neydi.app.nav.Settings
-import com.neydi.app.nav.Capture
 import com.neydi.app.nav.DeleteData
 import com.neydi.app.nav.MissingItems
 import com.neydi.app.nav.History
-import com.neydi.app.nav.ReceiptCheck
 import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
-import com.neydi.app.ui.capture.CaptureRoute
 import com.neydi.app.ui.finish.FinishShoppingRoute
 import com.neydi.app.ui.settings.DeleteDataRoute
 import com.neydi.app.ui.settings.SettingsRoute
@@ -30,7 +27,6 @@ import com.neydi.app.ui.missing.MissingItemsRoute
 import com.neydi.app.ui.history.HistoryRoute
 import com.neydi.app.ui.setup.SetupRoute
 import com.neydi.app.ui.list.ListScreen
-import com.neydi.app.ui.receipt.ReceiptCheckRoute
 import com.neydi.app.ui.theme.NeydiTheme
 import org.koin.compose.koinInject
 
@@ -63,14 +59,6 @@ fun App() {
             backStack.add(key)
         }
 
-        // Ust ogeyi DEGISTIR, ustune ekleme: uzun fisin parca gecisinde geri
-        // tusu onceki parcanin ekranina degil Liste/Gecmis'e donmeli - uc
-        // parcalik fiste uc kontrol ekrani istiflemek geri tusunu bozar.
-        fun replaceTop(key: NavKey) {
-            backStack.removeLastOrNull()
-            backStack.add(key)
-        }
-
         fun back() {
             if (backStack.size > 1) backStack.removeLastOrNull()
         }
@@ -94,9 +82,7 @@ fun App() {
                         onGoShopping = { go(MissingItems) },
                         onHistory = { go(History) },
                         onSettings = { go(Settings) },
-                        onOpenReceipt = { go(ReceiptCheck(it)) },
                         onFixTaken = { go(FinishShopping(it)) },
-                        onCapture = { go(Capture(it)) },
                     )
                 }
                 entry<MissingItems> {
@@ -129,33 +115,8 @@ fun App() {
                         onDone = { back() },
                     )
                 }
-                entry<ReceiptCheck> { key ->
-                    ReceiptCheckRoute(
-                        receiptId = key.receiptId,
-                        onBack = { back() },
-                        onCapture = { go(Capture(it)) },
-                    )
-                }
-                entry<Capture> { key ->
-                    CaptureRoute(
-                        tripId = key.tripId,
-                        // "Bitti" ILK PARCAYA goturuyor, sonuncuya degil:
-                        // Fis Kontrol artik fisin tamamini tek akista ciziyor
-                        // (tasarim karari 4), yani ilk parca butun fisin
-                        // kapisi. Cekim ekrani BACK STACK'TEN CIKIYOR -
-                        // kontrolden geri donunce kamera yeniden acilmamali.
-                        onDone = { receiptId ->
-                            backStack.removeLastOrNull()
-                            receiptId?.let { go(ReceiptCheck(it)) }
-                        },
-                        onCancel = { back() },
-                    )
-                }
                 entry<History> {
-                    HistoryRoute(
-                        onBack = { back() },
-                        onOpenReceipt = { go(ReceiptCheck(it)) },
-                    )
+                    HistoryRoute(onBack = { back() })
                 }
                 entry<Settings> {
                     SettingsRoute(onBack = { back() }, onDeleteData = { go(DeleteData) })

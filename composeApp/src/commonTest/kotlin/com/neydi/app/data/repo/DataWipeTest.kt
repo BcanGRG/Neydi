@@ -6,7 +6,6 @@ import com.neydi.app.data.db.Household
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.db.NeydiDatabaseConstructor
 import com.neydi.app.data.db.Product
-import com.neydi.app.data.db.Receipt
 import com.neydi.app.data.db.Store
 import com.neydi.app.data.db.Trip
 import com.neydi.app.ui.settings.rowsOf
@@ -33,18 +32,6 @@ class DataWipeTest {
     private suspend fun seed(db: NeydiDatabase) {
         db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         db.tripDao().insert(Trip(id = "t1", householdId = home, startedAt = 0, createdAt = 0))
-        db.receiptDao().insert(
-            Receipt(
-                id = "r1",
-                householdId = home,
-                tripId = "t1",
-                // Yol BOS BIRAKILMIYOR ama diskte de yok: silme akisi olmayan
-                // dosyayi silmeye calisinca patlamamali.
-                imagePath = "/tmp/neydi-test/fis-1.jpg",
-                capturedAt = 0,
-                createdAt = 0,
-            ),
-        )
         db.productDao().insert(
             Product(
                 id = "p1",
@@ -68,8 +55,6 @@ class DataWipeTest {
         val counts = DataWipe(db.dataWipeDao()).counts(home)
 
         assertEquals(1, counts.trips)
-        assertEquals(1, counts.receipts)
-        assertEquals(1, counts.photos)
         assertEquals(1, counts.products)
         assertEquals(1, counts.staples)
     }
@@ -82,7 +67,6 @@ class DataWipeTest {
 
         assertTrue(wipe.counts(home).isEmpty)
         assertTrue(db.storeDao().observeAll(home).first().isEmpty())
-        assertEquals(null, db.receiptDao().byId("r1"))
         assertEquals(null, db.tripDao().byId("t1"))
     }
 
@@ -101,23 +85,22 @@ class DataWipeTest {
     // --- Satirlarin metni ---------------------------------------------------
 
     /**
-     * SIFIR SAYAN SATIR CIZILMIYOR. "Fiş fotoğrafı 0" yazmak, olmayan bir seyi
+     * SIFIR SAYAN SATIR CIZILMIYOR. "Alisveris 0" yazmak, olmayan bir seyi
      * silineceklerin arasina koymak olurdu.
      */
     @Test
     fun zeroCountsDrawNoRows() {
         assertTrue(rowsOf(WipeCounts()).isEmpty())
         assertEquals(
-            listOf("Fiş fotoğrafı"),
-            rowsOf(WipeCounts(photos = 3)).map { it.name },
+            listOf("Alışveriş"),
+            rowsOf(WipeCounts(trips = 3)).map { it.name },
         )
     }
 
     /** Iki seyi sayan satir IKI RAKAM tasiyor - tasarimin kendi bicimi ("9 + 2"). */
     @Test
     fun compoundRowsCarryBothNumbers() {
-        val rows = rowsOf(WipeCounts(trips = 18, receipts = 12, staples = 9, blocks = 2))
-        assertEquals("18 + 12", rows.first { it.name == "Alışveriş ve fişler" }.count)
+        val rows = rowsOf(WipeCounts(trips = 18, staples = 9, blocks = 2))
         assertEquals("9 + 2", rows.first { it.name.startsWith("Her zamankiler") }.count)
     }
 }

@@ -7,14 +7,11 @@ import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.repo.DataWipe
 import com.neydi.app.data.repo.ListRepository
-import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.data.suggest.SuggestionEngine
-import com.neydi.app.ui.capture.CaptureViewModel
 import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
-import com.neydi.app.ui.receipt.ReceiptCheckViewModel
 import com.neydi.app.ui.missing.MissingItemsViewModel
 import com.neydi.app.ui.settings.DeleteDataViewModel
 import com.neydi.app.ui.settings.SettingsViewModel
@@ -54,8 +51,6 @@ val dataModule = module {
     single { get<NeydiDatabase>().productDao() }
     single { get<NeydiDatabase>().tripDao() }
     single { get<NeydiDatabase>().tripLineDao() }
-    single { get<NeydiDatabase>().receiptDao() }
-    single { get<NeydiDatabase>().receiptLineDao() }
     single { get<NeydiDatabase>().productAliasDao() }
     single { get<NeydiDatabase>().storeDao() }
     single { get<NeydiDatabase>().dataWipeDao() }
@@ -74,8 +69,6 @@ val dataModule = module {
             priceObservationDao = get(),
             statsRebuilder = get(),
             suggestionEngine = get(),
-            receiptDao = get(),
-            processor = get(),
         )
     }
 
@@ -95,18 +88,6 @@ val dataModule = module {
 
     viewModel { DeleteDataViewModel(wipe = get(), memberDao = get()) }
 
-    // tripId ve fis dizini PARAMETREYLE: gezi hangi ekrandan gelindigine
-    // bagli, dizin ise platformdan (FileKit.filesDir) - ikisi de DI'da sabit
-    // olamaz.
-    viewModel { (tripId: String, receiptsDirPath: String) ->
-        CaptureViewModel(
-            tripId = tripId,
-            repo = get(),
-            receiptsDirPath = receiptsDirPath,
-            now = ::now,
-        )
-    }
-
     viewModel {
         SetupViewModel(
             catalogSeedDao = get(), settingsDao = get(),
@@ -115,33 +96,11 @@ val dataModule = module {
     }
 
     viewModel {
-        HistoryViewModel(
-            tripDao = get(), receiptDao = get(),
-            tripLineDao = get(), receiptLineDao = get(),
-        )
+        HistoryViewModel(tripDao = get(), tripLineDao = get())
     }
 
     viewModel { (tripId: String?) ->
         FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())
-    }
-
-    // receiptId parametreyle geliyor: hangi fisi kontrol ettigimiz hedefin
-    // kendisinde yaziyor, ViewModel'in onu tahmin etmesi gerekmiyor.
-    viewModel { (receiptId: String) ->
-        ReceiptCheckViewModel(
-            receiptId = receiptId,
-            processor = get(),
-            receiptDao = get(),
-            receiptLineDao = get(),
-            productDao = get(),
-            tripLineDao = get(),
-            aliasDao = get(),
-            catalogSeedDao = get(),
-            repo = get(),
-            statsRebuilder = get(),
-            clock = ::now,
-            newId = ::newUuid,
-        )
     }
 
     single { DataWipe(dao = get()) }
@@ -154,25 +113,9 @@ val dataModule = module {
     }
 
     single {
-        ReceiptProcessor(
-            reader = get(),
-            receiptDao = get(),
-            receiptLineDao = get(),
-            productDao = get(),
-            aliasDao = get(),
-            tripDao = get(),
-            storeDao = get(),
-            statsRebuilder = get(),
-            clock = ::now,
-            newId = ::newUuid,
-        )
-    }
-
-    single {
         ListRepository(
             tripDao = get(),
             tripLineDao = get(),
-            receiptDao = get(),
             productDao = get(),
             // Saat ve id URETIMI disaridan: repository saf kalsin ve testte
             // deterministik olabilsin.

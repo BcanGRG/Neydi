@@ -32,28 +32,29 @@ interface ProductStatsDao {
     /**
      * SATIN ALMA OLAYLARI - istatistigin tek girdisi.
      *
-     * **IKI KAYNAK BIRLESIYOR ve bu bilincli bir karar:** listede isaretlenmis
-     * satirlar **ve** fiste bir urune baglanmis satirlar. Yalnizca `trip_line`
-     * okumak, tam olarak kullanicinin **listeye yazmayi unuttugu** urunleri
-     * saymamak demekti - yani Faz 4'un var olma sebebini ("fis, listeye
-     * yazilmasa bile ekmegi iceriyor") es gecmek.
+     * **TEK KAYNAK: LISTEDE ISARETLENMIS SATIRLAR.** Fis donemi buraya ikinci
+     * bir kol eklemisti (`receipt_line`), gerekcesi de yaziliydi: "fis, listeye
+     * yazilmasa bile ekmegi iceriyor" - yani kullanicinin listeye yazmayi
+     * UNUTTUGU urunleri de saymak. O kol E10'da kaynagiyla birlikte silindi.
      *
-     * **TEKILLESTIRME (productId, tripId) UZERINDE ve bu sart:** ayni urun hem
-     * listede isaretli hem fiste eslesmis olabilir. Tekillestirilmezse
-     * `purchaseCount` ikiye katlanir ve `medianIntervalDays` **yariya duser** -
-     * yani uygulama her seyi iki kat sik onermeye baslar. Sessiz, yavas ve geri
-     * alinmasi zor bir bozulma; ayni tehlike gezi kapanisinin cift kosmasinda da
-     * kayitli.
+     * KAYBEDILEN SEY GERCEK ve kayda geciyor: listeye hic yazilmadan alinan
+     * urun artik satin alma sayilmiyor, yani oneri motoru onu ogrenemiyor.
+     * Etiket cekimi bunun yerine GECMIYOR - etiket bir FIYAT gozlemi, satin
+     * alma kaniti degil (kullanici fiyata bakip almayabilir de). Iyimser
+     * mutabakat (F4.8) bu bosluğun asil karsiligi: kapanista isaretlenmemis
+     * her satir alindi sayiliyor, yani listeye yazilan hicbir sey kaybolmuyor.
+     *
+     * **TEKILLESTIRME (productId, tripId) UZERINDE ve tek kolda bile sart:**
+     * ayni urun bir geziye iki satir olarak girebilir. Tekillestirilmezse
+     * `purchaseCount` sisiyor ve `medianIntervalDays` **duşuyor** - yani
+     * uygulama her seyi daha sik onermeye basliyor. Sessiz, yavas ve geri
+     * alinmasi zor bir bozulma.
      *
      * **ZAMAN DAMGASI `trip.completedAt`, `trip_line.checkedAt` DEGIL.**
-     * Iyimser mutabakat (F4.8) kapanista isaretlenmemis **her** satira kapanis
-     * damgasini yaziyor, yani tembel kullanimda - F4.8'in bekledigi yaygin
-     * durum - butun gezinin `checkedAt`'i ayni. O alan satin alma ani olarak
+     * Iyimser mutabakat kapanista isaretlenmemis **her** satira kapanis
+     * damgasini yaziyor, yani tembel kullanimda - beklenen yaygin durum -
+     * butun gezinin `checkedAt`'i ayni. O alan satin alma ani olarak
      * kullanilamaz.
-     *
-     * **MIN() ile fis tarihi kazaniyor:** fiste basili tarih satin almanin
-     * gerceklestigi an, gezinin kapanmasi ise kullanicinin "bitir"e bastigi an.
-     * Ikisi ayni gun olsa da fis daha guvenilir kayit.
      */
     @Query(
         """
@@ -64,18 +65,6 @@ interface ProductStatsDao {
             WHERE t.householdId = :householdId
               AND t.completedAt IS NOT NULL AND t.deletedAt IS NULL
               AND tl.checked = 1 AND tl.deletedAt IS NULL
-
-            UNION ALL
-
-            SELECT rl.matchedProductId AS productId, t.id AS tripId,
-                   COALESCE(r.receiptDate, t.completedAt) AS purchasedAt
-            FROM receipt_line rl
-            JOIN receipt r ON r.id = rl.receiptId
-            JOIN trip t ON t.id = r.tripId
-            WHERE t.householdId = :householdId
-              AND t.completedAt IS NOT NULL AND t.deletedAt IS NULL
-              AND rl.matchedProductId IS NOT NULL AND rl.needsReview = 0
-              AND rl.deletedAt IS NULL AND r.deletedAt IS NULL
         )
         GROUP BY productId, tripId
         ORDER BY productId, purchasedAt

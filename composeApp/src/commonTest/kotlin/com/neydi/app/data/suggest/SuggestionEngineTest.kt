@@ -117,7 +117,7 @@ class SuggestionEngineTest {
         var n = 0
         return ListRepository(
             tripDao = db.tripDao(), tripLineDao = db.tripLineDao(),
-            receiptDao = db.receiptDao(), productDao = db.productDao(),
+            productDao = db.productDao(),
             clock = { now }, newId = { "id-${++n}" },
         )
     }

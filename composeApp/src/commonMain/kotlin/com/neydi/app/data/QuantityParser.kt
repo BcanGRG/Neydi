@@ -31,6 +31,24 @@ private val UNITS: Map<String, String> = mapOf(
 )
 
 /**
+ * OCR'dan gelen birimi normalize eder: `Ka` gercek fiste `Kg`nin okunmus hali.
+ *
+ * [UNITS] ile AYNI KANON DEGIL ve bu bilerek boyle birakildi (E2): bu
+ * fonksiyonun ciktilari ("gr", "lt") fis satirlarina yazilmis durumda ve bir
+ * tasima adiminda davranis degistirilmez. Etiket ayristiricisi (E14) birim
+ * kanonunu [UNITS] uzerinden kuracak; o gun bu fonksiyon ya ona katilir ya
+ * olur.
+ */
+internal fun normalizeUnit(raw: String): String = when (raw.lowercase()) {
+    "ka", "kg" -> "kg"
+    "ad", "adet" -> "adet"
+    "gr", "g" -> "gr"
+    "lt", "l" -> "lt"
+    "pkt", "paket" -> "paket"
+    else -> raw.lowercase()
+}
+
+/**
  * Bastaki sayi + opsiyonel birim + kalan ad.
  *
  * ONDALIK AYIRICI VIRGUL: Turkce'de "1,5 kg" yazilir. Nokta da kabul ediliyor

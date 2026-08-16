@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.image
 
 /**
  * iOS kucultmesi Faz 8'de gelecek (UIImage + CGImage).
@@ -10,6 +10,11 @@ package com.neydi.app.data.receipt
  *
  * DIKKAT (Faz 8): CMP iOS'ta UIImage ve kamera karesi bellek baskisi bilinen
  * bir sorun; kucultme burada Android'den DAHA kritik.
+ *
+ * DIKKAT (Faz 8): sozlesme YONU DE PIKSELE ISLEMEYI istiyor. iOS'ta karsiligi
+ * `UIImage.imageOrientation`; kareyi olceklerken bir baglama cizmek yonu zaten
+ * duzeltiyor ama `CGImage`i dogrudan yazmak ETIKETI biraktigi icin ayni hatayi
+ * uretir - Android'de o hata fisin sekiz satira cokmesi olarak odendi (F4.20).
  */
 actual suspend fun downscaleForOcr(
     source: ByteArray,

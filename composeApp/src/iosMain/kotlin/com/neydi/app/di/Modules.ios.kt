@@ -23,7 +23,6 @@ import platform.Foundation.NSUserDomainMask
  */
 @OptIn(ExperimentalForeignApi::class)
 actual fun platformModule(): Module = module {
-    single<com.neydi.app.data.receipt.ReceiptReader> { com.neydi.app.data.receipt.IosReceiptReader() }
 
     single<RoomDatabase.Builder<NeydiDatabase>> {
         val documents: NSURL = NSFileManager.defaultManager.URLForDirectory(

@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.image
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

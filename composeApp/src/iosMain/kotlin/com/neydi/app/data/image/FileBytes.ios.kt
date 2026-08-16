@@ -1,4 +1,4 @@
-package com.neydi.app.data.receipt
+package com.neydi.app.data.image
 
 /** iOS dosya yazimi Faz 8'de - kucultme de orada gelecek. */
 actual suspend fun writeBytesTo(destPath: String, bytes: ByteArray): Boolean = false
