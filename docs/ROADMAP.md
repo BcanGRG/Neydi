@@ -302,6 +302,15 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       Dizin `layoutInfo`dan değil VERİDEN hesaplanıyor (`rowIndexInList`):
       `layoutInfo` yalnızca bestelenmiş öğeleri tanır ve satır ekranın epey
       altındaysa orada bulunamaz — tam da kaydırmanın gerektiği durumda.
+      **İlk sürüm eksikti, kullanıcı bildirdi.** İki hata vardı: (1) sinyal
+      `repo.add` döner dönmez düşüyor ama `state` veritabanı akışından geriden
+      geliyordu — etki çalıştığında satır henüz listede yok, dizin `null`, ve
+      etki bir daha denenmiyordu. Yarış olduğu için kararsızdı: satır zaten
+      görünür bir reyona düştüyse fark edilmiyordu, YENİ reyon açıldığında
+      görünüyordu. `snapshotFlow` artık satırın listeye düşmesini bekliyor,
+      bekleme 2 sn ile sınırlı. (2) `addFromEngine` `repo.add`'i doğrudan
+      çağırıyordu ve sinyali kimse yazmıyordu — öneri şeridinden ekleme hiç
+      kaydırmıyordu. Sinyal artık tek kapıdan (`signalAdded`) geçiyor.
 
 ## Öncelik 6 — Tasarım sadakati
 

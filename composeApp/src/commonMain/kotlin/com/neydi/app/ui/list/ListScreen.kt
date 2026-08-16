@@ -37,6 +37,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import kotlin.time.Clock
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,6 +53,9 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import com.neydi.app.data.db.CatalogSeed
 import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.db.Category
@@ -73,6 +78,16 @@ import com.neydi.app.ui.theme.SizesExtra
 import com.neydi.app.ui.theme.pressable
 import com.neydi.app.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
+
+/**
+ * Eklenen satirin listede belirmesi icin beklenecek en uzun sure.
+ *
+ * SINIRLI OLMASI SART: ekleme sessizce basarisiz olduysa (uye okunamadi, gezi
+ * acilamadi) satir hic gelmez ve suresiz bekleyen bir etki, kullanici baska bir
+ * sey yaparken aniden kaydiran bir hayalete donusurdu. Iki saniye veritabani
+ * gidis-donusunun kat kat ustunde; asilirsa dogru davranis sessizce vazgecmek.
+ */
+private const val ADDED_ROW_WAIT_MS = 2_000L
 
 // ModalBottomSheet hala @ExperimentalMaterial3Api. Sheet'i kendimiz yazmak
 // surukleme, scrim ve geri tusu davranisini yeniden uretmek demekti.
@@ -287,12 +302,38 @@ internal fun ListContent(
     // ilk cozum ve yanlis: listenin reyon duzeni markette gezerken isin
     // TAMAMI. Duzen duruyor, bakis acisi degisiyor.
     //
-    // ZATEN GORUNUYORSA KIPIRDAMIYOR: ekleme ekranin ortasinda oluyorsa
-    // kaydirmak gereksiz bir sicrama olurdu. Kosul "tamamen gorunur mu" -
-    // yarisi klavyenin altinda kalan satir gorunmus sayilmaz.
+    // ---- DURUMU BEKLEMEK ZORUNDA ve ilk surum bunu yapmiyordu ----
+    //
+    // `lastAdded` sinyali `repo.add` doner donmez dusuyor; `state` ise
+    // veritabani akisindan GERIDEN geliyor. Yani etki calistiginda satir
+    // cogu zaman henuz listede YOK, `rowIndexInList` null donuyor ve etki
+    // bir daha denenmedigi icin kaydirma hic olmuyordu.
+    //
+    // Hata YARIS oldugu icin kararsizdi: satir zaten gorunur bir reyona
+    // dustuyse kimse fark etmiyordu, YENI bir reyon acildiginda ise
+    // (kullanicinin bildirdigi hal) durum degisikligi daha buyuk ve daha gec
+    // geliyor - tam da hicbir seyin olmadigi durum.
+    //
+    // `snapshotFlow` satirin listeye DUSMESINI bekliyor. Bekleme SINIRLI:
+    // ekleme sessizce basarisiz olduysa (uye yok, gezi acilamadi) dakikalar
+    // sonra beliren bir kaydirma, hic kaydirmamaktan daha kotu olurdu.
+    val guncelState = rememberUpdatedState(state)
+    val guncelChip = rememberUpdatedState(showsClipboardChip)
     LaunchedEffect(lastAdded) {
         val added = lastAdded ?: return@LaunchedEffect
-        val index = rowIndexInList(state, showsClipboardChip, added.rowId) ?: return@LaunchedEffect
+        val index = withTimeoutOrNull(ADDED_ROW_WAIT_MS) {
+            snapshotFlow { rowIndexInList(guncelState.value, guncelChip.value, added.rowId) }
+                .filterNotNull()
+                .first()
+        } ?: return@LaunchedEffect
+
+        // ZATEN TAM GORUNUYORSA KIPIRDAMIYOR: ekleme ekranin ortasinda
+        // oluyorsa kaydirmak gereksiz bir sicrama olurdu. "Tam" onemli -
+        // yarisi klavyenin altinda kalan satir gorunmus sayilmaz.
+        //
+        // Satir YENI belirdiginde `layoutInfo` onu henuz tanimiyor ve kosul
+        // dogal olarak "gorunmuyor" diyor; yanilma yonu dogru tarafta -
+        // gereksiz kaydirma, kacirilmis kaydirmadan iyidir.
         val info = listState.layoutInfo
         val gorunen = info.visibleItemsInfo.firstOrNull { it.index == index }
         val tamGorunur = gorunen != null &&
