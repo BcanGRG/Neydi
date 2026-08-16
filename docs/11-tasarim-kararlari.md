@@ -42,7 +42,11 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 28 | Alışveriş başlığındaki market = o gezide son çekilen etiketin marketi | ⏳ **E18** |
 | 29 | Fotoğraf Kaydet'e basıldığı anda silinir; hiçbir yüzey çizmez | ⏳ **E15** · planla aynı |
 | 30 | Geçmiş'te gözlem satırı yok; gezi satırı tarih + kalem + `~` tutar | ✅ E8 · `~` tutar **E18** |
-| 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | 📄 doküman |
+| 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | ✅ tasarım tazeledi |
+| **32** | **İkon A yolu düştü** — 15 ikon Phosphor Regular çizimleriyle elle `ImageVector` | ⏳ **F11.11** |
+| **33** | Karanlık temada GRAD yerine **renk kademesi**: metin `#E4D8C9`, ikon `#F5EDE6`; dolgulu ikon telafi almaz | ⏳ **F11.11** |
+| **34** | Envanter **15** — `check`/`push_pin`/`content_paste` geri girdi; `check` ile `check_circle` ayrı | ✅ kodda zaten öyle |
+| **35** | Gizlilik notu + katılma kodu metni onaylandı | ✅ **birebir uygulandı** |
 
 **Karar 29 planı doğruladı:** fotoğrafın kayıttan sonra silinmesi benim önerimdi
 ve açık karar olarak duruyordu — design aynı sonuca vardı, gerekçesi de aynı:
@@ -161,18 +165,19 @@ Karar tasarımın; ROADMAP'e **F11.11** olarak girdi.
 
 ---
 
-## Tasarıma sorulacaklar
+## Dördüncü tur kapandı ✅
 
-1. **`PushPin`, `Check`, `ContentPaste`** ikon envanterinde yok ama kodda
-   kullanımda (sabit ürün rozeti, onay tiki, pano yapıştırma). 12'lik listeye
-   girecek mi, yoksa yerlerine kalan 12'den biri mi geçecek?
-2. **İkon A yolu** yukarıdaki üç seçenekten hangisi? (Compose'da değişken font
-   ekseni ancak fontu bundle edip `Text` çizerek çalışıyor.)
-3. **Boş durum 01** başlıkta `Son alışveriş: 3 gün önce · 642 TL` yazıyor —
-   biçim kuralı her tutarın `~` taşımasını söylüyor. Çerçeve mi güncellenecek?
-4. **Boş durum 03** hâlâ dört hedefli toolbar çiziyor (`add`, `undo`,
-   `filter_list`, `Bitir`) — karar 3 ikiye indirmişti. Çerçeve tazelenecek mi?
-5. **Boş durum 07** Katılma kodu satırını `R4TB9C` + kopyala ikonuyla
-   çiziyor — karar 24 soluk "Faz 7'de açılıyor" diyor. Aynı çerçevede
-   Mağazalar satırı da chevron'lu ve "İlk gözlemden öğrenilecek" değerli;
-   karar 23 ve 24 ikisini de kaldırmıştı.
+`12-tasarima-sorular-4.md`'nin beş sorusunun hepsi cevaplandı (karar 32–35 +
+atlas tazelemesi). **Teknik itiraz tuttu:** design A yolunu düşürdü ve
+gerekçesinde bizim argümanımızı birebir kullandı — eksenler yalnızca değişken
+fontta yaşıyor, A'nın tek avantajı olan ucuzluk gerçek değildi, font paketleme
+Fraunces'te zaten reddedilmişti, ve kalan iki seçenek aynı mekanik işi
+istediği için kimlik kazancı olan taraf seçildi.
+
+## Yeni açık soru
+
+**Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın örneği *"Son
+alışveriş: 8 gün önce · 642 TL"*; kendi tarih merdiveni ise 7–13 günü **"geçen
+hafta"**ya topluyor. Kod merdiveni esas aldı (daha yeni, daha açık ve
+sayıyla tanımlı). Örnek mi güncellenecek, yoksa başlık merdivenin dışında mı
+kalacak? → **F11.13**
