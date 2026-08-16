@@ -10,6 +10,10 @@ Sıra önem sırası, birikme sırası değil. 1. madde 2, 3 ve 4'ü belirliyor;
 okumadan onlara karar verilemez. **5. madde bu turda yeni** ve tasarımda hiç
 karşılığı olmayan tek eksik: çekilen fotoğraf kullanıcıya hiç gösterilmiyor.
 
+**10. madde sona eklendi ama küçük değil:** 1. maddenin ölçümü yapılırken çıktı
+ve 2. maddeyi doğrudan etkiliyor — Ekran 4 hakkında soru sormadan önce o
+ekranın kullanıcıya hiç görünmediğini bilmek gerekiyor.
+
 ---
 
 ## 1. Parça parça çekim, beklenen yol olmaktan çıktı — karar 4'ün öncülü değişti
@@ -246,3 +250,53 @@ mockup'tan sonra yazıldı.
 
 **Soru.** Boş hâl çerçevesi güncellensin mi? (Aynı çerçevede *"Katılma kodu"*
 satırı da dolu görünüyor ama Faz 7'ye kadar üretilmiyor.)
+
+---
+
+## 10. Ekran 4 pratikte hiç açılmıyor — açıldığında da uzun fişi okuyamıyor
+
+*Bu madde diğerlerinden sonra, 1. maddenin ölçümü yapılırken cihazda çıktı.*
+
+**Tasarımın verdiği.** Ekran 4 · Kamera: amber köşeli çerçeve rehberi, *"1.
+kare"* sayacı, *"Bitti"*, izin ve hata metinleri. Tasarımın çizdiği, uygulamanın
+da birebir yazdığı bir ekran.
+
+**Gerçek — iki katmanlı.**
+
+**(a) Ekran açılmıyor.** Belge tarayıcısı geldiğinden beri (F4.18) *"Fiş çek"*
+ekranı açılır açılmaz **tarayıcı** başlıyor; kendi kameramız yalnızca tarayıcı
+başlatılamazsa devreye giriyor. Play Services'i olan hiçbir cihazda o yola
+düşülmüyor. Yani `CaptureScreen` — çerçeve rehberi, sayaç, *"Bitti"*, üç
+önizleme — **yazılmış ama görünmeyen bir ekran**.
+
+Bunun 2. maddeye doğrudan etkisi var: orada bu ekranın sayacını ve *"Bitti"*
+metnini soruyoruz. Sormadan önce cevaplanması gereken soru şu — kullanıcının
+gerçekten gördüğü Ekran 4, **tarayıcının kendi arayüzü** ve onu biz
+çizmiyoruz.
+
+**(b) Açıldığında uzun fişi okuyamıyor.** Cihazda ölçüldü, aynı fiş:
+
+| | fişin kadrajdaki genişliği | tavanın yüzdesi | okunan görsel satır |
+|---|---|---|---|
+| tarayıcı | 693 px | %100 | **159** |
+| kendi kameramız | ~500 px | %72 | **6** |
+
+Sebep çözünürlük tavanı **değil** — tavan ikisinde de aynı (694 px, bkz. 1.
+madde). Sebep **çerçeveleme**. Tarayıcı fişin kenarını buluyor, kırpıyor ve
+kırpılmış hâli gösterip onaylatıyor. Bizim ekranımızda çerçeve rehberi yalnızca
+bir overlay: hiçbir şey onu dayatmıyor, hiçbir şey kırpmıyor, ve kullanıcı
+çerçeveye hizalamadığında bunu söyleyen hiçbir şey yok. Ölçüm karesinde fiş
+kadrajın **%16'sını** kaplıyordu; gerisi masa, ayaklar ve **iki başka fiş**.
+
+Sonuncusu ayrı bir tehlike: kadrajda üç fiş varken tarayıcı birine kırpar,
+bizim yolumuz üçünü birden OCR'a verir — ve ne ayrıştırıcının ne satır
+tekilleştirmesinin *"bu hangi fiş"* diye bir kavramı var.
+
+**Sorular.**
+1. Yedek yol **ciddi mi?** Ciddiyse ekranın kenar bulma/kırpma ya da en azından
+   *"fiş çerçeveye sığmadı"* uyarısı taşıması gerekiyor: bugün çerçeve rehberi
+   bir söz veriyor ve tutmuyor.
+2. Ciddi değilse, kullanıcıya **söylenmeli mi?** Bugün hangi yolda olduğunu
+   bilmiyor — tarayıcı açılamadığında sessizce daha zayıf bir kameraya düşüyor.
+3. 2. maddedeki sayaç ve *"Bitti"* soruları hangi ekran için soruluyor? İkisi
+   ayrı ekran, ve bugün görünen olan bizim değil.
