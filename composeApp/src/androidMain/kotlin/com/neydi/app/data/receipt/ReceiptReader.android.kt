@@ -70,7 +70,7 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
             val rows = ArrayList<String>()
             for (band in bands) {
                 val piece = decoder.decodeRegion(band, BitmapFactory.Options()) ?: continue
-                rows += visualRows(recognize(piece, rotation))
+                rows += visualRows(recognize(piece, rotation), rotation)
                 piece.recycle()
             }
             // Seritler bilerek bindigi icin ayni kalem birden fazla seritte
@@ -84,7 +84,7 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
     /** Serit yolu kullanilamadiginda eski davranis - tek gecis. */
     private suspend fun singlePassRead(imagePath: String, rotation: Int): List<String> {
         val bitmap = BitmapFactory.decodeFile(imagePath) ?: error("gorsel cozulemedi: $imagePath")
-        val rows = visualRows(recognize(bitmap, rotation))
+        val rows = visualRows(recognize(bitmap, rotation), rotation)
         bitmap.recycle()
         return rows
     }
@@ -100,7 +100,7 @@ internal class MlKitReceiptReader(private val context: Context) : ReceiptReader 
             imagePath,
             BitmapFactory.Options().apply { inSampleSize = ROTATION_SAMPLE },
         ) ?: return 0
-        val best = listOf(0, 90, 270).maxByOrNull { score(visualRows(recognize(small, it))) } ?: 0
+        val best = listOf(0, 90, 270).maxByOrNull { score(visualRows(recognize(small, it), it)) } ?: 0
         small.recycle()
         return best
     }
@@ -147,28 +147,53 @@ private data class Parca(val text: String, val kutu: Rect)
  * Geometri platforma ozgu veri oldugu icin bu is BURADA yapiliyor; ayristirici
  * dizgi uzerinde calismaya devam ediyor ve cihazsiz test edilebilir kaliyor.
  */
-internal fun visualRows(text: Text): List<String> {
+internal fun visualRows(text: Text, rotationDegrees: Int = 0): List<String> {
     val parcalar = text.textBlocks
         .flatMap { blok -> blok.lines }
         .mapNotNull { satir -> satir.boundingBox?.let { Parca(satir.text, it) } }
     if (parcalar.isEmpty()) return emptyList()
 
+    // KUTULAR DONDURULMEMIS KOORDINATTA GELIYOR ve bu, bu projenin en pahali
+    // sessiz hatasiydi.
+    //
+    // ML Kit metni `rotationDegrees` ile DOGRU okuyor ama `boundingBox`
+    // degerlerini HAM bitmap eksenlerinde veriyor. Fis yan cekildiginde (90 ya
+    // da 270) satirlar ham bitmap'te DIKEY kolonlara donuyor, yani hepsinin
+    // merkez-Y'si birbirine yakin. Y ekseninde gruplayan eski kod bu yuzden
+    // butun fisi TEK satir sayiyordu.
+    //
+    // Cihazda olculdu: tek karede fisin TAMAMI okundu - otuz dokuz kalemin
+    // adi, barkodu, tutari hepsi metinde vardi - ama sekiz dev satira
+    // cokmustu ve ayristirici hicbirini goremedi. Uzun sure "OCR fisi
+    // okuyamiyor" sanilan sey aslinda buydu.
+    //
+    // Duzeltme: gruplama eksenini YONE gore secmek. Bitmap'i dondurmek ikinci
+    // bir tam boy kopya demek olurdu ve kacindigimiz sey tam olarak o.
+    val yatay = rotationDegrees == 90 || rotationDegrees == 270
+    val satirEkseni: (Rect) -> Int = if (yatay) Rect::centerX else Rect::centerY
+    val kolonEkseni: (Rect) -> Int = if (yatay) Rect::top else Rect::left
+    val kalinlik: (Rect) -> Int = if (yatay) Rect::width else Rect::height
+
     // Tolerans satir yuksekliginin ORANI: sabit piksel degeri farkli
     // cozunurluklerde ya da cok kucuk ya da cok buyuk olurdu.
-    val ortaYukseklik = parcalar.map { it.kutu.height() }.sorted()[parcalar.size / 2]
+    val ortaYukseklik = parcalar.map { kalinlik(it.kutu) }.sorted()[parcalar.size / 2]
     val tolerans = (ortaYukseklik * 0.6f).toInt().coerceAtLeast(1)
 
-    val siralı = parcalar.sortedBy { it.kutu.centerY() }
+    val siralı = parcalar.sortedBy { satirEkseni(it.kutu) }
     val gruplar = mutableListOf<MutableList<Parca>>()
     for (p in siralı) {
         val grup = gruplar.lastOrNull()
         val ayniSatir = grup != null &&
-            kotlin.math.abs(p.kutu.centerY() - grup.last().kutu.centerY()) <= tolerans
+            kotlin.math.abs(satirEkseni(p.kutu) - satirEkseni(grup.last().kutu)) <= tolerans
         if (ayniSatir && grup != null) grup.add(p) else gruplar.add(mutableListOf(p))
     }
 
+    // 270'te okuma yonu ters: satir icindeki parcalar sagdan sola diziliyor.
+    val tersYon = rotationDegrees == 270
     return gruplar.map { grup ->
-        grup.sortedBy { it.kutu.left }.joinToString(" ") { it.text.trim() }
+        val sirali = grup.sortedBy { kolonEkseni(it.kutu) }
+        val yon = if (tersYon) sirali.reversed() else sirali
+        yon.joinToString(" ") { it.text.trim() }
     }
 }
 
