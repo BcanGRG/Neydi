@@ -9,21 +9,55 @@ package com.neydi.app.data
 fun formatMinor(minor: Long, currency: String = "TL"): String {
     val negative = minor < 0
     val absolute = if (negative) -minor else minor
-    val major = absolute / 100
     val remaining = absolute % 100
 
-    val majorText = buildString {
-        val digits = major.toString()
-        digits.forEachIndexed { i, c ->
-            if (i > 0 && (digits.length - i) % 3 == 0) append('.')
-            append(c)
-        }
-    }
     val minorText = if (remaining < 10) "0$remaining" else remaining.toString()
     return buildString {
         if (negative) append('-')
-        append(majorText); append(','); append(minorText)
+        append(groupThousands(absolute / 100)); append(','); append(minorText)
         if (currency.isNotEmpty()) { append(' '); append(currency) }
+    }
+}
+
+/**
+ * Kurus -> "~642 TL". TAHMIN BICIMI.
+ *
+ * IKI FARKI VAR ve ikisi de kasitli:
+ *
+ * 1. **Tilde bitisik** (`~642`, `~ 642` degil). Tilde bir sembol degil,
+ *    sayinin parcasi: ayrik yazilinca "yaklasik" bir aciklama gibi okunuyor,
+ *    bitisik yazilinca sayinin kendisinin kesin olmadigini soyluyor.
+ * 2. **KURUS YAZILMIYOR.** Iki ondalik hane bir kesinlik iddiasidir; gozlemden
+ *    hesaplanan bir sayida o iddiayi tasimak, tildenin soyledigi seyi ayni
+ *    satirda geri alir. `642,50` gormek "tam olarak bu kadar" demek.
+ *
+ * NEDEN AYRI FONKSIYON, `formatMinor`a bayrak DEGIL: uygulamada artik
+ * **kesin tutar diye bir veri yok** (gezinme sozlesmesi · bicimler). Iki ayri
+ * isim, hangi biçimin nerede kullanildigini cagri yerinde gorunur kiliyor;
+ * bayrak olsaydi yanlis varsayilan sessizce her yere yayilirdi.
+ *
+ * Yuvarlama EN YAKINA: asagi yuvarlamak tahmini sistematik olarak dusuk
+ * gosterirdi ve bu uygulamanin kacinmak istedigi sey - kasada surpriz.
+ */
+fun formatEstimate(minor: Long, currency: String = "TL"): String {
+    val negative = minor < 0
+    val absolute = if (negative) -minor else minor
+    // En yakin liraya: 642,50 -> 643, 642,49 -> 642.
+    val lira = (absolute + 50) / 100
+    return buildString {
+        append('~')
+        if (negative) append('-')
+        append(groupThousands(lira))
+        if (currency.isNotEmpty()) { append(' '); append(currency) }
+    }
+}
+
+/** 1085 -> "1.085". Binlik ayirici NOKTA (Turkce yazim). */
+private fun groupThousands(value: Long): String = buildString {
+    val digits = value.toString()
+    digits.forEachIndexed { i, c ->
+        if (i > 0 && (digits.length - i) % 3 == 0) append('.')
+        append(c)
     }
 }
 

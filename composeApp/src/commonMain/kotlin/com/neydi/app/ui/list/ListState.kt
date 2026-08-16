@@ -2,7 +2,8 @@ package com.neydi.app.ui.list
 
 import com.neydi.app.data.daysBetween
 import com.neydi.app.data.db.ListRowProjection
-import com.neydi.app.data.formatMinor
+import com.neydi.app.data.formatEstimate
+import com.neydi.app.data.formatRelativeDay
 import com.neydi.app.ui.components.ListRow
 import com.neydi.app.data.repo.STAPLE_LIMIT
 import com.neydi.app.ui.components.turkishInitials
@@ -67,15 +68,13 @@ data class LastTrip(val closedAt: Long, val totalMinor: Long?)
  */
 internal fun lastTripSummary(lastTrip: LastTrip?, now: Long): String {
     if (lastTrip == null) return "Henüz alışveriş yok"
-    val days = daysBetween(lastTrip.closedAt, now)
-    val whenText = when {
-        // Negatif gun: cihaz saati geri alinmis. "-2 gun once" yazmaktansa
-        // bugune yuvarlamak daha az yanlis.
-        days <= 0 -> "bugün"
-        days == 1 -> "dün"
-        else -> "$days gün önce"
-    }
-    val amount = lastTrip.totalMinor?.let { " · ${formatMinor(it)}" } ?: ""
+    // TARIH MERDIVENI ORTAK (F5.11): buradaki uc dallı hal tasarimin alti
+    // basamakli merdiveninin bir alt kumesiydi ve iki yer iki farkli cumle
+    // uretiyordu. Tek fonksiyon, tek dil.
+    val whenText = formatRelativeDay(lastTrip.closedAt, now)
+    // TAHMIN BICIMI: uygulamada kesin tutar diye bir veri yok, her tutar
+    // gozlemden hesaplaniyor - tilde ve kurussuz (gezinme sozlesmesi).
+    val amount = lastTrip.totalMinor?.let { " · ${formatEstimate(it)}" } ?: ""
     return "Son alışveriş: $whenText$amount"
 }
 
