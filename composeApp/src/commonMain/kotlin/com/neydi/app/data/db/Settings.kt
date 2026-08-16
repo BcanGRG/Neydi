@@ -41,12 +41,16 @@ data class AppSettings(
     val tempoDays: Int? = null,
 
     /**
-     * Fis fotograflari senkron edilsin mi. **VARSAYILAN HAYIR ve bu bir karar.**
+     * Cekilen fotograflar senkron edilsin mi. **VARSAYILAN HAYIR ve bu bir
+     * karar** - kolonun burada olmasi o kararin YAZILI olmasini sagliyor,
+     * yoksa gizlilik ozelligi ilk depolama baglamasinda sessizce tersine
+     * donerdi.
      *
-     * `Receipt.imagePath` KDoc'u *"fotografin KENDISI kisisel veri ve varsayilan
-     * olarak cihazdan cikmaz"* diyor; F4.2 ham dosyayi tam bu yuzden siliyor.
-     * Kolonun burada olmasi o kararin **yazili** olmasini sagliyor - yoksa
-     * gizlilik ozelligi ilk depolama baglamasinda sessizce tersine donerdi.
+     * PIVOT SONRASI DURUM: bugun senkron edilecek bir fotograf YOK. Fis
+     * gorselleri E11'de tablosuyla birlikte gitti; etiket fotografi da kayittan
+     * hemen sonra siliniyor (E15) - etiket bir odeme kaniti degil, yalnizca
+     * fiyatin okundugu andir. Kolon yine de duruyor: karari tasiyor ve Faz
+     * 7'de senkron kapsamini konusurken tek referans o olacak.
      */
     val syncPhotos: Boolean = false,
 
