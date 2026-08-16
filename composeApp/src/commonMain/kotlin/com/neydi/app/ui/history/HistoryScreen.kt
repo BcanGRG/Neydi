@@ -57,17 +57,17 @@ import org.koin.compose.viewmodel.koinViewModel
  * BASARISIZ fisler de listede ve dokunulabilir.
  */
 @Composable
-fun HistoryRoute(onBack: () -> Unit, onOpenReceipt: (String) -> Unit) {
+fun HistoryRoute(onBack: () -> Unit) {
     val vm: HistoryViewModel = koinViewModel()
     val trips by vm.trips.collectAsStateWithLifecycle()
-    HistoryScreen(trips = trips, onBack = onBack, onOpenReceipt = onOpenReceipt)
+    HistoryScreen(trips = trips, onBack = onBack)
 }
 
 @Composable
 fun HistoryScreen(
     trips: List<HistoryTrip>,
     onBack: () -> Unit,
-    onOpenReceipt: (String) -> Unit,
+
 ) {
     // SURFACE ZORUNLU, sadece Column DEGIL.
     //
@@ -127,7 +127,7 @@ fun HistoryScreen(
 
         LazyColumn(modifier = Modifier.padding(horizontal = Spacing.md)) {
             items(trips.size, key = { trips[it].id }) { i ->
-                TripRow(trips[i]) { onOpenReceipt(it) }
+                TripRow(trips[i])
             }
         }
     }
@@ -205,19 +205,15 @@ private fun EmptyHistory(modifier: Modifier = Modifier) {
  * tam olarak "yanlis okunmus fise donmenin tek yolu" olmak.
  */
 @Composable
-private fun TripRow(trip: HistoryTrip, onOpenReceipt: (String) -> Unit) {
+private fun TripRow(trip: HistoryTrip) {
     val extras = LocalNeydiExtraColors.current
     val single = trip.receipts.singleOrNull()
     Column(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(
-                    // Tek fisli gezide satirin kendisi fise goturuyor; cok
-                    // parcalida asagidaki parca satirlari goturuyor.
-                    if (single != null) Modifier.pressable(onTap = { onOpenReceipt(single.id) })
-                    else Modifier,
-                )
+                // Fis Kontrol pivotla oldu (E5); satir dokunussuz. E8 bu
+                // ekrani gezi-duzeyine indirecek.
                 .heightIn(min = 72.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -257,7 +253,7 @@ private fun TripRow(trip: HistoryTrip, onOpenReceipt: (String) -> Unit) {
         // Parcalar: yalnizca birden fazla fis varsa.
         if (trip.receipts.size > 1) {
             trip.receipts.forEach { receipt ->
-                PartRow(receipt) { onOpenReceipt(receipt.id) }
+                PartRow(receipt)
             }
         }
         Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
@@ -276,11 +272,12 @@ private fun TripRow(trip: HistoryTrip, onOpenReceipt: (String) -> Unit) {
  * gerektirmiyor.
  */
 @Composable
-private fun PartRow(receipt: HistoryReceipt, onClick: () -> Unit) {
+private fun PartRow(receipt: HistoryReceipt) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .pressable(onTap = onClick)
+            // Fis Kontrol pivotla oldu (E5); parca satiri dokunussuz, E8'de
+            // tamamen kalkacak.
             .heightIn(min = 56.dp)
             .padding(start = 20.dp, bottom = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
@@ -417,14 +414,14 @@ private fun HistoryPreview() = NeydiPreview {
             HistoryTrip("t2", 1_754_900_000_000, null, emptyList()),
         ),
         onBack = {},
-        onOpenReceipt = {},
+
     )
 }
 
 @PreviewLightDark
 @Composable
 private fun HistoryEmptyPreview() = NeydiPreview {
-    HistoryScreen(trips = emptyList(), onBack = {}, onOpenReceipt = {})
+    HistoryScreen(trips = emptyList(), onBack = {})
 }
 
 /**
@@ -468,7 +465,7 @@ private fun HistoryMultiPartPreview() = NeydiPreview {
             ),
         ),
         onBack = {},
-        onOpenReceipt = {},
+
     )
 }
 
@@ -496,6 +493,6 @@ private fun HistoryAllStatusesPreview() = NeydiPreview {
             ),
         ),
         onBack = {},
-        onOpenReceipt = {},
+
     )
 }

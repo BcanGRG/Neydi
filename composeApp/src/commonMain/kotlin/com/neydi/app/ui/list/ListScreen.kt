@@ -90,7 +90,6 @@ fun ListScreen(
     onGoShopping: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
-    onOpenReceipt: (String) -> Unit,
     onFixTaken: (String) -> Unit,
     /** Fis cekme oturumunu acar (Ekran 4). Gezi kimligini tasiyor. */
     onCapture: (String) -> Unit,
@@ -98,16 +97,6 @@ fun ListScreen(
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    // Fis kaydedilir kaydedilmez Fis Kontrol ekranina gecis. Kullaniciyi
-    // "fotograf cektim, sonra ne oldu" belirsizliginde birakmak, okuma
-    // basarisiz olsa bile en kotu sonuc olurdu.
-    val openReceiptId by vm.openReceiptId.collectAsStateWithLifecycle()
-    LaunchedEffect(openReceiptId) {
-        openReceiptId?.let { id ->
-            vm.consumeOpenReceipt()
-            onOpenReceipt(id)
-        }
-    }
     val input by vm.input.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
     val engineSuggestions by vm.engineSuggestions.collectAsStateWithLifecycle()

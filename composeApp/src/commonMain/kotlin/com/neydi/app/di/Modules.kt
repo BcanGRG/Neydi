@@ -14,7 +14,6 @@ import com.neydi.app.ui.capture.CaptureViewModel
 import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
-import com.neydi.app.ui.receipt.ReceiptCheckViewModel
 import com.neydi.app.ui.missing.MissingItemsViewModel
 import com.neydi.app.ui.settings.DeleteDataViewModel
 import com.neydi.app.ui.settings.SettingsViewModel
@@ -123,25 +122,6 @@ val dataModule = module {
 
     viewModel { (tripId: String?) ->
         FinishShoppingViewModel(tripId = tripId, tripLineDao = get(), repo = get(), statsRebuilder = get())
-    }
-
-    // receiptId parametreyle geliyor: hangi fisi kontrol ettigimiz hedefin
-    // kendisinde yaziyor, ViewModel'in onu tahmin etmesi gerekmiyor.
-    viewModel { (receiptId: String) ->
-        ReceiptCheckViewModel(
-            receiptId = receiptId,
-            processor = get(),
-            receiptDao = get(),
-            receiptLineDao = get(),
-            productDao = get(),
-            tripLineDao = get(),
-            aliasDao = get(),
-            catalogSeedDao = get(),
-            repo = get(),
-            statsRebuilder = get(),
-            clock = ::now,
-            newId = ::newUuid,
-        )
     }
 
     single { DataWipe(dao = get()) }
