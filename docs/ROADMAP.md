@@ -284,9 +284,12 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       iki ikonun aynı çizimi taşımadığı, yalnızca yön taşıyanların
       `autoMirror` olduğu. Cihazda beş ikon gözle doğrulandı; on beşinin
       atlası `NeydiIcon.kt`'de `@PreviewLightDark` olarak duruyor.
-- **F11.12 ✅ — Boş durum atlası tazelendi** (tasarım yaptı): toolbar iki
-      hedef, bütün tutarlar `~`, eşikler sayıyla, "parse" dili kalktı,
-      çerçeve 04 → "Alışveriş kapanışı".
+- [ ] **F11.12 ✅ tasarımda / ⏳ aynada — Boş durum atlası.** Tasarım tazeledi
+      (toolbar iki hedef, bütün tutarlar `~`, eşikler sayıyla, "parse" dili
+      kalktı, çerçeve 04 → "Alışveriş kapanışı") ama `docs/tasarim/Neydi -
+      Bos Durumlar.dc.html` **indirilmedi**: dosyada hâlâ `undo`/`filter_list`,
+      "Fiş Kontrol", `content_copy`'li katılma kodu ve **sıfır** `~` tutarı
+      var. Kapanması için bayt kopyasının çekilmesi gerekiyor.
 - [ ] **F11.13 — Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın
       örneği *"Son alışveriş: 8 gün önce"*; tarih merdiveni 7–13 günü
       "geçen hafta"ya topluyor. Kod merdiveni esas aldı (daha yeni ve daha
@@ -299,6 +302,20 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       metinden bir basamak yukarıda. **(b) uygulandı**, çünkü (a) bir ikon
       kararından türetilen palet çapında bir değişiklik olurdu. İkincil
       metnin (`#C6B6A9`) yanındaki ikon `#E4D8C9`'a çıkıyor. Onay bekliyor.
+- [ ] **F11.15 — Mağazalar eşiği ölü, iki karar birbirini yiyor.** Gezinme
+      sözleşmesi *"1 gözlemin altında bölüm çizilmez"* diyor; kod ise
+      `state.stores.isNotEmpty()`'e bakıyor ve **gözlem sayısını hiç
+      okumuyor**. Karar 11'in tohumu (E13) açılışta yedi mağaza satırı
+      yazdığı için `stores` asla boş dönmüyor — yani sıfır gözlemli temiz
+      kurulumda bölüm ilk açılışta görünüyor. Bugünkü UI bozukluğunun
+      görülebilmesinin sebebi de bu. Kod değiştirilmedi; üç okuma ve
+      eğilimim `11-tasarim-kararlari.md`'nin "Yeni açık sorular"ında.
+- [ ] **F11.16 — `github.md` ekran haritası ölü yolları gösteriyor.**
+      Tablo bir satırını `ui/receipt/ReceiptCheckScreen.kt` ve
+      `data/receipt/ReceiptGrouping.kt`'ye bağlıyor; ikisi de pivotta silindi.
+      Buna karşılık pivotla gelen `ui/capture/CameraSurface.kt` tabloda hiç
+      geçmiyor. Dosya tasarımın kendi senkron günlüğü, o yüzden elle
+      düzeltmek yerine bir sonraki senkronda tazelenmesi doğru olur.
 - **F11.10 → E19'a devroldu.**
 
 ---
@@ -330,7 +347,12 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 
 Örnekleri arşivdeki "Öğrenilenler"de:
 
-1. **Kendi örneğiyle kendini onaylama** — sentetik fikstür hiçbir şey kanıtlamaz
+1. **Kendi örneğiyle kendini onaylama** — sentetik fikstür hiçbir şey kanıtlamaz.
+   **Önizleme fikstürü de fikstürdür:** Ayarlar önizlemesi üç kısa mağaza adı
+   uyduruyordu, gerçek tohum yedi ad üretiyor. Üçü satıra sığdığı için önizleme
+   yeşil görünürken cihazda etiket **harf harf alt alta** akıyordu. Fikstür,
+   layout'un çalıştığı veriyi seçmişti. Kural: fikstür gerçeğin **kaynağını**
+   okusun (`SEED_CHAINS` gibi), taklidini değil
 2. **Isırdığı kanıtlanmamış test test değildir** — düzeltmeyi geri alıp kırmızıya düştüğü görülmeli
 3. **Kelime sınırsız önek eşleşmesi** — `" pos"` `" poseti"` içinde bulunur
 4. **SQL dizgisi koddur** — kolon adı, bağ değişkeni ve takma ad Kotlin ile sözleşmedir

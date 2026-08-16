@@ -2,8 +2,13 @@
 
 **16 Ağustos 2026.** Design pivot turunu tamamladı ve karar defterini **yirmi
 maddeye** indirdi: fiş dönemine ait on bir karar (4, 9, 13–21) defterden
-tamamen çıkarıldı. İki de yeni dosya geldi — **Gezinme sözleşmesi** ve
-**İkonografi**.
+tamamen çıkarıldı. Bir de yeni dosya geldi: **Gezinme sözleşmesi**.
+
+> **İkonografi'nin `.dc.html` kopyası depoya hiç girmedi.** Önceki hâli iki
+> yeni dosya geldiğini söylüyordu; `docs/tasarim/` altında sekiz `.dc.html`
+> var ve hiçbiri İkonografi değil. İçeriği okundu ve aşağıdaki *İkonografi*
+> bölümüne elle işlendi — yani kayıp yok, ama "tazelenmedi" demek yanlıştı:
+> hiç gelmedi.
 
 Bu dosya karar defterinin kopyası değil; **her kararın kodda karşılığı ne, hangi
 adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
@@ -11,10 +16,17 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 
 > **Ayna durumu.** `docs/tasarim/` altındaki `.dc.html` kopyaları bu oturumda
 > tazelendi: **Ekran 1**, **Ekranlar 2-4**, **Ekranlar 5-8**, **Tasarım
-> sistemi** ve yeni **Gezinme sözleşmesi**. Tazelenmeyen üç dosya —
-> **Kararlar**, **İkonografi**, **Boş durumlar**, **Compose spec** — hâlâ
-> pivot öncesi sürümü taşıyor; içerikleri okundu ve aşağıya işlendi ama
-> bayt kopyaları güncellenmedi. Canlı kaynak:
+> sistemi** ve yeni **Gezinme sözleşmesi**. Tazelenmeyen **üç** dosya —
+> **Kararlar**, **Boş durumlar**, **Compose spec** — hâlâ pivot öncesi
+> sürümü taşıyor; içerikleri okundu ve aşağıya işlendi ama bayt kopyaları
+> güncellenmedi.
+>
+> **Boş durumlar'ınki bir tuzak:** tasarım onu yukarı akışta tazeledi
+> (F11.12) ama depodaki kopya indirilmedi — dosyada hâlâ `undo`/`filter_list`
+> hedefleri, "Fiş Kontrol" ibaresi ve **sıfır** `~` tutarı var. Yani
+> ROADMAP'in ✅'i tasarım tarafı için doğru, ayna için değil.
+>
+> Canlı kaynak:
 > [design projesi](https://claude.ai/design/p/8eea982a-c3f6-4008-8789-81aaf478b51d).
 
 ---
@@ -71,8 +83,8 @@ erken kapatmaz · kökte "çıkmak için tekrar bas" göstermez.
 
 ### Eşikler — hepsi kodlanacak sayı
 
-| Yüzey | En az | Altında |
-|---|---|---|
+| Yüzey | En az | Altında | Kod |
+|---|---|---|---|
 | Ürün Detayı sparkline | **3 gözlem** | Grafik hiç çizilmez | ✅ bu turda |
 | "Nerede ucuz" bölümü | **2 market** | Bölüm çizilmez |
 | Delta çipi | **2 gözlem** | Çip yok, "ilk gözlem" ibaresi de yok |
@@ -82,7 +94,7 @@ erken kapatmaz · kökte "çıkmak için tekrar bas" göstermez.
 | "Bitmiş olabilir" | **4 alım** | Bölüm çizilmez |
 | Eksik olabilir ekranı | **1 satır** | Ekran açılmaz, toast bilgilendirir |
 | Geçmiş grafiği | **3 gezi** | Çubuklar çizilmez |
-| Ayarlar · Mağazalar | **1 gözlem** | Bölüm çizilmez | ✅ var |
+| Ayarlar · Mağazalar | **1 gözlem** | Bölüm çizilmez | ⚠ **F11.15** — eşik ölü |
 
 ### Tarih merdiveni (F5.11'in eksik yarısı — artık tam)
 
@@ -217,3 +229,42 @@ alışveriş: 8 gün önce · 642 TL"*; kendi tarih merdiveni ise 7–13 günü 
 hafta"**ya topluyor. Kod merdiveni esas aldı (daha yeni, daha açık ve
 sayıyla tanımlı). Örnek mi güncellenecek, yoksa başlık merdivenin dışında mı
 kalacak? → **F11.13**
+
+**3 · Karar 23'ün "tek satıra sığıyor" varsayımı geçersiz.** Karar Mağazalar
+satırından chevron'u kaldırırken gerekçesi *"üç beş zincir tek satıra sığıyor,
+adlar değerin içinde"*ydi. **E13 tohumu bunu bozdu:** ilk açılıştan itibaren
+yedi zincir var ve `BİM, A101, ŞOK, Migros, CarrefourSA, File, Tarım Kredi`
+elli karakter — cihazda satır etiketi harf harf alt alta akacak kadar taştı.
+
+Kararın **gerekçesi ayakta** (satırın götüreceği bir ekran yok, adlar değerin
+kendisi, chevron hâlâ yok), o yüzden kararı çevirmedim: yalnızca geometri
+değişti, adlar kendi satırına indi. Tasarımın çerçeveyi buna göre tazelemesi
+gerekiyor → **E19**.
+
+**4 · Mağazalar eşiği ölü — tohum onu geçersiz kıldı.** Gezinme sözleşmesinin
+eşik tablosu *"Ayarlar · Mağazalar, en az **1 gözlem**, altında bölüm
+çizilmez"* diyor. Kod ise bambaşka bir şeye bakıyor:
+`SettingsScreen.kt` → `if (state.stores.isNotEmpty())`, kaynağı
+`storeDao.observeAll(household)` — **gözlem sayısı hiçbir yerde okunmuyor.**
+
+Ve karar 11'in tohumu (E13) bootstrap'te yedi mağaza satırı yazdığı için
+`stores` **hiçbir zaman boş dönmüyor**. Yani eşik pratikte hep aşılmış
+sayılıyor: sıfır gözlemli, yepyeni bir kurulumda bölüm ilk açılışta görünüyor.
+
+Bugünkü UI bozukluğunun görülebilmesinin sebebi de bu — bölüm hiç
+çizilmeseydi satır da kırılmayacaktı.
+
+İki karar birbirini yiyor ve ikisi de kayıtta ✅ duruyordu. Üç okuma var:
+
+- **(a) Sözleşme haklı:** bölüm ilk gözleme kadar gizlensin. Bugün gözlem
+  üretebilen bir yüzey yok (E14/E15 gelmedi), yani bölüm uygulamadan tamamen
+  kaybolur.
+- **(b) Kod haklı:** tohum mağazaları gerçek kıldı, eşik pivotla anlamını
+  yitirdi; tablo güncellensin.
+- **(c) Etiket yanlış:** bölüm kalsın ama *"Takip edilen zincirler"* sıfır
+  gözlemken **doğru olmayan bir iddia** — hiçbiri henüz takip edilmiyor.
+  Karar 24 üretilmiş katılma kodunu tam bu gerekçeyle reddetmişti.
+
+**Kod değiştirilmedi** — üçü de savunulabilir ve seçim tasarımın.
+Eğilimim (c)+(b): bölüm kalsın, başlık *"Seçilebilen zincirler"* gibi
+doğru bir şey desin. → **F11.15**
