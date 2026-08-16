@@ -66,6 +66,10 @@ mlkitText = "16.0.1"                      # cihazda, ucretsiz, Latin betigi Turk
 # isteniyordu ve cihaz yok sayiyordu. Tasarimin Ekran 4'u ("1. kare" ... "Bitti")
 # zaten uygulama ici bir kamera tarif ediyor.
 androidxCamera = "1.6.1"
+# Belge tarayici: kenar algilama + kirpma + golge/leke temizleme. Arayuz ve
+# modeller Play Services'ten geliyor, yani APK'ya yuk binmiyor.
+# 16.0.0 son surum (2026-08-16, Google Maven metadata).
+mlkitDocScanner = "16.0.0"
 filekit = "0.14.2"                        # 0.15.0 cok yeni; 2 aylik saha suresi olani pinliyoruz
 coil = "3.5.0"
 
@@ -76,6 +80,7 @@ mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "androidxCamera" }
 androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "androidxCamera" }
 androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "androidxCamera" }
+mlkit-document-scanner = { module = "com.google.android.gms:play-services-mlkit-document-scanner", version.ref = "mlkitDocScanner" }
 # Compose Multiplatform
 # compose.runtime / foundation / material3 / ui / components.resources / preview
 # kisayollarinin HEPSI CMP 1.11.1'de @Deprecated("Specify dependency directly").

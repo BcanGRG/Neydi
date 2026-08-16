@@ -99,6 +99,8 @@ kotlin {
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
             implementation(libs.androidx.camera.view)
+            // Belge tarayici: kenar algilama, kirpma, golge/leke temizleme.
+            implementation(libs.mlkit.document.scanner)
         }
 
         commonTest.dependencies {

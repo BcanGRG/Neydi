@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -179,8 +181,19 @@ private fun FrameGuide() {
     val accent = LocalNeydiExtraColors.current.accent
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(440.dp)
+            // CERCEVE FISIN ORANINDA, KARE DEGIL (F4.18).
+            //
+            // Once 440dp yuksekliginde, TAM GENISLIKTE bir kutuydu - yani
+            // yaklasik 1:1,2. Fis ise 1:4 ile 1:12 arasinda ince uzun bir
+            // serit. Kullanici fisi o kutuya hizalayinca kare ortasinda ince
+            // bir cizgi olarak kaliyor ve sensorun genisliginin buyuk kismi
+            // ARKA PLANA gidiyordu. "Tek kareye sigmiyor" sikayetinin bir
+            // parcasi tam olarak buydu: sigmiyor degil, kadraji doldurmuyordu.
+            //
+            // Dar ve uzun cerceve fisi kadraja OTURTUYOR; ayni sensorden satir
+            // basina cok daha fazla piksel dusuyor.
+            .fillMaxHeight()
+            .aspectRatio(RECEIPT_ASPECT)
             .border(2.dp, CAMERA_ON_SCRIM.copy(alpha = 0.9f), RoundedCornerShape(20.dp))
             .padding(14.dp),
     ) {
@@ -289,6 +302,17 @@ private fun BottomBar(
         }
     }
 }
+
+/**
+ * Cerceve rehberinin en-boy orani.
+ *
+ * Turk market fisi ~8cm genisliginde; uzunlugu alisverise gore 25-100cm. 0,32
+ * orta boy bir fisi (~25cm) kadraja oturtuyor ve daha uzun fiste kullaniciyi
+ * geriye cekilmeye degil, fisi katlamaya ya da ikinci kare cekmeye birakiyor -
+ * cerceveyi daha da inceltmek kisa fiste kadrajin buyuk kismini bosa
+ * harcardi.
+ */
+private const val RECEIPT_ASPECT = 0.32f
 
 /** Tasarimin kamera zemini (#221A14) ve uzerindeki metin rengi (#F5EDE6). */
 private val CAMERA_SCRIM = Color(0xFF221A14)

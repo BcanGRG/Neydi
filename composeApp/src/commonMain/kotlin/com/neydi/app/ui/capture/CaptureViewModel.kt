@@ -42,6 +42,43 @@ class CaptureViewModel(
     val state: StateFlow<CaptureState> = _state.asStateFlow()
 
     /**
+     * Tarayicinin verdigi sayfalari geziye baglar (F4.18).
+     *
+     * SAYFALAR ZATEN KIRPILMIS ve temizlenmis geliyor; kucultme yolu yine de
+     * ayni - `attachReceiptToTrip` `content://` ve olcekleme derslerini tek
+     * yerde tutuyor ve sayfa zaten diskteki gercek bir dosya.
+     *
+     * ILK SAYFANIN KIMLIGI donduruluyor: Fis Kontrol fisin tamamini tek akista
+     * ciziyor (tasarim karari 4), yani ilk sayfa butun fisin kapisi.
+     */
+    fun attachScanned(pagePaths: List<String>, onDone: (String?) -> Unit) {
+        viewModelScope.launch {
+            var first: String? = _state.value.firstReceiptId
+            var count = _state.value.partCount
+            for (path in pagePaths) {
+                val receipt = attachReceiptToTrip(
+                    repo = repo,
+                    householdId = DEFAULT_HOUSEHOLD_ID,
+                    tripId = tripId,
+                    source = PlatformFile(path),
+                    destPath = path,
+                    // Kaynak ve hedef AYNI dosya: tarayici ciktisi zaten bizim
+                    // dizinimizde ve silinecek bir ham kopya yok.
+                    rawPath = path,
+                )
+                if (first == null) first = receipt.id
+                count++
+            }
+            _state.value = _state.value.copy(
+                partCount = count,
+                lastFailed = false,
+                firstReceiptId = first,
+            )
+            onDone(first)
+        }
+    }
+
+    /**
      * Bir kare ceker, kucultur ve geziye baglar.
      *
      * KUCULTME YOLU DEGISMIYOR: `attachReceiptToTrip` `content://` ve
