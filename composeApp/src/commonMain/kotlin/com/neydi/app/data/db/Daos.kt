@@ -489,6 +489,39 @@ interface PriceObservationDao {
         """,
     )
     fun observeStoreIdsWithObservations(householdId: String): Flow<List<String>>
+
+    /**
+     * Ayni market + urun + fiyat, [since]'dan sonra yazilmis mi (tasarim: etiket akisi).
+     *
+     * `storeId IS :storeId`, `=` DEGIL: SQL'de `NULL = NULL` **yanlis**tir, yani `=`
+     * kullansaydik marketi secilmemis iki ayni cekim mukerrer sayilmaz ve ikisi de
+     * yazilirdi - korumanin en cok gerektigi yerde (kullanici acele ediyor, market
+     * secmemis) tam olarak calismazdi. `IS` iki NULL'u esit sayiyor.
+     *
+     * SILINMIS GOZLEM ENGEL DEGIL: kullanici bir gozlemi silip ayni etiketi tekrar
+     * cekiyorsa niyeti bellidir, koruma onun onune gecmemeli.
+     *
+     * `observedAt`e bakiyor, `createdAt`e degil: soru "bu fiyati az once mi gordum",
+     * "bu satiri az once mi yazdim" degil.
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM price_observation
+        WHERE householdId = :householdId
+          AND productId = :productId
+          AND storeId IS :storeId
+          AND unitPriceMinor = :unitPriceMinor
+          AND observedAt >= :since
+          AND deletedAt IS NULL
+        """,
+    )
+    suspend fun countRecentDuplicates(
+        householdId: String,
+        productId: String,
+        storeId: String?,
+        unitPriceMinor: Long,
+        since: Long,
+    ): Int
 }
 
 @Dao

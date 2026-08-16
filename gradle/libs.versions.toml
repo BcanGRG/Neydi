@@ -66,7 +66,6 @@ mlkitText = "16.0.1"                      # cihazda, ucretsiz, Latin betigi Turk
 # zaten uygulama ici bir kamera tarif ediyor.
 androidxCamera = "1.6.1"
 filekit = "0.14.2"                        # 0.15.0 cok yeni; 2 aylik saha suresi olani pinliyoruz
-coil = "3.5.0"
 
 [libraries]
 mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitText" }
@@ -147,7 +146,6 @@ supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt" }
 supabase-storage = { module = "io.github.jan-tennert.supabase:storage-kt" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
-coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

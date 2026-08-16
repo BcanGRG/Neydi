@@ -36,12 +36,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.absolutePath
-import io.github.vinceglb.filekit.name
-import io.github.vinceglb.filekit.createDirectories
-import io.github.vinceglb.filekit.div
-import io.github.vinceglb.filekit.filesDir
 import kotlin.time.Clock
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,7 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -111,15 +105,20 @@ fun ListScreen(
     val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
 
-    // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
-    // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
-    val clipboard = LocalClipboardManager.current
+    // Pano bir KEZ, ekran acilirken okunuyor. Her karede okumak hem pahali hem
+    // de bazi sistemlerde "pano okundu" bildirimi tetikliyor.
+    //
+    // `LocalClipboard`, `LocalClipboardManager` DEGIL: eskisi kullanimdan
+    // kaldirildi. Okuma artik `suspend` ve zaten `LaunchedEffect` icindeyiz,
+    // yani ek bir yapi gerekmedi. Metni `ClipEntry`den cikarmak platform isi -
+    // bkz. [plainTextOrNull].
+    val clipboard = LocalClipboard.current
     var clipboardText by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        clipboardText = clipboard.getText()?.text?.takeIf { looksLikeList(it) }
+        clipboardText = clipboard.getClipEntry()?.plainTextOrNull()?.takeIf { looksLikeList(it) }
     }
 
     ListContent(
