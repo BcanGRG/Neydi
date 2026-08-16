@@ -134,7 +134,6 @@ val dataModule = module {
         ListRepository(
             tripDao = get(),
             tripLineDao = get(),
-            receiptDao = get(),
             productDao = get(),
             // Saat ve id URETIMI disaridan: repository saf kalsin ve testte
             // deterministik olabilsin.

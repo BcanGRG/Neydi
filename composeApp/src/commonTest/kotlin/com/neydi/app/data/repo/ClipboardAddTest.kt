@@ -34,7 +34,6 @@ class ClipboardAddTest {
         return ListRepository(
             tripDao = db.tripDao(),
             tripLineDao = db.tripLineDao(),
-            receiptDao = db.receiptDao(),
             productDao = db.productDao(),
             clock = { 1_000L },
             newId = { "id-${++n}" },

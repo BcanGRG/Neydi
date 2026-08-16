@@ -10,7 +10,7 @@ listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe **ürün ba
 fiyat hafızası biriktiren. Döngü: *liste → markette işaretle → etiket çek →
 ürün+marka+market+tarih+fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**İlerleme:** 8 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
+**İlerleme:** 10 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
 "Pivot sonrası" bölümünde.
 
 ---
@@ -119,9 +119,9 @@ kapsamında fiş fotoğrafı kalmadı). Tasarıma bildirim: `10-tasarima-pivot.m
 - [~] **E8 — Geçmiş ameliyatı.** Parça satırları, durum ikonları,
   `physicalReceipts`, tutar okuması çıkar; `LastTrip` tutarsız kalır (geçici,
   E18 geri getirir). **Bitti:** Geçmiş = tarih + kalem sayısı.
-- [ ] **E9 — ListRepository temizliği.** `receiptDao` + `enqueueReceipt` çıkar.
+- [~] **E9 — ListRepository temizliği.** `receiptDao` + `enqueueReceipt` çıkar.
   **Bitti:** repo yapıcısı fişsiz.
-- [ ] **E10 — purchaseEvents tek kaynak.** *(cihazsız)* UNION'ın fiş kolu
+- [x] **E10 — purchaseEvents tek kaynak.** *(cihazsız)* UNION'ın fiş kolu
   silinir — liste kanıtı belgelenmiş fallback. **Bitti:** stats testleri
   fikstürsüz yeşil.
 - [ ] **E11 — `data/receipt/` yıkımı + şema v5.** Bilinçli büyük commit

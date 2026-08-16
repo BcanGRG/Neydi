@@ -6,9 +6,6 @@ import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.db.NeydiDatabaseConstructor
-import com.neydi.app.data.db.Receipt
-import com.neydi.app.data.db.ReceiptLine
-import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.repo.ListRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -22,12 +19,13 @@ private const val DAY = 86_400_000L
 /**
  * `ProductStats` hesabi (F6.1).
  *
- * KARAR: istatistik **hem** `trip_line` **hem** eslesmis `receipt_line`
- * okuyor. Yalnizca listeyi okumak, tam olarak kullanicinin **yazmayi unuttugu**
- * urunleri saymamak demekti - yani Faz 4'un var olma sebebini es gecmek.
+ * KARAR (E10'da guncellendi): istatistigin tek kaynagi **isaretlenmis liste
+ * satirlari**. Fis donemi ikinci bir kol daha okuyordu (eslesmis
+ * `receipt_line`) ve gerekcesi kullanicinin *yazmayi unuttugu* urunleri de
+ * saymakti; o kol kaynagiyla birlikte silindi.
  *
- * O kararin bedeli tekillestirme: ayni urun hem listede isaretli hem fiste
- * eslesmis olabilir ve bu BIR alistir.
+ * Tekillestirme (productId, tripId) YINE SART: ayni urun bir geziye iki satir
+ * olarak girebilir ve bu BIR alistir.
  */
 class ProductStatsTest {
 
@@ -44,7 +42,6 @@ class ProductStatsTest {
         return ListRepository(
             tripDao = db.tripDao(),
             tripLineDao = db.tripLineDao(),
-            receiptDao = db.receiptDao(),
             productDao = db.productDao(),
             clock = { now },
             newId = { "id-${++n}" },
@@ -82,32 +79,10 @@ class ProductStatsTest {
         return trip.id
     }
 
-    /** Kapali bir geziye, urune BAGLANMIS bir fis satiri ekler. */
-    private suspend fun fisSatiriEkle(
-        db: NeydiDatabase,
-        tripId: String,
-        productId: String,
-        receiptDate: Long?,
-        id: String,
-    ) {
-        db.receiptDao().insert(
-            Receipt(
-                id = "r-$id", householdId = home, tripId = tripId,
-                imagePath = "/tmp/$id.jpg", capturedAt = 0, receiptDate = receiptDate,
-                status = ReceiptStatus.VERIFIED, createdAt = 0,
-            ),
-        )
-        db.receiptLineDao().insertAll(
-            listOf(
-                ReceiptLine(
-                    id = "rl-$id", householdId = home, receiptId = "r-$id",
-                    rawText = "X", rawTextNormalized = "x",
-                    unitPriceMinor = null, lineTotalMinor = 1000,
-                    matchedProductId = productId, needsReview = false, createdAt = 0,
-                ),
-            ),
-        )
-    }
+    // FIS YARDIMCISI VE DORT FIS TESTI E10'DA OLDU. `purchaseEvents` artik
+    // tek kaynakli (isaretlenmis liste satirlari); fisten gelen alim kolu
+    // kaynagiyla birlikte silindi. Kaybedilen davranis DAO'nun KDoc'unda
+    // kayitli: listeye hic yazilmadan alinan urun artik sayilmiyor.
 
     // --- Sayim -------------------------------------------------------------
 
@@ -157,89 +132,6 @@ class ProductStatsTest {
         rebuilder(db).rebuild(home)
 
         assertNull(db.productStatsDao().byProduct(product.id))
-    }
-
-    // --- Fisten gelen alimlar (kullanicinin kararı) -------------------------
-
-    /**
-     * LISTEYE YAZILMAMIS ama fiste olan urun SAYILIYOR.
-     *
-     * Bu, kararin butun sebebi: kullanicinin unuttugu ekmek de bir alim.
-     */
-    @Test
-    fun receiptOnlyPurchaseIsCounted() = runTest {
-        val db = db(); prepare(db)
-        val r = repo(db)
-        val trip = sepetKapat(db, r, 10 * DAY, "Ekmek")
-        val sut = r.findOrCreateProduct(home, "Süt", "temel-gida", "adet")
-        fisSatiriEkle(db, trip, sut.id, receiptDate = 10 * DAY, id = "1")
-
-        rebuilder(db).rebuild(home)
-
-        assertEquals(1, db.productStatsDao().byProduct(sut.id)!!.purchaseCount)
-    }
-
-    /**
-     * AYNI URUN HEM LISTEDE HEM FISTE = **BIR** ALIM.
-     *
-     * Tekillestirilmezse `purchaseCount` ikiye katlanir ve
-     * `medianIntervalDays` yariya duser - yani uygulama her seyi iki kat sik
-     * onermeye baslar. Sessiz, yavas ve geri alinmasi zor.
-     */
-    @Test
-    fun listAndReceiptInSameTripCountOnce() = runTest {
-        val db = db(); prepare(db)
-        val r = repo(db)
-        val trip = sepetKapat(db, r, 10 * DAY, "Ekmek")
-        val ekmek = db.productDao().findByMatchKey(home, "ekmek")!!
-        fisSatiriEkle(db, trip, ekmek.id, receiptDate = 10 * DAY, id = "1")
-
-        rebuilder(db).rebuild(home)
-
-        assertEquals(1, db.productStatsDao().byProduct(ekmek.id)!!.purchaseCount)
-    }
-
-    /** Onaya dusmus fis satiri alim DEGIL: yanlis esleme gecmisi kirletir. */
-    @Test
-    fun unconfirmedReceiptLineIsNotAPurchase() = runTest {
-        val db = db(); prepare(db)
-        val r = repo(db)
-        val trip = sepetKapat(db, r, 10 * DAY, "Ekmek")
-        val sut = r.findOrCreateProduct(home, "Süt", "temel-gida", "adet")
-        db.receiptDao().insert(
-            Receipt(
-                id = "r-x", householdId = home, tripId = trip, imagePath = "/tmp/x.jpg",
-                capturedAt = 0, status = ReceiptStatus.MISMATCHED, createdAt = 0,
-            ),
-        )
-        db.receiptLineDao().insertAll(
-            listOf(
-                ReceiptLine(
-                    id = "rl-x", householdId = home, receiptId = "r-x",
-                    rawText = "X", rawTextNormalized = "x", unitPriceMinor = null,
-                    lineTotalMinor = 1000, matchedProductId = sut.id,
-                    needsReview = true, createdAt = 0,
-                ),
-            ),
-        )
-
-        rebuilder(db).rebuild(home)
-
-        assertNull(db.productStatsDao().byProduct(sut.id))
-    }
-
-    /** Fisin BASILI tarihi kazaniyor: satin almanin gerceklestigi an o. */
-    @Test
-    fun printedReceiptDateWinsOverCloseTime() = runTest {
-        val db = db(); prepare(db)
-        val r = repo(db)
-        val trip = sepetKapat(db, r, 20 * DAY, "Ekmek")
-        val sut = r.findOrCreateProduct(home, "Süt", "temel-gida", "adet")
-        fisSatiriEkle(db, trip, sut.id, receiptDate = 18 * DAY, id = "1")
-
-        rebuilder(db).rebuild(home)
-
-        assertEquals(18 * DAY, db.productStatsDao().byProduct(sut.id)!!.lastPurchasedAt)
     }
 
     // --- Medyan ------------------------------------------------------------
