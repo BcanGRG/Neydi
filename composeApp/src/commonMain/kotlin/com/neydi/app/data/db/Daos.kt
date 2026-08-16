@@ -190,6 +190,12 @@ interface TripDao {
      * kullanicinin elle duzeltmesi de (o yuzey yazilinca) bu yazmayla
      * ezilmemeli.
      */
+    // CAGIRANI YOK (E11'den beri): tek yazani ReceiptProcessor.rememberStore'du.
+    // Etiket modelinde gozlem geziye degil MAGAZAYA bagli (pivot karari 3), yani
+    // Trip.storeId'yi dolduracak dogal bir an kalmadi. Silinmedi cunku Ekran
+    // 1'in alisveris modu basligi magaza adi gosteriyor ve o bilginin kaynagi
+    // tasarima soruldu (10-tasarima-pivot.md); cevap "o gezinin marketi" olursa
+    // yazan taraf tam burasi olacak.
     @Query("UPDATE trip SET storeId = :storeId WHERE id = :id AND storeId IS NULL")
     suspend fun setStoreIfAbsent(id: String, storeId: String)
 

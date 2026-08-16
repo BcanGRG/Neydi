@@ -35,6 +35,12 @@ kotlin {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+            // Room'un KSP islemcisi `NeydiDatabaseConstructor`in actual'ini
+            // URETIYOR ve uretilen dosyaya annotasyon koyamiyoruz - kendi
+            // expect'imizde @Suppress duruyor ama uretilen tarafta uyari
+            // kaliyordu. Bayrak projeyi tek bir gercek uyariyla birakiyor
+            // (LocalClipboardManager, F10.10) ve o gercekten is bekliyor.
+            freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
 

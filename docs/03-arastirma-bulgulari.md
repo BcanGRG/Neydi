@@ -1,3 +1,11 @@
+> **⚠ ARŞİV — bu dosyanın fişle ilgili iddiaları geçersiz.**
+> 16 Ağustos 2026 pivotunda fiş okuma bırakıldı. Buradaki OCR doğruluğu,
+> Claude vision maliyeti ve "tek kare yetmez" varsayımlarının hepsi ya
+> ölçümle çürütüldü ya da konusuz kaldı. Güncel durum:
+> [ROADMAP.md](ROADMAP.md) "Pivot kaydı". Fiş dönemi kararlarının tam kaydı:
+> [ARSIV-fis-donemi.md](ARSIV-fis-donemi.md).
+> Dosya, *neyin nasıl yanlış çıktığının* kaydı olarak duruyor.
+
 # Araştırma Bulguları — planlama aşamasının girdisi
 
 12 ajan, ~400 kaynak sorgusu. Aşağıdakiler **kararları değiştiren** bulgular. Doğrulama ajanları bazı ilk bulguları çürüttü — çürütülenler de burada, çünkü onlara güvenip kod yazmak en pahalı hata olurdu.

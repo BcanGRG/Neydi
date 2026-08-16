@@ -1,7 +1,0 @@
-# Fis fotograflari kisisel veridir - repoya girmez.
-receipts/
-# Cikarim ve dogruluk dosyalari yerel kalir; skorlar rapor olarak paylasilir.
-out/
-truth/
-node_modules/
-package-lock.json
