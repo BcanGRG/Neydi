@@ -7,7 +7,7 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 11/19 · sıradaki **E12**. Uygulama derleniyor, cihazda kurulu,
+**Durum:** Faz E 11/19 · sıradaki **E12**. Tasarım pivot turunu kapattı (20 karar). Uygulama derleniyor, cihazda kurulu,
 183 test yeşil, tek derleyici uyarısı var (F10.10'un kendi işi).
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -25,9 +25,10 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 | 2 | **E13** — mağaza tohumu | E15'in market seçicisi buna dayanıyor | — |
 | 3 | **E14** — TagParser | E15'i açan son teknik parça | E12 |
 
-**Tasarımdan cevap bekleyen** (paralel, hiçbirini bloklamıyor):
-`docs/10-tasarima-pivot.md`'nin 7 sorusu → E15 onay kartı yerleşimi, E17 marka
-satırları, E19 karar defteri.
+**Tasarım cevapladı** (16 Ağu): karar defteri 20 maddeye indi, iki yeni dosya
+geldi (gezinme sözleşmesi + ikonografi). Kararların kod karşılığı ve kalan beş
+soru: [`11-tasarim-kararlari.md`](11-tasarim-kararlari.md). E15 ve E17'nin
+spesifikasyonu artık tam — eşikler, geri sırası, hata yolları dahil.
 
 ---
 
@@ -130,12 +131,18 @@ sarı etiket, uzun ürün adı).
 - `TagCapture` nav key — **parametresiz** (çekim geziden bağımsız)
 - Kamera durumu: `CameraSurface` + `CaptureController` (E6'dan beri hazır
   bekliyor), etiket oranında çerçeve rehberi
-- Onay kartı: **Fiyat** (düzenlenebilir — "elle fiyat girilmez" kuralının tek
-  istisnası) · **Ürün** (alias çözüyorsa sıfır soru) · **Marka** (opsiyonel) ·
+- Onay kartı **fotoğrafın üstünde**, dışına dokunmak kapatmaz (karar 25):
+  **Fiyat** (düzenlenebilir — "elle fiyat girilmez" kuralının tek istisnası) ·
+  **Ürün** (alias çözüyorsa sıfır soru) · **Marka** (kesik çerçeve = tahmin) ·
   **Market** (yapışkan) · **Tarih** (bugün)
-- Kaydet → alias insert + `PriceObservation` insert → fotoğraf silinir →
-  kamera geri gelir (seri çekim)
-- Liste ekranına giriş düğmesi *(yeri tasarımdan gelecek — soru 3)*
+- Eksik alan **amber şerit + tek cümle** ("fiyat okunamadı — yaz"); birden çok
+  alan boşsa **yalnızca ilki** vurgulanır
+- Kart hemen açılır; OCR 1,5 sn'yi geçerse alanlar **iskelet**, kart beklemez
+- Kaydet → alias + `PriceObservation` → fotoğraf silinir (karar 29) → kamera
+  **300 ms** içinde hazır → toast 2 sn. Kaydet sırasında geri = kayıt tamamlanır
+- Aynı market+ürün+fiyat **60 sn** içinde tekrarlanırsa ikinci gözlem yazılmaz
+- Giriş: **liste başlığında kalıcı kamera hedefi**, her iki modda (karar 27)
+- Geri sırası: klavye → sheet → kart → menü → destinasyon → çıkış
 
 **Bitti sayılır:** cihazda 1 etiket → 1 dokunuş → 1 gözlem satırı → listede
 **"Tahmini sepet" ilk kez görünüyor** (`EstimatedBasket` sıfır kodla yanacak).
@@ -150,8 +157,10 @@ eşler: `None` / `Single` / `Trend` / `PackChanged`.
 
 ### ▸ E17 — Ekran 5 fiyat bölümü
 
-`history(productId, 9)`; 0/1/9 gözlem hâlleri; **market + marka + fiyat +
-tarih** satırları — kullanıcının yoğurt örneği birebir burada.
+`history(productId, 9)`; 0/1/9 gözlem hâlleri. **"Nerede ucuz" satırının
+kimliği market + marka çifti** (karar 26): aynı marketten iki marka = iki
+satır, en son fiyat, sıralama fiyata göre en ucuz üstte. Eşikler: sparkline
+3 gözlem, bölüm 2 market, delta çipi 2 gözlem.
 
 **Bitti sayılır:** `BİM · Dost · 100 TL` / `Migros · Pınar · 130 TL` çiziliyor.
 
@@ -183,13 +192,14 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       `packSize`/`packUnit` çıkarıyor; kalan iş `PriceHint.PackChanged`'i
       besleyip shrinkflation'ı gerçekten yakalamak. *Bu olmadan 1 L → 900 ml
       düşüşü "fiyat sabit" diye raporlanır.*
-- [ ] **F5.10 — Mükerrer gözlem koruması** *(cihazsız)*. Senaryo pivotla
-      değişti: artık "aynı etiketi iki kez çekmek". Kural yeniden yazılacak —
-      aynı (ürün, market, gün) için ikinci gözlem güncelleme mi, ayrı satır mı?
-- [ ] **F5.11 — İki biçimlendirici.** (a) tam TL (`~640 TL`) — `formatMinor`
-      her zaman iki ondalık basıyor; (b) göreli gün ("12 gün önce").
-      ⚠ Tuzak: `(now - then) / 86_400_000` **takvim günü saymaz**; aynı
-      aritmetik hem gösterimde hem `medianIntervalDays`'te kullanılmalı.
+- [ ] **F5.10 — Mükerrer gözlem koruması** *(cihazsız)*. **Kural tasarımdan
+      geldi:** aynı market + ürün + fiyat **60 saniye** içinde tekrarlanırsa
+      ikinci gözlem yazılmaz. Eşitlemede aynı dakika = tek gözlem.
+- [ ] **F5.11 — İki biçimlendirici.** İkisinin de spesifikasyonu tasarımdan
+      tam geldi. (a) tahmin biçimi `~642 TL` — tilde bitişik, **kuruş
+      yazılmaz**; (b) tarih merdiveni: az önce / bugün 15:38 / dün / 3 gün önce
+      / geçen hafta / 12 Ağustos. ⚠ Tuzak: `(now - then) / 86_400_000`
+      **takvim günü saymaz**; aynı aritmetik `medianIntervalDays`'te de.
 - [~] **F6.4 — Eksik Olabilir (Ekran 3).** "Son ödenen fiyat" kolonu artık
       gözlemden besleniyor.
 - [ ] **F6.5 — Sabit terfisi + bastırma.** "Bunu önerme" listesinin giriş
@@ -250,6 +260,14 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Yukarıdaki
       dört isim; kullanılacak mı silinecek mi tasarımın kararı.
 - [ ] **F11.6 — Alışveriş modu satır container'ı.**
+- [ ] **F11.11 — İkon ekseni (ikonografi A yolu).** Tasarım 24dp / wght 300 /
+      opsz 24 / karanlıkta GRAD 100 istiyor. ⚠ **Bugünkü kodla imkânsız:**
+      `androidx.compose.material.icons` statik `ImageVector` veriyor, ekseni
+      yok. Üç seçenek `11-tasarim-kararlari.md`'de; karar tasarımın.
+- [ ] **F11.12 — Boş durum atlası tazelensin.** Üç çerçeve kararlarla
+      çelişiyor: 01'de tutar `~`'siz, 03'te dört hedefli toolbar (karar 3
+      ikiye indirmişti), 07'de üretilmiş katılma kodu + chevron'lu Mağazalar
+      satırı (karar 23/24). Tasarıma soruldu.
 - **F11.10 → E19'a devroldu.**
 
 ---
@@ -304,8 +322,9 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 2. **Katalog fiyatı ile gözlem aynı tabloda mı** (F5.4).
 3. **Blok listesi olay mı tablo mu** (F6.5).
 4. **Hane yeniden anahtarlama** (Faz 7).
-5. **Etiket fotoğrafı kayıttan sonra silinsin mi** — önerimiz evet; tasarıma
-   soruldu (soru 5), E15'ten önce ucuz geri dönüş.
+5. ~~Etiket fotoğrafı kayıttan sonra silinsin mi~~ — **kapandı**: karar 29
+   evet diyor, gerekçesi de aynı (etiket ödeme kanıtı değil, fiyatın okunduğu
+   an). Hiçbir yüzey fotoğraf çizmiyor.
 
 ## Bayat adlar — harita ≠ kod
 
@@ -333,7 +352,8 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 
 | Dosya | Ne işe yarar |
 |---|---|
-| [10-tasarima-pivot.md](10-tasarima-pivot.md) | **Aktif** — tasarıma pivot bildirimi, 7 açık soru |
+| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 20 kararın kod durumu, gezinme sözleşmesi sabitleri, ikonografi, 5 açık soru |
+| [10-tasarima-pivot.md](10-tasarima-pivot.md) | Tasarıma pivot bildirimi — cevaplandı, arşiv değeri |
 | [ARSIV-fis-donemi.md](ARSIV-fis-donemi.md) | Pivottan önceki tam harita; F-numaralarının kaynağı |
 | [01-claude-design-prompt.md](01-claude-design-prompt.md) | Sekiz ekranın özgün spesifikasyonu |
 | [05](05-tasarim-denetimi.md) · [06](06-tasarima-sorular.md) · [07](07-tasarima-sorular-2.md) · [08](08-tasarim-bulgulari.md) · [09](09-tasarima-sorular-3.md) | Önceki tasarım turları — fiş dönemi, arşiv değeri |

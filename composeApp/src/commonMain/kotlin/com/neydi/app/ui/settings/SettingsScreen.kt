@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -48,14 +49,15 @@ import org.koin.compose.viewmodel.koinViewModel
  * BOS BOLUM HIC CIZILMEZ ve bu ekranin en onemli kurali. Tasarimin gerekcesi:
  * *"Bos bir bolum basligi, olmayan bir isi varmis gibi gosterir."*
  *
- * - **Magazalar**: ilk fiste market adi okununca KENDILIGINDEN doluyor
- *   (tasarim karari 11) - satir yokken bolum cizilmiyor, elle magaza ekleme
- *   yok.
+ * - **Magazalar**: yedi zincir tohumlanmis geliyor ve kullanici etiket
+ *   cekerken market seciyor (tasarim karari 11, pivotla revize) - satir
+ *   yokken bolum cizilmiyor.
  * - **Onerilmeyenler**: `suggestion_block` tablosu semada var (v3) ama hicbir
  *   yazan yok - F6.5 (bastirma) yazilinca dolacak; bolum o gune kadar
  *   cizilmiyor.
- * - **Katilma kodu**: `Household.joinCode` alani var ama null; kod uretimi
- *   Faz 7'nin (senkron) isi.
+ * - **Katilma kodu**: `Household.joinCode` null; satir SOLUK ciziliyor ve
+ *   "Faz 7'de acilyor" yaziyor (karar 24) - varligi ozelligin gelecegini,
+ *   solukluğu henuz olmadigini soyluyor.
  *
  * Bunlari sahte verilerle doldurmak ya da "yakinda" yazmak, tasarimin tam
  * olarak yasakladigi sey olurdu.
@@ -118,12 +120,19 @@ fun SettingsScreen(
             ) {
                 SectionHeader("Hane")
                 state.householdName?.let { SettingRow(label = "Ad", value = it) }
-                // Katilma kodu YALNIZCA uretilmisse. Faz 7'ye kadar null ve
-                // satir hic cizilmiyor - bos bir kod alani "buradan katilinir"
-                // sozu verip tutamamak olurdu.
-                state.joinCode?.let { code ->
-                    SettingRow(label = "Katılma kodu", value = code, icon = NeydiIcons.ContentCopy)
-                }
+                // KATILMA KODU CIZILIYOR AMA SOLUK (tasarim karari 24).
+                //
+                // Once satir hic cizilmiyordu; karar 24 bunu degistirdi:
+                // satirin varligi ozelligin GELECEGINI soyluyor, degeri ise
+                // henuz olmadigini. Uretilmis bir kod gostermek en pahali hata
+                // turuydu - kullanici kodu esine verir ve karsiliginda hicbir
+                // sey olmaz. Kopyalama ikonu da dustu (ikonografi envanteri):
+                // kopyalanacak bir sey yok.
+                SettingRow(
+                    label = "Katılma kodu",
+                    value = state.joinCode ?: "Faz 7'de açılıyor",
+                    dimmed = state.joinCode == null,
+                )
                 SettingRow(
                     label = "Üyeler",
                     // Tek kisilik hanede sayi degil DURUM yaziliyor: "1"
@@ -141,19 +150,22 @@ fun SettingsScreen(
                     // Tasarimin bos hali: bolum basligi duruyor ama altinda
                     // liste yerine tek satirlik aciklama var. Bu bir CTA degil,
                     // "kendiliginden olacak" bilgisi.
-                    Note("Her alışverişte aldığın ürünler birkaç fişten sonra kendiliğinden burada birikir.")
+                    Note("Her alışverişte aldığın ürünler birkaç alışverişten sonra kendiliğinden burada birikir.")
                 } else {
                     state.staples.forEach { staple ->
                         StapleRowItem(staple) { onRemoveStaple(staple.productId) }
                     }
                 }
 
-                // MAGAZALAR SATIR VARKEN CIZILIYOR (tasarim karari 11).
+                // MAGAZALAR SATIR VARKEN CIZILIYOR (tasarim karari 11 + 24).
                 //
-                // Tasarimin bos hali bu bolumu "Ilk fisten ogrenilecek"
-                // yaziyla ciziyordu; karar 11 onun yerine bolumun HIC
-                // cizilmemesini soyluyor - ilk fisten sonra kendiliginden
-                // gorunuyor, yani bos hal hic yasanmiyor.
+                // Bos hal HIC CIZILMIYOR: "Ilk gozlemden ogrenilecek" bir vaat,
+                // bir deger degil - bolum ilk gozlemden sonra kendiliginden
+                // gorunuyor, yani bos hal pratikte hic yasanmiyor.
+                //
+                // CHEVRON YOK (karar 23): satir kendi basina tamam, adlar
+                // degerin icinde. Goturecegi bir ekran olmadigi icin chevron
+                // tutulamayacak bir soz olurdu.
                 if (state.stores.isNotEmpty()) {
                     SectionHeader("Mağazalar")
                     SettingRow(
@@ -163,7 +175,7 @@ fun SettingsScreen(
                         // kiliyor.
                         value = state.stores.joinToString(", ") { it.name },
                     )
-                    Note("Mağazalar ilk fişte market adı okunduğunda kendiliğinden birikir; elle mağaza eklenmez.")
+                    Note("Market etiket çekerken seçiliyor; son seçilen bir sonraki çekimde hazır gelir.")
                 }
 
                 SectionHeader("Gizlilik")
@@ -200,11 +212,13 @@ private fun SettingRow(
     label: String,
     value: String? = null,
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    /** Henuz calismayan ozellik: satir cizilir ama solar (tasarim karari 24). */
+    dimmed: Boolean = false,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).alpha(if (dimmed) 0.5f else 1f),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(

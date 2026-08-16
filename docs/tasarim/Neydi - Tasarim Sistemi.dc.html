@@ -466,8 +466,8 @@
         <div style="display:flex;align-items:center;background:#221A14;border-radius:18px;padding:14px 16px;max-width:360px"><div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6">Liste hazır, eksik görünmüyor</div></div>
         <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">Toast — yeni bileşen. Aksiyonsuz, 2 sn, zemin textPrimary #221A14, metin surface, köşe 18dp, gölge yok, dokunma hedefi yok. Konum: floating toolbar'ın 12dp üstü; toolbar yoksa safe area + 12dp. Yalnızca "oldu bitti, dokunacak bir şey yok" olaylarında.</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#221A14;border-radius:18px;padding:14px 16px;max-width:360px">
-          <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6;font-variant-numeric:tabular-nums">Alışveriş kaydedildi · 18 ürün · 642,50 TL</div>
-          <div style="font:600 14px/1 'Plus Jakarta Sans';color:#FF9166;white-space:nowrap">Fişi gör</div>
+          <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6;font-variant-numeric:tabular-nums">Alışveriş kaydedildi · 18 ürün · ~642 TL</div>
+          <div style="font:600 14px/1 'Plus Jakarta Sans';color:#FF9166;white-space:nowrap">Geçmiş'te gör</div>
         </div>
         <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">Snackbar aksiyon taşır ve tek bir yerde kullanılır: alışveriş kendiliğinden kapandığında. İşaretlemede asla snackbar yok.</div>
         <div style="display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:1px solid #E7DACB;border-radius:28px 28px 0 0;padding:16px;max-width:360px">
@@ -478,28 +478,30 @@
       </div>
     </div>
 
-    <!-- Fiş kontrol satırı + boş durum -->
+    <!-- Onay kartı alan satırı + boş durum -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:16px">
-        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Fiş kontrol satırı · üç görsel ağırlık</div>
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Onay kartı alan satırı · üç hâl</div>
         <div style="display:flex;flex-direction:column;gap:10px;max-width:380px">
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:#FFFFFF;border:1px solid #E7DACB">
-            <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Yumurta 10'lu</div><div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">YMRT KLS 10LU</div></div>
-            <div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">1</div>
-            <div style="width:88px;text-align:right;font:600 17px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">89,90 TL</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:#FFFFFF;border:1px solid #E7DACB;border-left:4px solid #E0A32E">
-            <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Yeni: Tam Buğday Ekmek</div><div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">TM BGDY EKMEK 500G</div></div>
-            <div style="width:44px;height:26px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:flex-end;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#fff"></div></div>
-            <div style="width:88px;text-align:right;font:600 17px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">18,00 TL</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:#FFFFFF;border:1px solid #E7DACB;border-left:4px solid #E0A32E">
-            <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans';color:#96560A">Emin değil: Ayçiçek Yağı 5 L?</div><div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">AYC YAG 5LT MARKA</div></div>
-            <div style="width:88px;text-align:right;font:600 17px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">369,90 TL</div>
+          <div style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 4px;border-top:1px solid #E7DACB">
+            <div style="width:74px;flex:none;font:600 13px/1.3 'Plus Jakarta Sans';color:#8A7666">Ürün</div>
+            <div style="flex:1;display:flex"><div style="height:34px;padding:0 14px;border-radius:999px;background:#F1E7DB;border:1px solid #E7DACB;box-sizing:border-box;display:flex;align-items:center;font:600 15px/1 'Plus Jakarta Sans'">Yoğurt 1 kg</div></div>
             <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">chevron_right</span>
           </div>
+          <div style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 4px;border-top:1px solid #E7DACB">
+            <div style="width:74px;flex:none;font:600 13px/1.3 'Plus Jakarta Sans';color:#8A7666">Marka</div>
+            <div style="flex:1;display:flex;align-items:center;gap:8px"><div style="height:34px;padding:0 14px;border-radius:999px;background:#F1E7DB;border:1px dashed #C9B9A5;box-sizing:border-box;display:flex;align-items:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Dost</div><div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">öneri</div></div>
+            <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">chevron_right</span>
+          </div>
+          <div style="display:flex;align-items:stretch;gap:10px;padding:10px 4px;border-top:1px solid #E7DACB">
+            <div style="width:4px;flex:none;border-radius:2px;background:#E0A32E"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.1;color:#8A7666">— TL</div>
+              <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#96560A">fiyat okunamadı — yaz</div>
+            </div>
+          </div>
         </div>
-        <div style="font:500 13px/1.45 'Plus Jakarta Sans';color:#5C4F45">Ham OCR metni pazarlık konusu değil: kağıt fişi tekrar okumadan eşleşmeyi doğrulama yolu bu. Eşleşen satır renksiz ve aksiyonsuzdur.</div>
+        <div style="font:500 13px/1.45 'Plus Jakarta Sans';color:#5C4F45">Dolu alan sessizdir: renk yok, yalnızca çip ve chevron. Öneri kesik çerçeve taşır — uygulamanın tahmini olduğunu söyleyen tek işaret. Eksik alan amber şerit ve tek cümle alır; aynı anda iki alan boşsa yalnızca ilki vurgulanır.</div>
       </div>
 
       <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:16px">

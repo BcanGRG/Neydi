@@ -34,7 +34,11 @@ fun Sparkline(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
-    if (values.size < 2) return
+    // ESIK UC GOZLEM (gezinme sozlesmesi · thresholds). Once ikiydi: iki
+    // nokta bir cizgi verir ama TREND vermez - iki gozlem arasindaki tek
+    // dogru, gurultuyu egilim gibi gosterir. Altinda grafik hic cizilmiyor,
+    // mansset cumlesi tek basina kaliyor.
+    if (values.size < MIN_OBSERVATIONS) return
 
     Canvas(modifier = modifier.size(SizesExtra.sparkline)) {
         val min = values.min()
@@ -85,3 +89,6 @@ private fun SparklinePreview() = NeydiPreview {
         Sparkline(listOf(400f), extras.priceUp)                     // tek nokta: HIC cizilmez
     }
 }
+
+/** Grafigin cizilmesi icin gereken en az gozlem sayisi (tasarim esigi). */
+private const val MIN_OBSERVATIONS = 3
