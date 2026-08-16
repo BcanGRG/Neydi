@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Bir urunun tek bir gezideki satin alinma olayi.
  *
- * `tripId` TASINIYOR cunku tekilligin anahtari o: ayni urun hem listede
- * isaretli hem fiste eslesmis olabilir ve bu **bir** alistir, iki degil.
+ * `tripId` TASINIYOR cunku tekilligin anahtari o: ayni urun bir geziye iki
+ * satir olarak girebilir ve bu **bir** alistir, iki degil.
  */
 data class PurchaseEvent(
     val productId: String,
@@ -22,7 +22,7 @@ data class PurchaseEvent(
 /**
  * Turetilmis istatistik tablosunun DAO'su (F6.1).
  *
- * TABLO BIR ONBELLEK, kaynak degil: TripLine ve ReceiptLine'lardan yeniden
+ * TABLO BIR ONBELLEK, kaynak degil: `trip_line` satirlarindan yeniden
  * kurulabiliyor, o yuzden senkron edilmiyor ve tombstone tasimiyor. Bozulursa
  * silinip yeniden uretiliyor - `ProductStats` KDoc'u bunu yaziyor.
  */
@@ -88,7 +88,7 @@ interface ProductStatsDao {
      * TAM YENIDEN KURULUM, tek transaction'da. Asla incremental.
      *
      * Turetilmis bir onbellegi artimli guncellemek, kaynak veri her degistiginde
-     * (satir silindi, fis yeniden okundu, mutabakat geri alindi) sayaci hangi
+     * (satir silindi, mutabakat geri alindi) sayaci hangi
      * yonde duzeltecegini bilmek demekti. Bu olcekte (80 urun x 60 gezi) tam
      * kurulum milisaniyeler suruyor ve **her zaman dogru**.
      *

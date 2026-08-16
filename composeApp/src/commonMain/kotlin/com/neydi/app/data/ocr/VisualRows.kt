@@ -26,10 +26,11 @@ internal data class OcrPiece(
 /**
  * OCR parcalarini GORSEL SATIRLARA gruplar; her grubu okuma yonunde birlestirir.
  *
- * NEDEN SIRAYA GUVENILMIYOR: fis iki kolon - solda aciklama, sagda tutar - ve
- * ikisi AYNI gorsel satirda. ML Kit onlari ayri "line" olarak donduruyor,
- * dikey konumlari da neredeyse ayni. Dolayisiyla dizilis rastgele bozuluyor;
- * gercek fiste olculdu:
+ * NEDEN SIRAYA GUVENILMIYOR: basili bir yuzey iki kolon tasiyabilir - solda
+ * aciklama, sagda tutar - ve ikisi AYNI gorsel satirda. ML Kit onlari ayri
+ * "line" olarak donduruyor, dikey konumlari da neredeyse ayni. Dolayisiyla
+ * dizilis rastgele bozuluyor; gercek bir fis ciktisinda olculdu (kural raf
+ * etiketinde de ayni: ad solda, fiyat sagda):
  *
  *     *125.58
  *     *47.00                     <- tutar, adindan ONCE
@@ -43,8 +44,9 @@ internal data class OcrPiece(
  * seciyordu ve iki ayri yerden birden yaniliyordu:
  *
  *  1. Verilen aci yanlissa (yon secimi kor kaldiginda oluyordu) eksen de
- *     yanlis seciliyor, yan cekilmis fisin butun satirlari birbirine yakin bir
- *     merkez degeri paylastigi icin fis birkac DEV satira cokuyordu. Cihazda
+ *     yanlis seciliyor, yan cekilmis bir yuzeyin butun satirlari birbirine
+ *     yakin bir merkez degeri paylastigi icin sayfa birkac DEV satira
+ *     cokuyordu. Cihazda
  *     olculdu: otuz dokuz kalemin adi, barkodu, tutari metinde vardi ama sekiz
  *     satira cokmustu ve ayristirici hicbirini goremedi.
  *  2. 90 ile 270 birbirinin 180 derece donmusu, yani dogru bir uygulamada

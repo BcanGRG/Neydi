@@ -72,7 +72,7 @@ class DeleteDataViewModel(
 /**
  * Sayilari tasarimin dort satirina cevirir.
  *
- * SIFIR SAYAN SATIR CIZILMIYOR - "Fiş fotoğrafı 0" yazmak, olmayan bir seyi
+ * SIFIR SAYAN SATIR CIZILMIYOR - "Alışveriş 0" yazmak, olmayan bir seyi
  * silinecekler listesine koymak demek. Ayni ekranin ayni kurali: bos bolum
  * cizilmez.
  */

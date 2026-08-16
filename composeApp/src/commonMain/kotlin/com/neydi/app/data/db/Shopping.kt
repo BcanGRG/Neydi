@@ -29,7 +29,7 @@ data class Store(
  * kismi unique index (WHERE completedAt IS NULL) gerekir ve o F2.3'un isi.
  *
  * storeId null olabilir: alisverise cikarken nereye gidilecegi her zaman
- * belli degil, fis okununca doluyor.
+ * belli degil; etiket cekiminde secilen marketten dolabilir (bkz. TripDao).
  */
 @Entity(
     tableName = "trip",

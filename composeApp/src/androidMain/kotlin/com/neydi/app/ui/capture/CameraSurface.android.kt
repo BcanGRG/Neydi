@@ -36,10 +36,10 @@ import kotlin.coroutines.resume
  * dinlemiyor. `CameraSelector.DEFAULT_BACK_CAMERA` bir ipucu degil, secimin
  * kendisi.
  *
- * `CAPTURE_MODE_MAXIMIZE_QUALITY`: fis okumasinda tek belirleyici sey satir
- * basina dusen piksel (bkz. `MIN_USABLE_LINES` gerekcesi). Hizli cekim modu
- * JPEG'i daha cok sikistirir ve tam da kaybetmeye tahammulumuz olmayan
- * ayrintiyi kaybettirir.
+ * `CAPTURE_MODE_MAXIMIZE_QUALITY`: etiket okumasinda belirleyici sey karakter
+ * basina dusen piksel. Hizli cekim modu JPEG'i daha cok sikistirir ve tam da
+ * kaybetmeye tahammulumuz olmayan ayrintiyi - ince, dusuk kontrastli glif
+ * kenarlarini - kaybettirir.
  */
 @Composable
 actual fun CameraSurface(controller: CaptureController, modifier: Modifier) {
@@ -83,7 +83,7 @@ actual fun CameraSurface(controller: CaptureController, modifier: Modifier) {
         modifier = modifier,
         factory = { ctx ->
             PreviewView(ctx).also { view ->
-                // FILL_CENTER: fis kadraji doldurmali. FIT_CENTER kenarlarda
+                // FILL_CENTER: etiket kadraji doldurmali. FIT_CENTER kenarlarda
                 // bos birakip cerceve rehberini yalan soyler hale getirirdi -
                 // kullanici cerceveye hizaladigini sanip disina tasar.
                 view.scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -109,7 +109,7 @@ actual fun CameraSurface(controller: CaptureController, modifier: Modifier) {
 /**
  * Kareyi diske yazar.
  *
- * DOSYAYA YAZIYOR, bellege DEGIL: fis fotografi tam cozunurlukte on megabayti
+ * DOSYAYA YAZIYOR, bellege DEGIL: kare tam cozunurlukte on megabayti
  * bulabiliyor ve onu bir `ByteArray` olarak tasimak cekim aninda ikinci bir tam
  * kopya demek. Zaten hedef yol bir dosya.
  */

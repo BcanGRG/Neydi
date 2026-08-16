@@ -179,9 +179,12 @@ fun SettingsScreen(
                 }
 
                 SectionHeader("Gizlilik")
+                // ETIKET FOTOGRAFI SAKLANMIYOR (tasarim karari 29): kayittan
+                // hemen sonra siliniyor, yani "cihazinda kalir" demek artik
+                // yanlis olurdu - hicbir yerde kalmiyor.
                 Note(
-                    "Fiş fotoğrafları cihazında kalır; yalnızca ürün adı, fiyatı ve " +
-                        "market adı hane içinde paylaşılır.",
+                    "Etiket fotoğrafı kaydedildikten sonra siliniyor; yalnızca ürün " +
+                        "adı, markası, fiyatı ve market adı hane içinde paylaşılır.",
                 )
                 Spacer(Modifier.height(10.dp))
                 // SATIR CHEVRON KAZANDI ve tam ekran onaya gidiyor (tasarim
