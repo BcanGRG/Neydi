@@ -440,6 +440,38 @@ interface PriceObservationDao {
         """,
     )
     fun observePricedCount(tripId: String): Flow<Int>
+
+    /**
+     * TABLONUN ILK YAZANI. `price_observation` sema v1'den beri duruyordu ve
+     * dort surum boyunca hicbir sey ona satir yazmadi - pivotun inecegi yerin
+     * hazir olmasinin sebebi buydu.
+     *
+     * ABORT stratejisi bilincli: id'leri biz uretiyoruz (UUID v7), yani ayni
+     * id ikinci kez gelirse bu bir hata - sessizce yutulmasi degil gorulmesi
+     * gereken bir sey. Mukerrer gozlem koruması id'de degil, ZAMAN penceresinde
+     * (aynı market + urun + fiyat, 60 sn - bkz. F5.10).
+     */
+    @Insert
+    suspend fun insert(observation: PriceObservation)
+
+    /**
+     * Son gozlemin marketi - market seciciyi YAPISKAN yapan sey (karar 11).
+     *
+     * TERCIH DOSYASINA YAZILMIYOR, gozlemden okunuyor: iki kaynak olsaydi
+     * senkron sonrasi ayrisirlardi ve "son sectigim market" cihaza gore
+     * degisirdi. Gozlem zaten kalici ve zaten paylasiliyor.
+     *
+     * Ilk cekimde null doner ve secici bos acilir - kullanicidan bir kez acik
+     * secim istemek, yanlis bir varsayilani duzelttirmekten ucuz.
+     */
+    @Query(
+        """
+        SELECT storeId FROM price_observation
+        WHERE householdId = :householdId AND storeId IS NOT NULL AND deletedAt IS NULL
+        ORDER BY observedAt DESC LIMIT 1
+        """,
+    )
+    suspend fun lastUsedStoreId(householdId: String): String?
 }
 
 @Dao
