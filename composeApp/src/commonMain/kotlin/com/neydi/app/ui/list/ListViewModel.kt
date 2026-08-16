@@ -11,6 +11,7 @@ import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.TripDao
+import com.neydi.app.data.db.TripLine
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.matchKey
@@ -185,12 +186,14 @@ class ListViewModel(
             val memberId = selfMemberId() ?: return@launch
             val trip = repo.openOrGetActiveTrip(household, memberId)
             val product = productDao.byId(suggestion.productId) ?: return@launch
-            repo.add(
-                householdId = household,
-                tripId = trip.id,
-                product = product,
-                memberId = memberId,
-                isFromSuggestion = true,
+            signalAdded(
+                repo.add(
+                    householdId = household,
+                    tripId = trip.id,
+                    product = product,
+                    memberId = memberId,
+                    isFromSuggestion = true,
+                ),
             )
         }
     }
@@ -531,6 +534,28 @@ class ListViewModel(
 
     private var addSeq = 0L
 
+    /**
+     * "Bu satir az once eklendi" sinyali.
+     *
+     * TEK KAPI olmasinin sebebi bir hata: `addFromEngine` `repo.add`i DOGRUDAN
+     * cagiriyordu ve sinyali kimse yazmiyordu - yani oneri seridinden eklenen
+     * urun hicbir zaman gorunur kilinmiyordu. Ekleme yollari bes tane ve
+     * yenisi eklenebilir; her birinin ayni iki satiri hatirlamasini beklemek
+     * bu hatanin tekrarini istemek olurdu.
+     *
+     * SAYAC DA TASINIYOR, yalnizca id DEGIL: ayni urunu ikinci kez eklemek yeni
+     * satir acmiyor, var olanin adedini artiriyor - yani id degismiyor.
+     * Yalnizca id'ye bakan bir ekran "ayni deger" gorup kipirdamazdi ve
+     * kullanici tam da ikinci eklemede eklendi mi diye bakiyor olurdu.
+     *
+     * TOPLU EKLEMEDE (pano, "gecen sefer aldiklarini ekle") her satir sinyali
+     * ezip gecer ve SONUNCUSU kazanir - dogrusu bu: yirmi satir eklenirken
+     * yirmi kez kaydirmanin anlami yok.
+     */
+    private fun signalAdded(line: TripLine) {
+        _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
+    }
+
     fun onInputChanged(value: String) {
         _input.value = value
         viewModelScope.launch {
@@ -589,19 +614,15 @@ class ListViewModel(
                 categoryId = categoryId,
                 unit = unit,
             )
-            val line = repo.add(
-                householdId = household,
-                tripId = trip.id,
-                product = product,
-                memberId = memberId,
-                count = count,
+            signalAdded(
+                repo.add(
+                    householdId = household,
+                    tripId = trip.id,
+                    product = product,
+                    memberId = memberId,
+                    count = count,
+                ),
             )
-            // SAYAC DA TASINIYOR, yalnizca id DEGIL: ayni urunu ikinci kez
-            // eklemek yeni satir acmiyor, var olanin adedini artiriyor - yani id
-            // degismiyor. Yalnizca id'ye baksaydik ekran "ayni deger" gorup
-            // kipirdamazdi ve kullanici tam da ikinci eklemede eklendi mi diye
-            // bakiyor olurdu.
-            _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
             _input.value = ""
             _suggestions.value = emptyList()
     }
