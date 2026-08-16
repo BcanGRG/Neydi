@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neydi.app.data.formatMinor
+import com.neydi.app.data.formatEstimate
 import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.NeydiExtraShapes
@@ -81,9 +81,9 @@ internal fun EstimatedBasket(
         }
         Text(
             text = if (pricedCount < totalCount) {
-                "en az ${formatMinor(amountMinor)}"
+                "en az ${formatEstimate(amountMinor)}"
             } else {
-                formatMinor(amountMinor)
+                formatEstimate(amountMinor)
             },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
@@ -140,7 +140,7 @@ internal fun SummaryCard(
 
         if (amountMinor != null) {
             Text(
-                text = formatMinor(amountMinor),
+                text = formatEstimate(amountMinor),
                 // 36sp Fraunces: ekranda bu boyutta baska hicbir sey yok.
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontFamily = neydiDisplayFamily(),

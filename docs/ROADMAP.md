@@ -7,7 +7,7 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 11/19 · sıradaki **E12**. Tasarım pivot turunu kapattı (20 karar). Uygulama derleniyor, cihazda kurulu,
+**Durum:** Faz E 13/19 · sıradaki **E12**. Tasarım pivot turunu kapattı (20 karar). Uygulama derleniyor, cihazda kurulu,
 183 test yeşil, tek derleyici uyarısı var (F10.10'un kendi işi).
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -203,11 +203,10 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F5.10 — Mükerrer gözlem koruması** *(cihazsız)*. **Kural tasarımdan
       geldi:** aynı market + ürün + fiyat **60 saniye** içinde tekrarlanırsa
       ikinci gözlem yazılmaz. Eşitlemede aynı dakika = tek gözlem.
-- [ ] **F5.11 — İki biçimlendirici.** İkisinin de spesifikasyonu tasarımdan
-      tam geldi. (a) tahmin biçimi `~642 TL` — tilde bitişik, **kuruş
-      yazılmaz**; (b) tarih merdiveni: az önce / bugün 15:38 / dün / 3 gün önce
-      / geçen hafta / 12 Ağustos. ⚠ Tuzak: `(now - then) / 86_400_000`
-      **takvim günü saymaz**; aynı aritmetik `medianIntervalDays`'te de.
+- [x] **F5.11 — İki biçimlendirici.** `formatEstimate` (`~642 TL`, tilde
+      bitişik, kuruşsuz, en yakına yuvarlar) ve `formatRelativeDay` (altı
+      basamaklı tarih merdiveni). Başlık, sepet tahmini ve özet manşeti
+      bağlandı. Takvim-günü tuzağı zaten `daysBetween`'de çözülmüştü.
 - [~] **F6.4 — Eksik Olabilir (Ekran 3).** "Son ödenen fiyat" kolonu artık
       gözlemden besleniyor.
 - [ ] **F6.5 — Sabit terfisi + bastırma.** "Bunu önerme" listesinin giriş
@@ -274,14 +273,21 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Yukarıdaki
       dört isim; kullanılacak mı silinecek mi tasarımın kararı.
 - [ ] **F11.6 — Alışveriş modu satır container'ı.**
-- [ ] **F11.11 — İkon ekseni (ikonografi A yolu).** Tasarım 24dp / wght 300 /
-      opsz 24 / karanlıkta GRAD 100 istiyor. ⚠ **Bugünkü kodla imkânsız:**
-      `androidx.compose.material.icons` statik `ImageVector` veriyor, ekseni
-      yok. Üç seçenek `11-tasarim-kararlari.md`'de; karar tasarımın.
-- [ ] **F11.12 — Boş durum atlası tazelensin.** Üç çerçeve kararlarla
-      çelişiyor: 01'de tutar `~`'siz, 03'te dört hedefli toolbar (karar 3
-      ikiye indirmişti), 07'de üretilmiş katılma kodu + chevron'lu Mağazalar
-      satırı (karar 23/24). Tasarıma soruldu.
+- [ ] **F11.11 — İkon seti taşıması (karar 32–34).** Tasarım A yolunu düşürdü:
+      **15 ikon Phosphor Regular çizimleriyle elle `ImageVector` olarak
+      taşınacak.** Değişken font paketlenmiyor, `Text` olarak çizilmiyor,
+      ikon paketi bağımlılığı eklenmiyor. Karanlık tema telafisi **GRAD değil
+      renk kademesi** (karar 33): metin `#E4D8C9` iken ikon `#F5EDE6`, dolgulu
+      ikonlar telafi almıyor. Envanter **15** (karar 34): `check` ile
+      `check_circle` ayrı kalıyor — çıplak `check` satırda "işaretlendi",
+      `check_circle` yalnızca çipte/seçicide "seçili".
+- **F11.12 ✅ — Boş durum atlası tazelendi** (tasarım yaptı): toolbar iki
+      hedef, bütün tutarlar `~`, eşikler sayıyla, "parse" dili kalktı,
+      çerçeve 04 → "Alışveriş kapanışı".
+- [ ] **F11.13 — Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın
+      örneği *"Son alışveriş: 8 gün önce"*; tarih merdiveni 7–13 günü
+      "geçen hafta"ya topluyor. Kod merdiveni esas aldı (daha yeni ve daha
+      açık). Tasarıma sorulacak.
 - **F11.10 → E19'a devroldu.**
 
 ---
