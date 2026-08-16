@@ -260,14 +260,12 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       `SafeArea`, `AccentStrip`, `AccentSurface`, `Modifier.focusRing`
       (dördü de tanımlı, sıfır çağıran) — F11.4 ile birlikte karara bağlanır.
 - [ ] **F10.3 — `graph.json` takip kararı.**
-- [ ] **F10.17 — Fiş dönemi mağaza kalıntısı.** Eski `rememberStore` fiş
-      künyesinden okuduğu her şeyi `store` satırı yapmış; test cihazında 17
-      çöp satır var (`Kg`, `KDV`, `Term:`, `(BTECH)`…). E11 tabloyu silmedi
-      çünkü `store` yaşıyor. Seçenekler: (a) tek seferlik temizlik göçü —
-      `chain`'i tohum listesinde olmayan **ve** hiç gözlemi olmayan satırları
-      sil; (b) Ayarlar satırını yalnızca gözlemi olan mağazalara indir;
-      (c) dokunma, kullanıcı "Verilerimi sil" ile temizlesin. ⚠ Veri silme —
-      karar kullanıcının.
+- **F10.17 ✅ — Fiş dönemi mağaza kalıntısı.** Test cihazında 17 çöp `store`
+      satırı vardı (eski `rememberStore` her yanlış okunan künye satırını
+      mağaza yazmış). Silindi, 10 `trip.storeId` referansı boşaltıldı.
+      **Temizlik göçü yazılmadı ve bu bilinçli:** fiş ayrıştırıcısı öldüğü için
+      yeni çöp üretilemez; tek seferlik bir iş için kalıcı göç yazmak sonsuza
+      kadar taşınacak ölü kod olurdu.
 - **Kapandı:** F6.9 ✅ · F10.1 ✅ · F10.4 ✅ *(03'e arşiv notu düşüldü)* ·
   F10.12 ✅ *(uyarı sayısı 5→1)* · F10.13 ✅ · F10.15 ✅ · F10.16 ✅
 
