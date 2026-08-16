@@ -37,7 +37,7 @@ spesifikasyonu artık tam — eşikler, geri sırası, hata yolları dahil.
 | Kural | Detay |
 |---|---|
 | **Dal adı** | `pivot/etiket` (Faz E boyunca tek dal); sonrası `faz<N>/<kisa-slug>` |
-| **PR başlığı** | `[E14] TagParser` — adım numarası zorunlu |
+| **PR başlığı** | `[E14] Tag parser` — adım numarası zorunlu. **Commit mesajları ve PR metinleri İngilizce**; KDoc/yorum ve `docs/` Türkçe kalır |
 | **PR içeriği** | Kod **+** bu dosyadaki kutunun `- [x]` yapılması. Aynı PR'da, ayrı commit'te değil — yoksa harita koddan sapar. |
 | **Kapı 1** | `./gradlew :composeApp:assembleDebug` yeşil. Değilse PR açılmaz. |
 | **Kapı 2** | `./gradlew :androidApp:installDebug` — bağlı telefonda değişiklik **gözle doğrulanır**. Cihazda görülmeyen bir şey "bitti" sayılmaz. |
@@ -352,7 +352,8 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 
 | Dosya | Ne işe yarar |
 |---|---|
-| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 20 kararın kod durumu, gezinme sözleşmesi sabitleri, ikonografi, 5 açık soru |
+| [12-tasarima-sorular-4.md](12-tasarima-sorular-4.md) | **Aktif** — tasarıma dördüncü tur: boş durum atlası, ikon envanteri, ikon ekseni teknik engeli |
+| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 20 kararın kod durumu, gezinme sözleşmesi sabitleri, ikonografi |
 | [10-tasarima-pivot.md](10-tasarima-pivot.md) | Tasarıma pivot bildirimi — cevaplandı, arşiv değeri |
 | [ARSIV-fis-donemi.md](ARSIV-fis-donemi.md) | Pivottan önceki tam harita; F-numaralarının kaynağı |
 | [01-claude-design-prompt.md](01-claude-design-prompt.md) | Sekiz ekranın özgün spesifikasyonu |
