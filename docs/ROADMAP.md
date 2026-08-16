@@ -271,7 +271,16 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       kaldırdı — madde koda değil, kendi kaydına takılı kalmış.
 - [ ] **F10.7 — Odak halkasını bağla.** `Modifier.focusRing` tanımlı, çağıranı yok.
 - [ ] **F10.8 — 44dp altındaki üç kontrol.**
-- [ ] **F10.9 — Satır silme yolu yok.**
+- [ ] **F10.9 — Satır silme yolu yok.** ⚠ **Tasarım bunu zaten tarif etmiş** —
+      gezinme sözleşmesinin "Jest" satırı: *"sağdan sola swipe listede satırı
+      siler (geri alma 'Alındı' bölümünde değil, 5 sn'lik snackbar'da)"*, artı
+      200 ms yükseklik daralması animasyonu. Veri tarafı da hazır (`remove()` →
+      `softDelete`). **Tek engel:** geri alma snackbar'ı uygulamanın İLK aksiyon
+      taşıyan snackbar'ı olur, oysa **karar 8** snackbar'ın *"uygulamada tek bir
+      yerde"* kullanıldığını yazıyor. İki doküman çelişiyor → altıncı turda
+      soruldu (`14-tasarima-sorular-6.md`).
+      **Ders:** bu madde "tasarlanmamış" diye duruyordu; aslında sözleşmede
+      yazılıydı ve biz aynayı tazeleyip içini taramamıştık.
 - [ ] **F10.11 — Ölü kod ve ölü token temizliği.** *(bir bölümü yapıldı)*
       **Silinenler:** `ui/screens/Placeholders.kt` (86 satır, hiçbir dosya import
       etmiyordu), `ListScreen`'deki altı FileKit import'u, `formatDayMonthTime`,
