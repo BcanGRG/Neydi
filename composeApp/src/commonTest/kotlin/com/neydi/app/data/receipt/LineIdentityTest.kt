@@ -64,6 +64,46 @@ class LineIdentityTest {
      * birini SILERDI. Silmemek en kotu ihtimalle mukerrer gosterir; silmek
      * veri kaybettirir.
      */
+    /**
+     * SERIT BINDIRMESI: ayni kalem iki seritte okunuyor, biri kaliyor - VE
+     * ADI DA BIRLIKTE gidiyor.
+     *
+     * Adi birakmak butun fisi bir kaydirirdi: kalan ad bir sonraki kalemin adi
+     * sanilirdi (AKYURT duzeninde ad, tutar satirinin bir ALTINDA).
+     */
+    @Test
+    fun bandOverlapDropsItemWithItsName() {
+        val rows = listOf(
+            "43 8690576029431 1 Adet 28,50 %01 28,50",
+            "ANKARA MAK.500 GR.KALEM",
+            // ikinci seridin basi - ayni kalem yeniden
+            "43 8690576029431 1 Adet 28,50 %01 28,50",
+            "ANKARA MAK.500 GR.KALEM",
+            "44 8690576029257 1 Adet 28,50 %01 28,50",
+            "ANKARA MAK,500 GR. MANTI",
+        )
+        assertEquals(
+            listOf(
+                "43 8690576029431 1 Adet 28,50 %01 28,50",
+                "ANKARA MAK.500 GR.KALEM",
+                "44 8690576029257 1 Adet 28,50 %01 28,50",
+                "ANKARA MAK,500 GR. MANTI",
+            ),
+            dedupeRepeatedItems(rows),
+        )
+    }
+
+    /** KIMLIKSIZ SATIRLARA DOKUNULMUYOR - kunye, KDV dokumu, toplam. */
+    @Test
+    fun rowsWithoutIdentityAreUntouched() {
+        val rows = listOf(
+            "AKYURT SÜPERMARKET GIDA İNS.SAN.VE TİC. A.Ş.",
+            "KDV % Matrah KDV Tutar",
+            "Ödenecek KDV Dahíl Tutar *5.709,08",
+        )
+        assertEquals(rows, dedupeRepeatedItems(rows))
+    }
+
     @Test
     fun classicLayoutHasNoIdentity() {
         assertNull(lineIdentity("KREMA 18YAĞLI 200ML %1. *106.00"))

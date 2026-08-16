@@ -114,3 +114,22 @@ tam da uzun fişte, en çok gerektiği anda gizli kalıyor.
 **Soru.** Satır listenin sonunda mı kalsın (tasarımdaki yer), yoksa alt buton
 bloğuna mı sabitlensin? Sabitlenirse "Onayla ve kaydet" ile aynı görsel
 ağırlığa gelmemesi gerekir.
+
+## 7. Kamera rehberi artık ikinci kare istemiyor
+
+**Nerede çıktı.** F4.17 (tek çekim) uygulanırken.
+
+**Tasarımın verdiği.** Ekran 4'ün rehber metni: *"Fişin tamamı kadraja girsin.
+Uzunsa 2 kare çek."* Altında da "1. kare" sayacı ve "Bitti".
+
+**Gerçek.** Fotoğraf artık **içeride** üst üste binen şeritlere bölünüp her
+şerit kendi çözünürlüğünde okunuyor. İkinci kare artık *beklenen* şey değil,
+yalnızca okuma yetmediğinde başvurulan yol — kullanıcı da part part çekmeye
+açıkça karşı çıktı.
+
+Metin *"Fişin tamamı kadraja girsin."* olarak kısaldı; ikinci kare ancak ilk
+kare okunamadığında ya da eksik kalem tespit edildiğinde öneriliyor.
+
+**Soru.** Sayaç ("1. kare") ve "Bitti" tek çekim varsayılan olunca hâlâ doğru
+kelimeler mi? Tek kare çekip biten bir akışta "Bitti" yerine "Kullan" ya da
+doğrudan Fiş Kontrol'e geçiş daha mı doğru?

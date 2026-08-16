@@ -51,6 +51,49 @@ private val ITEM_HEAD = Regex("""^\s*([0-9OSIl]{1,3})\s+([0-9OSIl]{5,})\s""")
  * Kimlik bu duzeltmeyi yapmazsa ayni kalem iki parcada iki AYRI kimlik alir ve
  * bindirme goze gorunmez kalir.
  */
+/**
+ * Ust uste binen SERITLERDEN gelen mukerrer satirlari eler (F4.17).
+ *
+ * Tek fotograf iceride seritlere bolunup her serit ayri okunuyor ve seritler
+ * bilerek %15 biniyor - serit sinirina denk gelen satir ikiye bolunmesin diye.
+ * Bindirmenin bedeli mukerrer satir; bu fonksiyon o bedeli odiyor.
+ *
+ * AD SATIRI DA BIRLIKTE ATILIYOR. AKYURT duzeninde ad, tutar satirinin bir
+ * ALTINDA (F4.14). Mukerrer tutar satirini atip adini birakmak, ayristiricinin
+ * eslestirmesini kaydirirdi: kalan ad bir sonraki kalemin adi sanilirdi -
+ * yani tek bir mukerrer satir butun fisi bir kaydirirdi.
+ *
+ * KIMLIKSIZ SATIRA DOKUNULMUYOR. Bas/kunye satirlari, KDV dokumu, toplam:
+ * hicbiri sira numarasi tasimiyor ve zaten ayristirici tarafinda eleniyor.
+ */
+internal fun dedupeRepeatedItems(rows: List<String>): List<String> {
+    val seen = HashSet<String>()
+    val kept = ArrayList<String>(rows.size)
+    var index = 0
+    while (index < rows.size) {
+        val row = rows[index]
+        val identity = lineIdentity(row)
+        if (identity == null) {
+            kept += row
+            index++
+            continue
+        }
+        if (seen.add(identity)) {
+            kept += row
+            index++
+        } else {
+            // Mukerrer kalem: kendisi ve - varsa - adi birlikte atiliyor.
+            index++
+            if (index < rows.size && lineIdentity(rows[index]) == null &&
+                rows[index].any(Char::isLetter)
+            ) {
+                index++
+            }
+        }
+    }
+    return kept
+}
+
 private fun normalizeDigits(raw: String): String = raw.map { char ->
     when (char) {
         'O', 'o' -> '0'

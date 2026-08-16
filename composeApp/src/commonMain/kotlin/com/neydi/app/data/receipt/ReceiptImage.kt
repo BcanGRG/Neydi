@@ -1,7 +1,22 @@
 package com.neydi.app.data.receipt
 
-/** Fis gorseli icin ust sinir: uzun kenar bu kadar piksel. */
-const val MAX_LONG_EDGE = 2576
+/**
+ * Fis gorseli icin ust sinir: uzun kenar bu kadar piksel.
+ *
+ * 2576'DAN 4096'YA CIKARILDI (F4.17) ve bu, tek cekimin onkosuluydu.
+ *
+ * Eski sinir OCR'a giden goruntuyu sensorun verdiginin yaklasik ucte ikisine
+ * indiriyordu - yani "bir metrelik fis tek kareye sigmiyor" itirazinin buyuk
+ * bir kismi FIZIK DEGIL, bizim kirptigimiz pikseldi. 12MP bir karede uzun
+ * kenar ~4000; 2576'ya inince satir basina dusen piksel de ayni oranda
+ * eriyordu.
+ *
+ * Bellek gerekcesi hala gecerli ama artik baska turlu karsilaniyor: OCR
+ * fotografi tek parca belege almiyor, `BitmapRegionDecoder` ile serit serit
+ * okuyor (bkz. ReceiptReader.android.kt). Yani tam boy bitmap hicbir zaman
+ * ayrilmiyor ve sinir yalnizca DISK icin duruyor.
+ */
+const val MAX_LONG_EDGE = 4096
 
 /**
  * Fis fotografini OCR icin kucultup hedefe yazar.

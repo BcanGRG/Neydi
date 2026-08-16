@@ -90,16 +90,22 @@ fun CaptureScreen(
                     ) {
                         FrameGuide()
                         Text(
+                            // TEK CEKIM ARTIK VARSAYILAN (F4.17). Tasarimin
+                            // metni "Uzunsa 2 kare çek" diyordu; fotograf
+                            // artik iceride seritlere bolunup her serit kendi
+                            // cozunurlugunde okundugu icin ikinci kare
+                            // ISTENMIYOR - yalnizca okuma yetmediginde
+                            // oneriliyor. Sapma tasarima bulgu olarak yazildi.
                             text = when {
                                 controller.denied ->
                                     "Kamera izni yok. Fiş çekmek için izin vermen gerekiyor."
                                 lastFailed ->
-                                    "Son kare okunamadı. Yaklaş ve fişin bu bölümünü kadraja al — " +
-                                        "her karede 10-15 satır görünsün."
+                                    "Bu kare okunamadı. Fişi düz ser, ışık alsın ve " +
+                                        "tamamı kadraja girsin."
                                 partCount > 0 ->
-                                    "Kaldığın yerden devam et. Bir önceki karenin son " +
-                                        "iki satırı görünsün."
-                                else -> "Fişin tamamı kadraja girsin. Uzunsa 2 kare çek."
+                                    "Okunmayan yer kaldıysa o bölümü ayrıca çekebilirsin — " +
+                                        "üst üste binmesi sorun değil."
+                                else -> "Fişin tamamı kadraja girsin."
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = CAMERA_ON_SCRIM,
