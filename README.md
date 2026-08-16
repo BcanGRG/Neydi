@@ -1,8 +1,10 @@
 # Neydi
 
-İki kişilik bir hane için ortak market listesi — ne aldığınızı hatırlayan ve ne ödediğinizi bilen.
+İki kişilik bir hane için ortak market listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe ürün bazında fiyat hafızası biriktiren.
 
-**Kapalı döngü:** liste → markette işaretle → fiş fotoğrafı → ürün bazında fiyat geçmişi → sonraki listede öneri.
+**Kapalı döngü:** liste → markette işaretle → raf etiketi çek → ürün + marka + market + tarih + fiyat gözlemi → sonraki listede fiyat ipucu.
+
+> **16 Ağustos 2026 pivotu:** fiş okuma denendi, cihazda ölçüldü ve çıkarıldı — 60 kalemin 31'i okunabiliyordu ve tavan fiziksel. Yerine tek tek raf etiketi çekimi geldi. Kayıt: [docs/ROADMAP.md](docs/ROADMAP.md) "Pivot kaydı".
 
 ## Neden var
 
@@ -11,7 +13,7 @@
 
 ## İki mutlak kısıt
 
-- **Elle fiyat girilmez.** Uygulamanın tamamında sayısal klavye tek bir yerde açılır: fişten yanlış okunan bir fiyatı düzeltirken.
+- **Elle fiyat girilmez.** Uygulamanın tamamında sayısal klavye tek bir yerde açılır: etiketten yanlış okunan bir fiyatı düzeltirken.
 - **Az ekran.** Bottom navigation yok, dashboard yok, feed yok. Liste ekranı uygulamanın kendisidir; diğer her yer oraya dönen bir sapmadır.
 
 ## Teknoloji
@@ -24,17 +26,17 @@
 | Yerel DB | Room 3.0.1 (`androidx.room3`) | Koordinat 2.x'ten değişti — eski tutorial'lar yanlış import ettirir |
 | Backend | Supabase 3.7.0 | Ücretsiz katman **7 günde duraklıyor** — keep-alive `pg_cron` veya Cloudflare Worker ile, GitHub Actions ile **değil** (60 gün sessiz repo'da workflow devre dışı kalır) |
 | Kamera / dosya | FileKit 0.14.2 | Peekaboo ve CameraK ölü (Peekaboo 0.5.2 = Nisan 2024) |
-| Fiş okuma | Claude vision API, Cloudflare Worker proxy arkasından | Fiş başına ~$0,029; ayda 3 fişte yılda ~$1 |
+| Etiket okuma | ML Kit Text Recognition v2, cihazda | Model gömülü (~4MB); ağ yok, maliyet yok. Tek etiket = tek bitmap, tek çağrı |
 
 ## Durum
 
-**Milestone 1 — iskelet.** Nav3 grafiği ayakta, tema ("Sıcak Kiler") bağlı, tasarım devir paketi indirilmiş, 6 hedef placeholder ekran olarak duruyor.
+**Pivot yürüyor.** Liste, gezi, öneri motoru ve tasarım sistemi ayakta ve cihazda doğrulanmış; fiş hattı sökülüyor, etiket hattı kuruluyor. Adım adım çizelge: [docs/ROADMAP.md](docs/ROADMAP.md) "Faz E".
 
 ## Yol haritası
 
-Tüm iş **[`docs/ROADMAP.md`](docs/ROADMAP.md)** altında: 11 faz, 66 adım, her adım bir PR.
+Tüm iş **[`docs/ROADMAP.md`](docs/ROADMAP.md)** altında: 19 pivot adımı (E1–E19) + pivot sonrası işler. Her adım bir PR. Pivottan önceki harita [`docs/ARSIV-fis-donemi.md`](docs/ARSIV-fis-donemi.md)'de dondurulmuş duruyor.
 
-Sıralama **risk azaltma önce**: fiş okuma doğruluğu ölçülmeden ekran yazılmıyor, çünkü satır adı doğruluğu kötü çıkarsa ürünün yarısının kapsamı değişir.
+Sıralama **risk azaltma önce**: etiket ayrıştırıcısı gerçek etiket fikstürleri toplanmadan sertleşmiyor (E12) — sentetik örnek yasak, ders fiş döneminde ödendi.
 
 Her adımın iki kapısı var — `assembleDebug` yeşil **ve** değişikliğin bağlı telefonda gözle doğrulanması. Cihazda görülmeyen bir şey "bitti" sayılmıyor.
 
@@ -47,14 +49,14 @@ Her adımın iki kapısı var — `assembleDebug` yeşil **ve** değişikliğin 
 Bağlı fiziksel cihaza kur (her adımın 2. kapısı):
 
 ```bash
-./gradlew :composeApp:installDebug
+./gradlew :androidApp:installDebug
 ```
 
 **iOS Windows'ta derlenmez.** Hedefler `composeApp/build.gradle.kts` içinde tanımlı ve Gradle host'un desteklemediği task'leri çalıştırmıyor — Mac'e geçildiğinde tek satır değişiklik gerekmeden derlenmeye başlar.
 
 ## Bilgi grafiği (graphify)
 
-Proje bir graphify bilgi grafiği taşıyor: **177 node · 236 edge · 17 topluluk**. Kod AST ile (ücretsiz), `docs/` semantik çıkarımla işlendi. Rapor `graphify-out/GRAPH_REPORT.md` altında ve repoda takip ediliyor; `graph.json` / `graph.html` yeniden üretilebilir olduğu için gitignore'da.
+Proje bir graphify bilgi grafiği taşıyor (2000+ node; kod AST ile ücretsiz, `docs/` semantik çıkarımla işlendi). Rapor `graphify-out/GRAPH_REPORT.md` altında ve repoda takip ediliyor; `graph.json` / `graph.html` yeniden üretilebilir olduğu için gitignore'da.
 
 Grafın en çok bağlantılı düğümü bir özellik değil, bir yöntem: `Adversaryal Doğrulama Ajanı` (15 kenar) — aynı doğrulama mekanizması hem isim elemesinde hem fizibilite kontrolünde çalıştığı için iki ayrı topluluğu birbirine bağlıyor.
 
@@ -72,10 +74,8 @@ python -c "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.write_text(p.read_
 
 ## Bilinen ve kasıtlı borçlar
 
-- `App.kt` düz `mutableStateListOf` back stack kullanıyor. `rememberNavBackStack`'e geçmeden önce iOS için `SavedStateConfiguration` + polymorphic `SerializersModule` gerekiyor — iOS ve web'de reflection tabanlı serialization yok. Android'de bugün sorun değil; iOS'ta "back stack restore olmuyor" diye sessizce tezahür eder.
-- Fontlar (Plus Jakarta Sans + Fraunces) henüz bundle edilmedi; ölçek ve düzen doğru, yüz henüz `FontFamily.Default`.
 - Fraunces **variable font olarak bundle edilmeyecek** — CMP'de `FontVariation.Settings` iOS'ta güvenilir değil ve sessizce `opsz=14` varsayılanına düşer, 44sp'de yanlış görünür. `opsz=72 SOFT=30 WONK=0 wght=600` ayarında tek statik TTF üretilecek.
 
 ## Planlama dokümanları
 
-`../market-app-planning/` altında: isim analizi, Claude Design promptu, logo/splash promptları ve araştırma bulguları.
+`docs/` altında: yol haritası + arşiv, tasarım karar defteri ve devir paketi (`docs/tasarim/`), tasarıma soru/bulgu turları (05–10), isim analizi ve araştırma bulguları (⚠ `03`'ün fiş iddiaları pivotla geçersiz).
