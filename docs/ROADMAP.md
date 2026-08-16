@@ -9,8 +9,8 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** Faz E 13/19 · sıradaki **E12** (kullanıcının etiket fotoğrafları bekliyor). Tasarım beşinci turu da
 kapattı (**36 karar**), ayna dokuz dosyayla tazelendi. Uygulama derleniyor, cihazda kurulu, **222 test yeşil**,
-tek derleyici uyarısı var (F10.10'un kendi işi). İkon seti Phosphor'a taşındı — `material-icons-extended`
-bağımlılığı düştü.
+**sıfır derleyici uyarısı** (F10.10 kapandı). İkon seti Phosphor'a taşındı — `material-icons-extended`
+ve `coil` bağımlılıkları düştü.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
 > Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -248,18 +248,29 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 
 ## Öncelik 5 — Sürekli / refactor
 
-- [ ] **F10.10 — Pano okumasını güncel API'ye taşı.** `LocalClipboardManager`
-      → `LocalClipboard`. **Projedeki tek derleyici uyarısı bu**; okuma suspend
-      olduğu için davranış değişikliği taşıyor, F3.4 ile birlikte doğrulanmalı.
+- **F10.10 ✅ — Pano okuması güncel API'ye taşındı.** `LocalClipboardManager` →
+      `LocalClipboard`. Yenisi metni `ClipEntry` olarak veriyor ve `ClipEntry`'nin
+      commonMain'de metin okuyan public üyesi **yok** (Compose'un kendi `readText()`
+      yardımcısı `internal`), o yüzden küçük bir `expect/actual` gerekti:
+      `plainTextOrNull()`. Android'de `ClipData`, iOS'ta `getPlainText()`.
+      **Projenin tek derleyici uyarısı kapandı** — zorlanmış tam derlemede sıfır.
 - [ ] **F10.5 — Sheet yüksekliğindeki sihirli sayı.** `TODO(sheet-yuksekligi)`
 - [ ] **F10.2 — Bottom sheet'leri Nav3 Scene'e taşı.** F10.5'e bağlı.
-- [ ] **F10.6 — M3 tıklanabilir bileşen sözleşmesi** — artık yalnız `HistoryScreen`.
+- **F10.6 ✅ — M3 tıklanabilir bileşen sözleşmesi.** Kod zaten temiz: tıklanabilir
+      `Button`/`Card`/`ListItem` sıfır, dokuz `Surface`'ın hiçbiri tıklanamaz.
+      `HistoryScreen` satırları da fiş döneminde dokunulabilirdi, karar 30 o hedefi
+      kaldırdı — madde koda değil, kendi kaydına takılı kalmış.
 - [ ] **F10.7 — Odak halkasını bağla.** `Modifier.focusRing` tanımlı, çağıranı yok.
 - [ ] **F10.8 — 44dp altındaki üç kontrol.**
 - [ ] **F10.9 — Satır silme yolu yok.**
-- [ ] **F10.11 — Ölü kod ve ölü token temizliği.** Bilinen adaylar:
-      `SafeArea`, `AccentStrip`, `AccentSurface`, `Modifier.focusRing`
-      (dördü de tanımlı, sıfır çağıran) — F11.4 ile birlikte karara bağlanır.
+- [ ] **F10.11 — Ölü kod ve ölü token temizliği.** *(bir bölümü yapıldı)*
+      **Silinenler:** `ui/screens/Placeholders.kt` (86 satır, hiçbir dosya import
+      etmiyordu), `ListScreen`'deki altı FileKit import'u, `formatDayMonthTime`,
+      `NeydiExtraShapes.barTop`, katalogdan `coil`/`coil-compose`.
+      **Kalan adaylar:** `SafeArea`, `AccentStrip`, `Modifier.focusRing`.
+      ⚠ **`AccentSurface` bu listeden CIKTI:** "sıfır çağıran" iddiası yanlıştı —
+      `AccentChip.kt:62` ve `:78`'den çağrılıyor, `AccentChip` da üretimde canlı
+      (`ListItemRow.kt:256`).
 - [ ] **F10.3 — `graph.json` takip kararı.**
 - **F10.17 ✅ — Fiş dönemi mağaza kalıntısı.** Test cihazında 17 çöp `store`
       satırı vardı (eski `rememberStore` her yanlış okunan künye satırını
@@ -272,8 +283,11 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 
 ## Öncelik 6 — Tasarım sadakati
 
-- [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Yukarıdaki
-      dört isim; kullanılacak mı silinecek mi tasarımın kararı.
+- [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Artık **üç**
+      isim (`SafeArea`, `AccentStrip`, `focusRing`) — `AccentSurface` yanlışlıkla
+      listedeymiş, çağrılıyor. `AccentStrip`'in kaderi tasarıma bağlı: amber şerit
+      3dp ve amber sözleşmesi 1.5dp kenarlık şart koşuyor, yani iki yandan kenarlık
+      konunca iç dolgu 0dp kalıyor ve amber tamamen kayboluyor. Sorulacak.
 - [ ] **F11.6 — Alışveriş modu satır container'ı.**
 - **F11.11 ✅ — İkon seti Phosphor'a taşındı (karar 32–34).** 15 ikon
       Phosphor Regular 2.1.1 çizimleriyle elle `ImageVector`. Değişken font

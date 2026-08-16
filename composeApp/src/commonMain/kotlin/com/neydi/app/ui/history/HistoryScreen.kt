@@ -70,14 +70,14 @@ fun HistoryScreen(
     // themes.xml'deki SABIT `windowBackground = #FBF7F2`'den geliyordu:
     // acik krem zemin uzerinde karanlik paletin beyaza yakin metni. NeydiTheme
     // bir Surface saglamiyor, NavDisplay de zemin cizmiyor - ekranin kendisi
-    // cizmek zorunda (Placeholders ve ListContent oyle yapiyor).
+    // cizmek zorunda (ListContent oyle yapiyor).
     //
     // ONIZLEME BUNU MASKELEDI: NeydiPreview icerigi kendi Surface'ina
     // sariyor, yani preview'de zemin dogru gorunuyordu. Hatanin yalnizca
     // gercek ekranda var olmasinin sebebi bu.
     //
     // safeDrawingPadding da SART: cihazda "Geri" ve baslik durum cubugunun
-    // altina girdi. Placeholders'taki iskelet ekranlarda vardi, yeni
+    // altina girdi. iskelet ekranlarda vardi (o dosya silindi), yeni
     // ekranlarda unutulmustu.
     val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
