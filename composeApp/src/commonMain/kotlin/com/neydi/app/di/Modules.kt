@@ -82,7 +82,8 @@ val dataModule = module {
     viewModel {
         SettingsViewModel(
             householdDao = get(), memberDao = get(),
-            productDao = get(), storeDao = get(), clock = ::now,
+            productDao = get(), storeDao = get(),
+            priceObservationDao = get(), clock = ::now,
         )
     }
 

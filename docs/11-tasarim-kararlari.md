@@ -2,36 +2,30 @@
 
 **16 Ağustos 2026.** Design pivot turunu tamamladı ve karar defterini **yirmi
 maddeye** indirdi: fiş dönemine ait on bir karar (4, 9, 13–21) defterden
-tamamen çıkarıldı. Bir de yeni dosya geldi: **Gezinme sözleşmesi**.
-
-> **İkonografi'nin `.dc.html` kopyası depoya hiç girmedi.** Önceki hâli iki
-> yeni dosya geldiğini söylüyordu; `docs/tasarim/` altında sekiz `.dc.html`
-> var ve hiçbiri İkonografi değil. İçeriği okundu ve aşağıdaki *İkonografi*
-> bölümüne elle işlendi — yani kayıp yok, ama "tazelenmedi" demek yanlıştı:
-> hiç gelmedi.
+tamamen çıkarıldı. İki de yeni dosya geldi — **Gezinme sözleşmesi** ve
+**İkonografi**. Beşinci turda defter **36 karara** çıktı.
 
 Bu dosya karar defterinin kopyası değil; **her kararın kodda karşılığı ne, hangi
 adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 [`tasarim/Neydi - Kararlar.dc.html`](tasarim/) altında.
 
-> **Ayna durumu.** `docs/tasarim/` altındaki `.dc.html` kopyaları bu oturumda
-> tazelendi: **Ekran 1**, **Ekranlar 2-4**, **Ekranlar 5-8**, **Tasarım
-> sistemi** ve yeni **Gezinme sözleşmesi**. Tazelenmeyen **üç** dosya —
-> **Kararlar**, **Boş durumlar**, **Compose spec** — hâlâ pivot öncesi
-> sürümü taşıyor; içerikleri okundu ve aşağıya işlendi ama bayt kopyaları
-> güncellenmedi.
+> **Ayna durumu: temiz.** `docs/tasarim/` altındaki dokuz `.dc.html` ile
+> `github.md`, beşinci tur sonrası hâlleriyle indirildi — Kararlar, Gezinme
+> sözleşmesi, Boş durumlar, Ekran 1, Ekranlar 5-8, Compose spec değişti;
+> **İkonografi ilk kez geldi**; Ekranlar 2-4 ile Tasarım sistemi zaten
+> günceldi.
 >
-> **Boş durumlar'ınki bir tuzak:** tasarım onu yukarı akışta tazeledi
-> (F11.12) ama depodaki kopya indirilmedi — dosyada hâlâ `undo`/`filter_list`
-> hedefleri, "Fiş Kontrol" ibaresi ve **sıfır** `~` tutarı var. Yani
-> ROADMAP'in ✅'i tasarım tarafı için doğru, ayna için değil.
+> **Ayna denetlenmeli, güvenilmemeli.** Önceki turda ROADMAP F11.12'yi
+> "tazelendi" diye kapatmıştı ama bayt kopyası indirilmemişti: dosyada hâlâ
+> `undo`/`filter_list` ve sıfır `~` tutar vardı. Tasarımın yapması ile bizde
+> olması ayrı iki olay; ✅ ancak ikincisinden sonra yazılır.
 >
 > Canlı kaynak:
 > [design projesi](https://claude.ai/design/p/8eea982a-c3f6-4008-8789-81aaf478b51d).
 
 ---
 
-## Yirmi kararın kod durumu
+## Otuz altı kararın kod durumu
 
 | # | Karar | Kod durumu |
 |---|---|---|
@@ -43,11 +37,11 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 7 | Ekran 3'ün üç bölüm notu | ✅ var |
 | 8 | Toast: aksiyonsuz, 2 sn, kuyruksuz | ✅ var |
 | 10 | Avatar tek kişilik hanede de; `priceChip` 14sp / `priceRow` 17sp | ✅ var |
-| 11 | **Revize:** 7 zincir tohumlanır, market çekimde seçilir, yapışkan | ⏳ **E13** · Ayarlar metni bu turda düzeldi |
+| 11 | **Revize:** 7 zincir tohumlanır, market çekimde seçilir, yapışkan | ✅ E13 · yapışkan seçim **E15** |
 | 12 | Ekle sheet'indeki işaret "bu listede var" | ✅ var |
 | 22 | Zincir adı etiketteki gibi büyük harf, caps satır 500 ağırlık | ✅ var (locale'siz dönüşüm zaten yasak) |
 | 23 | Zincirler satırından chevron kalktı | ✅ **bu turda** |
-| 24 | Boş hâlde Mağazalar çizilmez; Katılma kodu soluk "Faz 7'de açılıyor" | ✅ **bu turda** |
+| 24 | Katılma kodu soluk "Faz 7'de açılıyor" *(Mağazalar yarısını **karar 36** geçersiz kıldı)* | ✅ var |
 | 25 | Onay kartı fotoğrafın üstünde; eksik alan amber şerit; dışına dokunmak kapatmaz | ⏳ **E15** |
 | 26 | "Nerede ucuz" satırının kimliği **market + marka** çifti | ⏳ **E17** |
 | 27 | Etiket çekimine tek giriş: **liste başlığında kamera hedefi** | ⏳ **E15** |
@@ -56,9 +50,10 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 30 | Geçmiş'te gözlem satırı yok; gezi satırı tarih + kalem + `~` tutar | ✅ E8 · `~` tutar **E18** |
 | 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | ✅ tasarım tazeledi |
 | **32** | **İkon A yolu düştü** — 15 ikon Phosphor Regular çizimleriyle elle `ImageVector` | ✅ **F11.11** |
-| **33** | Karanlık temada GRAD yerine **renk kademesi**: metin `#E4D8C9`, ikon `#F5EDE6`; dolgulu ikon telafi almaz | ✅ F11.11 · renkler **F11.14** |
+| **33** | **Yeniden yazıldı:** kural mutlak renk değil **ilişki** — ikon yanındaki metinden bir kademe açık; palet değişmiyor | ✅ **okumamız onaylandı** |
 | **34** | Envanter **15** — `check`/`push_pin`/`content_paste` geri girdi; `check` ile `check_circle` ayrı | ✅ kodda zaten öyle |
 | **35** | Gizlilik notu + katılma kodu metni onaylandı | ✅ **birebir uygulandı** |
+| **36** | **Mağazalar bölümü kalıyor**, eşik kalktı; satır "Zincirler"; gözlemi olan zincir metin renginde, yalnızca seçilebilir olan soluk | ✅ **bu turda** |
 
 **Karar 29 planı doğruladı:** fotoğrafın kayıttan sonra silinmesi benim önerimdi
 ve açık karar olarak duruyordu — design aynı sonuca vardı, gerekçesi de aynı:
@@ -94,7 +89,6 @@ erken kapatmaz · kökte "çıkmak için tekrar bas" göstermez.
 | "Bitmiş olabilir" | **4 alım** | Bölüm çizilmez |
 | Eksik olabilir ekranı | **1 satır** | Ekran açılmaz, toast bilgilendirir |
 | Geçmiş grafiği | **3 gezi** | Çubuklar çizilmez |
-| Ayarlar · Mağazalar | **1 gözlem** | Bölüm çizilmez | ⚠ **F11.15** — eşik ölü |
 
 ### Tarih merdiveni (F5.11'in eksik yarısı — artık tam)
 
@@ -203,68 +197,38 @@ fontta yaşıyor, A'nın tek avantajı olan ucuzluk gerçek değildi, font paket
 Fraunces'te zaten reddedilmişti, ve kalan iki seçenek aynı mekanik işi
 istediği için kimlik kazancı olan taraf seçildi.
 
-## Yeni açık sorular
+## Beşinci tur kapandı ✅ — dördünün dördü de cevaplandı
 
-**1 · Karar 33'ün renkleri palete oturmuyor.** Karar *"metin `#E4D8C9`, ikon
-`#F5EDE6`"* diyor. Ama tasarımın kendi `handoff/tokens.json`'ı karanlık
-`textPrimary`yi **`#F5EDE6`** yazıyor — yani kararın "ikon" rengi uygulamanın
-bugünkü *metin* rengi — ve `#E4D8C9` palette hiç geçmiyor (tasarım
-dokümanlarında yalnızca HTML çerçevesinin kendi zemin/metin rengi olarak var).
+| Soru | Cevap | Kod |
+|---|---|---|
+| **F11.15** Mağazalar eşiği | **Karar 36**: bölüm kalıyor, eşik satırı tablodan kalktı, etiket "Zincirler", gözlem ayrımı **renkle** | ✅ bu turda |
+| **F11.13** Ekran 1 başlık örneği | Tasarım merdivene uydu: *"geçen hafta · ~642 TL"* | ✅ kodda iş yok, `formatRelativeDay` zaten doğruydu |
+| **F11.14** Karar 33'ün renkleri | Karar **ilişki olarak yeniden yazıldı**; okumamız birebir benimsendi | ✅ `Color.kt` değişmedi, çekince silindi |
+| **F11.12 / F11.16** Bayat ayna | Atlas ve ekran haritası tazelendi, **İkonografi ilk kez geldi** | ✅ dokuz dosya indirildi |
 
-İki okuma mümkün:
-- **(a)** Karanlık gövde metni bir kademe insin (`#F5EDE6` → `#E4D8C9`), ikon
-  yerinde kalsın. Sayılara birebir uyar ama **bir ikon kararından türetilen
-  palet çapında bir değişiklik** olurdu ve her ekranı etkilerdi.
-- **(b)** Çift, iki mutlak renk değil bir **ilişki**: ikon yanındaki metinden
-  bir basamak yukarıda. Uygulamanın karanlık rampası `#C6B6A9` → `#F5EDE6` ve
-  `#E4D8C9` tam bu ikisinin arasına düşüyor.
+**Karar 36, önerdiğimizden bir adım ileri gitti.** Biz *"bölüm kalsın, yanlış
+olan tek şeyi — iddiayı — düzeltelim"* demiştik. Tasarım bunu kabul etti ve
+üstüne **gözlem ayrımını renkle** ekledi: gerçekten fiyat kaydedilmiş zincir
+metin renginde, yalnızca seçilebilir olan soluk.
 
-**(b) uygulandı** — ikincil metnin yanındaki ikon `#E4D8C9`'a çıkıyor, birincil
-metnin yanındaki zaten rampanın tepesinde. Telafi bir *kaldırma*; tepenin
-üstüne çıkamaz. Okuma `Color.kt`'de not olarak duruyor ve `NeydiColorTest`
-ölçüyor. → **F11.14**
+Bu ekleme, gizleme seçeneğinin (a) kaybedeceğinden korktuğumuz bilgiyi geri
+getiriyor — *"hangisini gerçekten takip ediyorum"* sorusu, bölüm görünür
+kalırken de cevaplanıyor. Kararın kendi ifadesi: **"tek liste, tek satır, yeni
+bileşen yok."**
 
-**2 · Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın örneği *"Son
-alışveriş: 8 gün önce · 642 TL"*; kendi tarih merdiveni ise 7–13 günü **"geçen
-hafta"**ya topluyor. Kod merdiveni esas aldı (daha yeni, daha açık ve
-sayıyla tanımlı). Örnek mi güncellenecek, yoksa başlık merdivenin dışında mı
-kalacak? → **F11.13**
+Kodda karşılığı: `hasObservation` bayrağı (yeni `DISTINCT storeId` sorgusundan),
+tek `AnnotatedString` içinde iki `SpanStyle`, ve **gözlemliler önce** sıralaması.
+Sıralama kararın metninde yok ama dolu makette var — ve gerekli: ayrımın tek
+taşıyıcısı renk olsaydı renk görmeyen kullanıcıya hiç ulaşmazdı.
 
-**3 · Karar 23'ün "tek satıra sığıyor" varsayımı geçersiz.** Karar Mağazalar
-satırından chevron'u kaldırırken gerekçesi *"üç beş zincir tek satıra sığıyor,
-adlar değerin içinde"*ydi. **E13 tohumu bunu bozdu:** ilk açılıştan itibaren
-yedi zincir var ve `BİM, A101, ŞOK, Migros, CarrefourSA, File, Tarım Kredi`
-elli karakter — cihazda satır etiketi harf harf alt alta akacak kadar taştı.
+## Açık kalan iki küçük madde
 
-Kararın **gerekçesi ayakta** (satırın götüreceği bir ekran yok, adlar değerin
-kendisi, chevron hâlâ yok), o yüzden kararı çevirmedim: yalnızca geometri
-değişti, adlar kendi satırına indi. Tasarımın çerçeveyi buna göre tazelemesi
-gerekiyor → **E19**.
+**1 · Ekran 1'in beşinci çerçevesi hâlâ tildesiz.** Dört maket *"~642 TL"*
+oldu ama biri *"Son alışveriş: bugün · 642,50 TL"* — tilde yok, kuruş var.
+Türetilmiş bir tutar olduğu için biçim kuralına aykırı. → **F11.17**
 
-**4 · Mağazalar eşiği ölü — tohum onu geçersiz kıldı.** Gezinme sözleşmesinin
-eşik tablosu *"Ayarlar · Mağazalar, en az **1 gözlem**, altında bölüm
-çizilmez"* diyor. Kod ise bambaşka bir şeye bakıyor:
-`SettingsScreen.kt` → `if (state.stores.isNotEmpty())`, kaynağı
-`storeDao.observeAll(household)` — **gözlem sayısı hiçbir yerde okunmuyor.**
-
-Ve karar 11'in tohumu (E13) bootstrap'te yedi mağaza satırı yazdığı için
-`stores` **hiçbir zaman boş dönmüyor**. Yani eşik pratikte hep aşılmış
-sayılıyor: sıfır gözlemli, yepyeni bir kurulumda bölüm ilk açılışta görünüyor.
-
-Bugünkü UI bozukluğunun görülebilmesinin sebebi de bu — bölüm hiç
-çizilmeseydi satır da kırılmayacaktı.
-
-İki karar birbirini yiyor ve ikisi de kayıtta ✅ duruyordu. Üç okuma var:
-
-- **(a) Sözleşme haklı:** bölüm ilk gözleme kadar gizlensin. Bugün gözlem
-  üretebilen bir yüzey yok (E14/E15 gelmedi), yani bölüm uygulamadan tamamen
-  kaybolur.
-- **(b) Kod haklı:** tohum mağazaları gerçek kıldı, eşik pivotla anlamını
-  yitirdi; tablo güncellensin.
-- **(c) Etiket yanlış:** bölüm kalsın ama *"Takip edilen zincirler"* sıfır
-  gözlemken **doğru olmayan bir iddia** — hiçbiri henüz takip edilmiyor.
-  Karar 24 üretilmiş katılma kodunu tam bu gerekçeyle reddetmişti.
-
-**Kod değiştirilmedi** — üçü de savunulabilir ve seçim tasarımın.
-Eğilimim (c)+(b): bölüm kalsın, başlık *"Seçilebilen zincirler"* gibi
-doğru bir şey desin. → **F11.15**
+**2 · İkonografi dosyası karar 33'ü eski çiftiyle örnekliyor.** Karar defteri
+ilişkiyi doğru yazıyor (*"ikon yanındaki metinden bir kademe açık"*) ama
+İkonografi aynı kuralı hâlâ *"metin `#E4D8C9`, ikon `#F5EDE6`"* diye
+örnekliyor. İki ayna kuralda hemfikir, örnekte değil; defter esas alındı.
+→ **F11.18**

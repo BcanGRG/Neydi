@@ -69,9 +69,12 @@ private val DarkHairline = Color(0xFF2E2621)
  * metnin yanindaki ikon zaten rampanin tepesinde (`#F5EDE6`), bir kaldirma
  * tepenin ustune cikamaz.
  *
- * Tasarimin `tokens.json`'i hala karanlik `textPrimary`yi `#F5EDE6` yaziyor,
- * yani karar 33 ile token dosyasi henuz ayni seyi soylemiyor - okuma bu notla
- * kayitli ve **F11.14** olarak soruldu.
+ * OKUMA TASARIMCA ONAYLANDI: karar 33 bu turda yeniden yazildi ve *"kural
+ * mutlak renk degil ILISKI"* diyor - ayni hex ciftiyle (`#C6B6A9` yanindaki
+ * ikon `#E4D8C9`) ve ayni gerekceyle ("birincil metin zaten rampanin
+ * tepesinde, orada telafi yok"). Kararin *"palet degismiyor"* cumlesi de
+ * alternatif okumayi - karanlik govde metnini bir kademe indirmek - acikca
+ * reddediyor.
  *
  * ISIK TEMASINDA TELAFI YOK (`GRAD 0`): orada ikon ikincil metinle ayni renkte.
  */

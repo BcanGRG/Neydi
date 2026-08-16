@@ -25,7 +25,8 @@ private const val TOAST_MS = 2_000L
  *
  * SNACKBAR'DAN AYRI BIR BILESEN ve ayrimi tasarim acikca ciziyor:
  * snackbar AKSIYON tasiyor ve uygulamada tek bir yerde kullaniliyor
- * (alisveris kendiliginden kapandiginda "Fisi gor"). Burada dokunulacak bir
+ * (alisveris kendiliginden kapandiginda **"Gecmis'te gor"** - karar 8 pivotla
+ * guncellendi, eski hedef fis detayiydi ve o ekran kalmadi). Burada dokunulacak bir
  * sey yok. Ikisini ayni bilesene bindirmek, isaretlemede snackbar
  * yasagini da bulanıklastirirdi - "bir gezide 20 isaretleme var".
  *

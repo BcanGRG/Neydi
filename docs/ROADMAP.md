@@ -7,9 +7,10 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 13/19 · sıradaki **E12** (kullanıcının etiket fotoğrafları bekliyor). Tasarım dördüncü turu da
-kapattı (35 karar). Uygulama derleniyor, cihazda kurulu, **214 test yeşil**, tek derleyici uyarısı var
-(F10.10'un kendi işi). İkon seti Phosphor'a taşındı — `material-icons-extended` bağımlılığı düştü.
+**Durum:** Faz E 13/19 · sıradaki **E12** (kullanıcının etiket fotoğrafları bekliyor). Tasarım beşinci turu da
+kapattı (**36 karar**), ayna dokuz dosyayla tazelendi. Uygulama derleniyor, cihazda kurulu, **222 test yeşil**,
+tek derleyici uyarısı var (F10.10'un kendi işi). İkon seti Phosphor'a taşındı — `material-icons-extended`
+bağımlılığı düştü.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
 > Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -284,43 +285,22 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       iki ikonun aynı çizimi taşımadığı, yalnızca yön taşıyanların
       `autoMirror` olduğu. Cihazda beş ikon gözle doğrulandı; on beşinin
       atlası `NeydiIcon.kt`'de `@PreviewLightDark` olarak duruyor.
-- [ ] **F11.12 ✅ tasarımda / ⏳ aynada — Boş durum atlası.** Tasarım tazeledi
-      (toolbar iki hedef, bütün tutarlar `~`, eşikler sayıyla, "parse" dili
-      kalktı, çerçeve 04 → "Alışveriş kapanışı") ama `docs/tasarim/Neydi -
-      Bos Durumlar.dc.html` **indirilmedi**: dosyada hâlâ `undo`/`filter_list`,
-      "Fiş Kontrol", `content_copy`'li katılma kodu ve **sıfır** `~` tutarı
-      var. Kapanması için bayt kopyasının çekilmesi gerekiyor.
-
-> **F11.12 (ayna) · F11.13 · F11.14 · F11.15 · F11.16 tasarıma soruldu** —
-> beşinci tur: [`13-tasarima-sorular-5.md`](13-tasarima-sorular-5.md).
-> Turun ağırlık merkezi **F11.15**; diğerleri tazeleme işi.
-
-- [ ] **F11.13 — Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın
-      örneği *"Son alışveriş: 8 gün önce"*; tarih merdiveni 7–13 günü
-      "geçen hafta"ya topluyor. Kod merdiveni esas aldı (daha yeni ve daha
-      açık). Tasarıma sorulacak.
-- [ ] **F11.14 — Karar 33'ün renkleri palete oturmuyor.** Karar *"metin
-      `#E4D8C9`, ikon `#F5EDE6`"* diyor; tasarımın kendi `tokens.json`'ı ise
-      karanlık `textPrimary`yi **`#F5EDE6`** yazıyor ve `#E4D8C9` uygulamanın
-      paletinde hiç yok. İki okuma var: (a) karanlık gövde metni bir kademe
-      inecek, (b) çift mutlak renk değil bir *ilişki* — ikon yanındaki
-      metinden bir basamak yukarıda. **(b) uygulandı**, çünkü (a) bir ikon
-      kararından türetilen palet çapında bir değişiklik olurdu. İkincil
-      metnin (`#C6B6A9`) yanındaki ikon `#E4D8C9`'a çıkıyor. Onay bekliyor.
-- [ ] **F11.15 — Mağazalar eşiği ölü, iki karar birbirini yiyor.** Gezinme
-      sözleşmesi *"1 gözlemin altında bölüm çizilmez"* diyor; kod ise
-      `state.stores.isNotEmpty()`'e bakıyor ve **gözlem sayısını hiç
-      okumuyor**. Karar 11'in tohumu (E13) açılışta yedi mağaza satırı
-      yazdığı için `stores` asla boş dönmüyor — yani sıfır gözlemli temiz
-      kurulumda bölüm ilk açılışta görünüyor. Bugünkü UI bozukluğunun
-      görülebilmesinin sebebi de bu. Kod değiştirilmedi; üç okuma ve
-      eğilimim `11-tasarim-kararlari.md`'nin "Yeni açık sorular"ında.
-- [ ] **F11.16 — `github.md` ekran haritası ölü yolları gösteriyor.**
-      Tablo bir satırını `ui/receipt/ReceiptCheckScreen.kt` ve
-      `data/receipt/ReceiptGrouping.kt`'ye bağlıyor; ikisi de pivotta silindi.
-      Buna karşılık pivotla gelen `ui/capture/CameraSurface.kt` tabloda hiç
-      geçmiyor. Dosya tasarımın kendi senkron günlüğü, o yüzden elle
-      düzeltmek yerine bir sonraki senkronda tazelenmesi doğru olur.
+- **F11.12 ✅ · F11.13 ✅ · F11.14 ✅ · F11.15 ✅ · F11.16 ✅ — beşinci tur kapandı.**
+      Ayna dokuz dosyayla tazelendi (**İkonografi ilk kez geldi**), Ekran 1
+      başlık örneği merdivene uydu, karar 33 ilişki olarak yeniden yazıldı ve
+      okumamız birebir benimsendi, ekran haritasındaki ölü fiş yolları düştü.
+      Eşik çelişkisini **karar 36** kapattı → aşağıda F11.19.
+- [ ] **F11.17 — Ekran 1'in beşinci çerçevesi tildesiz.** Dört maket `~642 TL`
+      oldu ama biri hâlâ *"Son alışveriş: bugün · 642,50 TL"* — tilde yok,
+      kuruş var. Türetilmiş tutar, biçim kuralına aykırı. Tasarıma sorulacak.
+- [ ] **F11.18 — İkonografi, karar 33'ü eski çiftiyle örnekliyor.** Karar
+      defteri ilişkiyi doğru yazıyor; İkonografi aynı kuralı hâlâ *"metin
+      `#E4D8C9`, ikon `#F5EDE6`"* diye örnekliyor. Defter esas alındı.
+- [ ] **F11.19 — Karar 36'nın renk ayrımı cihazda görülmedi.** Kod, testler
+      (8 yeni) ve önizleme yerinde; ama uygulamada bugün **gözlem üretebilen
+      bir yüzey yok**, yani karışık liste (kimi koyu, kimi soluk) çalışan
+      uygulamada ulaşılamaz bir hâl. Sıfır gözlemli hâl cihazda doğrulandı.
+      **E15** gelince gözle bakılacak.
 - **F11.10 → E19'a devroldu.**
 
 ---

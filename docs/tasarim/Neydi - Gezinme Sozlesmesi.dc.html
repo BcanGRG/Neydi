@@ -25,7 +25,7 @@
     <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">16 Ağustos 2026 · gezinme ve etkileşim sözleşmesi</div>
     <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Açık kapı bırakmayan sözleşme</div>
     <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Ekran çizimleri neyin göründüğünü söylüyor; bu dosya ne olduğunu söylüyor. Her yüzeyin nereden açıldığı, geri tuşunun ne yaptığı, yarıda kalan işin ne olacağı, izin reddedilirse nereye düşüleceği. Kodlarken karar verilecek bir şey kalmasın diye yazıldı: bir satır boşsa o bir eksiktir, tercih değil.</div>
-    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Ekranlar: <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a> · <a href="Neydi - Bos Durumlar.dc.html">Boş durumlar</a> · <a href="Neydi - Kararlar.dc.html">Kararlar</a> · <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a></div>
+    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Ekranlar: <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a> · <a href="Neydi - Bos Durumlar.dc.html">Boş durumlar</a> · <a href="Neydi - Kararlar.dc.html">Kararlar</a> · <a href="Neydi - Ikonografi.dc.html">İkonografi</a> · <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a></div>
   </div>
 
   <div style="display:flex;flex-direction:column;gap:16px">
@@ -510,7 +510,7 @@ class Component extends DCLogic {
         { t: "Alışveriş modundan Geçmiş'e ve Ayarlar'a geçilmez: menü o modda tek madde taşır." },
         { t: "Etiket çekiminden Ürün Detayı'na atlanmaz — kayıt akışı kesintiye uğramaz." },
         { t: "Ürün Detayı'ndan etiket çekimine kısayol yok; giriş tek yerde, Liste başlığında." },
-        { t: "Ayarlar'daki \"Takip edilen zincirler\" bir ekrana gitmez; satır kendi başına tamam." },
+        { t: "Ayarlar'daki \"Zincirler\" satırı bir ekrana gitmez; adlar değerin kendisi." },
         { t: "Hiçbir yerden Kurulum'a dönülemez; tamamlanan kurulum bir daha görünmez." },
         { t: "Bildirim yok, deep link yok. Uygulamaya tek giriş simgesi." }
       ],
@@ -539,8 +539,8 @@ class Component extends DCLogic {
       ],
       formats: [
         { k: "para", v: "1.085,65 TL · binlik nokta, ondalık virgül, TL sonda ve boşlukla" },
-        { k: "tahmin", v: "~642 TL · tilde bitişik, tahminlerde kuruş yazılmaz" },
-        { k: "kesin tutar", v: "Yok. Uygulamada her tutar gözlemden hesaplanır." },
+        { k: "gözlem fiyatı", v: "100,00 TL · etiketten okunan tek fiyat kesindir, tilde almaz, kuruş yazılır" },
+        { k: "türetilen tutar", v: "~642 TL · toplanan, ortalanan, tahmin edilen her tutar tilde alır ve kuruş yazılmaz" },
         { k: "birim fiyat", v: "92,48/lt · birim kısaltması küçük harf, bölü işareti bitişik" },
         { k: "ağırlık", v: "1,206 kg · üç ondalık yalnızca tartıda" },
         { k: "rakamlar", v: "Tüm sayılar tabular; hizalanan sütunlarda genişlik zıplamaz" },
@@ -571,8 +571,7 @@ class Component extends DCLogic {
         { name: "\"Her zamankiler\"", min: "3 gezi", below: "Kurulumdaki seçim neyse o; öğrenme başlamaz" },
         { name: "\"Bitmiş olabilir\"", min: "4 alım", below: "Bölüm çizilmez — tempo hesaplanamaz" },
         { name: "Eksik olabilir ekranı", min: "1 satır", below: "Ekran hiç açılmaz, toast bilgilendirir" },
-        { name: "Geçmiş grafiği", min: "3 gezi", below: "Çubuklar çizilmez, liste tek başına" },
-        { name: "Ayarlar · Mağazalar", min: "1 gözlem", below: "Bölüm çizilmez" }
+        { name: "Geçmiş grafiği", min: "3 gezi", below: "Çubuklar çizilmez, liste tek başına" }
       ],
       device: [
         { name: "Rotasyon · liste", rule: "Yatay tutuşta düzen değişmez, yalnızca genişler; iki sütuna geçmez. Kaydırma konumu korunur." },
@@ -590,7 +589,7 @@ class Component extends DCLogic {
         { t: "Geri her zaman bir şey kapatır ya da uygulamadan çıkar; hiçbir zaman soru sormaz." },
         { t: "Alışveriş modu gezinin durumudur: uygulama kapansa da açık kalır." },
         { t: "Etiket fotoğrafı kaydın ardından silinir; hiçbir yüzeyde yeniden gösterilmez." },
-        { t: "Her tutar tahmindir ve önünde ~ vardır; gerçek ödenen tutar diye bir veri yok." },
+        { t: "Tek bir gözlem fiyatı kesindir; ondan türetilen her tutar (sepet, gezi, ortalama) tilde alır. Gerçek ödenen tutar diye bir veri yok." },
         { t: "Marka gözlemin alanıdır; ürün jenerik kalır." },
         { t: "Aynı etiket metni aynı markette bir kez sorulur." },
         { t: "İşaretleme snackbar açmaz; bir gezide yirmi kez olur." },

@@ -23,164 +23,27 @@
 
   <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
     <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">15 Ağustos 2026 · karar defteri</div>
-    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Açık kalan on iki madde</div>
-    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Kodun ölçtüğü on iki yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var; üç yüzey ilk kez burada çiziliyor.</div>
-    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Açık kalan yirmi altı madde</div>
+    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Kodun ölçtüğü yirmi altı yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var. Defter yalnızca bugün geçerli olan kararları taşıyor: ürün raf etiketi okuyor, önceki döneme ait kararlar tamamen çıkarıldı.</div>
+    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Gezinme Sozlesmesi.dc.html">Gezinme sözleşmesi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
   </div>
 
   <div style="display:flex;flex-direction:column;gap:16px">
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
-      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">İlk kez çizilen üç yüzey</div>
-    </div>
-
-    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
-
-      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
-        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Verilerimi sil · onay</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">dialog değil, destinasyon</div></div>
-        <div data-screen-label="7 Silme onayı" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
-          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>19:11</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
-          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Verilerimi sil</div></div>
-          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:16px;padding:24px 20px 0">
-            <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Bunlar geri gelmez</div>
-            <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45">Silme hanenin tamamı için çalışır ve anında yapılır. Geri alma yok, yedek yok.</div>
-            <div style="display:flex;flex-direction:column;gap:2px">
-              <sc-for list="{{ deleteRows }}" as="d" hint-placeholder-count="4">
-                <div style="display:flex;align-items:center;gap:12px;min-height:56px;border-top:1px solid #E7DACB">
-                  <div style="flex:1;font:500 17px/1.28 'Plus Jakarta Sans'">{{ d.name }}</div>
-                  <div style="font:600 15px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ d.count }}</div>
-                </div>
-              </sc-for>
-            </div>
-            <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;border-top:1px solid #E7DACB;padding-top:14px">Fiş fotoğrafları cihazdan da silinir. Hane iki kişilikse eşinin cihazındaki veri de silinir; hane dağılır.</div>
-          </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 16px 34px;border-top:1px solid #E7DACB">
-            <div style="height:52px;border-radius:999px;background:#B3261E;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#FFFFFF">Verileri sil</div>
-            <div style="height:52px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Vazgeç</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
-        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Fiş kontrol · çok parçalı</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">parça hata hali değil, normal hal</div></div>
-        <div data-screen-label="4 Çok parçalı" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
-          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>15:36</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:0 16px 12px;border-bottom:1px solid #E7DACB">
-            <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Fiş kontrol</div></div>
-            <div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">Migros Ataşehir · 12 Ağustos 15:31 · 2 parça</div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:36px;line-height:1.1;letter-spacing:-0.01em;font-variant-numeric:tabular-nums">642,50 TL</div>
-              <div style="height:32px;align-self:flex-start;padding:0 12px;border-radius:999px;background:#E3EFE7;display:flex;align-items:center;gap:6px;font:600 14px/1 'Plus Jakarta Sans';color:#2E6B45"><span style="font-family:'Material Symbols Rounded';font-size:18px;font-variation-settings:'FILL' 1">check_circle</span>Fişin tamamı tutuyor</div>
-            </div>
-          </div>
-          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:12px 16px 0">
-            <sc-for list="{{ multiRows }}" as="r" hint-placeholder-count="8">
-              <sc-if value="{{ r.isPart }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px 2px">
-                  <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">{{ r.title }}</div>
-                  <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">{{ r.meta }}</div>
-                </div>
-              </sc-if>
-              <sc-if value="{{ r.isRow }}" hint-placeholder-val="{{ true }}">
-                <div style="display:flex;align-items:stretch;gap:10px;padding:10px 14px 10px 10px;border-radius:16px;background:#FFFFFF;border:1px solid #E7DACB">
-                  <sc-if value="{{ r.unsure }}" hint-placeholder-val="{{ false }}">
-                    <div style="width:4px;flex:none;border-radius:2px;background:#E0A32E"></div>
-                  </sc-if>
-                  <sc-if value="{{ r.plain }}" hint-placeholder-val="{{ true }}">
-                    <div style="width:4px;flex:none"></div>
-                  </sc-if>
-                  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0">
-                    <div style="font:500 17px/1.28 'Plus Jakarta Sans'">{{ r.name }}</div>
-                    <div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">{{ r.ocr }}</div>
-                  </div>
-                  <div style="width:86px;flex:none;text-align:right;font:600 17px/1.3 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ r.price }}</div>
-                  <sc-if value="{{ r.hasChevron }}" hint-placeholder-val="{{ false }}">
-                    <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666;flex:none;align-self:center">chevron_right</span>
-                  </sc-if>
-                </div>
-              </sc-if>
-            </sc-for>
-            <div style="display:flex;align-items:center;gap:8px;padding:10px 4px;font:600 15px/1 'Plus Jakarta Sans';color:#B34418"><span style="font-family:'Material Symbols Rounded';font-size:20px">photo_camera</span>Bu fişin devamını çek</div>
-          </div>
-          <div style="flex:none;padding:12px 16px 34px;border-top:1px solid #E7DACB">
-            <div style="height:52px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff">Onayla ve kaydet</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
-        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Geçmiş · parçalı gezi</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">gezi ikonu en kötü hali gösterir</div></div>
-        <div data-screen-label="6 Parçalı gezi" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
-          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>19:02</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
-          <div style="flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 14px;border-bottom:1px solid #E7DACB"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
-          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 16px">
-            <div style="display:flex;align-items:center;gap:12px;height:72px;flex:none;border-bottom:1px solid #E7DACB">
-              <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Migros Ataşehir</div><div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">12 Ağustos · 34 ürün</div></div>
-              <div style="width:92px;flex:none;text-align:right;font:600 17px/1.28 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">642,50 TL</div>
-              <span style="font-family:'Material Symbols Rounded';font-size:22px;flex:none;color:#96560A">error_outline</span>
-            </div>
-            <sc-for list="{{ tripParts }}" as="p" hint-placeholder-count="2">
-              <div style="display:flex;align-items:center;gap:12px;height:56px;flex:none;border-bottom:1px solid #E7DACB;padding-left:20px">
-                <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 15px/1.3 'Plus Jakarta Sans';color:#5C4F45">{{ p.title }}</div><div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">{{ p.meta }}</div></div>
-                <sc-if value="{{ p.warn }}" hint-placeholder-val="{{ false }}">
-                  <span style="font-family:'Material Symbols Rounded';font-size:20px;flex:none;color:#96560A">error_outline</span>
-                </sc-if>
-                <sc-if value="{{ p.ok }}" hint-placeholder-val="{{ true }}">
-                  <span style="font-family:'Material Symbols Rounded';font-size:20px;flex:none;color:#5C4F45">receipt_long</span>
-                </sc-if>
-                <span style="font-family:'Material Symbols Rounded';font-size:20px;flex:none;color:#8A7666">chevron_right</span>
-              </div>
-            </sc-for>
-            <sc-for list="{{ otherTrips }}" as="h" hint-placeholder-count="4">
-              <div style="display:flex;align-items:center;gap:12px;height:72px;flex:none;border-bottom:1px solid #E7DACB">
-                <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">{{ h.store }}</div><div style="font:400 14px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ h.date }} · {{ h.count }}</div></div>
-                <div style="width:92px;flex:none;text-align:right;font:600 17px/1.28 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">{{ h.total }}</div>
-                <span style="font-family:'Material Symbols Rounded';font-size:22px;flex:none;color:#8A7666">{{ h.icon }}</span>
-              </div>
-            </sc-for>
-          </div>
-          <div style="flex:none;padding:12px 20px 34px"><div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#8A7666">Toplam gezide, satırlar parçalarda. Parça satırı yalnızca gezi iki parçadan oluşuyorsa çizilir.</div></div>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:20px;flex:1;min-width:340px;max-width:460px">
-        <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px">
-          <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Toast — yeni bileşen</div>
-          <div style="display:flex;align-items:center;background:#221A14;border-radius:18px;padding:14px 16px"><div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6">Liste hazır, eksik görünmüyor</div></div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <sc-for list="{{ toastSpec }}" as="t" hint-placeholder-count="5">
-              <div style="display:flex;gap:10px;font:400 14px/1.45 'Plus Jakarta Sans';border-top:1px solid #E7DACB;padding-top:8px">
-                <div style="width:96px;flex:none;font:600 14px/1.45 'Plus Jakarta Sans';color:#8A5A00">{{ t.k }}</div>
-                <div style="flex:1;color:#5C4F45">{{ t.v }}</div>
-              </div>
-            </sc-for>
-          </div>
-        </div>
-        <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px">
-          <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Floating toolbar · iki hedef</div>
-          <div style="display:flex;align-items:center;gap:6px;background:#FFFFFF;border:1px solid #E7DACB;border-radius:999px;padding:6px;box-shadow:0 3px 4px rgba(0,0,0,.18)">
-            <div style="width:56px;height:56px;border-radius:999px;background:#B34418;display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-size:26px;color:#fff">add</span></div>
-            <div style="flex:1;height:56px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 16px/1 'Plus Jakarta Sans';color:#fff;font-variant-numeric:tabular-nums">Bitir (12/18)</div>
-          </div>
-          <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Çıkış artık toolbar'da değil, başlıktaki <span style="font-family:'Material Symbols Rounded';font-size:15px">more_vert</span> menüsünde tek madde olarak duruyor: "Alışverişi bırak". Menü tek madde taşıdığı için reyonda gezinme yine kapalı.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div style="display:flex;flex-direction:column;gap:16px">
-    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
-      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">02</div>
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Karar defteri</div>
-      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">On iki madde, on iki karar. Her karar bir gerekçe taşıyor.</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Yirmi altı karar. Her biri bugünkü üründe geçerli.</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:20px;max-width:1400px">
-      <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="12">
+      <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="26">
         <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;align-items:center;gap:12px">
             <div style="width:28px;height:28px;border-radius:999px;background:#221A14;display:flex;align-items:center;justify-content:center;font:700 13px/1 'Plus Jakarta Sans';color:#F5EDE6;flex:none;font-variant-numeric:tabular-nums">{{ d.no }}</div>
-            <div style="font:700 18px/1.28 'Plus Jakarta Sans'">{{ d.title }}</div>
+            <div style="flex:1;font:700 18px/1.28 'Plus Jakarta Sans'">{{ d.title }}</div>
+            <sc-if value="{{ d.retired }}" hint-placeholder-val="{{ false }}">
+              <div style="height:24px;padding:0 10px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;font:700 12px/1 'Plus Jakarta Sans';color:#5C4F45;flex:none">düştü</div>
+            </sc-if>
           </div>
           <div style="display:flex;gap:10px;border-top:1px solid #E7DACB;padding-top:12px">
             <div style="width:64px;flex:none;font:600 13px/1.45 'Plus Jakarta Sans';color:#8A7666">kural</div>
@@ -207,8 +70,8 @@
 
   <sc-if value="{{ showOpen }}" hint-placeholder-val="{{ true }}">
     <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:32px;padding:32px;display:flex;flex-direction:column;gap:12px;max-width:1400px">
-      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Açık soru kalmadı</div>
-      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Mağazalar ve Ekle sheet'indeki işaret de kapandı (11 ve 12). İkisi de veri sahipliği sorusuydu; ikisinde de daha az iş yapan cevap kazandı — mağaza satırı fişten doğuyor, işaret listenin durumunu söylüyor.</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Defterin bugünkü hâli</div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde yirmi altı karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
     </div>
   </sc-if>
 </div>
@@ -216,45 +79,14 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;showWhy&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sunum&quot;},&quot;showOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sunum&quot;}}">
 class Component extends DCLogic {
   renderVals() {
-    const part = (title, meta) => ({ isPart: true, isRow: false, title, meta });
-    const row = (name, ocr, price, o) => Object.assign({
-      isRow: true, isPart: false, name, ocr, price, unsure: false, plain: true, hasChevron: false
-    }, o || {});
     return {
       showWhy: this.props.showWhy ?? true,
       showOpen: this.props.showOpen ?? true,
       deleteRows: [
-        { name: "Alışveriş ve fişler", count: "18" },
-        { name: "Fiş fotoğrafı", count: "12" },
+        { name: "Alışveriş ve listeler", count: "18" },
+        { name: "Fiyat gözlemi", count: "46" },
         { name: "Ürün ve fiyat geçmişi", count: "214" },
         { name: "Her zamankiler, önerilmeyenler", count: "9 + 2" }
-      ],
-      multiRows: [
-        part("Parça 1", "18 satır"),
-        row("Yumurta 10'lu", "YMRT KLS 10LU", "89,90 TL"),
-        row("Pınar Süt 1 L", "PNR SUT 1L X2", "84,00 TL"),
-        row("Tam Buğday Ekmek", "TM BGDY EKMK", "18,00 TL"),
-        part("Parça 2", "16 satır"),
-        row("Ayçiçek Yağı 5 L", "AYCCK YAG 5LT", "369,90 TL"),
-        row("Kaşar Peyniri 400 g", "KSR PYNR 400G", "164,00 TL", { unsure: true, plain: false, hasChevron: true }),
-        row("Bulgur 1 kg", "BULGUR 1KG", "54,00 TL")
-      ],
-      tripParts: [
-        { title: "Parça 1", meta: "18 satır · okundu", warn: false, ok: true },
-        { title: "Parça 2", meta: "16 satır · 1 satır kontrol bekliyor", warn: true, ok: false }
-      ],
-      otherTrips: [
-        { store: "A101 Ataşehir", date: "2 Ağustos", count: "18 ürün", total: "601,00 TL", icon: "receipt_long" },
-        { store: "Migros Ataşehir", date: "23 Temmuz", count: "21 ürün", total: "688,40 TL", icon: "receipt_long" },
-        { store: "BİM", date: "14 Temmuz", count: "9 ürün", total: "212,60 TL", icon: "receipt_long" },
-        { store: "Migros Ataşehir", date: "3 Temmuz", count: "17 ürün", total: "574,00 TL", icon: "receipt_long" }
-      ],
-      toastSpec: [
-        { k: "zemin", v: "textPrimary #221A14, metin surface #F5EDE6, 14sp / 500" },
-        { k: "şekil", v: "köşe 18dp, gölge yok, kenarlık yok" },
-        { k: "konum", v: "floating toolbar'ın 12dp üstü; toolbar yoksa safe area + 12dp" },
-        { k: "süre", v: "2 sn, aksiyon yok, dokunma hedefi yok, kuyruk yok" },
-        { k: "nerede", v: "Ekran 3 atlandığında; başka olay eklenirse önce buraya yazılır" }
       ],
       decisions: [
         {
@@ -271,9 +103,9 @@ class Component extends DCLogic {
           title: "\"Verilerimi sil\" ile sıfır dialog",
           rule: "Gizlilik bölümünde düz bir satır, error renginde · v1'de sıfır modal dialog.",
           decision: "Satır chevron kazandı ve tam ekran bir onay destinasyonuna gidiyor. Dialog yasağı bozulmuyor, silme onaysız da çalışmıyor.",
-          why: "Geri alınamaz bir işi snackbar süresine sıkıştırmak olmazdı; satır içi iki aşamalı dokunuş ise kazayı yalnızca bir dokunuş uzağa taşıyor. Destinasyon üç şeyi birden yapıyor: geri tuşu doğal bir vazgeçme yolu oluyor, ekran neyin gideceğini sayıyla yazıyor, ve \"Sil\" tek başına duruyor. Kapsam hanenin tamamı: alışverişler, fişler, fiyat geçmişi ve cihazdaki fiş fotoğrafları.",
-          where: "Bu dosya · yeni ekran",
-          href: "Neydi - Kararlar.dc.html"
+          why: "Geri alınamaz bir işi snackbar süresine sıkıştırmak olmazdı; satır içi iki aşamalı dokunuş ise kazayı yalnızca bir dokunuş uzağa taşıyor. Destinasyon üç şeyi birden yapıyor: geri tuşu doğal bir vazgeçme yolu oluyor, ekran neyin gideceğini sayıyla yazıyor, ve \"Sil\" tek başına duruyor. Kapsam hanenin tamamı: liste, geziler, ürünler, fiyat gözlemleri ve mağazalar. Saklanan bir fotoğraf yok (karar 29).",
+          where: "Ekran 4 · etiket çekimi",
+          href: "Neydi - Ekranlar 2-4.dc.html"
         },
         {
           no: "3",
@@ -283,15 +115,6 @@ class Component extends DCLogic {
           why: "Geri almayı tasarım zaten \"Alındı\" bölümüne veriyor ve orada tek dokunuş; ikinci bir geri alma yolu ikinci bir zihinsel model demekti. filter_list'in tanımlı bir işi yok: liste reyona göre gruplu, başlık kaç kaldığını yazıyor. Hiçbir şey yapmayan buton çizmek, \"boş bölüm çizilmez\" ilkesinin aynı sınıfı. İki hedef kalınca Bitir de genişledi.",
           where: "Ekran 1 · Tasarım sistemi",
           href: "Neydi - Tasarim Sistemi.dc.html"
-        },
-        {
-          no: "4",
-          title: "Çok parçalı fiş",
-          rule: "Bir alışveriş = bir fiş. Kamera \"uzunsa 2 kare çek\" diyor ama sonraki ekranların hiçbiri iki kareyi göstermiyor.",
-          decision: "Parça normal bir hal, hata hali değil. Fiş Kontrol tek akış: parça başlıkları bölüm başlığı gibi çiziliyor, manşet tutar fişin tamamı, aritmetik çipi \"Fişin tamamı tutuyor\" diyor. Geçmiş'te gezi satırı toplamı taşıyor, parçalar altında girintili duruyor, gezi ikonu en kötü hali gösteriyor.",
-          why: "60 kalemlik bir fiş tek kareye sığdırılınca satır başına 4,7 piksel düşüyor — çok kare fiziksel bir zorunluluk, kolaylık değil. Parçayı ayrı satır yapmak toplamı iki yere bölerdi; parçayı hiç göstermemek yanlış okunan parçaya erişimi kapatır, ki Geçmiş tam olarak o yüzden var. Girinti hiyerarşiyi tek bir görsel işaretle söylüyor ve yeni bir bileşen gerektirmiyor.",
-          where: "Bu dosya · iki yeni ekran",
-          href: "Neydi - Kararlar.dc.html"
         },
         {
           no: "5",
@@ -325,25 +148,16 @@ class Component extends DCLogic {
           title: "\"Liste hazır, eksik görünmüyor\"",
           rule: "Ekran 3 boşsa açılmıyor, doğrudan alışveriş moduna giriliyor ve 2 saniyelik koyu bir pill görünüyor.",
           decision: "Yeni bir toast bileşeni: aksiyonsuz, 2 sn, zemin #221A14, köşe 18dp, gölge yok, floating toolbar'ın 12dp üstünde. Snackbar ayrı kalıyor.",
-          why: "Snackbar aksiyon taşıyor ve uygulamada tek bir yerde kullanılıyor: alışveriş kendiliğinden kapandığında \"Fişi gör\". Bu mesajda dokunulacak bir şey yok — olan bitti bilgisi. İkisini aynı bileşene bindirmek, işaretlemede snackbar yasağını da bulanıklaştırırdı. Toast'ın kuyruğu yok: iki mesaj çakışırsa ikincisi hiç çizilmiyor.",
+          why: "Snackbar aksiyon taşıyor ve uygulamada tek bir yerde kullanılıyor: alışveriş kendiliğinden kapandığında \"Geçmiş'te gör\". Bu mesajda dokunulacak bir şey yok — olan bitti bilgisi. İkisini aynı bileşene bindirmek, işaretlemede snackbar yasağını da bulanıklaştırırdı. Toast'ın kuyruğu yok: iki mesaj çakışırsa ikincisi hiç çizilmiyor.",
           where: "Tasarım sistemi · bileşenler",
           href: "Neydi - Tasarim Sistemi.dc.html"
         },
         {
-          no: "9",
-          title: "Fiş Kontrol'de manşet",
-          rule: "Fiş Kontrol'de 642,50 TL Fraunces 36sp manşet, yanında aritmetik çipi.",
-          decision: "Manşet tutar. 36sp Fraunces 600, altında 32dp aritmetik çipi sola dayalı; satırlar manşetin altından başlıyor.",
-          why: "Ekranın işi \"bu fiş doğru mu\" sorusunu tek bakışta kapatmak; satır sayısı değişken ve zaten kaydırmalı, yani manşet olacak sabit tek şey tutar. Fraunces'in dört kullanım yerinden biri alışveriş sonrası büyük tutar — bu onun aynı anı, yeni bir istisna değil. Çip alta indi çünkü amber hali (\"Toplam 4,20 TL tutmuyor\") yan yana dizilişte manşeti sıkıştırıyordu.",
-          where: "Ekran 4 · Mod A",
-          href: "Neydi - Ekranlar 2-4.dc.html"
-        },
-        {
           no: "10",
           title: "Avatar ve PriceText",
-          rule: "Başlıkta 28dp avatar + 6dp varlık noktası · tasarım çipte 14sp, fiş satırında 17sp fiyat istiyor.",
+          rule: "Başlıkta 28dp avatar + 6dp varlık noktası · tasarım çipte 14sp, gözlem satırında 17sp fiyat istiyor.",
           decision: "Avatar tek kullanıcılı hanede de çiziliyor: kendi baş harfi, nokta gri. PriceText ikiye ayrılıyor — priceChip 14sp/600, priceRow 17sp/600.",
-          why: "Avatar başlığın sabit bir parçası; eş eklendiğinde yerleşim değişmiyor, yalnızca nokta yeşile dönüyor. Tek kullanıcıda gizlemek, ikinci kişi eklendiği gün başlığı yeniden öğretmek olurdu. Fiyat ikiye ayrılıyor çünkü fiş satırındaki fiyat dokunulabilir ve düzeltilebilir: bir kademe büyük olması dokunulabilirliğin kendisi, süs değil.",
+          why: "Avatar başlığın sabit bir parçası; eş eklendiğinde yerleşim değişmiyor, yalnızca nokta yeşile dönüyor. Tek kullanıcıda gizlemek, ikinci kişi eklendiği gün başlığı yeniden öğretmek olurdu. Fiyat ikiye ayrılıyor çünkü gözlem satırındaki fiyat dokunulabilir ve düzeltilebilir: bir kademe büyük olması dokunulabilirliğin kendisi, süs değil.",
           where: "Ekran 1 · Compose spec",
           href: "Neydi - Compose Spec.dc.html"
         },
@@ -351,8 +165,8 @@ class Component extends DCLogic {
           no: "11",
           title: "Mağazalar bölümü ne zaman doluyor",
           rule: "Ayarlar'da Mağazalar bölümü var; store tablosu şemada duruyor ama hiçbir yazan yok.",
-          decision: "Mağaza satırı ilk fişte market adı okunduğunda kendiliğinden doğuyor. Kullanıcı elle mağaza eklemiyor; bölüm satır yokken hiç çizilmiyor.",
-          why: "Elle eklenen bir mağaza fiyat karşılaştırmasına hiçbir veri katmıyor — karşılaştırmayı besleyen şey fişin kendisi. Kullanıcıya iş verip karşılığında hiçbir şey döndürmeyen bir form, uygulamanın \"her ekran varlığını ispat eder\" kuralına takılıyor. Bölüm ilk fişten sonra kendiliğinden görünüyor, yani boş hal hiç yaşanmıyor.",
+          decision: "Pivotla revize edildi: yedi zincir hazır gelir (BİM, A101, ŞOK, Migros, CarrefourSA, File, Tarım Kredi), kullanıcı etiket çekerken market seçer — yapışkan, son seçilen hatırlanır — ve gerekirse \"Yeni market\" ile ekler. Ayarlar'daki bölüm ilk gözlemden itibaren dolu.",
+          why: "Kararın ölçütü \"seçim karşılaştırmayı besliyor mu\" idi ve cevap artık evet: gözlemin marketi kullanıcının seçimiyle geliyor, çünkü künye diye okunan bir kaynak kalmadı. Eski gerekçe şuydu ve ölçüt olarak hâlâ geçerli: elle eklenen bir mağaza fiyat karşılaştırmasına hiçbir veri katmıyorsa çizilmez. Kullanıcıya iş verip karşılığında hiçbir şey döndürmeyen bir form, uygulamanın \"her ekran varlığını ispat eder\" kuralına takılıyor. Bölüm ilk gözlemden sonra kendiliğinden görünüyor, yani boş hal hiç yaşanmıyor.",
           where: "Ekran 7 · Ayarlar",
           href: "Neydi - Ekranlar 5-8.dc.html"
         },
@@ -364,6 +178,141 @@ class Component extends DCLogic {
           why: "Oturumda eklenen ürün zaten listede, yani iki tanım çakışmıyor; oturumun kendi sayacı da başlıkta duruyor (\"3 ürün eklendi\"). Listenin durumunu göstermek sheet'i kapatıp açmaya karşı dayanıklı: aynı ürün ikinci kez işaretsiz görünmüyor. Pasif olması da aynı şeyi söylüyor — aynı satırı iki kez eklemek bir iş değil.",
           where: "Ekran 2 · Ekle sheet'i",
           href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "22",
+          title: "Zincir adının harf düzeni",
+          rule: "Örneklerde \"File\" ve \"Migros\" — başlık düzeni.",
+          decision: "Zincir adı etikette ve kasada yazdığı gibi kalıyor: AKYURT, FiLE, BİM, MİGROS ATAŞEHİR. Tüm ekranlarda uygulandı; caps satırlar 500 ağırlıkta kalıyor, punto büyütülmüyor.",
+          why: "Başlık düzeni bu tasarımda estetik bir tercihti; karşılığı her platformda ayrı bir İ/ı köprüsü, yani bir iş kalemi — ve yanlış yapıldığında \"İNCİR\" beş harf yerine yedi kod noktası oluyor. Doğruluğu bozan bir güzellik tasarımın istediği şey değil. Üstelik ekrandaki adın fişte yazanla aynı olmasının kendi değeri var: kullanıcı eşleştirmeyi gözle yapıyor.",
+          where: "Tüm ekranlar",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "23",
+          title: "Zincirler satırındaki chevron",
+          rule: "\"Takip edilen zincirler · MİGROS, A101, BİM · chevron_right\" — chevron bir destinasyon vaat ediyor.",
+          decision: "Chevron kaldırıldı, mağaza ekranı çizilmeyecek. Satır kendi başına tamam: adlar değerin içinde duruyor.",
+          why: "Karar 11 zaten elle mağaza eklenmediğini söylüyor, yani açılacak ekranın yapacağı bir iş yok — zincir başına gözlem sayısı da son fiyatlar da Ürün Detayı ile Geçmiş'in işi. Hiçbir yere götürmeyen chevron, karar 3'te kaldırılan boş butonla aynı sınıf.",
+          where: "Ekran 7 · Ayarlar",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "24",
+          title: "Ayarlar'ın boş hâli",
+          rule: "Boş hâl çerçevesinde Mağazalar bölümü \"İlk gözlemden öğrenilecek\" değeriyle çiziliyordu.",
+          decision: "Bölüm boş hâlde hiç çizilmiyor — karar 11 esas alındı. Aynı çerçevede Katılma kodu satırı da üretilmiş bir kod göstermiyor: satır soluk ve \"Faz 7'de açılıyor\" yazıyor.",
+          why: "\"İlk gözlemden öğrenilecek\" bir vaat, bir değer değil; bölüm ilk gözlemden sonra kendiliğinden göründüğü için vaadi yazmaya gerek yok. Katılma kodu ise çalışmayan bir şeyi çalışıyor gibi gösteriyordu — kullanıcının kodu eşine verip karşılığında hiçbir şey olmaması en pahalı hata türü.",
+          where: "Ekran 7 · boş hâl",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "25",
+          title: "Onay kartı ve fotoğraf",
+          rule: "Etiket çekildikten sonraki onay yüzeyi hiç çizilmemişti.",
+          decision: "Kart fotoğrafın üstüne oturur: kameranın donmuş karesi arkada durur, kart alttan yükselir ve başında etiketin kırpılmış görüntüsünü taşır. Kartın dışına dokunmak kapatmaz. OCR'ın dolduramadığı alan amber şerit ve tek cümle alır (\"fiyat okunamadı — yaz\"); dolu alanlar sessiz kalır, marka önerisi kesik çerçeveyle tahmin olduğunu söyler. Aynı anda birden çok alan boşsa yalnızca ilki vurgulanır.",
+          why: "Kullanıcının doğrulayacağı şey kâğıdın kendisi değil bizim okuduğumuz; kırpım kartın içinde durursa göz iki santim gidip geliyor, ayrı bir ekran olsaydı akış ikiye bölünürdü. Dışına dokunmanın kapatmaması koridor kararı: tek elle, yürürken, yanlışlıkla iptal olmamalı. Tek alanın vurgulanması da aynı sebep — üç amber şerit hiçbir şey söylemez.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "26",
+          title: "Aynı markette iki marka",
+          rule: "\"Nerede ucuz\" listesi market başına tek satır varsayıyordu.",
+          decision: "Satırın kimliği market + marka çifti. Aynı marketten iki marka görülmüşse iki satır çizilir; aynı çiftin eski gözlemleri satırı çoğaltmaz, en son fiyat gösterilir. Sıralama fiyata göre, en ucuz üstte.",
+          why: "Pivotun tek cümlesi buydu: aynı ürünün farklı marketlerdeki farklı markaları karşılaştırılıyor. Marketi tek satıra indirmek, BİM'de 100 TL'lik Dost ile 118 TL'lik Sütaş'ı tek fiyata eziyordu — oysa kullanıcının kararı tam olarak o ikisi arasında. Eski gözlemleri satır yapmak ise listeyi tarih akışına çevirirdi; onun yeri Ürün Detayı'nın alt bölümü.",
+          where: "Ekran 5 · nerede ucuz",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "27",
+          title: "Etiket çekimine giriş",
+          rule: "Eski çekim düğmesi özet kartındaydı, yani geziye bağlıydı.",
+          decision: "Liste başlığında kalıcı bir kamera hedefi — her iki modda da görünür, gezi olmasa da çalışır. Başka giriş noktası yok.",
+          why: "Karar 3 çekimi geziden bağımsız kıldı; özet kartındaki bir düğme onu yeniden geziye bağlardı. Başlık uygulamanın her hâlinde aynı yerde duran tek şerit, yani \"her an çekebilirsin\" cümlesinin görsel karşılığı. İkinci bir giriş noktası (boş durum kartı, alt buton) eklemek, aynı işe iki kapı açıp ikisini de zayıflatırdı.",
+          where: "Ekran 1 · başlık",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "28",
+          title: "Alışveriş başlığındaki market adı",
+          rule: "Başlıkta \"MİGROS ATAŞEHİR · 12/18\" yazıyordu; kaynağı market künyesiydi.",
+          decision: "Kaynak, o gezide son çekilen etiketin marketi. Hiç etiket çekilmediyse market adı hiç yazılmaz; başlık yalnızca \"Liste · 12/18\" olur.",
+          why: "Uydurulacak tek alternatif konum tahminiydi ve yanlış marketi yazmak hiç yazmamaktan pahalı. Kullanıcının seçtiği market ise zaten doğrulanmış bir veri. Boş kalması da bilgi veriyor: bu gezide henüz fiyat bakılmadı.",
+          where: "Ekran 1 · alışveriş modu",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "29",
+          title: "Etiket fotoğrafının ömrü",
+          rule: "Fotoğrafın ne zaman silineceği yazılmamıştı.",
+          decision: "Kaydet'e basıldığı anda silinir. Gözlemin yanında küçük bir kanıt görseli tutulmaz; hiçbir liste, detay ya da geçmiş yüzeyi fotoğraf çizmez.",
+          why: "Etiket bir ödeme kanıtı değil, bir fiyatın okunduğu andır — yazıya döndüğünde işi biter. Saklamak yalnızca maruziyet: cihaz kaybolduğunda market market nerede gezildiğinin görsel kaydı olur. Küçük bir kanıt görseli de bir vaat verirdi: \"yanlışsa fotoğrafa bak\". Doğrulama anı kartta yaşanıyor, sonrasında değil.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "30",
+          title: "Geçmiş'te gözlem satırı",
+          rule: "Gezi satırının altında parça satırları duruyordu; onlar kalktı, yerine ne geleceği açıktı.",
+          decision: "Hiçbir şey. Gezi satırı tarih, kalem sayısı ve ~ tutarı taşır; altında girinti yok. Gözlemler Ürün Detayı'nda yaşar.",
+          why: "Gözlem geziye bağlı değil (karar 3): markete girip hiçbir şey almadan üç etiket çekmek meşru bir kullanım. Gezinin altına dizmek olmayan bir bağı varmış gibi gösterir ve \"bu gezide bunları aldım\" diye okunur. Kullanıcının sorusu — \"hangi tarihte kaça almışım\" — ürün ekseninde soruluyor, gezi ekseninde değil.",
+          where: "Ekran 6 · Geçmiş",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "31",
+          title: "Boş durum 04",
+          rule: "\"Alışverişi bitir · ekran açılmaz\" çerçevesi alışveriş sonrası bir kontrol ekranının varlığına dayanıyordu.",
+          decision: "Çerçeve yeniden çizilmedi, kategorisi de değişmedi: ekran hâlâ hiç açılmıyor. Değişen tek şey gerekçe metni — artık \"temiz okundu\" değil, \"kontrol edilecek bir belge yok\".",
+          why: "Boş durumlar atlası bir ekran kataloğu değil, \"bu durumda ne olmuyor\" kataloğu. Sonuç aynı kaldığı sürece çerçeveyi yeniden çizmek yeni bilgi üretmez; yanlış olan gerekçeydi, o düzeltildi.",
+          where: "Boş durumlar · 04",
+          href: "Neydi - Bos Durumlar.dc.html"
+        },
+        {
+          no: "32",
+          title: "İkon eksen ayarı kodda ifade edilemiyor",
+          rule: "İkonografi çalışmasının A yolu: tek bir IconDefaults ile wght 300, opsz 24, karanlıkta GRAD 100 — \"tek satırlık kod değişikliği\".",
+          decision: "A yolu düştü. Üç seçenekten üçüncüsü seçildi: on beş ikon Phosphor Regular çizimleriyle elle ImageVector olarak taşınıyor. Değişken font paketlenmiyor, ikonlar Text olarak çizilmiyor, hazır bir ikon paketi bağımlılığı eklenmiyor.",
+          why: "Eksenler yalnızca değişken fontta yaşıyor; uygulamanın kullandığı çizimler derlenmiş ve eksen taşımıyor, yani A'nın tek avantajı olan ucuzluk gerçek değildi. Font paketleme yolu Fraunces'te bir kez reddedilmişti — iOS'ta ayarlar sessizce varsayılana düşüyor ve ikonlar yanlış ağırlıkta çizilir; ikonlarda bu risk metinden daha görünür olur. Kalan iki seçenek aynı mekanik işi istiyor (on beş çizimi taşımak), fark yalnızca hangi setin çizimleri olduğu. İş eşitken kimlik kazancı olan taraf seçilir: Phosphor'un yuvarlak uçları 999px çip ve 44px köşe diliyle aynı aileden, fill ağırlığı da onay durumlarını karşılıyor.",
+          where: "İkonografi · iki yol",
+          href: "Neydi - Ikonografi.dc.html"
+        },
+        {
+          no: "33",
+          title: "Karanlık temada ikon ağırlığı",
+          rule: "Telafi GRAD ekseniyle yapılacaktı; eksen yok.",
+          decision: "İkinci bir ağırlık seti taşınmıyor. Kural mutlak renk değil ilişki: karanlık temada ikon, yanındaki metinden bir kademe açık çizilir. İkincil metnin (#C6B6A9) yanındaki ikon #E4D8C9'a çıkar; birincil metin (#F5EDE6) zaten rampanın tepesinde olduğu için orada telafi yoktur. Palet değişmiyor, dolgulu ikonlarda telafi uygulanmıyor.",
+          why: "İki ağırlık seti iki ikon dili demek — aynı uygulama iki temada iki ürün gibi görünür. Renk kademesi aynı optik sorunu tek bir token'la çözüyor: koyu zeminde ince çizgi soluk göründüğü için parlaklık artırılıyor, biçim hiç değişmiyor. Dolgulu ikon ağırlığını dolgudan aldığı için aynı telafiyi almazsa fazla parlak durur.",
+          where: "İkonografi · karar",
+          href: "Neydi - Ikonografi.dc.html"
+        },
+        {
+          no: "34",
+          title: "Envanter on beş ikon",
+          rule: "Envanter on ikiye indirilmişti; kodda karşılığı olan üç ikon listede yoktu.",
+          decision: "Envanter on beş: eski on ikiye check, push_pin ve content_paste eklendi. check ile check_circle ayrı kalıyor — çıplak check satırda \"işaretlendi\", check_circle yalnızca çipte ve seçicide \"seçili\". push_pin \"her listeye giriyor\" demek, content_paste kurulumun tek ikonu.",
+          why: "Üçü de bugün bir iş yapıyor ve karşılığı başka bir ikonda yok: check_circle'ı satıra taşımak \"seçili\" ile \"işaretlendi\"yi tek işarete indirir, oysa biri kalıcı bir durum diğeri anlık bir eylem. Envanteri on ikide tutmak için gerçekten kullanılan bir ikonu listeden saklamak, envanteri belge olmaktan çıkarır.",
+          where: "İkonografi · envanter",
+          href: "Neydi - Ikonografi.dc.html"
+        },
+        {
+          no: "35",
+          title: "Gizlilik notu ve katılma kodu metni",
+          rule: "Ayarlar'daki gizlilik notu fotoğrafın cihazda kaldığını söylüyordu; katılma kodu satırı üretilmiş bir kod gösteriyordu.",
+          decision: "Gizlilik notu: \"Etiket fotoğrafı kaydedildikten sonra siliniyor; yalnızca ürün adı, markası, fiyatı ve market adı hane içinde paylaşılır.\" Katılma kodu satırı soluk ve değeri \"Faz 7'de açılıyor\".",
+          why: "Eski not karar 29'la doğrudan çelişiyordu: silinen bir şeyin cihazda kaldığını söylemek, gizlilik metninin güvenilirliğini tümden düşürür. Yeni not iki cümlelik işi tek cümlede yapıyor — ne silindiği ve ne paylaşıldığı. Katılma kodunun soluk olması ise çalışmayan bir şeyi çalışıyor gibi göstermemenin en kısa yolu: satır duruyor ki hane özelliğinin geleceği bilinsin, ama kod üretilmiyor ki kimse eşine boş bir kod vermesin.",
+          where: "Ekran 7 · Ayarlar",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "36",
+          title: "Mağazalar bölümü ve eşiği",
+          rule: "Eşik tablosu \"1 gözlem altında bölüm çizilmez\" diyordu; karar 11 ise yedi zinciri ilk günden tohumluyor.",
+          decision: "Bölüm kalıyor, eşik satırı tablodan kalktı. Satır etiketi \"Takip edilen zincirler\" değil yalnızca \"Zincirler\"; adlar etiketin altında tam genişlikte. Gözlem geldikçe ayrım renkle yapılıyor: gözlemi olan zincirler birincil renkte, yalnızca seçilebilir olanlar ikincil renkte — tek liste, tek satır, yeni bileşen yok.",
+          why: "Eşik, mağazanın ancak gerçek veriden sonra var olabildiği dönemde yazılmıştı; tohum bu ontolojiyi değiştirdi ve iki cümle aynı anda doğru olamaz hâle geldi. Bölümü gizlemek karar 11'in kendi amacına ters: tohum tam da kullanıcı neyi seçebileceğini bilsin diye var. Yanlış olan tek şey iddiaydı — \"takip edilen\" hiçbiri takip edilmiyorken karar 24'ün reddettiği desenin aynısı: henüz doğru olmayan bir şeyi vaat etmek. Renkle ayrım, sayı rozetinden ucuz ve bölümü tek satır olarak korur.",
+          where: "Ekran 7 · Ayarlar",
+          href: "Neydi - Ekranlar 5-8.dc.html"
         }
       ]
     };
