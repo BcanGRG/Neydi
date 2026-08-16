@@ -26,9 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neydi.app.data.store.SEED_CHAINS
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
@@ -170,10 +172,18 @@ fun SettingsScreen(
                     SectionHeader("Mağazalar")
                     SettingRow(
                         label = "Takip edilen zincirler",
-                        // Adlar DEGERIN kendisi: uc bes zincir tek satira
-                        // sigiyor ve ayri bir liste ekrani acmayi gereksiz
-                        // kiliyor.
+                        // ADLAR DEGERIN KENDISI ama artik ALT SATIRDA.
+                        //
+                        // Karar 23 "uc bes zincir tek satira sigiyor" varsayimiyla
+                        // yazilmisti; E13 tohumu bunu gecersiz kildi - ilk acilistan
+                        // itibaren YEDI zincir var ve "BİM, A101, ŞOK, Migros,
+                        // CarrefourSA, File, Tarım Kredi" elli karakter.
+                        //
+                        // Kararin GEREKCESI ayakta: satirin goturecegi bir ekran
+                        // yok, adlar degerin kendisi, chevron hala yok. Degisen
+                        // yalnizca geometri - adlara kendi satiri veriliyor.
                         value = state.stores.joinToString(", ") { it.name },
+                        stacked = true,
                     )
                     Note("Market etiket çekerken seçiliyor; son seçilen bir sonraki çekimde hazır gelir.")
                 }
@@ -209,7 +219,23 @@ private fun SectionHeader(text: String) {
     )
 }
 
-/** Tasarimin 56dp'lik ayar satiri: etiket solda, deger sagda, altinda hairline. */
+/**
+ * Tasarimin 56dp'lik ayar satiri: etiket solda, deger sagda, altinda hairline.
+ *
+ * DEGER DE AGIRLIKLI, ve bu bir hata duzeltmesi. Once yalnizca etiket
+ * `weight(1f)` tasiyordu; Row agirliksiz cocuklari ONCE ve TAM GENISLIKLE
+ * olcuyor, yani uzun bir deger butun satiri yiyip etikete sifir birakiyordu.
+ * Etiket de sifir genislikte sarilinca **harf harf alt alta** aktı - cihazda
+ * "Takip edilen zincirler" yirmi iki satir boyu uzadi ve degerin uzerine bindi.
+ *
+ * Iki tarafi da agirliklandirmak sorunu SINIF OLARAK kapatiyor: hangi taraf
+ * uzarsa uzasin digerini ac birakamaz. Deger `TextAlign.End` ile kendi
+ * yarisinda saga yaslaniyor, yani kisa degerler eskisi gibi sag kenarda duruyor.
+ *
+ * @param stacked deger etiketin ALTINA, tam genislikte yazilir. Degeri bir
+ *   LISTE olan satirlar icin: yedi zincir adi yan yana bir yariya sigmiyor ve
+ *   sigdirmaya calismak satiri bes satir yuksekliginde bir blok yapardi.
+ */
 @Composable
 private fun SettingRow(
     label: String,
@@ -217,34 +243,52 @@ private fun SettingRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     /** Henuz calismayan ozellik: satir cizilir ama solar (tasarim karari 24). */
     dimmed: Boolean = false,
+    stacked: Boolean = false,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Column {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).alpha(if (dimmed) 0.5f else 1f),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f),
-            )
-            value?.let {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = label,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
                 )
+                if (!stacked) {
+                    value?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                icon?.let {
+                    Spacer(Modifier.width(Spacing.sm))
+                    NeydiIcon(icon = it, contentDescription = null, size = 20.dp)
+                }
+                trailing?.let {
+                    Spacer(Modifier.width(Spacing.sm))
+                    it()
+                }
             }
-            icon?.let {
-                Spacer(Modifier.width(Spacing.sm))
-                NeydiIcon(icon = it, contentDescription = null, size = 20.dp)
-            }
-            trailing?.let {
-                Spacer(Modifier.width(Spacing.sm))
-                it()
+            if (stacked) {
+                value?.let {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
         Hairline()
@@ -374,11 +418,14 @@ private fun SettingsFilledPreview() = NeydiPreview {
                 StapleRow("p2", "Süt"),
                 StapleRow("p3", "Yumurta"),
             ),
-            stores = listOf(
-                StoreRow("s1", "MİGROS"),
-                StoreRow("s2", "A101"),
-                StoreRow("s3", "BİM"),
-            ),
+            // MAGAZALAR TOHUMUN KENDISINDEN (`SEED_CHAINS`), uydurma DEGIL.
+            //
+            // Onceki hali uc kisa ad uyduruyordu ve o yuzden bu onizleme
+            // Mağazalar satirinin cihazdaki bozuk halini HIC GOSTERMEDI:
+            // uc ad satira sigiyordu, yedisi sigmiyor. Fikstur, layout'un
+            // calistigi veriyi secmisti - kendi kendini onaylayan bir
+            // onizleme. Artik gercek tohumu okuyor.
+            stores = SEED_CHAINS.mapIndexed { i, name -> StoreRow("s$i", name) },
         ),
         onBack = {},
         onRemoveStaple = {},

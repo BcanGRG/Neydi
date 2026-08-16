@@ -217,3 +217,14 @@ alışveriş: 8 gün önce · 642 TL"*; kendi tarih merdiveni ise 7–13 günü 
 hafta"**ya topluyor. Kod merdiveni esas aldı (daha yeni, daha açık ve
 sayıyla tanımlı). Örnek mi güncellenecek, yoksa başlık merdivenin dışında mı
 kalacak? → **F11.13**
+
+**3 · Karar 23'ün "tek satıra sığıyor" varsayımı geçersiz.** Karar Mağazalar
+satırından chevron'u kaldırırken gerekçesi *"üç beş zincir tek satıra sığıyor,
+adlar değerin içinde"*ydi. **E13 tohumu bunu bozdu:** ilk açılıştan itibaren
+yedi zincir var ve `BİM, A101, ŞOK, Migros, CarrefourSA, File, Tarım Kredi`
+elli karakter — cihazda satır etiketi harf harf alt alta akacak kadar taştı.
+
+Kararın **gerekçesi ayakta** (satırın götüreceği bir ekran yok, adlar değerin
+kendisi, chevron hâlâ yok), o yüzden kararı çevirmedim: yalnızca geometri
+değişti, adlar kendi satırına indi. Tasarımın çerçeveyi buna göre tazelemesi
+gerekiyor → **E19**.

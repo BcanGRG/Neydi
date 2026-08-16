@@ -22,8 +22,13 @@ import com.neydi.app.data.db.StoreDao
  * ID'LER DETERMINISTIK: katalog tohumlarindaki (`seed-<yayginlik>`) ayni desen.
  * Rastgele id verilseydi her acilis yeni satir yazardi - `insert` IGNORE olsa
  * bile cakisma birincil anahtarda degil, hicbir yerde olmazdi.
+ *
+ * `internal`, private DEGIL - ve sebebi bir hata: Ayarlar onizlemesi uc kisa
+ * ad uyduruyordu ("MİGROS, A101, BİM") ve o fikstur satira tam sigdigi icin
+ * gercekte YEDI zincirle olusan bozulmayi hic gostermedi. Onizleme artik
+ * tohumun kendisini okuyor; fikstur ile gercek bir daha ayrisamaz.
  */
-private val SEED_CHAINS = listOf(
+internal val SEED_CHAINS = listOf(
     "BİM",
     "A101",
     "ŞOK",

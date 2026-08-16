@@ -330,7 +330,12 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 
 Örnekleri arşivdeki "Öğrenilenler"de:
 
-1. **Kendi örneğiyle kendini onaylama** — sentetik fikstür hiçbir şey kanıtlamaz
+1. **Kendi örneğiyle kendini onaylama** — sentetik fikstür hiçbir şey kanıtlamaz.
+   **Önizleme fikstürü de fikstürdür:** Ayarlar önizlemesi üç kısa mağaza adı
+   uyduruyordu, gerçek tohum yedi ad üretiyor. Üçü satıra sığdığı için önizleme
+   yeşil görünürken cihazda etiket **harf harf alt alta** akıyordu. Fikstür,
+   layout'un çalıştığı veriyi seçmişti. Kural: fikstür gerçeğin **kaynağını**
+   okusun (`SEED_CHAINS` gibi), taklidini değil
 2. **Isırdığı kanıtlanmamış test test değildir** — düzeltmeyi geri alıp kırmızıya düştüğü görülmeli
 3. **Kelime sınırsız önek eşleşmesi** — `" pos"` `" poseti"` içinde bulunur
 4. **SQL dizgisi koddur** — kolon adı, bağ değişkeni ve takma ad Kotlin ile sözleşmedir
