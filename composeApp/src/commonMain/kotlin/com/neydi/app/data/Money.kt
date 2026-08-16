@@ -28,6 +28,36 @@ fun formatMinor(minor: Long, currency: String = "TL"): String {
 }
 
 /**
+ * OCR metnindeki tutari kurusa cevirir: "*106.00" / "x484,58" / "1.234,56".
+ *
+ * [parseMinorInput]'tan farki girdinin kaynagi: bu fonksiyon KAMERADAN gelen
+ * metni okur, o yuzden OCR copunu tolere eder (`*`/`x` oneki) ve TAM IKI
+ * ondalik hane sart kosar - iki hanesi olmayan sayi fiyat degil, miktar ya da
+ * barkod parcasidir. Kullanici girdisi ise "106" yazabilir; o esneklik
+ * [parseMinorInput]'ta.
+ *
+ * SON ayirici ondalik sayilir: "1.234,56" da "1,234.56" da 123456 kurus.
+ * Etiket donemine fiş ayristiricisindan tasindi (E2) - kural evrensel.
+ */
+internal fun parseMinor(text: String): Long? {
+    val clean = text.trim().trimStart('*', 'x', 'X', '×', ' ')
+    val negative = clean.startsWith("-")
+    val body = clean.removePrefix("-")
+    val lastDot = body.lastIndexOf('.')
+    val lastComma = body.lastIndexOf(',')
+    val sep = maxOf(lastDot, lastComma)
+    if (sep < 0) return null
+    val fraction = body.substring(sep + 1)
+    if (fraction.length != 2 || fraction.any { !it.isDigit() }) return null
+    val whole = body.substring(0, sep).filter { it.isDigit() }
+    if (whole.isEmpty()) return null
+    val major = whole.toLongOrNull() ?: return null
+    val minor = fraction.toLongOrNull() ?: return null
+    val total = major * 100 + minor
+    return if (negative) -total else total
+}
+
+/**
  * Kullanicinin yazdigi tutari kurusa cevirir: "106,00" / "106.00" / "106".
  *
  * ONDALIK AYIRICI OLARAK IKISI DE KABUL: klavye virgul veriyor ama fisin

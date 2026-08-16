@@ -10,7 +10,7 @@ listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe **ürün ba
 fiyat hafızası biriktiren. Döngü: *liste → markette işaretle → etiket çek →
 ürün+marka+market+tarih+fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**İlerleme:** 0 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
+**İlerleme:** 2 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
 "Pivot sonrası" bölümünde.
 
 ---
@@ -93,7 +93,7 @@ kapsamında fiş fotoğrafı kalmadı). Tasarıma bildirim: `10-tasarima-pivot.m
   Bu dosya; eski harita arşive; README ürün cümlesi/teknoloji; tasarıma yeni
   yapıyı anlatan ve yeni yüzeyleri isteyen `10-tasarima-pivot.md`.
   **Bitti:** haritada işaretlenmemiş fiş maddesi yok, prompt tasarıma hazır.
-- [ ] **E2 — Para/rakam kurtarma.** *(cihazsız)* `parseMinor`→`Money.kt`,
+- [x] **E2 — Para/rakam kurtarma.** *(cihazsız)* `parseMinor`→`Money.kt`,
   `normalizeDigits`→`data/ocr/OcrDigits.kt`, `normalizeUnit`→`QuantityParser.kt`;
   test taşıma (`MoneyParseTest`, `OcrDigitsTest`).
   **Bitti:** yeni test dosyaları yeşil.

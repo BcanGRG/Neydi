@@ -1,5 +1,7 @@
 package com.neydi.app.data.receipt
 
+import com.neydi.app.data.ocr.normalizeDigits
+
 /**
  * Bir fis satirinin FISIN KENDI VERDIGI kimligi - parca dikisi icin (F4.15).
  *
@@ -94,11 +96,5 @@ internal fun dedupeRepeatedItems(rows: List<String>): List<String> {
     return kept
 }
 
-private fun normalizeDigits(raw: String): String = raw.map { char ->
-    when (char) {
-        'O', 'o' -> '0'
-        'S', 's' -> '5'
-        'I', 'l', 'i' -> '1'
-        else -> char
-    }
-}.joinToString("")
+// normalizeDigits -> data/ocr/OcrDigits.kt (E2 kurtarmasi): rakam karisikligi
+// OCR'in evrensel huyu, fise ozgu degil.

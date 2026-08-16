@@ -1,6 +1,8 @@
 package com.neydi.app.data.receipt
 
 import com.neydi.app.data.matchKey
+import com.neydi.app.data.normalizeUnit
+import com.neydi.app.data.parseMinor
 
 /**
  * Turkce market fisi ayristirici. GERCEK fis cikitisina gore yazildi.
@@ -248,33 +250,8 @@ private const val STORE_HEADER_ROWS = 8
 private fun hasWord(text: String): Boolean =
     text.zipWithNext().any { (a, b) -> a.isLetter() && b.isLetter() }
 
-/** OCR birimi normalize eder: `Ka` gercek fiste `Kg`nin okunmus hali. */
-private fun normalizeUnit(raw: String): String = when (raw.lowercase()) {
-    "ka", "kg" -> "kg"
-    "ad", "adet" -> "adet"
-    "gr", "g" -> "gr"
-    "lt", "l" -> "lt"
-    "pkt", "paket" -> "paket"
-    else -> raw.lowercase()
-}
-
-internal fun parseMinor(text: String): Long? {
-    val clean = text.trim().trimStart('*', 'x', 'X', '×', ' ')
-    val negative = clean.startsWith("-")
-    val body = clean.removePrefix("-")
-    val lastDot = body.lastIndexOf('.')
-    val lastComma = body.lastIndexOf(',')
-    val sep = maxOf(lastDot, lastComma)
-    if (sep < 0) return null
-    val fraction = body.substring(sep + 1)
-    if (fraction.length != 2 || fraction.any { !it.isDigit() }) return null
-    val whole = body.substring(0, sep).filter { it.isDigit() }
-    if (whole.isEmpty()) return null
-    val major = whole.toLongOrNull() ?: return null
-    val minor = fraction.toLongOrNull() ?: return null
-    val total = major * 100 + minor
-    return if (negative) -total else total
-}
+// parseMinor -> Money.kt, normalizeUnit -> QuantityParser.kt (E2 kurtarmasi):
+// ikisi de fise ozgu degil ve bu dosya E11'de siliniyor.
 
 /**
  * Anahtar kelimeyi TAM KELIME olarak arar, alt dizgi olarak DEGIL.

@@ -1,5 +1,6 @@
 package com.neydi.app.data.receipt
 
+import com.neydi.app.data.parseMinor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
