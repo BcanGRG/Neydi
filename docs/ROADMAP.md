@@ -7,8 +7,9 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 13/19 · sıradaki **E12**. Tasarım pivot turunu kapattı (20 karar). Uygulama derleniyor, cihazda kurulu,
-183 test yeşil, tek derleyici uyarısı var (F10.10'un kendi işi).
+**Durum:** Faz E 13/19 · sıradaki **E12** (kullanıcının etiket fotoğrafları bekliyor). Tasarım dördüncü turu da
+kapattı (35 karar). Uygulama derleniyor, cihazda kurulu, **214 test yeşil**, tek derleyici uyarısı var
+(F10.10'un kendi işi). İkon seti Phosphor'a taşındı — `material-icons-extended` bağımlılığı düştü.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
 > Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -273,14 +274,16 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Yukarıdaki
       dört isim; kullanılacak mı silinecek mi tasarımın kararı.
 - [ ] **F11.6 — Alışveriş modu satır container'ı.**
-- [ ] **F11.11 — İkon seti taşıması (karar 32–34).** Tasarım A yolunu düşürdü:
-      **15 ikon Phosphor Regular çizimleriyle elle `ImageVector` olarak
-      taşınacak.** Değişken font paketlenmiyor, `Text` olarak çizilmiyor,
-      ikon paketi bağımlılığı eklenmiyor. Karanlık tema telafisi **GRAD değil
-      renk kademesi** (karar 33): metin `#E4D8C9` iken ikon `#F5EDE6`, dolgulu
-      ikonlar telafi almıyor. Envanter **15** (karar 34): `check` ile
-      `check_circle` ayrı kalıyor — çıplak `check` satırda "işaretlendi",
-      `check_circle` yalnızca çipte/seçicide "seçili".
+- **F11.11 ✅ — İkon seti Phosphor'a taşındı (karar 32–34).** 15 ikon
+      Phosphor Regular 2.1.1 çizimleriyle elle `ImageVector`. Değişken font
+      paketlenmedi, `Text` olarak çizilmedi ve **`material-icons-extended`
+      bağımlılığı tamamen düştü** (sürüm kataloğundan da silindi).
+      Çağrı yerlerinin hiçbiri değişmedi — `NeydiIcons` katmanının vaadi
+      sınandı ve tuttu. Karanlık tema telafisi renk kademesi olarak geldi
+      (`iconMuted`, karar 33). Yeni testler: her path'in gerçekten ayrıştığı,
+      iki ikonun aynı çizimi taşımadığı, yalnızca yön taşıyanların
+      `autoMirror` olduğu. Cihazda beş ikon gözle doğrulandı; on beşinin
+      atlası `NeydiIcon.kt`'de `@PreviewLightDark` olarak duruyor.
 - **F11.12 ✅ — Boş durum atlası tazelendi** (tasarım yaptı): toolbar iki
       hedef, bütün tutarlar `~`, eşikler sayıyla, "parse" dili kalktı,
       çerçeve 04 → "Alışveriş kapanışı".
@@ -288,6 +291,14 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       örneği *"Son alışveriş: 8 gün önce"*; tarih merdiveni 7–13 günü
       "geçen hafta"ya topluyor. Kod merdiveni esas aldı (daha yeni ve daha
       açık). Tasarıma sorulacak.
+- [ ] **F11.14 — Karar 33'ün renkleri palete oturmuyor.** Karar *"metin
+      `#E4D8C9`, ikon `#F5EDE6`"* diyor; tasarımın kendi `tokens.json`'ı ise
+      karanlık `textPrimary`yi **`#F5EDE6`** yazıyor ve `#E4D8C9` uygulamanın
+      paletinde hiç yok. İki okuma var: (a) karanlık gövde metni bir kademe
+      inecek, (b) çift mutlak renk değil bir *ilişki* — ikon yanındaki
+      metinden bir basamak yukarıda. **(b) uygulandı**, çünkü (a) bir ikon
+      kararından türetilen palet çapında bir değişiklik olurdu. İkincil
+      metnin (`#C6B6A9`) yanındaki ikon `#E4D8C9`'a çıkıyor. Onay bekliyor.
 - **F11.10 → E19'a devroldu.**
 
 ---
