@@ -115,7 +115,46 @@ tam da uzun fişte, en çok gerektiği anda gizli kalıyor.
 bloğuna mı sabitlensin? Sabitlenirse "Onayla ve kaydet" ile aynı görsel
 ağırlığa gelmemesi gerekir.
 
-## 7. Kamera rehberi artık ikinci kare istemiyor
+## 7. Parça parça çekim, beklenen yol olmaktan çıktı — karar 4'ün öncülü değişti
+
+**Nerede çıktı.** F4.17 (tek çekim) uygulanırken. **Bu listedeki en büyük
+madde; diğerlerinin çoğu buna bağlı.**
+
+**Tasarımın verdiği.** Karar 4: *"Parça normal bir hal, hata hali değil."*
+Gerekçesi de yazılı: *"60 kalemlik bir fiş tek kareye sığdırılınca satır başına
+4,7 piksel düşüyor — çok kare fiziksel bir zorunluluk, kolaylık değil."*
+
+**Gerçek — ve o ölçüm eksikti.** 4,7 piksel, fotoğraf **OCR'a verilmeden önce
+bizim** uzun kenarı 2576 piksele indirmemizden sonraki değerdi. Sensör ~4000
+veriyor. Yani kaybın büyük kısmı fizik değil, kendi koyduğumuz sınırdı.
+
+Artık fotoğraf **içeride** üst üste binen şeritlere bölünüp her şerit kendi
+çözünürlüğünde okunuyor; kullanıcıdan dört ayrı kare istemeden aynı etki
+alınıyor.
+
+**Kullanıcı bunu üç kez, açıkça istedi:** *"parça parça çekmeye çok karşıyım,
+tekte çekip içeride bizim ayarlamamız lazım"*, *"ard arda doğru satırı ayarlamak
+çok zahmetli ve tutarlı olmuyor"*. Ölçüm de onu doğruladı: dört parçalı bir
+çekimde 60 kalemin 42'si iki parçada birden okunmuş, 6'sı hiç okunmamıştı.
+
+**Parça YOK OLMADI, istisnaya indi.** Hâlâ gerekiyor: tek kare okunamazsa,
+ya da eksik kalem tespit edilirse. Fiş Kontrol'deki bölüm başlıkları ve
+Geçmiş'teki girintili parça satırları duruyor.
+
+**Sorular.**
+1. Karar 4'ün *"parça normal bir hal"* öncülü güncellensin mi — "istisnai hal,
+   ama hata değil" gibi?
+2. Ekran 4'ün alt şeridi (*"1. kare"* sayacı + *"Bitti"*) tek çekim varsayılan
+   olunca hâlâ doğru mu? Tek kare çekip biten akışta "Bitti" yerine doğrudan
+   Fiş Kontrol'e geçmek daha mı doğru?
+3. Ekran 6'daki parça satırları istisna hâline göre mi çizilmeli (örneğin
+   yalnızca bir parça sorunluysa)?
+
+**Ölçüm bekliyor:** tek karede çekilmiş 60 kalemlik bir fişin kaç kalemini
+okuduğumuz henüz görülmedi. Sonuç "hepsi" değilse bu maddenin cevabı değişir —
+o yüzden tasarıma verilecek prompt bu ölçümden **sonra** yazılmalı.
+
+## 8. Kamera rehberi artık ikinci kare istemiyor
 
 **Nerede çıktı.** F4.17 (tek çekim) uygulanırken.
 
