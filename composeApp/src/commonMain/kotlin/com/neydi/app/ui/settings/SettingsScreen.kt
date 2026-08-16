@@ -25,8 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -121,7 +125,7 @@ fun SettingsScreen(
                     .padding(horizontal = Spacing.md),
             ) {
                 SectionHeader("Hane")
-                state.householdName?.let { SettingRow(label = "Ad", value = it) }
+                state.householdName?.let { SettingRow(label = "Ad", value = AnnotatedString(it)) }
                 // KATILMA KODU CIZILIYOR AMA SOLUK (tasarim karari 24).
                 //
                 // Once satir hic cizilmiyordu; karar 24 bunu degistirdi:
@@ -132,21 +136,21 @@ fun SettingsScreen(
                 // kopyalanacak bir sey yok.
                 SettingRow(
                     label = "Katılma kodu",
-                    value = state.joinCode ?: "Faz 7'de açılıyor",
+                    value = AnnotatedString(state.joinCode ?: "Faz 7'de açılıyor"),
                     dimmed = state.joinCode == null,
                 )
                 SettingRow(
                     label = "Üyeler",
                     // Tek kisilik hanede sayi degil DURUM yaziliyor: "1"
                     // kullaniciya hicbir sey soylemiyor.
-                    value = if (state.members.size <= 1) "Sadece sen" else "${state.members.size} kişi",
+                    value = AnnotatedString(if (state.members.size <= 1) "Sadece sen" else "${state.members.size} kişi"),
                     trailing = { if (state.members.size > 1) MemberAvatars(state.members) },
                 )
 
                 SectionHeader("Her zamankiler")
                 SettingRow(
                     label = "Sabit ürünler",
-                    value = "${state.staples.size}/${state.stapleLimit}",
+                    value = AnnotatedString("${state.staples.size}/${state.stapleLimit}"),
                 )
                 if (state.staples.isEmpty()) {
                     // Tasarimin bos hali: bolum basligi duruyor ama altinda
@@ -159,30 +163,33 @@ fun SettingsScreen(
                     }
                 }
 
-                // MAGAZALAR SATIR VARKEN CIZILIYOR (tasarim karari 11 + 24).
+                // BOLUM KOSULSUZ CIZILIYOR (tasarim karari 36).
                 //
-                // Bos hal HIC CIZILMIYOR: "Ilk gozlemden ogrenilecek" bir vaat,
-                // bir deger degil - bolum ilk gozlemden sonra kendiliginden
-                // gorunuyor, yani bos hal pratikte hic yasanmiyor.
+                // Eskiden gezinme sozlesmesi "1 gozlemin altinda bolum
+                // cizilmez" diyordu ama kod hicbir zaman gozleme bakmadi -
+                // ve karar 11'in tohumu yedi zincir yazdigi icin esik zaten
+                // hic islemiyordu. Iki karar birbirini yiyordu; karar 36
+                // esigi kaldirdi.
                 //
-                // CHEVRON YOK (karar 23): satir kendi basina tamam, adlar
-                // degerin icinde. Goturecegi bir ekran olmadigi icin chevron
-                // tutulamayacak bir soz olurdu.
+                // Asagidaki kosul o esik DEGIL: gezinme sozlesmesinin genel
+                // degismezi - *bos bolum cizilmez*. Tohum yuzunden bu dal
+                // yalnizca kullanici zincirlerin hepsini silerse yasanir.
                 if (state.stores.isNotEmpty()) {
                     SectionHeader("Mağazalar")
                     SettingRow(
-                        label = "Takip edilen zincirler",
-                        // ADLAR DEGERIN KENDISI ama artik ALT SATIRDA.
+                        // "TAKIP EDILEN" DUSTU (karar 36): sifir gozlemli bir
+                        // kurulumda hicbiri takip edilmiyordu ve satir olmayan
+                        // bir seyi iddia ediyordu. Karar 24 uretilmis katilma
+                        // kodunu tam bu gerekcyle reddetmisti - deger, henuz
+                        // dogru olmayan bir sey vaat edemez.
+                        label = "Zincirler",
+                        // ADLAR DEGERIN KENDISI, alt satirda, IKI RENKTE.
                         //
-                        // Karar 23 "uc bes zincir tek satira sigiyor" varsayimiyla
-                        // yazilmisti; E13 tohumu bunu gecersiz kildi - ilk acilistan
-                        // itibaren YEDI zincir var ve "BİM, A101, ŞOK, Migros,
-                        // CarrefourSA, File, Tarım Kredi" elli karakter.
-                        //
-                        // Kararin GEREKCESI ayakta: satirin goturecegi bir ekran
-                        // yok, adlar degerin kendisi, chevron hala yok. Degisen
-                        // yalnizca geometri - adlara kendi satiri veriliyor.
-                        value = state.stores.joinToString(", ") { it.name },
+                        // Karar 23 "uc bes zincir tek satira sigiyor"
+                        // varsayimiyla yazilmisti; tohum bunu gecersiz kildi.
+                        // Kararin gerekcesi ayakta (goturecegi ekran yok,
+                        // chevron hala yok) - degisen yalnizca geometri.
+                        value = chainNames(state.stores),
                         stacked = true,
                     )
                     Note("Market etiket çekerken seçiliyor; son seçilen bir sonraki çekimde hazır gelir.")
@@ -202,6 +209,37 @@ fun SettingsScreen(
                 // calismiyor.
                 DangerRow(label = "Verilerimi sil", onClick = onDeleteData)
                 Spacer(Modifier.height(Spacing.xl))
+            }
+        }
+    }
+}
+
+/**
+ * Zincir adlari, gozlemi olanlar METIN RENGINDE, otekiler SOLUK
+ * (tasarim karari 36).
+ *
+ * NEDEN RENK, ROZET YA DA IKINCI SATIR DEGIL: karar "tek liste, tek satir,
+ * yeni bilesen yok" diyor. Ayrimi tasiyan sey bir isaret degil, adin kendisi -
+ * koyu okunan zincirde fiyat kaydettin, soluk olan yalnizca secebilecegin
+ * bir secenek.
+ *
+ * RENK TEK BASINA YETMEZ ve yetmesi de beklenmiyor: siralama gozlemlileri
+ * one aliyor (bkz. `SettingsViewModel`), yani bilgi renk gormeyen kullaniciya
+ * da konum olarak ulasiyor.
+ *
+ * AYRAC " · ", virgul DEGIL: tasarimin kendi yazimi. Virgul iki adin tek bir
+ * ad oldugunu dusundurebiliyor ("Tarım Kredi, File"), orta nokta ayirmiyor -
+ * boluyor.
+ */
+@Composable
+private fun chainNames(stores: List<StoreRow>): AnnotatedString {
+    val observed = MaterialTheme.colorScheme.onSurfaceVariant
+    val available = MaterialTheme.colorScheme.outline
+    return buildAnnotatedString {
+        stores.forEachIndexed { i, store ->
+            if (i > 0) withStyle(SpanStyle(color = available)) { append(" · ") }
+            withStyle(SpanStyle(color = if (store.hasObservation) observed else available)) {
+                append(store.name)
             }
         }
     }
@@ -239,7 +277,13 @@ private fun SectionHeader(text: String) {
 @Composable
 private fun SettingRow(
     label: String,
-    value: String? = null,
+    /**
+     * `AnnotatedString`, duz `String` DEGIL: karar 36 Zincirler satirinda iki
+     * rengi ayni degerin icinde istiyor ve tek satirda iki renk baska turlu
+     * cizilmiyor. Skaler satirlar `AnnotatedString("...")` ile cagiriyor -
+     * ikinci bir parametre eklemek iki kod yolu yaratirdi.
+     */
+    value: AnnotatedString? = null,
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     /** Henuz calismayan ozellik: satir cizilir ama solar (tasarim karari 24). */
     dimmed: Boolean = false,
@@ -425,7 +469,13 @@ private fun SettingsFilledPreview() = NeydiPreview {
             // uc ad satira sigiyordu, yedisi sigmiyor. Fikstur, layout'un
             // calistigi veriyi secmisti - kendi kendini onaylayan bir
             // onizleme. Artik gercek tohumu okuyor.
-            stores = SEED_CHAINS.mapIndexed { i, name -> StoreRow("s$i", name) },
+            //
+            // ILK IKISINDE GOZLEM VAR (karar 36): renk ayrimi ve "gozlemliler
+            // once" siralamasi ancak karisik bir listede gorunur. Hepsi ayni
+            // bayragi tasisaydi onizleme yine kendi kendini onaylardi.
+            stores = SEED_CHAINS.mapIndexed { i, name ->
+                StoreRow("s$i", name, hasObservation = i < 2)
+            },
         ),
         onBack = {},
         onRemoveStaple = {},
@@ -433,16 +483,26 @@ private fun SettingsFilledPreview() = NeydiPreview {
 }
 
 /**
- * Yeni hane: sabit yok, magaza yok, katilma kodu yok.
+ * Yeni hane: sabit yok, katilma kodu yok, HIC GOZLEM YOK.
  *
- * Magazalar bolumu bu onizlemede HIC GORUNMEMELI - karar 11'in gorsel
- * karsiligi tam olarak bu.
+ * ONCEKI HALI TERSINI IDDIA EDIYORDU - *"Magazalar bolumu bu onizlemede HIC
+ * GORUNMEMELI"* - ve o iddia karar 36 ile duştu. Ustelik zaten yanlisti:
+ * tohum yedi zincir yazdigi icin bolum cihazda ilk acilistan beri
+ * gorunuyordu, yalnizca onizleme fikstur olarak bos bir liste vererek onu
+ * gizliyordu. Iki kez ayni tuzak: fikstur, gormek istedigimizi gosteriyordu.
+ *
+ * ARTIK ASIL SINANAN SEY BURADA: yedi zincirin hepsi SOLUK cizilmeli, cunku
+ * hicbirinde gozlem yok. Dolu onizlemeyle yan yana bakildiginda karar 36'nin
+ * renk ayrimi tek bakista gorunuyor.
  */
 @PreviewLightDark
 @Composable
 private fun SettingsEmptyPreview() = NeydiPreview {
     SettingsScreen(
-        state = SettingsState(householdName = "Adsız hane"),
+        state = SettingsState(
+            householdName = "Adsız hane",
+            stores = SEED_CHAINS.mapIndexed { i, name -> StoreRow("s$i", name) },
+        ),
         onBack = {},
         onRemoveStaple = {},
     )

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@72,600,30,0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/fill/style.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+  body { margin:0; background:#E4D8C9; font-family:'Plus Jakarta Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#B34418; text-decoration:none; }
+  a:hover { color:#8A5A00; }
+</style>
+</helmet>
+
+<div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:44px;color:#221A14">
+
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">16 Ağustos 2026 · ikonografi çalışması</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">İkonlar</div>
+    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Bugün ekranlarda Material Symbols Rounded var — Android'in varsayılanı, kurulum maliyeti sıfır, ve tam da bu yüzden hiçbir şey söylemiyor. Aşağıda önce envanter budandı, sonra aynı işler dört sette yan yana çizildi. Başlangıçta iki yol vardı — eksen ayarı ve set değişimi; birincisi teknik olarak düştü, karar Phosphor'a taşımak.</div>
+    <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45"><a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Gezinme Sozlesmesi.dc.html">Gezinme sözleşmesi</a> · <a href="Neydi - Kararlar.dc.html">Kararlar</a></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Önce budama</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">En iyi ikon iyileştirmesi, çizilmeyen ikondur. Pivot altı tanesini öldürdü, üç tanesi envantere sonradan girdi.</div>
+    </div>
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:56px 150px 1.1fr 1fr 92px;gap:16px;padding:14px 20px;background:#F1E7DB;font:700 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">
+        <div></div><div>İş</div><div>Nerede</div><div>Karar</div><div>Durum</div>
+      </div>
+      <sc-for list="{{ inventory }}" as="i" hint-placeholder-count="16">
+        <div style="display:grid;grid-template-columns:56px 150px 1.1fr 1fr 92px;gap:16px;padding:12px 20px;border-top:1px solid #E7DACB;align-items:center">
+          <div style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'opsz' 24,'wght' 300,'FILL' 0,'GRAD' 0" data-dim="{{ i.dropped }}">{{ i.ms }}</div>
+          <div style="font:600 14px/1.4 'Plus Jakarta Sans'">{{ i.job }}</div>
+          <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ i.where }}</div>
+          <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ i.note }}</div>
+          <div style="font:700 12px/1.3 'Plus Jakarta Sans'" data-badge="{{ i.state }}">{{ i.state }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">Kalan sayı 15. Bir uygulamanın ikon envanteri iki düzineyi geçtiğinde ikonlar birbirinden ayırt edilemez hâle gelir; on beş ikon, her biri tek bir işe bağlı olduğu sürece öğrenilebilir bir dil kurar.</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">02</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Aynı on beş iş, dört set</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Gerçek fontlarla, gerçek boyutta (26px ≈ 24dp). Sağdaki üç sütun taşıma için birebir eşleme listesi.</div>
+    </div>
+
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:170px repeat(4,1fr);gap:12px;padding:16px 20px;background:#F1E7DB">
+        <div style="font:700 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">İş</div>
+        <sc-for list="{{ sets }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font:700 14px/1.3 'Plus Jakarta Sans'">{{ s.name }}</div>
+            <div style="font:400 12px/1.3 'Plus Jakarta Sans';color:#8A7666">{{ s.meta }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-for list="{{ compare }}" as="c" hint-placeholder-count="15">
+        <div style="display:grid;grid-template-columns:170px repeat(4,1fr);gap:12px;padding:12px 20px;border-top:1px solid #E7DACB;align-items:center">
+          <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">{{ c.job }}</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'opsz' 24,'wght' 400,'FILL' 0,'GRAD' 0">{{ c.ms }}</span>
+            <span style="font:400 12px/1.3 'Plus Jakarta Sans';color:#B6A695">{{ c.ms }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <i class="ph {{ c.ph }}" style="font-size:26px"></i>
+            <span style="font:400 12px/1.3 'Plus Jakarta Sans';color:#B6A695">{{ c.phName }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <i class="ti {{ c.ti }}" style="font-size:26px"></i>
+            <span style="font:400 12px/1.3 'Plus Jakarta Sans';color:#B6A695">{{ c.tiName }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <i class="{{ c.ri }}" style="font-size:26px"></i>
+            <span style="font:400 12px/1.3 'Plus Jakarta Sans';color:#B6A695">{{ c.riName }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+      <sc-for list="{{ verdicts }}" as="v" hint-placeholder-count="4">
+        <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:10px">
+          <div style="font:700 15px/1.3 'Plus Jakarta Sans'">{{ v.name }}</div>
+          <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#221A14">{{ v.good }}</div>
+          <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#8A7666;border-top:1px solid #E7DACB;padding-top:8px">{{ v.bad }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">03</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Set değiştirmeden: eksen ayarı</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Material Symbols değişken bir font. Bugün varsayılan değerlerde duruyor — asıl kayıp bu.</div>
+    </div>
+    <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:22px">
+      <sc-for list="{{ axes }}" as="a" hint-placeholder-count="4">
+        <div style="display:flex;gap:26px;align-items:center;flex-wrap:wrap;border-top:1px solid #E7DACB;padding-top:18px">
+          <div style="width:150px;flex:none;display:flex;flex-direction:column;gap:2px">
+            <div style="font:700 15px/1.3 'Plus Jakarta Sans'">{{ a.axis }}</div>
+            <div style="font:400 13px/1.4 'Plus Jakarta Sans';color:#8A7666">{{ a.range }}</div>
+          </div>
+          <div style="display:flex;gap:20px;align-items:center;flex:none">
+            <sc-for list="{{ a.samples }}" as="sm" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:96px">
+                <span style="font-family:'Material Symbols Rounded';font-size:30px" data-vf="{{ sm.vf }}">{{ sm.icon }}</span>
+                <div style="font:600 12px/1.3 'Plus Jakarta Sans';color:#8A5A00;text-align:center">{{ sm.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex:1;min-width:280px;font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ a.rule }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Bugün · varsayılan (wght 400)</div>
+        <div style="display:flex;align-items:center;gap:14px;height:56px;border-top:1px solid #E7DACB;padding-top:10px">
+          <span style="font-family:'Material Symbols Rounded';font-size:24px;font-variation-settings:'wght' 400">shopping_basket</span>
+          <div style="flex:1;font:500 17px/1.28 'Plus Jakarta Sans'">Yoğurt 1 kg</div>
+          <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666;font-variation-settings:'wght' 400">chevron_right</span>
+        </div>
+        <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">İkonun çizgisi 17sp/500 metinden kalın; satırda gözü ilk ikon çekiyor, oysa okunacak şey ürün adı.</div>
+      </div>
+      <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Öneri · wght 300, opsz 24</div>
+        <div style="display:flex;align-items:center;gap:14px;height:56px;border-top:1px solid #C9B9A5;padding-top:10px">
+          <span style="font-family:'Material Symbols Rounded';font-size:24px;font-variation-settings:'opsz' 24,'wght' 300">shopping_basket</span>
+          <div style="flex:1;font:500 17px/1.28 'Plus Jakarta Sans'">Yoğurt 1 kg</div>
+          <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666;font-variation-settings:'opsz' 24,'wght' 300">chevron_right</span>
+        </div>
+        <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Çizgi metinle aynı ağırlığa iniyor; ikon satırın parçası oluyor, rakibi değil. Tek satırlık bir kod değişikliği.</div>
+      </div>
+    </div>
+
+    <div style="background:#13100E;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:16px;color:#F5EDE6">
+      <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Karanlık temada GRAD</div>
+      <div style="display:flex;gap:40px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'wght' 300,'GRAD' 0">photo_camera</span>
+          <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'wght' 300,'GRAD' 0">search</span>
+          <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'wght' 300,'GRAD' 0">history</span>
+          <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#8A7A6E">GRAD 0 — çizgiler koyu zeminde inceliyor</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'wght' 300,'GRAD' 100">photo_camera</span>
+          <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'wght' 300,'GRAD' 100">search</span>
+          <span style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'wght' 300,'GRAD' 100">history</span>
+          <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#F2C14E">GRAD 100 — açık temayla aynı ağırlıkta görünüyor</div>
+        </div>
+      </div>
+      <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#C6B6A9;max-width:80ch">Aynı çizgi kalınlığı koyu zeminde daha ince görünür; GRAD ekseni tam da bunu telafi etmek için var. Karanlık temada ikon ağırlığını değiştirmek yerine GRAD 100 verilir — böylece iki temada iki ayrı ikon seti gibi hissettirmez.</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">04</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">İki yol</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <sc-for list="{{ paths }}" as="p" hint-placeholder-count="2">
+        <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:28px;padding:28px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="height:26px;padding:0 12px;border-radius:999px;display:flex;align-items:center;font:700 12px/1 'Plus Jakarta Sans'" data-badge="{{ p.tag }}">{{ p.tag }}</div>
+            <div style="font:700 18px/1.28 'Plus Jakarta Sans'">{{ p.name }}</div>
+          </div>
+          <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#221A14">{{ p.what }}</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ p.rows }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;gap:10px;border-top:1px solid #E7DACB;padding-top:8px">
+                <div style="width:80px;flex:none;font:600 13px/1.45 'Plus Jakarta Sans';color:#8A5A00">{{ r.k }}</div>
+                <div style="flex:1;font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ r.v }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:10px">
+      <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Karar · 16 Ağustos</div>
+      <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">A yolu düştü: eksen ayarı ancak değişken fontla mümkün, uygulama ise derlenmiş statik çizimler kullanıyor — yani "tek satırlık değişiklik" diye bir şey yok. Her iki yol da aynı mekanik işi, on beş ikonun elle taşınmasını gerektiriyor. İş aynıysa kimlik kazancı olan taraf seçilir: <span style="font-weight:600;color:#221A14">Phosphor Regular</span>. Yuvarlak uçlar 999px çip ve 44px köşe diliyle aynı aileden; fill ağırlığı da onay durumları için hazır. Değişken font yolu ayrıca Fraunces'te bir kez reddedilmişti (iOS'ta sessizce varsayılana düşüyor) — aynı riski ikonlarda almaya değmez.</div>
+      <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch;border-top:1px solid #C9B9A5;padding-top:12px"><span style="font-weight:600;color:#221A14">GRAD'ın yerine ne geçiyor:</span> ikinci bir ağırlık seti değil — iki set iki ikon dili demek. Karanlık temada ikon rengi metinden bir kademe açık alınır (metin #E4D8C9 iken ikon #F5EDE6). Çizgi kalınlığı sabit kalır, algılanan ağırlık eşitlenir ve maliyet tek bir renk token'ı olur. Fill'li ikonlarda telafi gerekmez, dolgu zaten ağırlığı taşır.</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
+      <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">05</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">İkon kuralları</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Hangi set seçilirse seçilsin geçerli.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+      <sc-for list="{{ rules }}" as="r" hint-placeholder-count="8">
+        <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:8px">
+          <div style="font:700 15px/1.3 'Plus Jakarta Sans'">{{ r.name }}</div>
+          <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">{{ r.rule }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500}}">
+class Component extends DCLogic {
+  componentDidMount() { this.paint(); }
+  componentDidUpdate() { this.paint(); }
+  paint() {
+    const root = this.dom || document;
+    root.querySelectorAll('[data-vf]').forEach(el => {
+      const v = el.getAttribute('data-vf');
+      if (!v || v === 'undefined') return;
+      el.style.fontVariationSettings = v;
+    });
+    root.querySelectorAll('[data-dim]').forEach(el => {
+      el.style.opacity = el.getAttribute('data-dim') === 'true' ? '.32' : '1';
+    });
+    root.querySelectorAll('[data-badge]').forEach(el => {
+      const v = (el.getAttribute('data-badge') || '').toLowerCase();
+      const map = {
+        'kalıyor': ['#E3EFE7', '#2E6B45'],
+        'düştü': ['#EFE6DA', '#8A7666'],
+        'yeni': ['#F6E7D2', '#8A5A00'],
+        'a': ['#E3EFE7', '#2E6B45'],
+        'b': ['#F6E7D2', '#8A5A00']
+      };
+      const pair = map[v];
+      if (!pair) return;
+      el.style.background = pair[0];
+      el.style.color = pair[1];
+      if (!el.style.padding) { el.style.padding = '3px 9px'; el.style.borderRadius = '999px'; el.style.justifySelf = 'start'; }
+    });
+  }
+  renderVals() {
+    const s = (icon, label, vf) => ({ icon, label, vf });
+    return {
+      inventory: [
+        { ms: "add", job: "Ekle", where: "Ekle sheet'i, toolbar, yeni ürün", note: "Tek ekleme ikonu; \"+ Yeni market\" de aynısını kullanır", state: "kalıyor", dropped: false },
+        { ms: "photo_camera", job: "Etiket çek", where: "Liste başlığı, kalanını çek", note: "Uygulamanın ikinci en önemli hedefi; ikonu yalnız o taşır", state: "kalıyor", dropped: false },
+        { ms: "more_vert", job: "Menü", where: "Liste başlığı", note: "Tek taşma menüsü", state: "kalıyor", dropped: false },
+        { ms: "arrow_back", job: "Geri", where: "Her destinasyon", note: "Kamera ve kartta close ile değişir", state: "kalıyor", dropped: false },
+        { ms: "close", job: "Kapat", where: "Kamera, sheet tutamağı", note: "\"Geri\" ile aynı işi yapar ama tam ekran yüzeylerde", state: "kalıyor", dropped: false },
+        { ms: "search", job: "Ara", where: "Ekle sheet'i, ürün seçici", note: "Yalnızca arama alanının içinde", state: "kalıyor", dropped: false },
+        { ms: "check_circle", job: "Onaylandı", where: "Market seçici, işaretli çip", note: "FILL 1 — dolu olan tek ikon", state: "kalıyor", dropped: false },
+        { ms: "chevron_right", job: "İleri", where: "Ayarlar satırı, kart alanı", note: "Dokunulabilirliğin tek işareti", state: "kalıyor", dropped: false },
+        { ms: "expand_more", job: "Aç", where: "Market çipi, sheet ipucu", note: "Aşağı açılan her şey", state: "kalıyor", dropped: false },
+        { ms: "logout", job: "Alışverişi bırak", where: "Taşma menüsü", note: "Tek maddelik menünün tek ikonu", state: "kalıyor", dropped: false },
+        { ms: "bolt", job: "Flaş", where: "Kamera", note: "Sistem davranışı; kendi ikonumuz olmalı", state: "kalıyor", dropped: false },
+        { ms: "info", job: "Eksik bilgi", where: "Onay kartı amber şeridi", note: "Uyarı değil bilgi; error ikonu kullanılmaz", state: "kalıyor", dropped: false },
+        { ms: "check", job: "İşaretlendi", where: "Liste satırı, Ekle sheet'i", note: "Çıplak check satırda; check_circle yalnızca çipte ve seçicide", state: "kalıyor", dropped: false },
+        { ms: "push_pin", job: "Sabit ürün", where: "Ayarlar · her zamankiler", note: "\"Bu her listeye giriyor\" demek; seçili demek değil", state: "kalıyor", dropped: false },
+        { ms: "content_paste", job: "Listeyi yapıştır", where: "Kurulum", note: "Tek kez görünen akışın tek ikonu", state: "kalıyor", dropped: false },
+        { ms: "receipt_long", job: "Belge", where: "Geçmiş satırı", note: "Pivotla öldü — okunacak bir belge yok", state: "düştü", dropped: true },
+        { ms: "error_outline", job: "Okuma sorunlu", where: "Geçmiş satırı", note: "Gezi ikonu tamamen kalktı", state: "düştü", dropped: true },
+        { ms: "functions", job: "Toplam hesaplandı", where: "Aritmetik çipi", note: "Çip metni zaten söylüyor; ikon fazlalıktı", state: "düştü", dropped: true },
+        { ms: "zoom_in", job: "Fotoğrafı büyüt", where: "Fotoğraf önizlemesi", note: "Fotoğraf saklanmıyor (karar 29)", state: "düştü", dropped: true },
+        { ms: "content_copy", job: "Kodu kopyala", where: "Katılma kodu", note: "Faz 7'ye kadar yok", state: "düştü", dropped: true },
+        { ms: "shopping_basket", job: "Ürün", where: "Ürün Detayı manşeti", note: "Kategori kutucuğu zaten iki harf taşıyor", state: "düştü", dropped: true }
+      ],
+      sets: [
+        { name: "Material Symbols Rounded", meta: "bugünkü set · Apache 2.0 · değişken eksenli" },
+        { name: "Phosphor", meta: "MIT · 6 ağırlık · CMP portu var" },
+        { name: "Tabler", meta: "MIT · 2px sabit çizgi · CMP portu var" },
+        { name: "Remix Icon", meta: "Apache 2.0 · line + fill çifti" }
+      ],
+      compare: [
+        { job: "Ekle", ms: "add", ph: "ph-plus", phName: "plus", ti: "ti-plus", tiName: "plus", ri: "ri-add-line", riName: "add-line" },
+        { job: "Etiket çek", ms: "photo_camera", ph: "ph-camera", phName: "camera", ti: "ti-camera", tiName: "camera", ri: "ri-camera-line", riName: "camera-line" },
+        { job: "Menü", ms: "more_vert", ph: "ph-dots-three-vertical", phName: "dots-three-vertical", ti: "ti-dots-vertical", tiName: "dots-vertical", ri: "ri-more-2-line", riName: "more-2-line" },
+        { job: "Geri", ms: "arrow_back", ph: "ph-arrow-left", phName: "arrow-left", ti: "ti-arrow-left", tiName: "arrow-left", ri: "ri-arrow-left-line", riName: "arrow-left-line" },
+        { job: "Kapat", ms: "close", ph: "ph-x", phName: "x", ti: "ti-x", tiName: "x", ri: "ri-close-line", riName: "close-line" },
+        { job: "Ara", ms: "search", ph: "ph-magnifying-glass", phName: "magnifying-glass", ti: "ti-search", tiName: "search", ri: "ri-search-line", riName: "search-line" },
+        { job: "Onaylandı", ms: "check_circle", ph: "ph-check-circle", phName: "check-circle", ti: "ti-circle-check", tiName: "circle-check", ri: "ri-checkbox-circle-line", riName: "checkbox-circle-line" },
+        { job: "İleri", ms: "chevron_right", ph: "ph-caret-right", phName: "caret-right", ti: "ti-chevron-right", tiName: "chevron-right", ri: "ri-arrow-right-s-line", riName: "arrow-right-s-line" },
+        { job: "Aç", ms: "expand_more", ph: "ph-caret-down", phName: "caret-down", ti: "ti-chevron-down", tiName: "chevron-down", ri: "ri-arrow-down-s-line", riName: "arrow-down-s-line" },
+        { job: "Alışverişi bırak", ms: "logout", ph: "ph-sign-out", phName: "sign-out", ti: "ti-logout", tiName: "logout", ri: "ri-logout-box-line", riName: "logout-box-line" },
+        { job: "Flaş", ms: "bolt", ph: "ph-lightning", phName: "lightning", ti: "ti-bolt", tiName: "bolt", ri: "ri-flashlight-line", riName: "flashlight-line" },
+        { job: "Eksik bilgi", ms: "info", ph: "ph-info", phName: "info", ti: "ti-info-circle", tiName: "info-circle", ri: "ri-information-line", riName: "information-line" },
+        { job: "İşaretlendi", ms: "check", ph: "ph-check", phName: "check", ti: "ti-check", tiName: "check", ri: "ri-check-line", riName: "check-line" },
+        { job: "Sabit ürün", ms: "push_pin", ph: "ph-push-pin", phName: "push-pin", ti: "ti-pin", tiName: "pin", ri: "ri-pushpin-line", riName: "pushpin-line" },
+        { job: "Listeyi yapıştır", ms: "content_paste", ph: "ph-clipboard-text", phName: "clipboard-text", ti: "ti-clipboard-text", tiName: "clipboard-text", ri: "ri-clipboard-line", riName: "clipboard-line" }
+      ],
+      verdicts: [
+        { name: "Material Symbols Rounded", good: "Tek değişken font: ağırlık, dolgu, optik boy ve koyu zemin telafisi tek dosyada. Android kullanıcısına tanıdık, kurulum sıfır.", bad: "Tanıdık olması aynı zamanda sorunu: uygulama sistem menüsü gibi görünüyor. Yuvarlak varyantta bile uçlar Fraunces'in yumuşaklığını karşılamıyor." },
+        { name: "Phosphor", good: "Yuvarlak uçlar ve düşük kontrastlı geometri, 999px çip ve 44px köşe diliyle birebir. Regular ağırlığı 17sp metinle aynı görsel ağırlıkta; fill ağırlığı FILL ekseninin yerini tutuyor.", bad: "Değişken eksen yok — karanlık tema telafisi için ayrı ağırlık gerekir. CMP portu topluluk işi, sürüm takibi bize kalır." },
+        { name: "Tabler", good: "2px sabit çizgi, 24 grid; kalabalık listelerde çok okunaklı. Olgun CMP portları mevcut.", bad: "Kare uçlar ve dik açılar bu palette sert duruyor; sıcak kilerden çok gösterge paneli hissi veriyor." },
+        { name: "Remix Icon", good: "Her ikonun line ve fill çifti hazır; seçili/seçilmemiş ayrımı bedava geliyor.", bad: "Çizim dili karışık: bazı ikonlar dolgun, bazıları ince. On iki ikonluk bir sette bu tutarsızlık hemen görünür." }
+      ],
+      axes: [
+        {
+          axis: "wght", range: "100–700 · bugün 400",
+          samples: [s("photo_camera", "300 · öneri", "'wght' 300"), s("photo_camera", "400 · bugün", "'wght' 400"), s("photo_camera", "500", "'wght' 500")],
+          rule: "İkon çizgisi yanındaki metnin ağırlığını geçmemeli. Gövde metni 500 ağırlıkta olduğu için ikonların doğru yeri 300; 24dp'de optik olarak eşitleniyor."
+        },
+        {
+          axis: "FILL", range: "0–1 · bugün karışık",
+          samples: [s("check_circle", "0 · nötr", "'FILL' 0,'wght' 300"), s("check_circle", "1 · seçili", "'FILL' 1,'wght' 300")],
+          rule: "Dolgu bir durum bildirir: seçili, onaylanmış, tamamlanmış. Süs olarak kullanılmaz. Uygulamada dolu çizilen tek ikon check_circle."
+        },
+        {
+          axis: "GRAD", range: "-50–200 · bugün 0",
+          samples: [s("history", "0 · açık tema", "'GRAD' 0,'wght' 300"), s("history", "100 · karanlık", "'GRAD' 100,'wght' 300")],
+          rule: "Koyu zeminde çizgiler optik olarak inceliyor. Ağırlığı değiştirmek yerine GRAD artırılır; ikonun biçimi aynı kalır, yalnızca ağırlık algısı eşitlenir."
+        },
+        {
+          axis: "opsz", range: "20–48 · bugün ayarsız",
+          samples: [s("search", "20dp", "'opsz' 20,'wght' 300"), s("search", "24dp", "'opsz' 24,'wght' 300"), s("search", "40dp", "'opsz' 40,'wght' 300")],
+          rule: "Optik boy piksel boyuyla eşleşmezse küçük ikonlar tıkanır, büyükler cılız kalır. Kural: opsz her zaman dp boyuna eşit."
+        }
+      ],
+      paths: [
+        {
+          tag: "A", name: "Ayar — düştü",
+          what: "Set aynı kalır, eksenler ayarlanır sanılıyordu. Kodda karşılığı yok: uygulama derlenmiş statik çizimler kullanıyor, eksen taşımıyorlar.",
+          rows: [
+            { k: "neden düştü", v: "wght / opsz / GRAD yalnızca değişken fontta yaşar. İkonları Text olarak çizmek gerekirdi; o yol Fraunces'te bir kez reddedildi — iOS'ta sessizce varsayılana düşüyor." },
+            { k: "yine de kalan", v: "Envanter budaması geçerli: düşen altı ikon koddan kalktı, her ikon tek işe bağlandı." },
+            { k: "maliyet", v: "Sanılan: bir günlük iş. Gerçek: font paketleme + çizim yolunun değişmesi + iOS riski." },
+            { k: "kalıntı", v: "Kuralları B yoluna taşındı: 24dp, metinle aynı görsel ağırlık, dolgu yalnızca onay durumu." }
+          ]
+        },
+        {
+          tag: "B", name: "Phosphor — seçildi",
+          what: "Phosphor Regular'a geçilir; fill ağırlığı seçili durumlar için kullanılır.",
+          rows: [
+            { k: "paket", v: "CMP için hazır artefaktlar var (composables.com ve topluluk portları); yalnızca kullanılan 15 ikon taşınırsa bağımlılık bile gerekmez — 15 ImageVector yeter." },
+            { k: "boyut", v: "15 ikon elle taşındığında APK etkisi birkaç KB; tüm paket eklenirse yüzlerce dosya gelir, gerek yok." },
+            { k: "risk", v: "Değişken eksen yok; karanlık tema telafisi renk kademesiyle çözülüyor (aşağıda)." },
+            { k: "kazanç", v: "Uygulama sistem varsayılanı gibi görünmeyi bırakır; ikonlar Fraunces ve yuvarlak çiplerle aynı ailedenmiş gibi durur." }
+          ]
+        }
+      ],
+      rules: [
+        { name: "İkon iş yapar", rule: "Bir ikon ya dokunulabilir bir hedeftir ya da bir durumu bildirir. Süs ikonu, başlık ikonu, bölüm ikonu yok." },
+        { name: "Tek metafor", rule: "Bir kavramın tek ikonu vardır: zaman her yerde aynı saat, market her yerde aynı dükkân. İki ikon aynı şeyi anlatamaz." },
+        { name: "Etiketsiz ikon", rule: "Yalnızca evrensel altı hedef etiketsiz durabilir: geri, kapat, menü, ara, ekle, kamera. Diğer her ikon metinle birlikte." },
+        { name: "Yıkıcı iş", rule: "Silme asla ikonla anlatılmaz; \"Verilerimi sil\" bir metin satırıdır. Çöp kutusu ikonu uygulamada yok." },
+        { name: "Boyut", rule: "Varsayılan 24dp; satır içi metadata 20dp; kamera kontrolleri 26dp. Dokunma hedefi her zaman en az 48dp, ikonun kendisi değil." },
+        { name: "Hizalama", rule: "İkon metnin optik ortasına hizalanır (baseline'a değil). Satırda ikon–metin boşluğu 12dp, sabit." },
+        { name: "Renk", rule: "İkon kendi rengini taşımaz; içinde bulunduğu metnin rengini alır. Tek istisna amber şeritteki bilgi ikonu." },
+        { name: "Erişilebilirlik", rule: "Etiketsiz her ikonun içerik açıklaması Türkçe ve fiil: \"etiket çek\", \"geri git\". Durum bildiren ikonlar okunmaz, durumu satırın metni söyler." }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

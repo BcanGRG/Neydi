@@ -470,6 +470,25 @@ interface PriceObservationDao {
         """,
     )
     suspend fun lastUsedStoreId(householdId: String): String?
+
+    /**
+     * Gozlem kaydedilmis zincirlerin id'leri (tasarim karari 36).
+     *
+     * Ayarlar'daki Zincirler satiri iki rengi bununla ayiriyor: gozlemi olan
+     * zincir metin renginde, yalnizca tohumdan gelen soluk. [lastUsedStoreId]
+     * yetmiyordu - o SONUNCUYU donduruyor, burada hepsi lazim.
+     *
+     * DISTINCT: bir markette elli gozlem olabilir ama soru "var mi", "kac
+     * tane" degil. Sayiya cevirmek [com.neydi.app.ui.settings.StoreRow]
+     * KDoc'unun bilerek reddettigi sey.
+     */
+    @Query(
+        """
+        SELECT DISTINCT storeId FROM price_observation
+        WHERE householdId = :householdId AND storeId IS NOT NULL AND deletedAt IS NULL
+        """,
+    )
+    fun observeStoreIdsWithObservations(householdId: String): Flow<List<String>>
 }
 
 @Dao
@@ -562,16 +581,16 @@ interface StoreDao {
     suspend fun insert(store: Store)
 
     /**
-     * Ayarlar'daki Magazalar bolumu.
+     * Ayarlar'daki Zincirler satiri (tasarim karari 36).
      *
-     * "BOS DONERSE BOLUM CIZILMEZ" ARTIK OLU BIR DAL: E13 tohumu her acilista
-     * yedi zinciri yaziyor, yani bu sorgu pratikte hic bos donmuyor ve bolum
-     * ilk acilistan itibaren goruluyor.
+     * BURASI GOZLEM SAYISINA BAKMIYOR ve artik bakmamasi DOGRU. Gezinme
+     * sozlesmesi bir zamanlar *"Ayarlar · Magazalar, en az 1 gozlem"* esigini
+     * yaziyordu; E13 tohumu yedi zinciri her acilista yazdigi icin bu sorgu hic
+     * bos donmuyordu ve esik hic islemiyordu. Iki karar birbirini yiyordu.
      *
-     * Bu, tasarimin gezinme sozlesmesindeki *"Ayarlar · Magazalar, en az
-     * 1 gozlem"* esigiyle CELISIYOR - burasi gozlem sayisini hic okumuyor.
-     * Iki karar birbirini yiyor; hangisinin gecerli oldugu **F11.15**'te
-     * tasarima soruldu, o gelene kadar davranis degistirilmedi.
+     * Karar 36 esigi kaldirdi: bolum kosulsuz ciziliyor, gozlemi olan zincir
+     * ile yalnizca secilebilir olan RENKLE ayrisiyor. Ayrimin verisi bu sorgu
+     * degil, [PriceObservationDao.observeStoreIdsWithObservations].
      */
     @Query(
         """
