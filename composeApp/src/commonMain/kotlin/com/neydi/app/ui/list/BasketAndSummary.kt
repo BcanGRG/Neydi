@@ -44,7 +44,11 @@ internal fun EstimatedBasket(
     totalCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    if (pricedCount == 0) return
+    // ESIK UC FIYATLI URUN (gezinme sozlesmesi · thresholds). Tek ya da iki
+    // fiyat bilinen bir sepette tahmin, tahminden cok yanilgi uretiyor:
+    // "~40 TL" yazan bir satir, on sekiz urunluk bir sepetin yaninda yanlis
+    // bir guven veriyor. Altinda satir HIC gorunmuyor.
+    if (pricedCount < MIN_PRICED_ITEMS) return
 
     Row(
         modifier = modifier
@@ -213,3 +217,6 @@ private fun SummaryWithTotalPreview() = NeydiPreview {
 private fun SummaryWithoutTotalPreview() = NeydiPreview {
     SummaryCard(takenCount = 6, totalCount = 8, amountMinor = null, durationMinutes = 31, onDismiss = {})
 }
+
+/** Sepet tahmininin cizilmesi icin gereken en az fiyatli urun (tasarim esigi). */
+private const val MIN_PRICED_ITEMS = 3

@@ -3,27 +3,18 @@ package com.neydi.app.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.ContentPaste
-import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.FilterList
-import androidx.compose.material.icons.rounded.Functions
-import androidx.compose.material.icons.rounded.HourglassTop
-import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,26 +54,16 @@ object NeydiIcons {
     val CheckCircle: ImageVector get() = Icons.Rounded.CheckCircle
     val Close: ImageVector get() = Icons.Rounded.Close
     val ArrowBack: ImageVector get() = Icons.AutoMirrored.Rounded.ArrowBack
-    val ArrowUpward: ImageVector get() = Icons.Rounded.ArrowUpward
-    val ArrowDownward: ImageVector get() = Icons.Rounded.ArrowDownward
     val ExpandMore: ImageVector get() = Icons.Rounded.ExpandMore
-    val Undo: ImageVector get() = Icons.AutoMirrored.Rounded.Undo
-    val FilterList: ImageVector get() = Icons.Rounded.FilterList
     /** "Satirlardan hesaplandi" - toplam okunamadiginda (tasarim karari 15). */
-    val Functions: ImageVector get() = Icons.Rounded.Functions
     val ContentPaste: ImageVector get() = Icons.Rounded.ContentPaste
-    val ContentCopy: ImageVector get() = Icons.Rounded.ContentCopy
     val Search: ImageVector get() = Icons.Rounded.Search
-    val LightMode: ImageVector get() = Icons.Rounded.LightMode
     /** "Alisverisi birak" - moddan cikis (tasarim karari 1). */
     val Logout: ImageVector get() = Icons.AutoMirrored.Rounded.Logout
-    val DragIndicator: ImageVector get() = Icons.Rounded.DragIndicator
     /** "Bu fisin devamini cek" - cok parcali fis (tasarim karari 4). */
     val PhotoCamera: ImageVector get() = Icons.Rounded.PhotoCamera
-    val HourglassTop: ImageVector get() = Icons.Rounded.HourglassTop
 
     /** Fis "kontrol bekliyor" hali. Dolgusuz varyant - tasarim rest FILL 0 diyor. */
-    val Error: ImageVector get() = Icons.Rounded.ErrorOutline
 }
 
 /** Tasarimin varsayilan ikon boyutu (`iconography/opticalSize`). */
