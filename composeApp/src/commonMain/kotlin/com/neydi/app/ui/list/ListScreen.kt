@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.MaterialTheme
@@ -104,6 +105,7 @@ fun ListScreen(
     val sheetResults by vm.sheetResults.collectAsStateWithLifecycle()
     val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
+    val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
 
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -151,6 +153,7 @@ fun ListScreen(
         onAddFromLastTrip = vm::addFromLastTrip,
         toast = toast,
         onToastShown = onToastShown,
+        lastAdded = lastAdded,
     )
 
     // Sheet, EKRAN DEGIL: liste arkada gorunur kaliyor.
@@ -258,6 +261,8 @@ internal fun ListContent(
     onAddFromLastTrip: () -> Unit = {},
     toast: String? = null,
     onToastShown: () -> Unit = {},
+    /** En son eklenen satir; gorunur degilse listeye kaydiriliyor. Bkz. [AddedRow]. */
+    lastAdded: AddedRow? = null,
     /**
      * Simdiki an - basligin "8 gun once" hesabi icin.
      *
@@ -269,9 +274,37 @@ internal fun ListContent(
     KeepScreenOn(state.shoppingMode)
     val haptics = LocalHapticFeedback.current
 
+    val listState = rememberLazyListState()
+    val showsClipboardChip = clipboardText != null && !state.shoppingMode && !state.isEmpty
+
+    // EKLENEN SATIR GORUNUR KILINIYOR (kullanici bildirdi).
+    //
+    // Yasanan sey: klavye acikken bir sey yaziyorsun, satir kendi reyonuna
+    // dusuyor, o reyon da ekranin altindaysa hicbir sey olmamis gibi
+    // gorunuyor - girdi temizleniyor ama liste kipirdamiyor.
+    //
+    // SATIR TASINMIYOR, KAMERA TASINIYOR. Yeni satiri en uste almak akla gelen
+    // ilk cozum ve yanlis: listenin reyon duzeni markette gezerken isin
+    // TAMAMI. Duzen duruyor, bakis acisi degisiyor.
+    //
+    // ZATEN GORUNUYORSA KIPIRDAMIYOR: ekleme ekranin ortasinda oluyorsa
+    // kaydirmak gereksiz bir sicrama olurdu. Kosul "tamamen gorunur mu" -
+    // yarisi klavyenin altinda kalan satir gorunmus sayilmaz.
+    LaunchedEffect(lastAdded) {
+        val added = lastAdded ?: return@LaunchedEffect
+        val index = rowIndexInList(state, showsClipboardChip, added.rowId) ?: return@LaunchedEffect
+        val info = listState.layoutInfo
+        val gorunen = info.visibleItemsInfo.firstOrNull { it.index == index }
+        val tamGorunur = gorunen != null &&
+            gorunen.offset >= info.viewportStartOffset &&
+            gorunen.offset + gorunen.size <= info.viewportEndOffset
+        if (!tamGorunur) listState.animateScrollToItem(index)
+    }
+
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentPadding = WindowInsets.safeDrawing
                     .only(WindowInsetsSides.Top)
@@ -320,7 +353,7 @@ internal fun ListContent(
                             onAddFromLastTrip = if (state.lastTrip != null) onAddFromLastTrip else null,
                         )
                     }
-                } else if (clipboardText != null && !state.shoppingMode) {
+                } else if (showsClipboardChip) {
                     // Liste doluyken de yapistirilabilir - ama alisveris
                     // modunda ASLA: reyonda toplu ekleme yapilmaz.
                     item {

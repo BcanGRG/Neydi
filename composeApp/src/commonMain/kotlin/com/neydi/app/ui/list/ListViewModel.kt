@@ -512,6 +512,25 @@ class ListViewModel(
     private val _suggestions = MutableStateFlow<List<CatalogSeed>>(emptyList())
     val suggestions: StateFlow<List<CatalogSeed>> = _suggestions
 
+    private val _lastAdded = MutableStateFlow<AddedRow?>(null)
+
+    /**
+     * En son eklenen satir - ekran onu gorunur kilsin diye.
+     *
+     * Kullanicinin yasadigi sorun: klavye acikken yazip ekliyorsun, satir kendi
+     * reyonuna dusuyor ve o reyon ekranin altindaysa **hicbir sey olmamis gibi**
+     * gorunuyor. Girdi alani temizleniyor, liste kipirdamiyor, eklendi mi
+     * eklenmedi mi belli degil.
+     *
+     * SIRA DEGISTIRILMIYOR: satiri en uste tasimak akla gelen ilk cozum ama
+     * listenin reyon duzenini bozardi - markette gezerken satirlarin reyon
+     * sirasinda durmasi bu ekranin butun isi. Cozum satiri tasimak degil, ONA
+     * BAKMAK.
+     */
+    val lastAdded: StateFlow<AddedRow?> = _lastAdded
+
+    private var addSeq = 0L
+
     fun onInputChanged(value: String) {
         _input.value = value
         viewModelScope.launch {
@@ -570,18 +589,33 @@ class ListViewModel(
                 categoryId = categoryId,
                 unit = unit,
             )
-            repo.add(
+            val line = repo.add(
                 householdId = household,
                 tripId = trip.id,
                 product = product,
                 memberId = memberId,
                 count = count,
             )
+            // SAYAC DA TASINIYOR, yalnizca id DEGIL: ayni urunu ikinci kez
+            // eklemek yeni satir acmiyor, var olanin adedini artiriyor - yani id
+            // degismiyor. Yalnizca id'ye baksaydik ekran "ayni deger" gorup
+            // kipirdamazdi ve kullanici tam da ikinci eklemede eklendi mi diye
+            // bakiyor olurdu.
+            _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
             _input.value = ""
             _suggestions.value = emptyList()
     }
 
 }
+
+/**
+ * En son eklenen satir ve kacinci ekleme oldugu.
+ *
+ * [seq] tek basina bir sayac degil, TETIKLEYICI: ayni satira ikinci kez ekleme
+ * yapildiginda [rowId] degismedigi icin ekranin bunu yeni bir olay olarak
+ * gorebilmesinin tek yolu bu.
+ */
+data class AddedRow(val rowId: String, val seq: Long)
 
 /** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */
 data class BasketEstimate(
