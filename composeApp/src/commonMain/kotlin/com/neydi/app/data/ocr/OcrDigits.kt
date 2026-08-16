@@ -3,7 +3,7 @@ package com.neydi.app.data.ocr
 /**
  * OCR'in harfe cevirdigi rakamlari geri alir.
  *
- * Gercek fiste goruldu: `S0` (50), `869O508101426` (sifir yerine harf O).
+ * Gercek basili metinde goruldu: `S0` (50), `869O508101426` (sifir yerine O).
  * Rakam karisikligi OCR'in evrensel huyu - fis doneminden etiket donemine
  * degismeden tasindi (E2). SADECE rakam beklenen metne uygulanir; ada
  * uygulamak "Iskender"i "1skender" yapar.

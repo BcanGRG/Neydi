@@ -12,7 +12,7 @@ import androidx.room3.PrimaryKey
 @Entity(
     tableName = "product",
     indices = [
-        // Yazarken tamamlama ve fis eslemesi matchKey uzerinden arar.
+        // Yazarken tamamlama ve etiket eslemesi matchKey uzerinden arar.
         // UNIQUE DEGIL: ayni matchKey'e sahip iki urun mesru olabilir
         // (farkli kategori, farkli ambalaj). Tekillestirme urun birlestirme
         // isidir, sema kisiti degil.
@@ -43,7 +43,7 @@ data class Product(
 )
 
 /**
- * Fisteki ham metni bir urune baglar - MAGAZA ZINCIRI BAZINDA.
+ * Etiketteki ham metni bir urune baglar - MAGAZA ZINCIRI BAZINDA.
  *
  * Zincir bazinda olmasinin sebebi: A101 "T.BUGDAY EKMEK 500G" yazarken Migros
  * "TAM BUGDAY EKMEGI" yaziyor. Ayni urun, tamamen farkli iki ham metin. Tek bir
@@ -62,7 +62,7 @@ data class Product(
         // esleme girerse hangisinin dogru oldugu belirsizlesir ve fiyat
         // gecmisi iki urune bolunur.
         Index(value = ["householdId", "storeChain", "rawTextNormalized"], unique = true),
-        // Fis okurken en sik sorgu: bu zincirde bu metin daha once gorulmus mu.
+        // Etiket okurken en sik sorgu: bu zincirde bu metin daha once gorulmus mu.
         Index(value = ["productId"]),
     ],
 )

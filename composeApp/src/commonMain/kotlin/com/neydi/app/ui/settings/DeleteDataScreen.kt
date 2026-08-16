@@ -155,7 +155,12 @@ fun DeleteDataScreen(
                 Hairline()
                 Text(
                     text = buildString {
-                        append("Fiş fotoğrafları cihazdan da silinir.")
+                        // FOTOGRAF CUMLESI KALKTI (tasarim karari 29):
+                        // etiket fotografi kayittan hemen sonra siliniyor,
+                        // yani silinecek bir fotograf zaten yok. Olmayan bir
+                        // seyi silineceklerin arasinda saymak, ekranin kendi
+                        // kuralini bozardi.
+                        append("Bu işlem geri alınamaz.")
                         // Es uyarisi YALNIZCA iki kisilik hanede. Tek kisilik
                         // hanede olmayan bir riski varmis gibi gostermek olurdu.
                         if (state.warnsSpouse) {
@@ -222,8 +227,7 @@ private fun DeleteDataPreview() = NeydiPreview {
     DeleteDataScreen(
         state = DeleteDataState(
             rows = listOf(
-                DeleteRow("Alışveriş ve fişler", "18 + 12"),
-                DeleteRow("Fiş fotoğrafı", "12"),
+                DeleteRow("Alışveriş", "18"),
                 DeleteRow("Ürün ve fiyat geçmişi", "64 + 214"),
                 DeleteRow("Her zamankiler, önerilmeyenler", "9 + 2"),
             ),

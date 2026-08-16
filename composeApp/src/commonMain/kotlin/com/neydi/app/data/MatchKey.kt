@@ -3,8 +3,8 @@ package com.neydi.app.data
 /**
  * Urun adlarini eslestirilebilir tek bir anahtara indirger.
  *
- * ISIN OZU: fisin yazdigi metinle kullanicinin yazdigi metin ayni urunu
- * gostermeli. Fis genelde ASCII ve buyuk harf ("AYCICEK YAGI 5 L"), kullanici
+ * ISIN OZU: etiketin bastigi metinle kullanicinin yazdigi metin ayni urunu
+ * gostermeli. Etiket genelde ASCII ve buyuk harf ("AYCICEK YAGI 5 L"), kullanici
  * ise Turkce yaziyor ("Ayçiçek Yağı 5 L"). Ikisi de `aycicek yagi 5 l` olmali.
  *
  * NEDEN `lowercase()` DEGIL:
@@ -14,7 +14,7 @@ package com.neydi.app.data
  *   "İNCİR".lowercase()  ->  i + U+0307 + n + c + i + U+0307 + r
  *
  * yani BES harf yerine SEKIZ kod noktasi; sondaki birlestirici noktalar
- * yuzunden `== "incir"` FALSE. Kullanici "İncir" yazip fis "INCIR" yazdiginda
+ * yuzunden `== "incir"` FALSE. Kullanici "İncir" yazip etiket "INCIR" bastiginda
  * uygulama bunlari iki ayri urun sanar, fiyat gecmisi ikiye boluner ve trend
  * yok olur. Hata vermez - sadece hafiza kaybolur.
  *
@@ -22,7 +22,7 @@ package com.neydi.app.data
  *
  * BILINCLI TAVIZ: ı ve i ayni anahtara katlaniyor. Turkce'de bunlar AYRI
  * harfler, yani "ısırgan" ile "isirgan" burada carpisir. Kabul ediyoruz:
- * fis yazicilarinin cogu Turkce karakter basmiyor ve "ISPANAK" cikiyor -
+ * raf etiketi yazicilarinin cogu Turkce karakter basmiyor ve "ISPANAK" cikiyor -
  * ayirmakta israr etmek her urunu buyuk/kucuk harf varyantlarina bolerdi.
  * Carpisma nadir; bolunme her aliverişte olurdu.
  */
@@ -33,7 +33,7 @@ private val TURKISH_FOLDING: Map<Char, Char> = mapOf(
     'Ü' to 'u', 'ü' to 'u',
     'Ö' to 'o', 'ö' to 'o',
     'Ç' to 'c', 'ç' to 'c',
-    // Fis yazicilarinda ara sira gorulen diger aksanlar.
+    // Etiket yazicilarinda ara sira gorulen diger aksanlar.
     'Â' to 'a', 'â' to 'a', 'Î' to 'i', 'î' to 'i', 'Û' to 'u', 'û' to 'u',
 )
 

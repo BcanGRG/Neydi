@@ -559,7 +559,7 @@ class ListViewModel(
             val memberId = selfMemberId() ?: return
             val trip = repo.openOrGetActiveTrip(household, memberId)
 
-            // Kategori/kanonik ad cozumlemesi ORTAK: fis duzeltmesi de ayni
+            // Kategori/kanonik ad cozumlemesi ORTAK: etiket onayi da ayni
             // fonksiyondan geciyor (ProductResolver), yoksa iki kapi ayni urunu
             // iki farkli yazimla olusturabilirdi.
             val product = resolveProduct(

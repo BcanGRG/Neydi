@@ -21,20 +21,19 @@ private const val MIN_PURCHASES_FOR_MEDIAN = 3
  * `product_stats`'i sifirdan kurar (F6.1).
  *
  * ASLA INCREMENTAL: turetilmis bir onbellegi artimli guncellemek, kaynak veri
- * her degistiginde (satir silindi, fis yeniden okundu, mutabakat geri alindi)
- * sayaci hangi yonde duzeltecegini bilmek demekti. Bu olcekte (80 urun x 60
+ * her degistiginde (satir silindi, mutabakat geri alindi) sayaci hangi yonde
+ * duzeltecegini bilmek demekti. Bu olcekte (80 urun x 60
  * gezi) tam kurulum milisaniyeler suruyor ve **her zaman dogru**.
  *
- * UC YERDEN TETIKLENIYOR ve ucu de gerekli:
- * 1. Gezi kapanisi - iyimser mutabakattan **sonra**, yoksa yeni kapanan gezinin
- *    alindi yazilan satirlari kendi tetikledigi yeniden kurulumun disinda kalir.
- * 2. Fis islendikten sonra - otomatik eslesen satirlar birer alim.
- * 3. Fis Kontrol'de kullanici bir satiri urune bagladiktan sonra.
+ * TEK YERDEN TETIKLENIYOR: gezi kapanisi - iyimser mutabakattan **sonra**,
+ * yoksa yeni kapanan gezinin alindi yazilan satirlari kendi tetikledigi
+ * yeniden kurulumun disinda kalir.
  *
- * (2) ve (3) atlanabilir gorunuyor ama DEGIL: **fis gezi kapandiktan sonra
- * cekiliyor.** Yalnizca kapanista hesaplasaydik fisten gelen alimlar daima bir
- * gezi geride kalirdi - yani "listeye yazmadan aldigim ekmek" bu gezide degil
- * bir sonrakinde sayilirdi.
+ * FIS DONEMINDE IKI TETIKLEYICI DAHA VARDI (fis islendikten sonra ve Fis
+ * Kontrol'de satir urune baglandiktan sonra) cunku fis gezi kapandiktan SONRA
+ * cekiliyordu. Etiket boyle bir gecikme uretmiyor: gozlem bir FIYAT kaydi,
+ * satin alma kaniti degil - istatistigin girdisi yalnizca isaretlenmis liste
+ * satirlari (bkz. ProductStatsDao.purchaseEvents).
  */
 class ProductStatsRebuilder(
     private val statsDao: ProductStatsDao,

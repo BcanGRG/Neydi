@@ -40,12 +40,16 @@ import com.neydi.app.ui.theme.Spacing
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * Gecmis (F4.9).
+ * Gecmis (Ekran 6).
  *
- * YANLIS OKUNMUS BIR FISE GERI DONMENIN TEK YOLU - ve uygulamanin en ucuz
- * ekrani. Bir fis burada gorunmuyorsa erisilemez demektir: fotograf diskte
- * durur, para hafizaya girmez, kullanici sebebini hic ogrenemez. Bu yuzden
- * BASARISIZ fisler de listede ve dokunulabilir.
+ * UYGULAMANIN EN UCUZ EKRANI: kapanmis gezileri tarih ve kalem sayisiyla
+ * listeliyor, baska bir sey yapmiyor. Fis doneminde bu ekran "yanlis okunmus
+ * bir fise donmenin tek yolu"ydu ve satirlari dokunulabilirdi; o hedef yok.
+ *
+ * GEZI SATIRININ ALTINDA HICBIR SEY YOK (tasarim karari 30): gozlem geziye
+ * bagli degil, markete girip hicbir sey almadan uc etiket cekmek mesru bir
+ * kullanim. Gozlemler Urun Detayi'nda yasiyor - kullanicinin sorusu
+ * ("hangi tarihte kaca almisim") urun ekseninde soruluyor.
  */
 @Composable
 fun HistoryRoute(onBack: () -> Unit) {

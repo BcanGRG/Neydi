@@ -35,7 +35,8 @@ import com.neydi.app.ui.theme.neydiDisplayFamily
  * kasada surpriz yasamasi demek - ve bu uygulamanin varlik sebeplerinden biri
  * tam olarak o surprizi engellemek.
  *
- * Hic fiyat bilinmiyorsa satir HIC CIZILMEZ. "0,00 TL" yazmak yalan olurdu.
+ * UCTEN AZ FIYAT BILINIYORSA SATIR HIC CIZILMEZ (gezinme sozlesmesi esigi).
+ * "0,00 TL" yazmak yalan olurdu; iki fiyattan tahmin uretmek de oyle.
  */
 @Composable
 internal fun EstimatedBasket(
@@ -97,8 +98,9 @@ internal fun EstimatedBasket(
  * bitirdi, uygulama ona ne yaptigini gosteriyor. Tutar 36sp Fraunces -
  * ekranin geri kalaninda o boyutta baska hicbir sey yok, bakis oraya gidiyor.
  *
- * Tutar bilinmiyorsa (fis okunmadi) sayilar gosteriliyor: "8 urun, 24 dakika".
- * Bu bile bos bir karttan iyi ve fis olmadan da dogru.
+ * Tutar bilinmiyorsa sayilar gosteriliyor: "8 urun, 24 dakika". Bu bile bos
+ * bir karttan iyi. E18'e kadar tutar HER ZAMAN bilinmiyor - gozlemlerden
+ * hesaplanan `~` tahmini henuz yazilmadi.
  */
 @Composable
 internal fun SummaryCard(
@@ -159,11 +161,13 @@ internal fun SummaryCard(
             textAlign = TextAlign.Center,
         )
 
-        // "Fis cek" butonu ve cekim rehberi E6'da kalkti. Etiket cekiminin
-        // girisi BURASI OLMAYACAK: pivot karari 3 geregi cekim geziden
-        // bagimsiz, yani ozet kartinin - ki yalnizca alisveris sonrasi
-        // gorunur - dogru yer olmasi mumkun degil. Girisin yeri tasarima
-        // soruldu (10-tasarima-pivot.md, soru 3), yaniti E15'te baglanacak.
+        // "Fis cek" butonu E6'da kalkti ve yerine bir sey GELMEYECEK.
+        // Tasarim karari 27 girisi tek bir yere koydu: liste basligindaki
+        // kalici kamera hedefi. Gerekcesi ozet kartini dogrudan eliyor -
+        // cekim geziden bagimsiz (karar 3), ozet karti ise yalnizca alisveris
+        // sonrasi gorunuyor; buraya bir dugme koymak cekimi yeniden geziye
+        // baglardi. Ikinci bir giris noktasi da yasak: "ayni ise iki kapi
+        // acip ikisini de zayiflatirdi".
 
         if (onFixTaken != null) {
             Text(
@@ -178,9 +182,13 @@ internal fun SummaryCard(
             )
         }
 
-        // "Tamam" fisten SONRA ve daha SILIK. Fis cekmek kartin asil isi;
-        // ustte ve vurgulu bir "Tamam" olsaydi cogu kullanici once ona basar,
-        // fis hic cekilmez ve fiyat hafizasi hic dolmazdi.
+        // "Tamam" en altta ve SILIK: kartin asil isi bir sey ANLATMAK, bir
+        // sey yaptirmak degil. Ustte ve vurgulu bir "Tamam", karti okunmadan
+        // kapatilan bir dialog'a cevirirdi.
+        //
+        // Eskiden burada "Fis cek" butonu vardi ve "Tamam"in silikligi onu
+        // one cikarmak icindi. O buton E6'da kalkti (pivot karari 3: cekim
+        // geziden bagimsiz, girisi liste basliginda - karar 27).
         NeydiButton(
             text = "Tamam",
             onClick = onDismiss,

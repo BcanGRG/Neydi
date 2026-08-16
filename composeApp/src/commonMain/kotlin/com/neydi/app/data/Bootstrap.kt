@@ -4,6 +4,7 @@ import com.neydi.app.data.catalog.seedCatalog
 import com.neydi.app.data.db.Household
 import com.neydi.app.data.db.Member
 import com.neydi.app.data.db.NeydiDatabase
+import com.neydi.app.data.store.seedStores
 
 /** Tek hane oldugu icin id sabit. Kurulum ekrani (Faz 8) adini degistirebilecek. */
 const val DEFAULT_HOUSEHOLD_ID: String = "0198f2a1-0000-7000-8000-000000000001"
@@ -19,6 +20,9 @@ const val DEFAULT_HOUSEHOLD_ID: String = "0198f2a1-0000-7000-8000-000000000001"
  */
 suspend fun NeydiDatabase.bootstrap(newId: () -> String, clock: () -> Long) {
     seedCatalog()
+    // Market zincirleri: etiket cekiminde secilecek liste cekimden ONCE hazir
+    // olmali (tasarim karari 11). Idempotent - bkz. seedStores.
+    seedStores(storeDao(), DEFAULT_HOUSEHOLD_ID, clock)
 
     // Hane ve "ben" uyesi. Kurulum ekrani gelene kadar varsayilan isimlerle
     // duruyor - liste ekraninin calismasi icin bir hane ve bir uye SART.

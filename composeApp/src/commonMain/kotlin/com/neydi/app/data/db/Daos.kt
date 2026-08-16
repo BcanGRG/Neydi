@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
  * aliskanligi ve sonradan tasima maliyeti cikarir.
  *
  * KAPSAM BILEREK DAR: burada yalnizca Liste ekraninin (Faz 3) ihtiyaci olanlar
- * var. Fis, fiyat ve senkron DAO'lari kendi fazlarinda gelecek - simdi yazmak
+ * var. Gozlem ve senkron DAO'lari kendi adimlarinda gelecek - simdi yazmak
  * kullanilmayan koda bakim borcu demek.
  *
  * `deletedAt IS NULL` HER SORGUDA: gercek silme yok, tombstone var. Filtreyi
@@ -183,12 +183,10 @@ interface TripDao {
     suspend fun setStatus(id: String, status: TripStatus): Int
 
     /**
-     * Geziyi fisten okunan magazaya baglar (tasarim karari 11).
+     * Geziyi bir magazaya baglar (tasarim karari 11).
      *
-     * `storeId IS NULL` KOSULU VAR: ilk okunan magaza kaliyor. Cok parcali bir
-     * fisin ikinci parcasi yanlis okunursa gezi mağaza degistirmemeli - ve
-     * kullanicinin elle duzeltmesi de (o yuzey yazilinca) bu yazmayla
-     * ezilmemeli.
+     * `storeId IS NULL` KOSULU VAR: ilk yazilan magaza kaliyor, sonraki
+     * yazmalar onu ezmiyor.
      */
     // CAGIRANI YOK (E11'den beri): tek yazani ReceiptProcessor.rememberStore'du.
     // Etiket modelinde gozlem geziye degil MAGAZAYA bagli (pivot karari 3), yani
@@ -332,9 +330,9 @@ interface TripLineDao {
     /**
      * VARSAYILAN-IYIMSER MUTABAKAT (F4.8).
      *
-     * Isaretlenmemis butun planli satirlari ALINDI yaziyor. Gerekcesi: fis
-     * cekilmeyen gezide (BIM/A101/SOK ya da unutulan fotograf) tek bilgi
-     * kaynagi listenin kendisi, ve kullanicinin reyonda her satiri tek tek
+     * Isaretlenmemis butun planli satirlari ALINDI yaziyor. Gerekcesi: satin
+     * almanin tek bilgi kaynagi listenin kendisi - etiket bir FIYAT gozlemi,
+     * alindi kaniti degil - ve kullanicinin reyonda her satiri tek tek
      * isaretlemesini beklemek gercekci degil - tembel kullanim da
      * KULLANILABILIR VERI uretmeli, yoksa oneri motoru hic beslenmez ve
      * uygulamanin ikinci varlik sebebi hic calismaz.
@@ -440,6 +438,38 @@ interface PriceObservationDao {
         """,
     )
     fun observePricedCount(tripId: String): Flow<Int>
+
+    /**
+     * TABLONUN ILK YAZANI. `price_observation` sema v1'den beri duruyordu ve
+     * dort surum boyunca hicbir sey ona satir yazmadi - pivotun inecegi yerin
+     * hazir olmasinin sebebi buydu.
+     *
+     * ABORT stratejisi bilincli: id'leri biz uretiyoruz (UUID v7), yani ayni
+     * id ikinci kez gelirse bu bir hata - sessizce yutulmasi degil gorulmesi
+     * gereken bir sey. Mukerrer gozlem koruması id'de degil, ZAMAN penceresinde
+     * (aynı market + urun + fiyat, 60 sn - bkz. F5.10).
+     */
+    @Insert
+    suspend fun insert(observation: PriceObservation)
+
+    /**
+     * Son gozlemin marketi - market seciciyi YAPISKAN yapan sey (karar 11).
+     *
+     * TERCIH DOSYASINA YAZILMIYOR, gozlemden okunuyor: iki kaynak olsaydi
+     * senkron sonrasi ayrisirlardi ve "son sectigim market" cihaza gore
+     * degisirdi. Gozlem zaten kalici ve zaten paylasiliyor.
+     *
+     * Ilk cekimde null doner ve secici bos acilir - kullanicidan bir kez acik
+     * secim istemek, yanlis bir varsayilani duzelttirmekten ucuz.
+     */
+    @Query(
+        """
+        SELECT storeId FROM price_observation
+        WHERE householdId = :householdId AND storeId IS NOT NULL AND deletedAt IS NULL
+        ORDER BY observedAt DESC LIMIT 1
+        """,
+    )
+    suspend fun lastUsedStoreId(householdId: String): String?
 }
 
 @Dao
@@ -471,18 +501,19 @@ interface ProductAliasDao {
      * REPLACE, IGNORE DEGIL.
      *
      * (householdId, storeChain, rawTextNormalized) uzerinde tekil index var ve
-     * IGNORE ile kullanicinin IKINCI karari sessizce yutuluyordu: bir fis
+     * IGNORE ile kullanicinin IKINCI karari sessizce yutuluyordu: bir etiket
      * metnini once yanlis urune baglayip sonra duzeltirsen duzeltme yazilmaz,
-     * eski alias sonsuza kadar kalir ve her fiste ayni yanlis eslesmeyi
-     * uretir - ustelik kullanici duzeltmeyi yapmis oldugu icin bir daha
-     * bakmaz. Ogrenen bir sistemde son karar kazanmali.
+     * eski alias sonsuza kadar kalir ve ayni metin her okundugunda ayni yanlis
+     * eslesmeyi uretir - ustelik kullanici duzeltmeyi yapmis oldugu icin bir
+     * daha bakmaz. Ogrenen bir sistemde son karar kazanmali.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(alias: ProductAlias)
 
     /**
-     * Zincir + ham metin -> urun. F4.7'nin butun degeri bu sorguda: ayni fis
-     * metni bir kez duzeltildikten sonra bir daha sorulmuyor.
+     * Zincir + ham metin -> urun. Alias ogrenmesinin butun degeri bu sorguda:
+     * ayni etiket metni ayni markette bir kez sorulur (gezinme sozlesmesi
+     * degismezi), bir daha sorulmaz.
      */
     @Query(
         """
@@ -496,20 +527,27 @@ interface ProductAliasDao {
 }
 
 /**
- * Store DAO'su - magaza satiri FISTEN DOGUYOR (tasarim karari 11).
+ * Store DAO'su (tasarim karari 11, pivotla revize).
  *
- * ELLE MAGAZA EKLEME YOK ve bu bilincli: elle girilen bir magaza fiyat
- * karsilastirmasina hicbir veri katmiyor, karsilastirmayi besleyen sey fisin
- * kendisi. Bu yuzden burada `insert` ve `observeAll` disinda bir sey yok -
- * guncelleme, silme, yeniden adlandirma cagrilari YAZILMADI cunku onlari
- * cagiracak bir yuzey yok.
+ * MAGAZA ARTIK SECILIYOR, OKUNMUYOR. Eskiden satir fis kunyesinden doguyordu
+ * ve "elle magaza ekleme yok" kurali oradan geliyordu; kunye diye bir kaynak
+ * kalmadi. Bugun yedi zincir tohumlanmis geliyor (bkz. `seedStores`) ve
+ * kullanici etiket cekerken hangisinde oldugunu seciyor.
+ *
+ * KARARIN OLCUTU DEGISMEDI: "secim karsilastirmayi besliyor mu". Cevap artik
+ * evet - gozlemin marketi karsilastirmanin ekseni. Bu yuzden yuzey hala dar:
+ * `insert`, `findByChain`, `observeAll`. Guncelleme ve silme cagrilari
+ * YAZILMADI cunku onlari cagiracak bir ekran yok.
  */
 @Dao
 interface StoreDao {
     /**
-     * ZINCIR BAZINDA TEKIL. Ayni zincirin ikinci fisi yeni satir DOGURMUYOR:
-     * "Migros"tan on fis cekmek Ayarlar'a on satir yazsaydi bolum bir liste
-     * degil bir gunluk olurdu.
+     * ZINCIR BAZINDA TEKIL. Ayni zincirden ikinci gozlem yeni satir
+     * DOGURMUYOR: "Migros"ta on etiket cekmek Ayarlar'a on satir yazsaydi
+     * bolum bir liste degil bir gunluk olurdu.
+     *
+     * Tohumlama da bu sorguya dayaniyor - baska bir yoldan gelmis zinciri
+     * ikinci kez yaratmamak icin (bkz. `seedStores`).
      */
     @Query(
         """

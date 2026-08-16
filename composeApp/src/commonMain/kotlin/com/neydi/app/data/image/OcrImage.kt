@@ -1,12 +1,12 @@
 package com.neydi.app.data.image
 
 /**
- * Fis gorseli icin ust sinir: uzun kenar bu kadar piksel.
+ * OCR'a gidecek gorsel icin ust sinir: uzun kenar bu kadar piksel.
  *
  * 2576'DAN 4096'YA CIKARILDI (F4.17) ve bu, tek cekimin onkosuluydu.
  *
  * Eski sinir OCR'a giden goruntuyu sensorun verdiginin yaklasik ucte ikisine
- * indiriyordu - yani "bir metrelik fis tek kareye sigmiyor" itirazinin buyuk
+ * indiriyordu - yani "goruntu tek kareye sigmiyor" itirazinin buyuk
  * bir kismi FIZIK DEGIL, bizim kirptigimiz pikseldi. 12MP bir karede uzun
  * kenar ~4000; 2576'ya inince satir basina dusen piksel de ayni oranda
  * eriyordu.
@@ -19,13 +19,13 @@ package com.neydi.app.data.image
 const val MAX_LONG_EDGE = 4096
 
 /**
- * Fis fotografini OCR icin kucultup, YONUNU DUZELTIP hedefe yazar.
+ * Cekilen kareyi OCR icin kucultup, YONUNU DUZELTIP hedefe yazar.
  *
  * YON SOZLESMENIN PARCASI (F4.20): yazilan dosya dik durmak zorunda, yani
  * kaynaktaki EXIF/`imageOrientation` bilgisi PIKSELE islenmeli ve cikti bir yon
  * etiketi TASIMAMALI. Bedeli olculdu: CameraX yonu yalnizca EXIF'e yaziyor,
  * eski kod da etiketi okumadan cozup etiketsiz yazdigi icin bilgi tam burada
- * kayboluyordu; fis yan haliyle okunuyor ve gorsel satir gruplamasi butun fisi
+ * kayboluyordu; kare yan haliyle okunuyor ve gorsel satir gruplamasi butun sayfayi
  * birkac dev satira cokuruyordu. Diskteki dosyayi OCR, `BitmapRegionDecoder` ve
  * ekran ayri ayri tuketiyor - etiketi tasimak sozlesmeyi hepsine yuklerdi.
  *
@@ -37,7 +37,7 @@ const val MAX_LONG_EDGE = 4096
  * buyuk cozunurluktu, yani bir MALIYET siniriydi. ML Kit cihazda calistigi
  * icin artik token maliyeti yok; sinir simdi BELLEK icin: ML Kit tam boy
  * bitmap'i bellege aliyor ve eski telefonlarda 12MP bir kare rahatca
- * OutOfMemory veriyor. 2576 fis metni icin bol bol yeterli - termal fisler
+ * OutOfMemory veriyor. 2576 basili metin icin bol bol yeterli - termal baski
  * zaten dusuk kontrastli ve kucuk puntolu, cozunurlugu artirmak bir yerden
  * sonra okumayi iyilestirmiyor.
  *
@@ -49,7 +49,7 @@ const val MAX_LONG_EDGE = 4096
  * cozmek cagiranin isi, gorseli olceklemek buranin.
  *
  * @return true = [destPath] yazildi. false = kucultme basarisiz; cagiran taraf
- *   HAM BAYTLARI ayni yola yazmali. Fis fotografi kullanicinin tek kaniti,
+ *   HAM BAYTLARI ayni yola yazmali. Kare kullanicinin tek kaniti,
  *   kucultemedik diye onu atmak kabul edilemez.
  */
 expect suspend fun downscaleForOcr(

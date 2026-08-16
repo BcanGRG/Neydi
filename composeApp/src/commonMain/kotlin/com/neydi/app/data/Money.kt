@@ -37,7 +37,7 @@ fun formatMinor(minor: Long, currency: String = "TL"): String {
  * [parseMinorInput]'ta.
  *
  * SON ayirici ondalik sayilir: "1.234,56" da "1,234.56" da 123456 kurus.
- * Etiket donemine fiş ayristiricisindan tasindi (E2) - kural evrensel.
+ * Fis ayristiricisindan tasindi (E2) - kural fise ozgu degil, evrensel.
  */
 internal fun parseMinor(text: String): Long? {
     val clean = text.trim().trimStart('*', 'x', 'X', '×', ' ')
@@ -60,7 +60,7 @@ internal fun parseMinor(text: String): Long? {
 /**
  * Kullanicinin yazdigi tutari kurusa cevirir: "106,00" / "106.00" / "106".
  *
- * ONDALIK AYIRICI OLARAK IKISI DE KABUL: klavye virgul veriyor ama fisin
+ * ONDALIK AYIRICI OLARAK IKISI DE KABUL: klavye virgul veriyor ama etiketin
  * kendisi nokta basiyor ve kullanici gordugunu yaziyor. Birini reddetmek
  * duzeltmeyi sessizce yutardi - ve bu ekranin butun amaci duzeltme.
  *

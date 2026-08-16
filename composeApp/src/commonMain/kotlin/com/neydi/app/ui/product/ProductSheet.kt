@@ -103,7 +103,7 @@ fun ProductSheetContent(
         // "yanlis bir sey gostermektense hicbir sey gostermemek" ve tek
         // noktadan trend cizmek yalan olurdu.
         Text(
-            text = "Fiş çektikçe burada fiyat geçmişi birikecek.",
+            text = "Etiket çektikçe burada fiyat geçmişi birikecek.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = Spacing.md),

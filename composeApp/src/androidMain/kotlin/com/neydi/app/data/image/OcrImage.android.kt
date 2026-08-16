@@ -23,18 +23,18 @@ import java.io.File
  *
  * CameraX `ImageCapture` dosyaya yazarken yonu EXIF ETIKETINE koyuyor,
  * pikselleri dondurmuyor - `setTargetRotation` cagrilsin ya da cagrilmasin.
- * Yani telefon dik tutulup cekilen fis diskte YAN yatmis piksellerle duruyor ve
+ * Yani telefon dik tutulup cekilen kare diskte YAN yatmis piksellerle duruyor ve
  * dogru yon yalnizca etikette. Buradaki eski kod ise `decodeByteArray` ile
  * cozuyordu (EXIF'i yok sayar) ve `Bitmap.compress` ile yaziyordu (EXIF yazmaz):
  * yon bilgisi tam bu iki satir arasinda kayboluyordu. Sonra okuma tarafi onu
  * tahmin etmeye calisiyor, kucultulmus kopyada hicbir sey okuyamayip 0 dereceye
- * dusuyor ve fis yan haliyle okunuyordu.
+ * dusuyor ve kare yan haliyle okunuyordu.
  *
  * Tarayici yolunda bu hic gorunmedi cunku belge tarayicisi sayfayi zaten dik
  * veriyor - "tarayici calisiyor, kendi kameramiz cokuyor" farkinin tamami buydu.
  *
  * DONDURMEK NEDEN BURADA, okurken degil: diskteki dosyayi HER tuketen dogru
- * gormek zorunda - OCR, `BitmapRegionDecoder` (EXIF'i hic okumaz), fis
+ * gormek zorunda - OCR, `BitmapRegionDecoder` (EXIF'i hic okumaz),
  * gorselini gosteren ekran ve yarin eklenecek her sey. Etiketi tasimak bu
  * sozlesmeyi her tuketiciye ayri ayri yuklerdi.
  */
@@ -75,8 +75,9 @@ actual suspend fun downscaleForOcr(
         }
 
         File(destPath).parentFile?.mkdirs()
-        // JPEG 90: fis metni icin fazlasiyla yeterli, PNG'nin uctenbir boyutu.
-        // Daha dusuk kalite termal fisin zaten zayif kontrastini bozuyor.
+        // JPEG 90: basili metin icin fazlasiyla yeterli, PNG'nin uctenbir
+        // boyutu. Daha dusuk kalite termal baskinin zaten zayif kontrastini
+        // bozuyor - raf etiketinin ince glifleri de ayni sinifta.
         //
         // CIKAN DOSYADA EXIF YOK ve olmasi da gerekmiyor: yon artik piksellerde.
         // Etiket birakmak "iki kere dondur" hatasina acik kapi olurdu.
@@ -102,7 +103,7 @@ private fun orientationOf(source: ByteArray): Int = runCatching {
  * EXIF yon etiketini matrise cevirir.
  *
  * AYNALAMALAR DA VAR: on kameradan gelen kare yatay aynalanmis olabiliyor ve
- * yalnizca donmeyi ele almak o kareyi ters cevrilmis metinle birakirdi. Fis
+ * yalnizca donmeyi ele almak o kareyi ters cevrilmis metinle birakirdi. Etiket
  * cekimi arka kamerayla yapiliyor ama bu fonksiyonun girdisi galeriden de
  * gelebilir.
  */

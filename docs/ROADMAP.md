@@ -103,7 +103,7 @@ sarı etiket, uzun ürün adı).
 > ⚠ **Sentetik örnek yasak.** Fiş ayrıştırıcısının ilk sürümü kendi yazdığı
 > örneklerle doğrulanmıştı, 17 test geçiyordu ve hiçbiri bir şey kanıtlamıyordu.
 
-### ▸ E13 — Mağaza tohumu
+### ▸ E13 — Mağaza tohumu ✅ *(cihazda doğrulandı)*
 
 - Bootstrap'te 7 zincir: **BİM · A101 · ŞOK · Migros · CarrefourSA · File ·
   Tarım Kredi** — `chainKey` ile `chain`, `insert` IGNORE (idempotent)
@@ -112,7 +112,15 @@ sarı etiket, uzun ürün adı).
 - `StoreDao.findByChain` zaten var, çağıranı E13'te geliyor
 - `StoreDao` KDoc'undaki karar-11 metni revize edilir
 
-**Bitti sayılır:** temiz kurulumda Ayarlar → Mağazalar'da 7 market görünüyor.
+**Bitti sayılır:** temiz kurulumda Ayarlar → Mağazalar'da 7 market görünüyor. ✅
+Tohum **zincir-farkında**: başka yoldan gelmiş aynı zinciri ikinci kez
+yaratmıyor, önce gelen kazanıyor.
+
+> ⚠ **Cihazda fiş dönemi çöpü bulundu.** Eski `rememberStore` künyeden okuduğu
+> her şeyi mağaza yazmış: `Kg`, `KDV`, `Term:`, `Adet`, `Kq`, `ECioREM`,
+> `RSALIYE`, `(BTECH)`, `Ae`, `DD`… test cihazında 17 satır. Bunlar Ayarlar'ın
+> "Takip edilen zincirler" satırını okunamaz yapar. Kod hatası değil, veri
+> kalıntısı — temizlik kararı kullanıcının, bkz. **F10.17**.
 
 ### ▸ E14 — TagReader + TagParser *(cihazsız · E12'ye bağlı)*
 
@@ -252,6 +260,12 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       `SafeArea`, `AccentStrip`, `AccentSurface`, `Modifier.focusRing`
       (dördü de tanımlı, sıfır çağıran) — F11.4 ile birlikte karara bağlanır.
 - [ ] **F10.3 — `graph.json` takip kararı.**
+- **F10.17 ✅ — Fiş dönemi mağaza kalıntısı.** Test cihazında 17 çöp `store`
+      satırı vardı (eski `rememberStore` her yanlış okunan künye satırını
+      mağaza yazmış). Silindi, 10 `trip.storeId` referansı boşaltıldı.
+      **Temizlik göçü yazılmadı ve bu bilinçli:** fiş ayrıştırıcısı öldüğü için
+      yeni çöp üretilemez; tek seferlik bir iş için kalıcı göç yazmak sonsuza
+      kadar taşınacak ölü kod olurdu.
 - **Kapandı:** F6.9 ✅ · F10.1 ✅ · F10.4 ✅ *(03'e arşiv notu düşüldü)* ·
   F10.12 ✅ *(uyarı sayısı 5→1)* · F10.13 ✅ · F10.15 ✅ · F10.16 ✅
 
