@@ -247,8 +247,22 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 
 - [ ] **Faz 7 — Senkron** (7.1 Supabase+RLS · 7.2 Auth · 7.3 Realtime v1 ·
       7.4 `updated_at` · 7.5 outbox+tombstone+add-beats-remove · 7.6 keep-alive).
-      `syncPhotos` kolonunun kaderi burada karara bağlanır — bugün senkron
-      edilecek fotoğraf yok.
+      **Supabase projesi açıldı:** `vjinflzmjcsaicaeatic`, **eu-central-1**
+      (Frankfurt — bölge sonradan değiştirilemiyor), ücretsiz plan. Şema
+      **boş**, hiçbir migration uygulanmadı.
+      **Tasarım turu bitti** → [`15-faz7-sema-plani.md`](15-faz7-sema-plani.md):
+      üç bağımsız öneri, her biri ayrı yargıçla çürütülmeye çalışıldı,
+      **üçünün de doğruluk puanı düşük çıktı** (4 · 5 · 3) — hiçbiri olduğu
+      gibi uygulanabilir değildi. Yirmi beş ölümcül kusur kayıtlı.
+      ⚠ **En ağırı mimari:** iki kişi çevrimdışıyken aynı geziye aynı ürünü
+      eklerse `(tripId, productId)` UNIQUE çakışıyor, ikinci push 23505
+      alıyor ve `pending_op` FIFO olduğu için **outbox kalıcı olarak
+      tıkanıyor** — hem de uygulamanın en olası eşzamanlı eylemi bu.
+      Çözüm yönü doğal anahtardan türetilen deterministik id, yani çakışma
+      red değil upsert olur. F7.5'in "add-beats-remove"u zaten oraya
+      işaret ediyordu.
+      `syncPhotos` kolonu **ölü** (karar 29 fotoğrafı siliyor); sunucuya
+      taşınmıyor, yerelden de düşürülebilir.
 - [ ] **Faz 8 — Marka varlıkları** (8.1–8.6). ⚠ Logo konsepti **C ("Fişin
       Kuyruğu") elenmeli** — fiş artık ürünün parçası değil.
 - [ ] **Faz 9 — iOS** (9.1 kabuk · 9.2 **etiket hattı**: `downscaleForOcr` +
