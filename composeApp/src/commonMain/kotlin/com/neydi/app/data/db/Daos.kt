@@ -561,7 +561,18 @@ interface StoreDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(store: Store)
 
-    /** Ayarlar'daki Magazalar bolumu. Bos donerse bolum HIC cizilmiyor. */
+    /**
+     * Ayarlar'daki Magazalar bolumu.
+     *
+     * "BOS DONERSE BOLUM CIZILMEZ" ARTIK OLU BIR DAL: E13 tohumu her acilista
+     * yedi zinciri yaziyor, yani bu sorgu pratikte hic bos donmuyor ve bolum
+     * ilk acilistan itibaren goruluyor.
+     *
+     * Bu, tasarimin gezinme sozlesmesindeki *"Ayarlar · Magazalar, en az
+     * 1 gozlem"* esigiyle CELISIYOR - burasi gozlem sayisini hic okumuyor.
+     * Iki karar birbirini yiyor; hangisinin gecerli oldugu **F11.15**'te
+     * tasarima soruldu, o gelene kadar davranis degistirilmedi.
+     */
     @Query(
         """
         SELECT * FROM store
