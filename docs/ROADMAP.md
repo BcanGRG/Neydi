@@ -290,6 +290,19 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - **Kapandı:** F6.9 ✅ · F10.1 ✅ · F10.4 ✅ *(03'e arşiv notu düşüldü)* ·
   F10.12 ✅ *(uyarı sayısı 5→1)* · F10.13 ✅ · F10.15 ✅ · F10.16 ✅
 
+- **F3.12 ✅ — Eklenen satır klavyenin altında kalıyordu** *(kullanıcı bildirdi)*.
+      Klavye açıkken ekleme yapınca satır kendi reyonuna düşüyor; o reyon ekranın
+      altındaysa girdi temizleniyor ama liste kıpırdamıyordu — eklendi mi
+      eklenmedi mi belli olmuyordu. **Satır taşınmıyor, kamera taşınıyor:**
+      yeni satırı en üste almak listenin reyon düzenini bozardı ve o düzen
+      markette gezerken işin tamamı. Zaten tam görünürse kıpırdamıyor.
+      Tetikleyici `AddedRow(rowId, seq)` — `seq` şart, çünkü aynı ürünü ikinci
+      kez eklemek yeni satır açmıyor, adedi artırıyor: yalnızca id'ye bakan bir
+      ekran tam da ikinci eklemede sessiz kalırdı.
+      Dizin `layoutInfo`dan değil VERİDEN hesaplanıyor (`rowIndexInList`):
+      `layoutInfo` yalnızca bestelenmiş öğeleri tanır ve satır ekranın epey
+      altındaysa orada bulunamaz — tam da kaydırmanın gerektiği durumda.
+
 ## Öncelik 6 — Tasarım sadakati
 
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Artık **üç**
