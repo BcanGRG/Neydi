@@ -1,6 +1,7 @@
 package com.neydi.app.data.receipt
 
 import androidx.room3.Room
+import com.neydi.app.data.store.chainKey
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.db.Household
 import com.neydi.app.data.db.NeydiDatabase

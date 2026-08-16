@@ -1,6 +1,7 @@
 package com.neydi.app.data.receipt
 
 import com.neydi.app.data.db.Receipt
+import com.neydi.app.data.store.chainKey
 
 /**
  * Bir gezideki fisleri FIZIKSEL FISLERE gruplar (F4.13 duzeltmesi).

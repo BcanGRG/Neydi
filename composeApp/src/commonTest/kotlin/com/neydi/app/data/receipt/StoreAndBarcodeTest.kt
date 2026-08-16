@@ -1,5 +1,6 @@
 package com.neydi.app.data.receipt
 
+import com.neydi.app.data.store.storeDisplayName
 import com.neydi.app.ui.receipt.barcodeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals

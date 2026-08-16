@@ -40,7 +40,7 @@ import com.neydi.app.data.db.ReceiptStatus
 import com.neydi.app.data.formatDayMonthTime
 import com.neydi.app.data.formatDayMonthYear
 import com.neydi.app.data.formatMinor
-import com.neydi.app.data.receipt.storeDisplayName
+import com.neydi.app.data.store.storeDisplayName
 import com.neydi.app.ui.components.AccentChip
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.LocalNeydiExtraColors

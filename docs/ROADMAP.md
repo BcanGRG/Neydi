@@ -10,7 +10,7 @@ listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe **ürün ba
 fiyat hafızası biriktiren. Döngü: *liste → markette işaretle → etiket çek →
 ürün+marka+market+tarih+fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**İlerleme:** 3 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
+**İlerleme:** 4 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
 "Pivot sonrası" bölümünde.
 
 ---
@@ -101,7 +101,7 @@ kapsamında fiş fotoğrafı kalmadı). Tasarıma bildirim: `10-tasarima-pivot.m
   `ReceiptImage`/`downscaleForOcr`→`data/image/OcrImage.kt` (EXIF dersiyle),
   `VisualRows.kt`+testi→`data/ocr/`; `DataWipe` importu düzelir.
   **Bitti:** `data/receipt/` dışarıdan import edilmiyor.
-- [ ] **E4 — Mağaza adı kurtarma.** *(cihazsız)* `chainKey`+`storeDisplayName`
+- [x] **E4 — Mağaza adı kurtarma.** *(cihazsız)* `chainKey`+`storeDisplayName`
   →`data/store/StoreName.kt`; `StoreNameTest`.
   **Bitti:** History ve Processor yeni yerden import ediyor.
 

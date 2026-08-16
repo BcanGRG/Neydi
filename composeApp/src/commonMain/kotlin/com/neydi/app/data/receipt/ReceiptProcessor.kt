@@ -10,6 +10,8 @@ import com.neydi.app.data.db.Store
 import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.matchKey
+import com.neydi.app.data.store.chainKey
+import com.neydi.app.data.store.storeDisplayName
 import com.neydi.app.data.stats.ProductStatsRebuilder
 
 /**
@@ -283,12 +285,5 @@ class ReceiptProcessor(
     }
 }
 
-/**
- * Magaza adindan zincir anahtari.
- *
- * SUBE DEGIL ZINCIR: alias "BIM"e baglanmali, "BIM BADEMLIK SUBESI"ne degil -
- * yoksa her sube icin ayni duzeltmeyi tekrar yapmak gerekirdi. Ilk kelime
- * pratikte zinciri veriyor (BIM, FILE, AKYURT, MIGROS).
- */
-internal fun chainKey(storeName: String?): String =
-    storeName?.let { matchKey(it).split(" ").firstOrNull { p -> p.length > 1 } } ?: "bilinmiyor"
+// chainKey -> data/store/StoreName.kt (E4 kurtarmasi): zincir anahtari fise
+// degil magazaya ait ve etiket doneminde de ayni vokabuleri uretmek zorunda.

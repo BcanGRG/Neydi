@@ -12,7 +12,7 @@ import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.receipt.physicalReceipts
-import com.neydi.app.data.receipt.storeDisplayName
+import com.neydi.app.data.store.storeDisplayName
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine

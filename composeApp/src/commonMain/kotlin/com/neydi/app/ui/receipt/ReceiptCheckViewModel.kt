@@ -19,8 +19,8 @@ import com.neydi.app.data.receipt.attachReceiptToTrip
 import com.neydi.app.data.receipt.ReceiptReadOutcome
 import com.neydi.app.data.receipt.TOLERANCE_MINOR
 import com.neydi.app.data.formatDayMonthTime
-import com.neydi.app.data.receipt.chainKey
-import com.neydi.app.data.receipt.storeDisplayName
+import com.neydi.app.data.store.chainKey
+import com.neydi.app.data.store.storeDisplayName
 import com.neydi.app.data.receipt.samePhysicalReceipt
 import com.neydi.app.data.receipt.stitchParts
 import com.neydi.app.data.repo.ListRepository
