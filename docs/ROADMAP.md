@@ -290,6 +290,11 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       Bos Durumlar.dc.html` **indirilmedi**: dosyada hâlâ `undo`/`filter_list`,
       "Fiş Kontrol", `content_copy`'li katılma kodu ve **sıfır** `~` tutarı
       var. Kapanması için bayt kopyasının çekilmesi gerekiyor.
+
+> **F11.12 (ayna) · F11.13 · F11.14 · F11.15 · F11.16 tasarıma soruldu** —
+> beşinci tur: [`13-tasarima-sorular-5.md`](13-tasarima-sorular-5.md).
+> Turun ağırlık merkezi **F11.15**; diğerleri tazeleme işi.
+
 - [ ] **F11.13 — Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın
       örneği *"Son alışveriş: 8 gün önce"*; tarih merdiveni 7–13 günü
       "geçen hafta"ya topluyor. Kod merdiveni esas aldı (daha yeni ve daha
