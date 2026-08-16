@@ -91,8 +91,6 @@ fun ListScreen(
     onHistory: () -> Unit,
     onSettings: () -> Unit,
     onFixTaken: (String) -> Unit,
-    /** Fis cekme oturumunu acar (Ekran 4). Gezi kimligini tasiyor. */
-    onCapture: (String) -> Unit,
     vm: ListViewModel = koinViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -194,11 +192,6 @@ fun ListScreen(
         }
     }
 
-    // SISTEM KAMERASI BASLATICISI KALDIRILDI (F4.16). Cekim artik kendi
-    // ekraninda (Ekran 4) ve `CaptureViewModel` uzerinden yuruyor; buradaki
-    // "Activity yeniden yaratilinca remember sifirlanir" dersi de gecerliligini
-    // yitirdi cunku uygulamadan hic cikilmiyor.
-
     productSheet?.let { sheet ->
         ModalBottomSheet(
             onDismissRequest = vm::closeProductSheet,
@@ -228,14 +221,6 @@ fun ListScreen(
                 durationMinutes = o.durationMinutes,
                 onDismiss = vm::dismissSummary,
                 onFixTaken = vm.summaryTripId?.let { id -> { onFixTaken(id) } },
-                // UYGULAMA ICI KAMERAYA gidiyor, sistem kamerasina DEGIL.
-                //
-                // Sistem kamerasi uc seyi birden veremiyordu: cerceve rehberi
-                // cizilemiyordu, kac kare cekildigi bilinmiyordu, ve arka
-                // kamera yalnizca bir ISTEKTI - test cihazi (Samsung) yok
-                // sayip on kamerayla aciyordu. Ucu de tasarimin Ekran 4'unde
-                // zaten tarif ediliyordu ("1. kare" ... "Bitti").
-                onTakeReceipt = vm.summaryTripId?.let { id -> { onCapture(id) } },
             )
         }
     }

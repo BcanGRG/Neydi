@@ -10,7 +10,7 @@ listesi — ne alacağınızı hatırlatan ve raf etiketi çektikçe **ürün ba
 fiyat hafızası biriktiren. Döngü: *liste → markette işaretle → etiket çek →
 ürün+marka+market+tarih+fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**İlerleme:** 5 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
+**İlerleme:** 6 / 19 pivot adımı. Pivot bitince kalan işler aşağıda
 "Pivot sonrası" bölümünde.
 
 ---
@@ -110,7 +110,7 @@ kapsamında fiş fotoğrafı kalmadı). Tasarıma bildirim: `10-tasarima-pivot.m
 - [~] **E5 — ReceiptCheck gider.** Ekran+VM+nav key (`Destinations.kt` iki
   liste + guard birlikte)+DI+`App.kt` entry; `onOpenReceipt` paramları.
   **Bitti:** uygulama kurulur, Geçmiş satırları dokunuşsuz.
-- [ ] **E6 — Capture (fiş) gider.** `Capture` nav key, `CaptureRoute/Screen/
+- [~] **E6 — Capture (fiş) gider.** `Capture` nav key, `CaptureRoute/Screen/
   ViewModel`, `ReceiptScanner*` silinir; `CameraSurface`+`CaptureController`
   **kalır** (geçici referanssız). **Bitti:** uygulamada kamera girişi yok.
 - [ ] **E7 — ListViewModel temizliği.** `receiptDao`/`processor`/

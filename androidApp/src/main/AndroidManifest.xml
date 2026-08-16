@@ -5,22 +5,19 @@
         allowBackup="false" - VARSAYILAN "true" BIR GIZLILIK KACAGIYDI.
         API 26+ ile Android uygulamanin dosyalarini kullanicinin Google
         Drive'ina otomatik yedekliyor. Bu uygulamanin dosyalari: her alisverisi,
-        fiyati ve hane uyesini tasiyan Room veritabani, ve `filesDir/receipts`
-        altindaki fis JPEG'leri. F4.2 ham kamera dosyasini "fis kisisel veri;
-        iki kopya hem yer hem gereksiz maruziyet" diye SILIYOR - manifest ise
-        sessizce ucuncu bir kopyayi Drive'a gonderiyordu, yani belgelenmis
-        karari dogrudan cürütüyordu.
+        fiyati ve hane uyesini tasiyan Room veritabani. Karar `syncPhotos`
+        kolonunda da yazili: goruntuler varsayilan olarak cihazdan cikmaz -
+        manifest ise sessizce Drive'a gonderiyordu, yani belgelenmis karari
+        dogrudan curutuyordu.
     -->
     <!--
-        KAMERA IZNI uygulama ici kamera icin (Ekran 4). Sistem kamerasi
-        kullanilirken gerekmiyordu - o kendi izniyle calisiyor - ama cerceve
-        rehberi, kare sayaci ve arka kamera secimi ancak onizlemeye BIZ
-        sahipsek mumkun.
+        KAMERA IZNI uygulama ici kamera icin: etiket cekiminde (E15) cerceve
+        rehberi ve arka kamera secimi ancak onizlemeye BIZ sahipsek mumkun.
 
         `android.hardware.camera` OZELLIGI ZORUNLU DEGIL: kamerasiz bir cihazda
-        uygulama yine calisir (liste, gecmis, ayarlar), yalnizca fis cekilemez.
-        `required="false"` yazmazsak Play Store kamerasiz cihazlari tamamen
-        eler.
+        uygulama yine calisir (liste, gecmis, ayarlar), yalnizca etiket
+        cekilemez. `required="false"` yazmazsak Play Store kamerasiz cihazlari
+        tamamen eler.
     -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />

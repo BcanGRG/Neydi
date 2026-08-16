@@ -104,8 +104,6 @@ internal fun SummaryCard(
     amountMinor: Long?,
     durationMinutes: Int?,
     onDismiss: () -> Unit,
-    /** null ise fis butonu HIC cizilmez - iOS kucultmesi Faz 8'e kadar yok. */
-    onTakeReceipt: (() -> Unit)? = null,
     /**
      * Fissiz mutabakati duzeltme yolu (F4.8).
      *
@@ -157,26 +155,11 @@ internal fun SummaryCard(
             textAlign = TextAlign.Center,
         )
 
-        if (onTakeReceipt != null) {
-            NeydiButton(
-                text = "Fiş çek",
-                onClick = onTakeReceipt,
-                modifier = Modifier
-                    .padding(top = Spacing.sm)
-                    .fillMaxWidth(),
-            )
-            // Cekim rehberi tasarimin kamera overlay metninden - sistem
-            // kamerasina overlay konamadigi icin BURADA (F4.13). Kullanicinin
-            // ana marketi uzun fis basiyor; tavsiye cekimden ONCE gorunmeli,
-            // basarisiz okumadan sonra degil.
-            Text(
-                text = "Fişin tamamı kadraja girsin. Uzunsa parça parça çek — her karede 10–15 satır.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Spacing.xs),
-            )
-        }
+        // "Fis cek" butonu ve cekim rehberi E6'da kalkti. Etiket cekiminin
+        // girisi BURASI OLMAYACAK: pivot karari 3 geregi cekim geziden
+        // bagimsiz, yani ozet kartinin - ki yalnizca alisveris sonrasi
+        // gorunur - dogru yer olmasi mumkun degil. Girisin yeri tasarima
+        // soruldu (10-tasarima-pivot.md, soru 3), yaniti E15'te baglanacak.
 
         if (onFixTaken != null) {
             Text(

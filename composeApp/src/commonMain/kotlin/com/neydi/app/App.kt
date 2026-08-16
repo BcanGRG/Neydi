@@ -14,14 +14,12 @@ import androidx.navigation3.ui.NavDisplay
 import com.neydi.app.di.AppBootstrap
 import com.neydi.app.nav.FinishShopping
 import com.neydi.app.nav.Settings
-import com.neydi.app.nav.Capture
 import com.neydi.app.nav.DeleteData
 import com.neydi.app.nav.MissingItems
 import com.neydi.app.nav.History
 import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
 import com.neydi.app.nav.NeydiSavedStateConfig
-import com.neydi.app.ui.capture.CaptureRoute
 import com.neydi.app.ui.finish.FinishShoppingRoute
 import com.neydi.app.ui.settings.DeleteDataRoute
 import com.neydi.app.ui.settings.SettingsRoute
@@ -85,7 +83,6 @@ fun App() {
                         onHistory = { go(History) },
                         onSettings = { go(Settings) },
                         onFixTaken = { go(FinishShopping(it)) },
-                        onCapture = { go(Capture(it)) },
                     )
                 }
                 entry<MissingItems> {
@@ -116,16 +113,6 @@ fun App() {
                         // mutabakati duzeltiyor, kapatmiyor. O yuzden back
                         // stack temizlenmiyor, sadece geri donuluyor.
                         onDone = { back() },
-                    )
-                }
-                entry<Capture> { key ->
-                    CaptureRoute(
-                        tripId = key.tripId,
-                        // Fis Kontrol pivotla oldu (E5); cekim bitince geri
-                        // donuluyor. Ekranin kendisi E6'da TagCapture'a
-                        // devrolana kadar duruyor.
-                        onDone = { back() },
-                        onCancel = { back() },
                     )
                 }
                 entry<History> {

@@ -10,7 +10,6 @@ import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.receipt.ReceiptProcessor
 import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.data.suggest.SuggestionEngine
-import com.neydi.app.ui.capture.CaptureViewModel
 import com.neydi.app.ui.finish.FinishShoppingViewModel
 import com.neydi.app.ui.history.HistoryViewModel
 import com.neydi.app.ui.list.ListViewModel
@@ -93,18 +92,6 @@ val dataModule = module {
     }
 
     viewModel { DeleteDataViewModel(wipe = get(), memberDao = get()) }
-
-    // tripId ve fis dizini PARAMETREYLE: gezi hangi ekrandan gelindigine
-    // bagli, dizin ise platformdan (FileKit.filesDir) - ikisi de DI'da sabit
-    // olamaz.
-    viewModel { (tripId: String, receiptsDirPath: String) ->
-        CaptureViewModel(
-            tripId = tripId,
-            repo = get(),
-            receiptsDirPath = receiptsDirPath,
-            now = ::now,
-        )
-    }
 
     viewModel {
         SetupViewModel(
