@@ -42,7 +42,11 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 28 | Alışveriş başlığındaki market = o gezide son çekilen etiketin marketi | ⏳ **E18** |
 | 29 | Fotoğraf Kaydet'e basıldığı anda silinir; hiçbir yüzey çizmez | ⏳ **E15** · planla aynı |
 | 30 | Geçmiş'te gözlem satırı yok; gezi satırı tarih + kalem + `~` tutar | ✅ E8 · `~` tutar **E18** |
-| 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | 📄 doküman |
+| 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | ✅ tasarım tazeledi |
+| **32** | **İkon A yolu düştü** — 15 ikon Phosphor Regular çizimleriyle elle `ImageVector` | ✅ **F11.11** |
+| **33** | Karanlık temada GRAD yerine **renk kademesi**: metin `#E4D8C9`, ikon `#F5EDE6`; dolgulu ikon telafi almaz | ✅ F11.11 · renkler **F11.14** |
+| **34** | Envanter **15** — `check`/`push_pin`/`content_paste` geri girdi; `check` ile `check_circle` ayrı | ✅ kodda zaten öyle |
+| **35** | Gizlilik notu + katılma kodu metni onaylandı | ✅ **birebir uygulandı** |
 
 **Karar 29 planı doğruladı:** fotoğrafın kayıttan sonra silinmesi benim önerimdi
 ve açık karar olarak duruyordu — design aynı sonuca vardı, gerekçesi de aynı:
@@ -131,48 +135,85 @@ Kalan 12: `add` · `photo_camera` · `more_vert` · `arrow_back` · `close` ·
 `search` · `check_circle` · `chevron_right` · `expand_more` · `logout` ·
 `bolt` · `info`
 
-**Bu turda yapıldı:** kod envanteri **23 → 13**. Silinenler: `ArrowUpward`,
-`ArrowDownward` (DeltaChip kendi okunu çiziyor), `Undo`, `FilterList`
-(karar 3), `Functions`, `ContentCopy` (karar 24), `LightMode`,
-`DragIndicator`, `HourglassTop`, `Error`.
+**Yapıldı:** kod envanteri önce **23 → 13**'e indi (silinenler: `ArrowUpward`,
+`ArrowDownward` — DeltaChip kendi okunu çiziyor —, `Undo`, `FilterList`
+(karar 3), `Functions`, `ContentCopy` (karar 24), `LightMode`, `DragIndicator`,
+`HourglassTop`, `Error`), sonra karar 34 ile **15**'e sabitlendi.
 
-Koddaki 13 = tasarımın 12'si − `bolt`/`info` (E15'te ekleniyor, şimdi
-eklemek ölü kod olurdu) + `PushPin`, `Check`, `ContentPaste` (üçü de
-kullanımda ama tasarım envanterinde yok — **tasarıma sorulacak**).
+Karar 34 üç ikonu geri getirdi: `push_pin`, `check`, `content_paste` — üçü de
+kullanımdaydı ama tasarım envanterinde yoktu. `check` ile `check_circle`
+**ayrı kalıyor** ve bu kasıtlı: çıplak `check` satırda *"işaretlendi"*,
+`check_circle` çipte/seçicide *"seçili"*. İkisini tek ikona indirmek iki farklı
+fiili aynı sözcükle söylemek olurdu.
 
-### ⚠ A yolu bugünkü kodla uygulanamıyor
+`bolt` ve `info` **şimdi yazıldı**, çağıranları E15'te gelecek. Daha önce
+"eklemek ölü kod olurdu" denmişti; karar 34 envanteri sabitleyince tercih
+değişti — seti tanımlayan taşımada iki ikonu dışarıda bırakmak, E15'te aynı
+elle-taşıma işini ikinci kez açmak demekti.
 
-Design'ın önerdiği A yolu tek bir `IconDefaults` istiyor: **24dp, wght 300,
-opsz 24, açık temada GRAD 0, karanlıkta GRAD 100**.
+### ✅ A yolu düştü, set Phosphor'a taşındı (F11.11)
 
-Bunlar **Material Symbols değişken fontunun eksenleri**. Uygulama ise
-`androidx.compose.material.icons` kullanıyor — bunlar **statik
-`ImageVector`**, ekseni yok. `wght 300` vermek mümkün değil.
+Design'ın önerdiği A yolu tek bir `IconDefaults` istiyordu: **24dp, wght 300,
+opsz 24, açık temada GRAD 0, karanlıkta GRAD 100**. Bunlar **Material Symbols
+değişken fontunun eksenleri**; uygulamanın kullandığı `androidx.compose.material
+.icons` ise derlenmiş **statik `ImageVector`** veriyor — ekseni yok. Yani A
+yolunun tek avantajı olan *ucuzluk* gerçek değildi: ekseni gerçekten çalıştırmak
+fontu paketleyip ikonları `Text` olarak çizmeyi gerektirirdi ve o yol Fraunces'te
+bir kez reddedilmişti (iOS'ta `FontVariation` güvenilir değil).
 
-Üç seçenek, üçü de bir iş kalemi:
-1. **Material Symbols fontunu bundle et** ve ikonları `Text` olarak çiz —
-   `fontVariationSettings` ile eksenler gerçekten çalışır; Fraunces'te aynı
-   yol seçilmedi çünkü iOS'ta güvenilir değildi *(aynı risk burada da var)*
-2. **12 ikonu wght 300'de elle `ImageVector` olarak taşı** — bağımlılık yok,
-   APK etkisi birkaç KB; design'ın B yolu için önerdiği yöntemin aynısı
-3. **B yoluna geç** (Phosphor) — kimlik kararı, ayrı konu
+Design bu itirazı kabul etti (karar 32) ve gerekçesinde aynı akışı kullandı:
+kalan iki seçenek **aynı mekanik işi** istediğine göre, kimlik kazancı olan
+taraf seçilir. Sonuç: **15 ikon Phosphor Regular 2.1.1 (MIT) çizimleriyle elle
+`ImageVector` olarak taşındı.**
 
-Karar tasarımın; ROADMAP'e **F11.11** olarak girdi.
+Kazanç yalnızca kimlik değil: `material-icons-extended` bağımlılığı tamamen
+düştü — o artifact JetBrains tarafında **1.7.3'te donmuştu** ve tek kullanıcısı
+`NeydiIcon.kt`'ydi. Şimdi 15 path dizesi, birkaç KB kaynak.
+
+**Ara katman sınandı ve tuttu:** set baştan sona değişti, `NeydiIcons.ArrowBack`
+diyen 17 çağrı yerinin **hiçbiri** değişmedi. `NeydiIcons`'un varlık sebebi tam
+olarak buydu ve ilk kez gerçek bir taşımada ödendi.
+
+**Elle taşımanın iki sessiz hata modu** teste bağlandı: kırpılmış bir `d` dizesi
+boş vektör üretir ve hiçbir şey şikâyet etmez; satır kopyalanıp path değiştirmeyi
+unutmak iki ikona aynı çizimi verir. `NeydiIconsTest` ikisini de yakalıyor.
+Testin *ölçemediği* şey çizimin ne olduğu — onun için `NeydiIcon.kt`'de on beş
+ikonun `@PreviewLightDark` atlası var, ve beşi cihazda gözle doğrulandı.
 
 ---
 
-## Tasarıma sorulacaklar
+## Dördüncü tur kapandı ✅
 
-1. **`PushPin`, `Check`, `ContentPaste`** ikon envanterinde yok ama kodda
-   kullanımda (sabit ürün rozeti, onay tiki, pano yapıştırma). 12'lik listeye
-   girecek mi, yoksa yerlerine kalan 12'den biri mi geçecek?
-2. **İkon A yolu** yukarıdaki üç seçenekten hangisi? (Compose'da değişken font
-   ekseni ancak fontu bundle edip `Text` çizerek çalışıyor.)
-3. **Boş durum 01** başlıkta `Son alışveriş: 3 gün önce · 642 TL` yazıyor —
-   biçim kuralı her tutarın `~` taşımasını söylüyor. Çerçeve mi güncellenecek?
-4. **Boş durum 03** hâlâ dört hedefli toolbar çiziyor (`add`, `undo`,
-   `filter_list`, `Bitir`) — karar 3 ikiye indirmişti. Çerçeve tazelenecek mi?
-5. **Boş durum 07** Katılma kodu satırını `R4TB9C` + kopyala ikonuyla
-   çiziyor — karar 24 soluk "Faz 7'de açılıyor" diyor. Aynı çerçevede
-   Mağazalar satırı da chevron'lu ve "İlk gözlemden öğrenilecek" değerli;
-   karar 23 ve 24 ikisini de kaldırmıştı.
+`12-tasarima-sorular-4.md`'nin beş sorusunun hepsi cevaplandı (karar 32–35 +
+atlas tazelemesi). **Teknik itiraz tuttu:** design A yolunu düşürdü ve
+gerekçesinde bizim argümanımızı birebir kullandı — eksenler yalnızca değişken
+fontta yaşıyor, A'nın tek avantajı olan ucuzluk gerçek değildi, font paketleme
+Fraunces'te zaten reddedilmişti, ve kalan iki seçenek aynı mekanik işi
+istediği için kimlik kazancı olan taraf seçildi.
+
+## Yeni açık sorular
+
+**1 · Karar 33'ün renkleri palete oturmuyor.** Karar *"metin `#E4D8C9`, ikon
+`#F5EDE6`"* diyor. Ama tasarımın kendi `handoff/tokens.json`'ı karanlık
+`textPrimary`yi **`#F5EDE6`** yazıyor — yani kararın "ikon" rengi uygulamanın
+bugünkü *metin* rengi — ve `#E4D8C9` palette hiç geçmiyor (tasarım
+dokümanlarında yalnızca HTML çerçevesinin kendi zemin/metin rengi olarak var).
+
+İki okuma mümkün:
+- **(a)** Karanlık gövde metni bir kademe insin (`#F5EDE6` → `#E4D8C9`), ikon
+  yerinde kalsın. Sayılara birebir uyar ama **bir ikon kararından türetilen
+  palet çapında bir değişiklik** olurdu ve her ekranı etkilerdi.
+- **(b)** Çift, iki mutlak renk değil bir **ilişki**: ikon yanındaki metinden
+  bir basamak yukarıda. Uygulamanın karanlık rampası `#C6B6A9` → `#F5EDE6` ve
+  `#E4D8C9` tam bu ikisinin arasına düşüyor.
+
+**(b) uygulandı** — ikincil metnin yanındaki ikon `#E4D8C9`'a çıkıyor, birincil
+metnin yanındaki zaten rampanın tepesinde. Telafi bir *kaldırma*; tepenin
+üstüne çıkamaz. Okuma `Color.kt`'de not olarak duruyor ve `NeydiColorTest`
+ölçüyor. → **F11.14**
+
+**2 · Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın örneği *"Son
+alışveriş: 8 gün önce · 642 TL"*; kendi tarih merdiveni ise 7–13 günü **"geçen
+hafta"**ya topluyor. Kod merdiveni esas aldı (daha yeni, daha açık ve
+sayıyla tanımlı). Örnek mi güncellenecek, yoksa başlık merdivenin dışında mı
+kalacak? → **F11.13**

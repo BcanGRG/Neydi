@@ -7,8 +7,9 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 11/19 · sıradaki **E12**. Tasarım pivot turunu kapattı (20 karar). Uygulama derleniyor, cihazda kurulu,
-183 test yeşil, tek derleyici uyarısı var (F10.10'un kendi işi).
+**Durum:** Faz E 13/19 · sıradaki **E12** (kullanıcının etiket fotoğrafları bekliyor). Tasarım dördüncü turu da
+kapattı (35 karar). Uygulama derleniyor, cihazda kurulu, **214 test yeşil**, tek derleyici uyarısı var
+(F10.10'un kendi işi). İkon seti Phosphor'a taşındı — `material-icons-extended` bağımlılığı düştü.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
 > Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -203,11 +204,10 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F5.10 — Mükerrer gözlem koruması** *(cihazsız)*. **Kural tasarımdan
       geldi:** aynı market + ürün + fiyat **60 saniye** içinde tekrarlanırsa
       ikinci gözlem yazılmaz. Eşitlemede aynı dakika = tek gözlem.
-- [ ] **F5.11 — İki biçimlendirici.** İkisinin de spesifikasyonu tasarımdan
-      tam geldi. (a) tahmin biçimi `~642 TL` — tilde bitişik, **kuruş
-      yazılmaz**; (b) tarih merdiveni: az önce / bugün 15:38 / dün / 3 gün önce
-      / geçen hafta / 12 Ağustos. ⚠ Tuzak: `(now - then) / 86_400_000`
-      **takvim günü saymaz**; aynı aritmetik `medianIntervalDays`'te de.
+- [x] **F5.11 — İki biçimlendirici.** `formatEstimate` (`~642 TL`, tilde
+      bitişik, kuruşsuz, en yakına yuvarlar) ve `formatRelativeDay` (altı
+      basamaklı tarih merdiveni). Başlık, sepet tahmini ve özet manşeti
+      bağlandı. Takvim-günü tuzağı zaten `daysBetween`'de çözülmüştü.
 - [~] **F6.4 — Eksik Olabilir (Ekran 3).** "Son ödenen fiyat" kolonu artık
       gözlemden besleniyor.
 - [ ] **F6.5 — Sabit terfisi + bastırma.** "Bunu önerme" listesinin giriş
@@ -274,14 +274,31 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Yukarıdaki
       dört isim; kullanılacak mı silinecek mi tasarımın kararı.
 - [ ] **F11.6 — Alışveriş modu satır container'ı.**
-- [ ] **F11.11 — İkon ekseni (ikonografi A yolu).** Tasarım 24dp / wght 300 /
-      opsz 24 / karanlıkta GRAD 100 istiyor. ⚠ **Bugünkü kodla imkânsız:**
-      `androidx.compose.material.icons` statik `ImageVector` veriyor, ekseni
-      yok. Üç seçenek `11-tasarim-kararlari.md`'de; karar tasarımın.
-- [ ] **F11.12 — Boş durum atlası tazelensin.** Üç çerçeve kararlarla
-      çelişiyor: 01'de tutar `~`'siz, 03'te dört hedefli toolbar (karar 3
-      ikiye indirmişti), 07'de üretilmiş katılma kodu + chevron'lu Mağazalar
-      satırı (karar 23/24). Tasarıma soruldu.
+- **F11.11 ✅ — İkon seti Phosphor'a taşındı (karar 32–34).** 15 ikon
+      Phosphor Regular 2.1.1 çizimleriyle elle `ImageVector`. Değişken font
+      paketlenmedi, `Text` olarak çizilmedi ve **`material-icons-extended`
+      bağımlılığı tamamen düştü** (sürüm kataloğundan da silindi).
+      Çağrı yerlerinin hiçbiri değişmedi — `NeydiIcons` katmanının vaadi
+      sınandı ve tuttu. Karanlık tema telafisi renk kademesi olarak geldi
+      (`iconMuted`, karar 33). Yeni testler: her path'in gerçekten ayrıştığı,
+      iki ikonun aynı çizimi taşımadığı, yalnızca yön taşıyanların
+      `autoMirror` olduğu. Cihazda beş ikon gözle doğrulandı; on beşinin
+      atlası `NeydiIcon.kt`'de `@PreviewLightDark` olarak duruyor.
+- **F11.12 ✅ — Boş durum atlası tazelendi** (tasarım yaptı): toolbar iki
+      hedef, bütün tutarlar `~`, eşikler sayıyla, "parse" dili kalktı,
+      çerçeve 04 → "Alışveriş kapanışı".
+- [ ] **F11.13 — Ekran 1 başlık örneği merdivenle çelişiyor.** Tasarımın
+      örneği *"Son alışveriş: 8 gün önce"*; tarih merdiveni 7–13 günü
+      "geçen hafta"ya topluyor. Kod merdiveni esas aldı (daha yeni ve daha
+      açık). Tasarıma sorulacak.
+- [ ] **F11.14 — Karar 33'ün renkleri palete oturmuyor.** Karar *"metin
+      `#E4D8C9`, ikon `#F5EDE6`"* diyor; tasarımın kendi `tokens.json`'ı ise
+      karanlık `textPrimary`yi **`#F5EDE6`** yazıyor ve `#E4D8C9` uygulamanın
+      paletinde hiç yok. İki okuma var: (a) karanlık gövde metni bir kademe
+      inecek, (b) çift mutlak renk değil bir *ilişki* — ikon yanındaki
+      metinden bir basamak yukarıda. **(b) uygulandı**, çünkü (a) bir ikon
+      kararından türetilen palet çapında bir değişiklik olurdu. İkincil
+      metnin (`#C6B6A9`) yanındaki ikon `#E4D8C9`'a çıkıyor. Onay bekliyor.
 - **F11.10 → E19'a devroldu.**
 
 ---

@@ -51,6 +51,32 @@ private val DarkTextPrimary = Color(0xFFF5EDE6)
 private val DarkTextSecondary = Color(0xFFC6B6A9)
 private val DarkHairline = Color(0xFF2E2621)
 
+/**
+ * Karanlik temada ikonun rengi - metninkinden BIR KADEME ACIK (tasarim karari 33).
+ *
+ * Tasarim once karanlikta `GRAD 100` istemisti: ince acik konturlar koyu zeminde
+ * optik olarak inceliyor, GRAD ekseni onlari kalinlastirip yanindaki metinle ayni
+ * agirlikta okutuyor. Degisken font paketlenmedigi icin (karar 32) kalinlik
+ * ekseni yok; telafi RENK KADEMESINE cevrildi. Ayni ise iki cozum degil - ayni
+ * optik sorunun elimizdeki tek araciyla cozumu.
+ *
+ * DEGER TASARIMIN VERDIGI CIFTTEN: karar 33 "metin `#E4D8C9`, ikon `#F5EDE6`"
+ * diyor. Uygulamanin karanlik rampasi ise `#C6B6A9` (ikincil metin) →
+ * `#F5EDE6` (birincil metin) ve `#E4D8C9` bu ikisinin arasina, ust basamaga
+ * yakin dusuyor. Yani tasarimin verdigi cift iki MUTLAK renk degil, bir
+ * ILISKI: ikon, yanindaki metinden bir basamak yukarida. Ikincil metin
+ * (`#C6B6A9`) yanindaki ikon o basamaga - `#E4D8C9`'a - cikiyor. Birincil
+ * metnin yanindaki ikon zaten rampanin tepesinde (`#F5EDE6`), bir kaldirma
+ * tepenin ustune cikamaz.
+ *
+ * Tasarimin `tokens.json`'i hala karanlik `textPrimary`yi `#F5EDE6` yaziyor,
+ * yani karar 33 ile token dosyasi henuz ayni seyi soylemiyor - okuma bu notla
+ * kayitli ve **F11.14** olarak soruldu.
+ *
+ * ISIK TEMASINDA TELAFI YOK (`GRAD 0`): orada ikon ikincil metinle ayni renkte.
+ */
+private val DarkIconMuted = Color(0xFFE4D8C9)
+
 val NeydiLightColors = lightColorScheme(
     primary = LightPrimary,
     onPrimary = LightOnPrimary,
@@ -98,6 +124,13 @@ data class NeydiExtraColors(
     val success: Color,
     val warning: Color,
     val hairline: Color,
+    /**
+     * Muted ikonun rengi - `NeydiIcon`in varsayilani.
+     *
+     * Isik temasinda ikincil metinle AYNI, karanlikta bir kademe ACIK
+     * (tasarim karari 33). Neden ayri bir token oldugu [DarkIconMuted]'ta.
+     */
+    val iconMuted: Color,
     /** Fiyat artisi (kirmizi ok) */
     val priceUp: Color,
     /** Fiyat dususu (yesil ok) */
@@ -122,6 +155,8 @@ val LightExtraColors = NeydiExtraColors(
     success = LightSuccess,
     warning = LightWarning,
     hairline = LightHairline,
+    // Isik temasinda telafi yok: ikon ikincil metinle ayni renkte.
+    iconMuted = LightTextSecondary,
     priceUp = LightError,
     priceDown = LightSuccess,
     accentNeedsOutline = true,
@@ -135,6 +170,7 @@ val DarkExtraColors = NeydiExtraColors(
     success = DarkSuccess,
     warning = DarkWarning,
     hairline = DarkHairline,
+    iconMuted = DarkIconMuted,
     priceUp = DarkError,
     priceDown = DarkSuccess,
     // Karanlik modda accent surface uzerinde 11.29:1 - kenarlik gerekmez.

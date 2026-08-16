@@ -69,7 +69,9 @@ kotlin {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
-            implementation(libs.compose.material.icons.extended)
+            // material-icons-extended YOK: ikonlar F11.11'de Phosphor cizimleriyle
+            // elle tasindi (tasarim karari 32), bkz. ui/components/NeydiIcon.kt.
+            // Bagimlilik 1.7.3'te donmustu ve tek kullanicisi o dosyaydi.
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.ui.tooling.preview)

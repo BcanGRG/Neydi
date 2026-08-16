@@ -88,6 +88,55 @@ class NeydiColorTest {
         assertAtLeast(3.0, DarkExtraColors.priceDown, NeydiDarkColors.surface, "karanlik priceDown/surface")
     }
 
+    // --- Karanlik tema ikon telafisi (tasarim karari 33) --------------------
+
+    /**
+     * TELAFI GERCEKTEN VAR MI - yorum degil, olcum.
+     *
+     * Karar 33 karanlikta ikonu metinden bir kademe acik cizdiriyor: ince acik
+     * konturlar koyu zeminde optik olarak inceliyor ve degisken font olmadigi
+     * icin (karar 32) kalinlik ekseniyle telafi edemiyoruz.
+     *
+     * `iconMuted`i birinin sessizce `onSurfaceVariant`a esitlemesi telafiyi
+     * ORTADAN KALDIRIR ve hicbir sey sikayet etmezdi - ekran da "biraz sonuk"
+     * gorunurdu, bozuk degil. Bu test o sessiz gerilemenin kilidi.
+     */
+    @Test
+    fun darkIconsAreLighterThanTheTextBesideThem() {
+        val textLum = NeydiDarkColors.onSurfaceVariant.luminance()
+        val iconLum = DarkExtraColors.iconMuted.luminance()
+        assertTrue(
+            iconLum > textLum,
+            "karanlik iconMuted parlakligi ${format(iconLum)}, ikincil metin ${format(textLum)} - " +
+                "ikon metinden ACIK olmali (karar 33)",
+        )
+        // Telafi bir kademe, sicrama degil: rampanin tepesini (onSurface) gecmemeli,
+        // yoksa muted ikon baslikla ayni agirlikta okunur.
+        assertTrue(
+            iconLum <= NeydiDarkColors.onSurface.luminance(),
+            "iconMuted birincil metinden acik - telafi bir kademe olmali, rampanin ustune cikmamali",
+        )
+    }
+
+    /** Isik temasinda telafi YOK (`GRAD 0`): ikon ikincil metinle ayni renkte. */
+    @Test
+    fun lightThemeHasNoIconCompensation() {
+        assertEquals(
+            NeydiLightColors.onSurfaceVariant,
+            LightExtraColors.iconMuted,
+            "isik temada ikon telafisi olmamali",
+        )
+    }
+
+    /** Ikon metin degil ama sinyal: metin-disi UI esigini (3:1) gecmeli. */
+    @Test
+    fun mutedIconsStayVisibleOnBothSurfaces() {
+        assertAtLeast(3.0, LightExtraColors.iconMuted, NeydiLightColors.surface, "isik iconMuted/surface")
+        assertAtLeast(3.0, LightExtraColors.iconMuted, NeydiLightColors.surfaceVariant, "isik iconMuted/surfaceVariant")
+        assertAtLeast(3.0, DarkExtraColors.iconMuted, NeydiDarkColors.surface, "karanlik iconMuted/surface")
+        assertAtLeast(3.0, DarkExtraColors.iconMuted, NeydiDarkColors.surfaceVariant, "karanlik iconMuted/surfaceVariant")
+    }
+
     // --- AMBER KURALI: testin asil sebebi -----------------------------------
 
     /**

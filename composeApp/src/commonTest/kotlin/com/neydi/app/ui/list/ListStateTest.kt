@@ -277,21 +277,40 @@ class ListStateTest {
      */
     @Test
     fun headerRemindsOfLastTrip() {
+        // TUTAR TAHMIN BICIMINDE (F5.11): tilde bitisik, kurus yok. Onceki
+        // hali "642,00 TL" idi - uygulamada artik kesin tutar diye bir veri
+        // olmadigi icin o bicim bir iddia tasiyordu.
+        //
+        // SEKIZ GUN "geçen hafta" YAZIYOR, "8 gün önce" DEGIL: tarih merdiveni
+        // 7-13 gun araligini tek cumleye topluyor. Tasarimin Ekran 1 ornegi
+        // hala "8 gün önce" gosteriyor - celiski tasarima soruldu; merdiven
+        // daha yeni ve daha acik oldugu icin o esas alindi.
         assertEquals(
-            "Son alışveriş: 8 gün önce · 642,00 TL",
+            "Son alışveriş: geçen hafta · ~642 TL",
             lastTripSummary(LastTrip(closedAt = daysAgo(8), totalMinor = 64200), now),
+        )
+        assertEquals(
+            "Son alışveriş: 3 gün önce · ~642 TL",
+            lastTripSummary(LastTrip(closedAt = daysAgo(3), totalMinor = 64200), now),
         )
     }
 
-    /** Bugun ve dun ozel yaziliyor - "0 gun once" kimsenin kurdugu cumle degil. */
+    /**
+     * MERDIVENIN ILK BASAMAGI SAATLE OLCULUYOR (F5.11).
+     *
+     * Bu test once "bugün" bekliyordu; tasarimin tarih merdiveni 0-6 saat
+     * araligina "az önce" diyor ve `daysAgo(0)` tam olarak `now` demek.
+     * "bugün" ancak alti saati gecmis ayni gun icin yaziliyor ve o zaman
+     * saati de tasiyor ("bugün 08:05").
+     */
     @Test
-    fun headerUsesWordsForTodayAndYesterday() {
+    fun headerUsesWordsForRecentTrips() {
         assertEquals(
-            "Son alışveriş: bugün · 12,50 TL",
+            "Son alışveriş: az önce · ~13 TL",
             lastTripSummary(LastTrip(closedAt = daysAgo(0), totalMinor = 1250), now),
         )
         assertEquals(
-            "Son alışveriş: dün · 12,50 TL",
+            "Son alışveriş: dün · ~13 TL",
             lastTripSummary(LastTrip(closedAt = daysAgo(1), totalMinor = 1250), now),
         )
     }
@@ -316,11 +335,14 @@ class ListStateTest {
         assertEquals("Henüz alışveriş yok", lastTripSummary(null, now))
     }
 
-    /** Cihaz saati geri alinmis: "-2 gun once" yerine bugune yuvarlaniyor. */
+    /**
+     * Cihaz saati geri alinmis: "-2 gün önce" yazmak yerine merdivenin en
+     * yakin dogru basamagina dusuluyor.
+     */
     @Test
-    fun headerClampsFutureTripToToday() {
+    fun headerClampsFutureTripToJustNow() {
         assertEquals(
-            "Son alışveriş: bugün",
+            "Son alışveriş: az önce",
             lastTripSummary(LastTrip(closedAt = daysAgo(-2), totalMinor = null), now),
         )
     }
