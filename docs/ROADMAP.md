@@ -23,9 +23,11 @@ ve `coil` bağımlılıkları düştü.
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **E12** — gerçek etiket fikstürleri | E14'ün ayrıştırıcısı sentetik örnekle yazılamaz | **Kullanıcı** — ~10 etiket fotoğrafı |
-| 2 | **E13** — mağaza tohumu | E15'in market seçicisi buna dayanıyor | — |
-| 3 | **E14** — TagParser | E15'i açan son teknik parça | E12 |
+| 1 | **E15** — TagCapture ekranı | pivotun canlandığı adım; E12–E14 hattı hazır | — |
+| 2 | **F11.19 + F11.29** — cihazda göz kontrolü | gözlem üretebilen yüzey ilk kez olacak | E15 |
+| 3 | **Metro örneği** — toptancı etiketi + yan tutulmuş kare | köşe sırası sözleşmesi hâlâ açık | **Kullanıcı** |
+
+*E12 ✅ · E13 ✅ · E14 ✅ — üçü de kapandı.*
 
 **Tasarım cevapladı** (16 Ağu): karar defteri 20 maddeye indi, iki yeni dosya
 geldi (gezinme sözleşmesi + ikonografi). Kararların kod karşılığı ve kalan beş
@@ -138,7 +140,7 @@ yaratmıyor, önce gelen kazanıyor.
 > "Takip edilen zincirler" satırını okunamaz yapar. Kod hatası değil, veri
 > kalıntısı — temizlik kararı kullanıcının, bkz. **F10.17**.
 
-### ▸ E14 — TagReader + TagParser *(okuyucu ✅ · ayrıştırıcı sürüyor)*
+### ▸ E14 — TagReader + TagParser ✅
 
 **Yapıldı:**
 - `readTag` — tek bitmap, tek ML Kit çağrısı. Şerit/yön oylaması/mükerrer eleme
@@ -165,9 +167,34 @@ yaratmıyor, önce gelen kazanıyor.
   birleştirmek tahmin olurdu.
 - Fikstür `TagFixtures.kt` olarak **üretildi** (elle yazılmadı); ham dökümler
   `commonTest/etiket-fikstur/` altında ve her sayı orada doğrulanabilir.
+- **`readTagName` + `readTagPack` — ad, marka önerisi ve gramaj.** Etiket
+  **kolonlu**: ad solda bir blok, fiyat sağda tek parça, künye altta. Bloğu
+  bitiren satır gramaj; marka bloğun ilk satırı ve yalnızca **öneri**
+  (karar 39 — manavda marka yok).
+  - **26/27'de ad, 23/27'de gramaj** okundu. 22 etikette marka+ad **tam
+    doğru**. Eksik dördünün her birinin gerekçesi testte yazılı: `53-62 G`
+    aralık (bilinçli red), bulanık çekim, aktüel etiket düzeni, gramajı
+    olmayan etiket (`12Lİ` adet çarpanı).
+  - Süzülenler: mağaza kodu (`P728`, 27 etikette de var, hiçbirinde ad değil),
+    raf adedi (`X 34 Adet`). **Paket çarpanı süzülmüyor** — `12Lİ` adın
+    parçası; ayıran tek işaret baştaki `X`.
+  - `groupVisualRows` **kullanılmadı** ve bu plan sapması bilinçli: fişte ad
+    ile tutar aynı görsel satırın iki ucuydu, etikette değil. Gerekçe
+    `TagFieldReader.kt` KDoc'unda.
+- **Bulanık çekim artık fiyat da uydurmuyor.** `readTagPrice` `183808` için
+  `86 TL` dönüyordu — 12 piksellik bir gürültü parçası. Eski test bunu gevşek
+  bir koşulla tolere ediyordu (`if (price != null) …`), yani önlemesi gereken
+  şeyi geçiriyordu. İki okuyucu artık paylaşılan `MIN_LIRA_RATIO` eşiğini
+  kullanıyor: manşet, kaynak yüksekliğin %2'sinden küçükse okuma yok.
 
-**Kalan:** ürün adı, marka önerisi, `packSize`/`priceUnit` çıkarımı,
-`groupVisualRows` ile satır gruplaması.
+**Kendi hatam, kayda geçsin:** ad bloğundaki gürültüyü "raf tabelası ad
+satırından on kat büyük" diye **yükseklik eşiğine** bağlamıştım. Test ısırması
+yanlışladı — eşiği kaldırdım, tabela testleri ayakta kaldı. Gerçek sebep
+tabelanın etiketin **bütün genişliğini** kaplaması (`Krena` x=132..3060, lira
+x=1979), yani kolon süzgeci onu zaten eliyor. Eşiğin tek gerçek işi bulanık
+çekimi düşürmekti ve onu da *kazara* yapıyordu (medyan yükseklik negatif
+çıkıyor, çarpım daha da negatif oluyor). Doğru sonuç, tesadüfi sebep — eşik
+silindi, yerine ölçülmüş bir kural kondu.
 
 ### ▸ E15 — TagCapture ekranı *(pivotun canlandığı adım)*
 
@@ -231,8 +258,9 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 
 ## Öncelik 1 — Fiyat hafızasını tamamlayan işler
 
-- [ ] **F5.7 — Ambalaj boyu çıkarımı.** E14 etiketin birim-fiyat satırından
-      `packSize`/`packUnit` çıkarıyor; kalan iş `PriceHint.PackChanged`'i
+- [ ] **F5.7 — Ambalaj boyu çıkarımı.** `readTagPack` **gramaj satırından**
+      okuyor (birim-fiyat satırından değil — ilk yazdığım tarif yanlıştı):
+      `750 G` → `750.0` + `gr`, 23/27 etikette. Kalan iş `PriceHint.PackChanged`'i
       besleyip shrinkflation'ı gerçekten yakalamak. *Bu olmadan 1 L → 900 ml
       düşüşü "fiyat sabit" diye raporlanır.*
 - **F5.10 ✅ (yerel yarısı) — Mükerrer gözlem koruması.** Tasarımın kuralı:

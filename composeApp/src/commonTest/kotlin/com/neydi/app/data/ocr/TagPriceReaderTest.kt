@@ -130,13 +130,22 @@ class TagPriceReaderTest {
         assertEquals("adet", u.unit)
     }
 
-    /** Basarisiz cekimde `null` donuyor - uydurma bir fiyat degil. */
+    /**
+     * Basarisiz cekimde `null` donuyor - uydurma bir fiyat DEGIL.
+     *
+     * ILK HALI GEVSEKTI: `if (price != null) assertTrue(!price.kurusFromOcr)`,
+     * yani "cokmesin, kurus uydurmasin" diyordu ve okuyucu `86 TL` donduruyordu.
+     * Ama o 86, bulanik bir fotoftaki 12 piksellik bir gurultu parcasi - lira
+     * hanesinin kendisi uydurma. Testin tolere ettigi sey tam olarak onlemesi
+     * gereken seydi.
+     *
+     * `readTagName` ayni fikstur icin `null` diyordu; iki okuyucunun ayni
+     * fotografta anlasmamasi tutarsizlikti. Esik artik paylasilan
+     * `MIN_LIRA_RATIO`.
+     */
     @Test
     fun theFailedShotYieldsNoPrice() {
-        val price = readTagPrice(TagFixtures.all.getValue("20260817_183808"))
-        // Tek okunan parca `86.` (h=12). Fiyat gibi gorunse de guvenilmez;
-        // burada onemli olan COKMEMESI ve uydurmamasi.
-        if (price != null) assertTrue(!price.kurusFromOcr)
+        assertNull(readTagPrice(TagFixtures.all.getValue("20260817_183808")))
     }
 
     /**
