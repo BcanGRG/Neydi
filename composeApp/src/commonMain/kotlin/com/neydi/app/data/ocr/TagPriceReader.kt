@@ -134,6 +134,11 @@ private fun OcrPiece.isKurusFor(lira: OcrPiece): Boolean {
  * Iki ondalik hane burada gercekten var (normal punto), o yuzden ayri bir
  * ayristirici gerekmiyor. Bastaki/sondaki cop temizleniyor: `T06,00 kg`,
  * `E7,50hg`, `239,44B | kg` - para birimi simgesi metne siziyor.
+ *
+ * BIRIM NORMALIZE EDILMIS DONUYOR. Once eslesen ham sozcugu donduruyordu ve
+ * bu bir sizintiydi: cagiran `itre` ile `lt`yi ayri birim saniyordu, yani
+ * `93,80 / litre` ile `5 LT` ambalaji capraz kontrolde eslesmiyordu. OCR
+ * copunu temizlemek bu fonksiyonun isi, cagiranin degil.
  */
 internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
     UNITS.forEach { unit ->
@@ -142,7 +147,7 @@ internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
             if (!t.contains(unit, ignoreCase = true)) return@forEach
             val m = MONEY.find(t) ?: return@forEach
             val minor = parseMinor(m.value) ?: return@forEach
-            return TagUnitPrice(minor = minor, unit = unit)
+            return TagUnitPrice(minor = minor, unit = unitKey(unit))
         }
     }
     return null
@@ -150,6 +155,18 @@ internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
 
 /** Etikette gorulen birim sozcukleri. `itre`/`ikg` OCR copu, olculdu. */
 private val UNITS = listOf("kg", "adet", "litre", "lt", "itre", "ikg", "hg")
+
+/**
+ * Birim sozcugunu tek bir anahtara indirger.
+ *
+ * `ikg` ve `hg` bastaki `/`nin harfe karismasi, `itre` `litre`nin bas harfinin
+ * dusmesi - ucu de [UNITS] listesine gercek olcumden girdi.
+ */
+private fun unitKey(raw: String): String = when (raw.lowercase()) {
+    "kg", "ikg", "hg" -> "kg"
+    "litre", "itre", "lt" -> "lt"
+    else -> raw
+}
 
 private val MONEY = Regex("""\d{1,4}[.,]\d{2}""")
 
