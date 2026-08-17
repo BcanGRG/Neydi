@@ -329,7 +329,7 @@
           <div style="font:700 15px/1.3 'Plus Jakarta Sans'">Varyantlar (soldan aşağı)</div>
           <div style="font:500 14px/1.7 'Plus Jakarta Sans';color:#5C4F45">normal · adet + fiyat çipli · fiyat ipuçlu (trend + sparkline) · sabit "her zamanki" (%70 opaklık + 12dp raptiye) · eş eklemiş · basılı (scale 0.97 + %6 tonal) · işaretli (squircle, üstü çizili, doygunluk düşer) · odaklı (2dp outline, 2dp offset)</div>
           <div style="height:1px;background:#E7DACB"></div>
-          <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Sağ kenardan swipe = sil; her yıkıcı işlem için taşma menüsünde jest olmayan bir yol da var. Sol kenar iOS'ta geri gitmeye ayrılmıştır, dokunulmaz.</div>
+          <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Sağ kenardan swipe = sil, yalnızca plan modunda ve alınmamış satırda; geri alma 5 sn'lik snackbar'da. Jest olmayan eş Ürün Detayı'ndaki error renkli "Listeden çıkar" satırı. Sol kenar iOS'ta geri gitmeye ayrılmıştır, dokunulmaz.</div>
         </div>
       </div>
     </div>
@@ -376,7 +376,7 @@
           <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Trend bastırılır. Ambalaj küçülmesi asla fiyat düşüşü gibi görünmez.</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Başka markette ucuz · liste başına en fazla 3</div>
+          <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">Başka markette ucuz · eşik %10 ve 5 TL · en fazla 3</div>
           <div style="display:flex;align-items:center;gap:12px;height:68px;padding:0 12px;border-radius:20px;background:#FFFFFF;border:1px solid #E7DACB">
             <div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div>
             <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Ayçiçek Yağı 5 L</div><div style="height:24px;align-self:flex-start;padding:0 10px;border-radius:999px;background:#E0A32E;border:1.5px solid #8A5A00;display:flex;align-items:center;font:600 12px/1 'Plus Jakarta Sans';color:#3A2600;font-variant-numeric:tabular-nums">A101'de 34,90</div></div>
@@ -469,7 +469,11 @@
           <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6;font-variant-numeric:tabular-nums">Alışveriş kaydedildi · 18 ürün · ~642 TL</div>
           <div style="font:600 14px/1 'Plus Jakarta Sans';color:#FF9166;white-space:nowrap">Geçmiş'te gör</div>
         </div>
-        <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">Snackbar aksiyon taşır ve tek bir yerde kullanılır: alışveriş kendiliğinden kapandığında. İşaretlemede asla snackbar yok.</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#221A14;border-radius:18px;padding:14px 16px;max-width:360px">
+          <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#F5EDE6">Satır silindi</div>
+          <div style="font:600 14px/1 'Plus Jakarta Sans';color:#FF9166;white-space:nowrap">Geri al</div>
+        </div>
+        <div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">Snackbar aksiyon taşır ve iki yerde kullanılır: alışveriş kendiliğinden kapandığında ve satır silindiğinde ("Geri al", 5 sn). İşaretlemede asla snackbar yok.</div>
         <div style="display:flex;flex-direction:column;gap:12px;background:#FFFFFF;border:1px solid #E7DACB;border-radius:28px 28px 0 0;padding:16px;max-width:360px">
           <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
           <div style="font:700 18px/1.28 'Plus Jakarta Sans'">Bottom sheet · üst köşe 28dp</div>

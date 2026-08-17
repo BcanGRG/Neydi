@@ -285,16 +285,21 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       kaldırdı — madde koda değil, kendi kaydına takılı kalmış.
 - [ ] **F10.7 — Odak halkasını bağla.** `Modifier.focusRing` tanımlı, çağıranı yok.
 - [ ] **F10.8 — 44dp altındaki üç kontrol.**
-- [ ] **F10.9 — Satır silme yolu yok.** ⚠ **Tasarım bunu zaten tarif etmiş** —
-      gezinme sözleşmesinin "Jest" satırı: *"sağdan sola swipe listede satırı
-      siler (geri alma 'Alındı' bölümünde değil, 5 sn'lik snackbar'da)"*, artı
-      200 ms yükseklik daralması animasyonu. Veri tarafı da hazır (`remove()` →
-      `softDelete`). **Tek engel:** geri alma snackbar'ı uygulamanın İLK aksiyon
-      taşıyan snackbar'ı olur, oysa **karar 8** snackbar'ın *"uygulamada tek bir
-      yerde"* kullanıldığını yazıyor. İki doküman çelişiyor → altıncı turda
-      soruldu (`14-tasarima-sorular-6.md`).
-      **Ders:** bu madde "tasarlanmamış" diye duruyordu; aslında sözleşmede
-      yazılıydı ve biz aynayı tazeleyip içini taramamıştık.
+- [ ] **F10.9 — Satır silme.** ⚠ **Bloke DEĞİL artık** — tek engel olan karar 8
+      çelişkisi **karar 37** ile kapandı: snackbar ikinci kullanımını aldı,
+      gerekçesi "iki yerde" diye düzeltildi. Dört alt sorunun dördü de
+      cevaplı: jest **yalnız plan modunda ve alınmamış satırda**, "Alındı"
+      bölümü jesti hiç almıyor, aksiyon etiketi **"Geri al"** (tek-kelime
+      kuralının bilinen tek istisnası), jestsiz eş **karar 38** ile Ürün
+      Detayı'nın son satırı (taşma menüsü DEĞİL — menü ekran düzeyinde
+      yaşıyor, satırı bilmiyor).
+      **Yazılacak yedi parça** ve kodda bugün ne olduğu:
+      [`16-tur6-cikarim.md`](16-tur6-cikarim.md) §3.
+      ⚠ İki tuzak: (1) mevcut "mezar kazma" yolu (`ListRepository:186`)
+      **restore değil yeniden ekleme** — `quantity`/`checked`/`addedBy`
+      sıfırlıyor, yani "Geri al" 2 kg elmayı 1 kg yapardı; gerçek bir
+      `restore` gerekiyor. (2) `Motion.CHECK_MS = 200` **işaretleme**
+      animasyonu; silme geri dönüşü ayrı sabit ister — aynı sayı, farklı iş.
 - [ ] **F10.11 — Ölü kod ve ölü token temizliği.** *(bir bölümü yapıldı)*
       **Silinenler:** `ui/screens/Placeholders.kt` (86 satır, hiçbir dosya import
       etmiyordu), `ListScreen`'deki altı FileKit import'u, `formatDayMonthTime`,
@@ -346,17 +351,10 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [ ] **F11.21 — Ekran 3 "Eksik olabilir (0)" ara karesi bir ihlal.** Üç ayrı
       yerde *"ekran hiç açılmaz, doğrudan alışveriş moduna girilir, 2 sn'lik
       toast çıkar"* yazıyor. Kodda ara kare çiziliyor.
-- [ ] **F11.22 — Dört tasarım kararını biz verip geçtik** *(soru değil, bildirim
-      — itiraz gelirse geri alınır)*. Birincil buton dolgusu maketleri esas
-      alıyor (`#B34418` ileri, `#3F6B54` onay); fiyat yönü kırmızı/yeşil kalıyor
-      (`tokens.json` makine-okunur kaynak ve o böyle diyor); "Nerede ucuz"da
-      ambalaj boyu **filtre**; tutarı hesaplanamayan özet kartı **hiç
-      çizilmiyor**. Gerekçeler `14-tasarima-sorular-6.md` B bölümünde.
-      Ayrım şu: bir yüzeyin **doğup doğmadığı** sözleşmenin işi, bir dolgunun
-      **rengi** maketin işi.
-
-## Öncelik 6 — Tasarım sadakati
-
+- **F11.22 ✅ — Dört kararımızın dördü de onaylandı**, sıfır itiraz; karar
+      42/43/44/45 olarak deftere girdi. Karar 44 eşiği ("iki market")
+      sayısallaştırarak onayladı. Ayrımımız tutmuş: yüzeyin doğup doğmadığı
+      sözleşmenin işi, dolgunun rengi maketin işi.
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Artık **üç**
       isim (`SafeArea`, `AccentStrip`, `focusRing`) — `AccentSurface` yanlışlıkla
       listedeymiş, çağrılıyor. `AccentStrip`'in kaderi tasarıma bağlı: amber şerit
@@ -373,17 +371,44 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       iki ikonun aynı çizimi taşımadığı, yalnızca yön taşıyanların
       `autoMirror` olduğu. Cihazda beş ikon gözle doğrulandı; on beşinin
       atlası `NeydiIcon.kt`'de `@PreviewLightDark` olarak duruyor.
+- [ ] **F11.29 — İkon envanteri 15 → 17.** Karar 34 delta çipinin
+      `arrow_upward`/`arrow_downward` oklarını envantere aldı. Oklar
+      **F11.11'de değil, pivot turunda** (`95c0f45`) silinmişti ve o sırada
+      henüz Material ikonuydular — yani **Phosphor formunda hiç var
+      olmadılar.** `Chips.kt:78` bugün oku **Unicode metin glifi** (`↑`/`↓`)
+      olarak çiziyor; karar 32 *"ikonlar `Text` olarak çizilmiyor"* diyor,
+      üstelik glif sistem fontuna bağlı ve Skia'nın fallback zinciri iki
+      platformda aynı şekli vermiyor. İki Phosphor path'i taşınacak,
+      **`autoMirror` KAPALI** (dikey yön taşıyorlar).
 - **F11.12 ✅ · F11.13 ✅ · F11.14 ✅ · F11.15 ✅ · F11.16 ✅ — beşinci tur kapandı.**
       Ayna dokuz dosyayla tazelendi (**İkonografi ilk kez geldi**), Ekran 1
       başlık örneği merdivene uydu, karar 33 ilişki olarak yeniden yazıldı ve
       okumamız birebir benimsendi, ekran haritasındaki ölü fiş yolları düştü.
       Eşik çelişkisini **karar 36** kapattı → aşağıda F11.19.
-- [ ] **F11.17 — Ekran 1'in beşinci çerçevesi tildesiz.** Dört maket `~642 TL`
-      oldu ama biri hâlâ *"Son alışveriş: bugün · 642,50 TL"* — tilde yok,
-      kuruş var. Türetilmiş tutar, biçim kuralına aykırı. Tasarıma sorulacak.
-- [ ] **F11.18 — İkonografi, karar 33'ü eski çiftiyle örnekliyor.** Karar
-      defteri ilişkiyi doğru yazıyor; İkonografi aynı kuralı hâlâ *"metin
-      `#E4D8C9`, ikon `#F5EDE6`"* diye örnekliyor. Defter esas alındı.
+- [ ] **F11.23 — Özet kartı tutar yokken çiziliyor, karar 45'in tersi.**
+      `BasketAndSummary.kt:141` yalnızca *manşeti* koşula bağlıyor; kart ve
+      "8 ürün · 24 dakika" satırı her hâlde çiziliyor. ⚠ **Sıralama tuzağı:**
+      dosyanın kendi KDoc'u *"E18'e kadar tutar HER ZAMAN bilinmiyor"* diyor —
+      karar 45 bugün uygulanırsa özet kartı **tamamen kaybolur**. **E18 ile
+      aynı PR'da** yapılmalı.
+- [ ] **F11.24 — `NeydiToast.kt:27` KDoc'u bayat.** *"tek bir yerde"* → iki
+      yerde (karar 8 düzeltildi). Tek satır; F10.9 PR'ına sığar.
+- [ ] **F11.25 — "Yaş" biçimlendiricisi.** Tarih merdivenine **istisna** girdi:
+      bir gözlemin/alımın **yaşı** gün sayısıyla yazılır ("11 gün önce"), 14
+      günü geçince hafta olur — çünkü "geçen hafta" yedi ile on üç arasını
+      siler. Merdiven yalnız tek başına duran tarihler için. `DateText.kt`'de
+      yaş modu yok.
+- [ ] **F11.26 — Çip para biçimi.** *"satır çipinde TL düşer; cümle içinde
+      asla."* `Money.kt`'de `formatMinor` ve `formatEstimate` var, TL sonekini
+      düşüren üçüncü varyant yok.
+- [ ] **F11.28 — Alışveriş başlığından market adı düşüyor.** Karar 28: adın
+      kaynağı o gezide çekilen son etiket; henüz çekilmediyse ad yazılmaz.
+      `ListState.kt:70-80` bu satırı üretiyor.
+- **F11.17 ✅ — Ekran 1'in beşinci çerçevesi tilde aldı.** Maket koda uydu;
+      Geçmiş'teki yedi gezi tutarı da kuruşunu bıraktı. Kod işi yok.
+- **F11.18 ✅ — İkonografi karar 33'e uydu** (`#C6B6A9` → `#E4D8C9`). Kod zaten
+      böyleydi; `NeydiIcon.kt`'deki "neden saptık" savunma paragrafı artık
+      gereksiz, tek cümleye inebilir.
 - [ ] **F11.19 — Karar 36'nın renk ayrımı cihazda görülmedi.** Kod, testler
       (8 yeni) ve önizleme yerinde; ama uygulamada bugün **gözlem üretebilen
       bir yüzey yok**, yani karışık liste (kimi koyu, kimi soluk) çalışan

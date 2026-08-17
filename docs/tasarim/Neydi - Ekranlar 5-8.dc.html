@@ -307,6 +307,9 @@
                   <div style="font:500 17px/1.28 'Plus Jakarta Sans'">Bunu önerme</div>
                   <div style="width:44px;height:26px;border-radius:999px;background:#E7DACB;display:flex;align-items:center;padding:2px;box-sizing:border-box"><div style="width:22px;height:22px;border-radius:50%;background:#FBF7F2;border:1px solid #E7DACB;box-sizing:border-box"></div></div>
                 </div>
+                <div style="display:flex;align-items:center;height:56px;border-top:1px solid #E7DACB">
+                  <div style="font:500 17px/1.28 'Plus Jakarta Sans';color:#B3261E">Listeden çıkar</div>
+                </div>
               </div>
             </div>
           </div>
@@ -680,6 +683,7 @@
 
     <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:28px;display:grid;grid-template-columns:repeat(3,1fr);gap:28px">
       <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Kurulum bitince</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Zaten dolu bir Liste ekranına düşülür — boş bir ekrana değil. Adım 2 ve 3'te "Atla" görünür; atlanırsa 12 çipli boş hal devreye girer.</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">"Listeden çıkar" neden burada</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Silmenin jest olmayan eşi bu satır: taşma menüsü ekran düzeyinde yaşıyor ve hangi satırda olduğumuzu bilmiyor, sheet ise satıra uzun dokunuşla açılıyor. Sheet Geçmiş'ten açıldığında aynı satırın yerinde kiremit renginde "Listeye ekle" duruyor — ikisi aynı anda çizilmiyor. Silinen satır 5 sn'lik snackbar'la geri alınabiliyor.</div></div>
       <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">Ürün Detayı neden sheet</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">Reyondayken listeyi terk etmiş hissettirmemeli. Push edilen ekran değil, liste satırındaki fiyat çipinden tek dokunuşla açılan genişleyebilen sheet.</div></div>
       <div style="display:flex;flex-direction:column;gap:8px"><div style="font:700 15px/1.3 'Plus Jakarta Sans'">"1 hafta" aralığı yok</div><div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45">10 günlük alışveriş temposunun haftalık çözünürlüğü yoktur. Çevrimdışıyken "Nerede ucuz" bloğu sessizce yok olur — hata metni gösterilmez.</div></div>
     </div>
@@ -760,13 +764,13 @@ class Component extends DCLogic {
       bars: [{ h: 52 }, { h: 68 }, { h: 44 }, { h: 78 }, { h: 62 }, { h: 88 }],
       barsDark: [{ h: 52 }, { h: 68 }, { h: 44 }, { h: 78 }, { h: 62 }, { h: 88 }],
       history: [
-        { store: "MİGROS ATAŞEHİR", date: "12 Ağustos", count: "18 ürün", total: "~642,50 TL" },
-        { store: "A101 KÜÇÜKBAKKALKÖY", date: "4 Ağustos", count: "6 ürün", total: "~184,90 TL" },
-        { store: "MİGROS ATAŞEHİR", date: "25 Temmuz", count: "17 ürün", total: "~601,00 TL" },
-        { store: "BİM BARBAROS", date: "16 Temmuz", count: "9 ürün", total: "~268,40 TL" },
-        { store: "MİGROS ATAŞEHİR", date: "6 Temmuz", count: "19 ürün", total: "~588,00 TL" },
-        { store: "A101 KÜÇÜKBAKKALKÖY", date: "27 Haziran", count: "7 ürün", total: "~212,60 TL" },
-        { store: "MİGROS ATAŞEHİR", date: "17 Haziran", count: "16 ürün", total: "~534,20 TL" }
+        { store: "MİGROS ATAŞEHİR", date: "12 Ağustos", count: "18 ürün", total: "~642 TL" },
+        { store: "A101 KÜÇÜKBAKKALKÖY", date: "4 Ağustos", count: "6 ürün", total: "~185 TL" },
+        { store: "MİGROS ATAŞEHİR", date: "25 Temmuz", count: "17 ürün", total: "~601 TL" },
+        { store: "BİM BARBAROS", date: "16 Temmuz", count: "9 ürün", total: "~268 TL" },
+        { store: "MİGROS ATAŞEHİR", date: "6 Temmuz", count: "19 ürün", total: "~588 TL" },
+        { store: "A101 KÜÇÜKBAKKALKÖY", date: "27 Haziran", count: "7 ürün", total: "~213 TL" },
+        { store: "MİGROS ATAŞEHİR", date: "17 Haziran", count: "16 ürün", total: "~534 TL" }
       ],
       pinnedSettings: [
         { name: "Tam Buğday Ekmek" }, { name: "Pınar Süt 1 L" }, { name: "Yumurta 10'lu" }

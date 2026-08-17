@@ -22,7 +22,7 @@
 <div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:44px;color:#221A14">
 
   <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
-    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">16 Ağustos 2026 · gezinme ve etkileşim sözleşmesi</div>
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">17 Ağustos 2026 · gezinme ve etkileşim sözleşmesi</div>
     <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Açık kapı bırakmayan sözleşme</div>
     <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Ekran çizimleri neyin göründüğünü söylüyor; bu dosya ne olduğunu söylüyor. Her yüzeyin nereden açıldığı, geri tuşunun ne yaptığı, yarıda kalan işin ne olacağı, izin reddedilirse nereye düşüleceği. Kodlarken karar verilecek bir şey kalmasın diye yazıldı: bir satır boşsa o bir eksiktir, tercih değil.</div>
     <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Ekranlar: <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a> · <a href="Neydi - Bos Durumlar.dc.html">Boş durumlar</a> · <a href="Neydi - Kararlar.dc.html">Kararlar</a> · <a href="Neydi - Ikonografi.dc.html">İkonografi</a> · <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a></div>
@@ -392,6 +392,7 @@ class Component extends DCLogic {
         { name: "Onay kartı", kind: "kart · kameranın üstünde", from: "Etiket çekiminden; ayrı destinasyon değil" },
         { name: "Ürün seçici", kind: "sheet", from: "Onay kartındaki ürün alanından" },
         { name: "Market seçici", kind: "sheet", from: "Onay kartından ve kameranın market çipinden" },
+        { name: "Marka seçici", kind: "sheet · klavyesiz", from: "Onay kartındaki marka satırından" },
         { name: "Gezi detayı", kind: "destinasyon", from: "Geçmiş satırından" },
         { name: "Verilerimi sil", kind: "destinasyon · onay", from: "Ayarlar → Gizlilik" },
         { name: "Kurulum", kind: "tam ekran akış", from: "Yalnızca ilk açılış; gezinmeyle ulaşılamaz" }
@@ -400,7 +401,7 @@ class Component extends DCLogic {
         { name: "Destinasyon", rule: "Geri yığınına girer, başlığında ← taşır, süreç ölümünden sonra geri gelir. Yalnızca kendi işini yapar." },
         { name: "Sheet", rule: "Yığına girmez ama geri onu kapatır. Arkasındaki ekran görünür ve canlı kalır; dışına dokunmak da kapatır." },
         { name: "Kart", rule: "Kameranın üstünde yaşayan tek yüzey. Dışına dokunmak kapatmaz — koridorda kazayla iptal olmasın diye." },
-        { name: "Geçici", rule: "Toast: 2 sn, aksiyonsuz, kuyruksuz. Snackbar: tek yerde, tek aksiyon. İkisi de geri tuşundan etkilenmez." }
+        { name: "Geçici", rule: "Toast: 2 sn, aksiyonsuz, kuyruksuz. Snackbar: iki yerde, tek aksiyon — alışveriş kendiliğinden kapanınca ve satır silinince. İkisi de geri tuşundan etkilenmez." }
       ],
       backRules: [
         { surface: "Liste · plan modu", back: "Uygulamadan çıkar.", draft: "Yok — her değişiklik anında yazılır.", up: "Yok; kökte ← çizilmez." },
@@ -409,7 +410,7 @@ class Component extends DCLogic {
         { surface: "Eksik olabilir", back: "Liste'ye döner, hiçbir şey eklemez.", draft: "Anahtar seçimleri atılır. Uyarı yok: seçim bir öneriye verilen cevap, yarım kalmış iş değil.", up: "← ile aynı." },
         { surface: "Etiket · kamera", back: "Liste'ye döner.", draft: "Yok — çekilmemiş kare diye bir şey yok.", up: "Başlıkta ← yerine ✕; ikisi de aynı." },
         { surface: "Etiket · onay kartı", back: "Klavye açıksa önce onu kapatır. Kapalıysa kartı iptal eder, fotoğrafı siler, kameraya döner.", draft: "Elle yazılan fiyat ve seçilen ürün gider. İki basış gerektiği için kaza değil.", up: "Kartta ← yok; \"Vazgeç\" aynı işi yapar." },
-        { surface: "Ürün / market seçici", back: "Sheet kapanır, onay kartı açık ve dolu kalır.", draft: "Arama metni atılır, kart alanları korunur.", up: "Yok." },
+        { surface: "Ürün / market / marka seçici", back: "Sheet kapanır, onay kartı açık ve dolu kalır.", draft: "Arama metni atılır, kart alanları korunur. Marka seçicide arama alanı yoktur.", up: "Yok." },
         { surface: "Ürün Detayı", back: "Sheet kapanır; genişletilmişse önce daraltmaz, doğrudan kapanır.", draft: "Yok — okuma yüzeyi.", up: "Yok." },
         { surface: "Geçmiş", back: "Liste'ye döner.", draft: "Yok.", up: "← ile aynı." },
         { surface: "Gezi detayı", back: "Geçmiş'e döner — Liste'ye değil.", draft: "Yok.", up: "← ile aynı." },
@@ -438,6 +439,8 @@ class Component extends DCLogic {
         { state: "Kart · OCR döndü", input: "—", result: "Fiyat, ürün, marka dolar; market yapışkan değerden gelir, tarih bugündür.", edge: "Aynı etiket metni daha önce eşlendiyse ürün sorulmaz." },
         { state: "Kart · fiyat boş", input: "Klavye kendiliğinden açılır", result: "Kaydet pasif; ilk rakamda etkinleşir.", edge: "Kullanıcı yazmadan geri basarsa klavye kapanır, kart durur." },
         { state: "Kart · ürün tanınmadı", input: "\"Ürün seç\" dokunuşu", result: "Katalog sheet'i arama odaklı açılır; seçim etiket metnine bağlanır.", edge: "Katalogda yoksa \"Yeni ürün olarak ekle\" tek dokunuş." },
+        { state: "Kart · marka satırı", input: "Marka dokunuşu", result: "Klavyesiz çip sheet'i açılır: bu ürün için görülmüş markalar + \"Marka yok\". Seçim kesik çerçeveyi kaldırır.", edge: "Hiç görülmüş marka yoksa sheet yalnızca \"Marka yok\" taşır; OCR artığı tek dokunuşla boşalır." },
+        { state: "Kart · market satırı", input: "Market dokunuşu ya da kameranın market çipi", result: "Zincir listesi arama alanıyla açılır; uyan zincir yoksa \"+ Yeni market «AKYURT»\" tek dokunuşla ekler.", edge: "Var olan bir adın başka yazımı (BIM / BİM) sessizce var olan zincire bağlanır." },
         { state: "Kart dolu", input: "Kaydet", result: "Gözlem yazılır, fotoğraf silinir, kart kapanır, kamera 300 ms içinde hazır olur, toast 2 sn görünür.", edge: "Kaydet sırasında geri basılırsa kayıt tamamlanır; iptal edilmez." },
         { state: "Kart dolu", input: "Vazgeç / geri", result: "Gözlem yazılmaz, fotoğraf silinir, kamera geri gelir.", edge: "Onay istenmez — çekim ucuz, tekrarı bir dokunuş." },
         { state: "Seri çekim", input: "Arka arkaya deklanşör", result: "Her kare kendi kartını açar; kuyruk yok, önceki kart kapanmadan kamera çalışmaz.", edge: "Aynı market + ürün + fiyat 60 sn içinde tekrarlanırsa ikinci gözlem yazılmaz." },
@@ -475,12 +478,13 @@ class Component extends DCLogic {
         { case: "Aynı anda kurulum", rule: "Kurulum hane başına bir kez; ikinci cihaz kurulum görmez, doğrudan listeye düşer." }
       ],
       inputRules: [
-        { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Değer önceden dolu ve seçili gelir; başka hiçbir yerde metin girişi yoktur — Ekle'deki arama alanı hariç." },
+        { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Değer önceden dolu ve seçili gelir; başka hiçbir yerde metin girişi yoktur — istisna arama alanları: Ekle, ürün seçici ve market seçici. Marka seçicide arama yok, liste kısa." },
         { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Tek istisna: fiyatı okunamamış onay kartı." },
         { name: "Dokunma hedefi", rule: "En küçük hedef 48dp. Alışveriş modunda satır 72dp, çünkü yürürken dokunuluyor." },
         { name: "Haptik", rule: "İşaretlemede hafif tık; kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
         { name: "Uzun dokunuş", rule: "Yalnızca Liste satırında: Ürün Detayı açar. Başka hiçbir yerde uzun dokunuş bir işe bağlanmaz." },
-        { name: "Jest", rule: "Sağdan sola swipe listede satırı siler (geri alma \"Alındı\" bölümünde değil, 5 sn'lik snackbar'da). Etiket akışında jest yok." },
+        { name: "Jest", rule: "Sağdan sola swipe yalnızca plan modunda ve yalnızca alınmamış satırda satırı siler; geri alma 5 sn'lik snackbar'da, aksiyon \"Geri al\". Alışveriş modunda, \"Alındı\" bölümünde ve etiket akışında jest yok." },
+        { name: "Jestsiz eş", rule: "Silmenin jest olmayan eşi Ürün Detayı'nda: satıra uzun dokunuş → error renginde \"Listeden çıkar\". Taşma menüsünde silme yok — menü ekran düzeyinde yaşar, silme satır düzeyinde bir iştir." },
         { name: "Dinamik yazı", rule: "%130'a kadar tüm ekranlar taşmadan büyür; manşetler 2 satıra iner, ölçüler değişmez." },
         { name: "Ekran okuyucu", rule: "Fiyat çipleri \"38 lira 50 kuruş\" olarak okunur; sparkline tek cümleye indirgenir: \"son 9 gözlem, yükseliyor\"." }
       ],
@@ -496,7 +500,8 @@ class Component extends DCLogic {
         { from: "Liste · alışveriş", to: "Liste · plan", trigger: "more_vert → \"Alışverişi bırak\" ya da \"Bitir\"", back: "Bırakmada gezi açık kalır, bitirmede kapanır" },
         { from: "Etiket çek", to: "Onay kartı", trigger: "Deklanşör", back: "Kart iptal, fotoğraf silinir, kamera" },
         { from: "Onay kartı", to: "Ürün seçici", trigger: "Ürün alanı", back: "Kart, alanları dolu" },
-        { from: "Onay kartı", to: "Market seçici", trigger: "Market alanı", back: "Kart, alanları dolu" },
+        { from: "Onay kartı", to: "Market seçici", trigger: "Market alanı ya da kameranın market çipi", back: "Kart, alanları dolu" },
+        { from: "Onay kartı", to: "Marka seçici", trigger: "Marka alanı", back: "Kart, alanları dolu" },
         { from: "Onay kartı", to: "Etiket çek", trigger: "Kaydet ya da Vazgeç", back: "—" },
         { from: "Etiket çek", to: "Ürün Detayı", trigger: "Toast'a değil, yok — kayıttan sonra detay açılmaz", back: "—" },
         { from: "Geçmiş", to: "Gezi detayı", trigger: "Gezi satırı", back: "Geçmiş" },
@@ -504,7 +509,8 @@ class Component extends DCLogic {
         { from: "Ayarlar", to: "Verilerimi sil", trigger: "Gizlilik → \"Verilerimi sil\"", back: "Ayarlar, hiçbir şey silinmeden" },
         { from: "Verilerimi sil", to: "Kurulum", trigger: "\"Verileri sil\" onayı", back: "Geri yığını temizlenir; geri uygulamadan çıkarır" },
         { from: "Kurulum", to: "Liste", trigger: "Son adımda \"Bitir\" ya da \"Atla\"", back: "Kurulum bir daha açılmaz" },
-        { from: "Ürün Detayı", to: "Ekle", trigger: "\"Listeye ekle\" satırı — sheet değişmez, satır eklenir ve detay kapanır", back: "Liste" }
+        { from: "Ürün Detayı", to: "Ekle", trigger: "\"Listeye ekle\" satırı — sheet değişmez, satır eklenir ve detay kapanır", back: "Liste" },
+        { from: "Ürün Detayı", to: "Liste", trigger: "\"Listeden çıkar\" satırı — sheet kapanır, satır silinir, snackbar açılır", back: "Snackbar'daki \"Geri al\" satırı yerine koyar" }
       ],
       noEdges: [
         { t: "Alışveriş modundan Geçmiş'e ve Ayarlar'a geçilmez: menü o modda tek madde taşır." },
@@ -524,7 +530,7 @@ class Component extends DCLogic {
         { name: "Satır işaretleme", dur: "180 ms", curve: "Satır aşağı kayar, opaklık .5", rule: "Haptik animasyonun başında verilir, sonunda değil" },
         { name: "Satır silme", dur: "200 ms", curve: "Yükseklik daralması", rule: "Silinen satırın altındakiler tek hareketle toplanır" },
         { name: "Toast", dur: "150 / 2000 / 150", curve: "Solma", rule: "Girişte kayma yok; yalnızca opaklık" },
-        { name: "Snackbar", dur: "220 / 5000 / 220", curve: "Aşağıdan kayma", rule: "Yalnızca alışveriş kendiliğinden kapandığında" },
+        { name: "Snackbar", dur: "220 / 5000 / 220", curve: "Aşağıdan kayma", rule: "İki yer: alışveriş kendiliğinden kapandığında ve satır silme geri almasında" },
         { name: "Mod geçişi", dur: "260 ms", curve: "Çapraz solma", rule: "Satırlar yerinde kalır, yalnızca yoğunluk değişir" },
         { name: "Bekleme", dur: "—", curve: "İskelet, dönen çark yok", rule: "1,5 sn'yi geçen tek iş OCR; onun da yeri kartın kendisi" }
       ],
@@ -545,6 +551,7 @@ class Component extends DCLogic {
         { k: "ağırlık", v: "1,206 kg · üç ondalık yalnızca tartıda" },
         { k: "rakamlar", v: "Tüm sayılar tabular; hizalanan sütunlarda genişlik zıplamaz" },
         { k: "sayaç", v: "12/18 · boşluksuz, tabular" },
+        { k: "satır çipi", v: "A101'de 89,00 · yalnızca 24dp çipte TL düşer; cümle içinde asla" },
         { k: "saat", v: "15:38 · 24 saat, baştaki sıfır korunur" }
       ],
       dateLadder: [
@@ -553,19 +560,21 @@ class Component extends DCLogic {
         { range: "1 gün", text: "\"dün\"" },
         { range: "2–6 gün", text: "\"3 gün önce\"" },
         { range: "7–13 gün", text: "\"geçen hafta\"" },
-        { range: "14+ gün", text: "\"12 Ağustos\" — yıl yalnızca farklı yılsa" }
+        { range: "14+ gün", text: "\"12 Ağustos\" — yıl yalnızca farklı yılsa" },
+        { range: "istisna", text: "Bir gözlemin ya da alımın yaşı gün sayısıyla yazılır (\"8 gün önce\", \"son alım 11 gün önce\"), 14 günü geçince hafta olarak (\"2 hafta önce\"): kıyaslanan şey yaşın kendisi, ve \"geçen hafta\" yedi ile on üç arasını siler. Merdiven tek başına duran tarihler için geçerli — gezi tarihi, kayıt saati." }
       ],
       colorMeaning: [
         { name: "Amber", hex: "#E0A32E", means: "Bir şey eksik ya da emin değiliz. Dokunulacak bir iş olduğunu söyler.", never: "Uyarı, tehlike ya da dekoratif vurgu." },
-        { name: "Yeşil", hex: "#3F6B54", means: "Onay eylemi ve tamamlanmış hâl. Birincil butonun tek rengi.", never: "\"İyi fiyat\" anlamı — ucuzluk yeşille değil sırayla anlatılır." },
-        { name: "Kiremit", hex: "#B34418", means: "İkincil, dolgusuz eylem: ekle, kalanını çek. Bağlantı rengi.", never: "Dolgulu buton zemini." },
-        { name: "Kırmızı", hex: "#B3261E", means: "Yalnızca geri alınamaz iş: veri silme, haneden çıkma.", never: "Hata mesajı, doğrulama, fiyat artışı." },
+        { name: "Yeşil", hex: "#3F6B54", means: "Onay ve bitirme aksiyonu (Bitir, Kaydet), tamamlanmış hâl ve fiyat düşüşü yönü.", never: "Ucuzluğu rozetleyen bir etiket — ucuzluk sırayla anlatılır; yön oku bunun dışındadır." },
+        { name: "Kiremit", hex: "#B34418", means: "İleri götüren birincil aksiyon: dolgulu buton zemini (üstünde onPrimary), FAB, ekleme eylemi. Bağlantı rengi.", never: "Uyarı ya da hata anlamı." },
+        { name: "Kırmızı", hex: "#B3261E", means: "Geri alınamaz iş (veri silme, haneden çıkma, \"Listeden çıkar\") ve fiyat artışı yönü.", never: "Hata mesajı, doğrulama." },
         { name: "Nötr", hex: "#8A7666", means: "Metadata, gerekçe, ikincil bilgi. Ekranın çoğunluğu bu.", never: "Dokunulabilir bir öğenin tek işareti." }
       ],
       thresholds: [
         { name: "Ürün Detayı sparkline", min: "3 gözlem", below: "Grafik hiç çizilmez; manşet cümlesi tek başına kalır" },
         { name: "\"Nerede ucuz\" bölümü", min: "2 market", below: "Bölüm çizilmez — tek marketle karşılaştırma olmaz" },
         { name: "Delta çipi", min: "2 gözlem", below: "Çip yok; \"ilk gözlem\" ibaresi de yok" },
+        { name: "\"Başka markette ucuz\" çipi", min: "%10 ve 5 TL", below: "Çip çizilmez; karşı gözlem 14 günden eskiyse de çizilmez. Trendle çakışırsa çip kazanır" },
         { name: "Ambalaj küçülmesi uyarısı", min: "2 farklı boy", below: "Sessiz" },
         { name: "Sepet tahmini", min: "3 fiyatı bilinen ürün", below: "Satır hiç görünmez" },
         { name: "\"Her zamankiler\"", min: "3 gezi", below: "Kurulumdaki seçim neyse o; öğrenme başlamaz" },
@@ -593,7 +602,9 @@ class Component extends DCLogic {
         { t: "Marka gözlemin alanıdır; ürün jenerik kalır." },
         { t: "Aynı etiket metni aynı markette bir kez sorulur." },
         { t: "İşaretleme snackbar açmaz; bir gezide yirmi kez olur." },
-        { t: "Toast kuyruğu yoktur: ikinci mesaj çakışırsa hiç çizilmez." }
+        { t: "Toast kuyruğu yoktur: ikinci mesaj çakışırsa hiç çizilmez." },
+        { t: "Snackbar iki yerde yaşar: alışverişin kendiliğinden kapanması ve satır silme geri alması. Üçüncü bir aksiyonlu geçici yüzey yok." },
+        { t: "Her yıkıcı işlemin jest olmayan bir eşi var; eş satır düzeyinde Ürün Detayı'nda, taşma menüsünde değil." }
       ]
     };
   }
