@@ -118,7 +118,6 @@ internal fun SummaryCard(
      * alinmamis urun satin alma gecmisine girer, kullanici gormez, oneri
      * motoru o urunu duzenli aliniyor sanar.
      */
-    onFixTaken: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -169,18 +168,17 @@ internal fun SummaryCard(
         // baglardi. Ikinci bir giris noktasi da yasak: "ayni ise iki kapi
         // acip ikisini de zayiflatirdi".
 
-        if (onFixTaken != null) {
-            Text(
-                text = "Hepsini almadım",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier
-                    .padding(top = Spacing.xs)
-                    .pressable(onTap = onFixTaken)
-                    .padding(Spacing.xs),
-            )
-        }
+        // "HEPSINI ALMADIM" HEDEFI KALKTI (F11.20).
+        //
+        // Bos Durumlar cerceve 04'un basligi birebir *"Alisveris kapanisi ·
+        // acilmaz"*: kontrol edilecek bir belge yok, liste kapanista
+        // kendiliginden temizleniyor. Karar 31 pivot turunda bunu yeniden ele
+        // alip teyit etti.
+        //
+        // ISARETLENMEMIS SATIRLARIN CEVABI VAR, sadece baska zamanda: bir
+        // SONRAKI gezinin basinda "Eksik olabilir" ekraninda *"gecen sefer
+        // unuttun"* diye geri geliyorlar. Duzeltmeyi kapanis aninda istemek,
+        // kullaniciyi kasadan cikarken bir forma oturtmak olurdu.
 
         // "Tamam" en altta ve SILIK: kartin asil isi bir sey ANLATMAK, bir
         // sey yaptirmak degil. Ustte ve vurgulu bir "Tamam", karti okunmadan

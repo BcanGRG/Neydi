@@ -30,10 +30,6 @@ data object Liste : NeydiKey
 @Serializable
 data object MissingItems : NeydiKey
 
-/** tripId null ise aktif alisveris kapatiliyor; dolu ise Gecmis'ten okuma/duzenleme modu. */
-@Serializable
-data class FinishShopping(val tripId: String? = null) : NeydiKey
-
 // Cekim hedefi E6'da oldu; yerine E15'te `TagCapture` geliyor - PARAMETRESIZ,
 // cunku etiket cekimi geziden bagimsiz (pivot karari 3).
 
@@ -79,7 +75,6 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
         polymorphic(NavKey::class) {
             subclass(Liste::class)
             subclass(MissingItems::class)
-            subclass(FinishShopping::class)
             subclass(History::class)
             subclass(Settings::class)
             subclass(DeleteData::class)
@@ -105,7 +100,6 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
 private fun NeydiKey.hasSerializerRegistration(): Unit = when (this) {
     is Liste -> Unit
     is MissingItems -> Unit
-    is FinishShopping -> Unit
     is History -> Unit
     is Settings -> Unit
     is DeleteData -> Unit

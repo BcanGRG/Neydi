@@ -2,7 +2,6 @@ package com.neydi.app.ui
 
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.parseMinorInput
-import com.neydi.app.ui.finish.quantityBadge
 import com.neydi.app.ui.history.combineTrips
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -64,28 +63,10 @@ class ListUiLogicTest {
         assertEquals(-500, parseMinorInput("-5,00"))
     }
 
-    // --- Adet rozeti --------------------------------------------------------
-
-    /** Adet 1 ise rozet CIZILMEZ: her satira ayni bilgiyi eklemek gurultu. */
-    @Test
-    fun singleUnitHasNoBadge() {
-        assertNull(quantityBadge(1.0, "adet"))
-        assertNull(quantityBadge(1.0, "ad"))
-    }
-
-    @Test
-    fun countedItemsUseMultiplier() {
-        assertEquals("2x", quantityBadge(2.0, "adet"))
-        assertEquals("3x", quantityBadge(3.0, "ad"))
-    }
-
-    /** Tartili urunde birim GORUNMELI: "0,5" tek basina anlamsiz. */
-    @Test
-    fun weighedItemsShowUnit() {
-        assertEquals("0,5 kg", quantityBadge(0.5, "kg"))
-        assertEquals("0,182 kg", quantityBadge(0.182, "kg"))
-        assertEquals("1 L", quantityBadge(1.0, "L"))
-    }
+    // ADET ROZETI TESTLERI TASINDI (F11.20): `quantityBadge` `ui/finish/`
+    // icinde yasiyordu ve o ekran sozlesmede olmadigi icin silindi.
+    // Iddialar `ListStateTest.weighedItemsShowTheirUnit`'e gecti - hayatta
+    // kalan `quantityLabel` neredeyse birebir aynisiydi.
 
     // --- Gecmis birlestirmesi ----------------------------------------------
     //
