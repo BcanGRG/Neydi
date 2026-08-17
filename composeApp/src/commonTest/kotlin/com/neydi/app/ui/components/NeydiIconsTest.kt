@@ -23,7 +23,7 @@ import kotlin.test.assertTrue
 class NeydiIconsTest {
 
     /**
-     * Envanter karar 34 ile 15'e sabitlendi. Liste burada ELLE yaziliyor:
+     * Envanter karar 34 ile 17'ye sabitlendi. Liste burada ELLE yaziliyor:
      * yansima commonMain'de yok, ve olsaydi bile testin `NeydiIcons`ten
      * bagimsiz bir envanter iddiasi olmasi daha iyi - ikisi ayrisirsa test
      * kirilsin diye.
@@ -44,11 +44,13 @@ class NeydiIconsTest {
         "check" to NeydiIcons.Check,
         "push_pin" to NeydiIcons.PushPin,
         "content_paste" to NeydiIcons.ContentPaste,
+        "arrow_upward" to NeydiIcons.ArrowUpward,
+        "arrow_downward" to NeydiIcons.ArrowDownward,
     )
 
     @Test
-    fun inventoryIsFifteen() {
-        assertEquals(15, icons.size, "Karar 34 envanteri 15'e sabitledi")
+    fun inventoryIsSeventeen() {
+        assertEquals(17, icons.size, "Karar 34 envanteri 17'ye sabitledi")
     }
 
     /**
@@ -114,6 +116,10 @@ class NeydiIconsTest {
      */
     @Test
     fun onlyDirectionalIconsAutoMirror() {
+        // Delta oklari (`arrow_upward`/`arrow_downward`) bilerek DISARIDA:
+        // DIKEY yon tasiyorlar ve RTL'de cevrilmemeliler. Bu testin iki tarafli
+        // olmasi tam da bunun icin - hepsine `autoMirror` veren bir degisiklik
+        // burada duser.
         val directional = setOf("arrow_back", "chevron_right", "logout")
         icons.forEach { (name, icon) ->
             assertEquals(

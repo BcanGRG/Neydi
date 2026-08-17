@@ -43,8 +43,8 @@ import com.neydi.app.ui.theme.Spacing
  * guvenilir degil). Geriye kalan iki secenek AYNI mekanik isi istiyordu, o
  * yuzden kimlik kazanci olan taraf secildi.
  *
- * Sonuc: 15 ikon **Phosphor Regular** cizimleriyle elle tasindi.
- * - Bagimlilik YOK - 15 path dizesi, birkac KB kaynak.
+ * Sonuc: 17 ikon **Phosphor Regular** cizimleriyle elle tasindi.
+ * - Bagimlilik YOK - 17 path dizesi, birkac KB kaynak.
  * - Font paketlenmiyor, ikon `Text` olarak cizilmiyor.
  * - `androidx.compose.material.icons` bagimliligi tamamen dustu (o artifact
  *   JetBrains tarafinda 1.7.3'ten sonra yayinlanmiyordu zaten).
@@ -53,7 +53,7 @@ import com.neydi.app.ui.theme.Spacing
  * MIT lisansli. viewBox 256x256, tek `path`, dolgu ile cizilmis konturlar -
  * `Icon` zaten tinting yaptigi icin dolgunun rengi onemsiz.
  *
- * ## Envanter: 15 (tasarim karari 34)
+ * ## Envanter: 17 (tasarim karari 34)
  *
  * `check` ile `check_circle` AYRI kaliyor ve bu kasitli: ciplak `check` satirda
  * *"isaretlendi"*, `check_circle` ise cipte/secicide *"secili"* demek. Ikisini
@@ -136,7 +136,7 @@ object NeydiIcons {
     /**
      * Flas - etiket kamerasinin sag ust hedefi (tasarim: Ekran 4).
      *
-     * HENUZ CAGIRAN YOK, kasitli: envanter karar 34 ile 15'e SABITLENDI ve set
+     * HENUZ CAGIRAN YOK, kasitli: envanter karar 34 ile 17'ye SABITLENDI ve set
      * tasimasi setin tanimlandigi an. E15 gelince ikonu ikinci kez elle tasimak
      * gerekmesin diye simdi yaziliyor - F11.4'un "tanimli ama kullanilmayan
      * primitif" denetimi bunu kaza sanmasin.
@@ -171,6 +171,31 @@ object NeydiIcons {
         "M235.33,104l-53.47,53.65c4.56,12.67,6.45,33.89-13.19,60A15.93,15.93,0,0,1,157,224c-.38,0-.75,0-1.13,0a16," +
             "16,0,0,1-11.32-4.69L96.29,171,53.66,213.66a8,8,0,0,1-11.32-11.32L85,159.71l-48.3-48.3A16,16,0,0,1,38," +
             "87.63c25.42-20.51,49.75-16.48,60.4-13.14L152,20.7a16,16,0,0,1,22.63,0l60.69,60.68A16,16,0,0,1,235.33,104Z",
+    )
+
+    /**
+     * Fiyat artisi oku - delta cipinde (tasarim karari 34).
+     *
+     * `autoMirror` KAPALI ve bu sessizce onemli: bu ok DIKEY yon tasiyor,
+     * RTL'de cevrilmesi anlamsiz olurdu. Dosyadaki uc yatay ikon
+     * ([ArrowBack], [ChevronRight], [Logout]) cevriliyor, bu ikisi cevrilmiyor.
+     *
+     * ONCE UNICODE GLIFIYDI (`↑`), ikon degil. Karar 32 *"ikonlar `Text` olarak
+     * cizilmiyor"* diyor; ustelik glif sistem fontundan cozuluyordu ve Skia'nin
+     * yedek zinciri iki platformda ayni sekli vermiyor - kalinlik ve optik boy
+     * da yanindaki metinle eslesmiyordu.
+     */
+    val ArrowUpward: ImageVector = phosphor(
+        "ArrowUpward",
+        "M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8," +
+            "8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z",
+    )
+
+    /** Fiyat dususu oku. Bkz. [ArrowUpward] - `autoMirror` burada da kapali. */
+    val ArrowDownward: ImageVector = phosphor(
+        "ArrowDownward",
+        "M205.66,149.66l-72,72a8,8,0,0,1-11.32,0l-72-72a8,8,0,0,1,11.32-11.32L120,196.69V40a8,8,0,0,1,16," +
+            "0V196.69l58.34-58.35a8,8,0,0,1,11.32,11.32Z",
     )
 
     /** Panodaki listeyi yapistir (tasarim: `content_paste`). */
@@ -257,7 +282,7 @@ fun NeydiIcon(
 // --- Onizlemeler ------------------------------------------------------------
 
 /**
- * On bes ikonun atlasi.
+ * On yedi ikonun atlasi.
  *
  * TESTIN OLCEMEDIGI SEYI BU GOSTERIYOR: `NeydiIconsTest` her path'in ayristigini
  * ve tekil oldugunu kanitliyor ama CIZIMIN NE OLDUGUNU bilmiyor. Yanlis Phosphor
@@ -286,6 +311,8 @@ private fun NeydiIconAtlasPreview() = NeydiPreview {
         "check" to NeydiIcons.Check,
         "push_pin" to NeydiIcons.PushPin,
         "content_paste" to NeydiIcons.ContentPaste,
+        "arrow_upward" to NeydiIcons.ArrowUpward,
+        "arrow_downward" to NeydiIcons.ArrowDownward,
     )
     Column(
         modifier = Modifier.padding(Spacing.md),
