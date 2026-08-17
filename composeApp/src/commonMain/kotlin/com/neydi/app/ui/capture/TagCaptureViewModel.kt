@@ -4,10 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.CatalogSeedDao
-import com.neydi.app.data.db.PriceObservation
 import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.StoreDao
-import com.neydi.app.data.db.insertUnlessRecentDuplicate
+import com.neydi.app.data.db.writeTagObservation
 import com.neydi.app.data.image.deleteFileAt
 import com.neydi.app.data.image.downscaleForOcr
 import com.neydi.app.data.ocr.TagFields
@@ -15,7 +14,6 @@ import com.neydi.app.data.ocr.readTag
 import com.neydi.app.data.ocr.readTagFields
 import com.neydi.app.data.parseMinorInput
 import com.neydi.app.data.repo.ListRepository
-import com.neydi.app.data.repo.resolveProduct
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,24 +122,17 @@ internal class TagCaptureViewModel(
         if (!card.canSave || _state.value.saving) return
         _state.value = _state.value.copy(saving = true)
         viewModelScope.launch {
-            val product = resolveProduct(
+            val written = writeTagObservation(
                 repo = repo,
                 catalogSeedDao = catalogSeedDao,
+                priceObservationDao = priceObservationDao,
                 householdId = household,
-                name = card.productName.trim(),
-            )
-            val at = clock()
-            val written = priceObservationDao.insertUnlessRecentDuplicate(
-                PriceObservation(
-                    id = newId(),
-                    householdId = household,
-                    productId = product.id,
-                    storeId = _state.value.storeId,
-                    unitPriceMinor = minor,
-                    brand = card.brand?.trim()?.ifBlank { null },
-                    observedAt = at,
-                    createdAt = at,
-                ),
+                productName = card.productName,
+                priceMinor = minor,
+                storeId = _state.value.storeId,
+                brand = card.brand,
+                at = clock(),
+                newId = newId,
             )
             deleteFileAt(card.photoPath)
             _state.value = _state.value.copy(card = null, saving = false)
