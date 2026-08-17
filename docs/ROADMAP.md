@@ -335,6 +335,26 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       çağırıyordu ve sinyali kimse yazmıyordu — öneri şeridinden ekleme hiç
       kaydırmıyordu. Sinyal artık tek kapıdan (`signalAdded`) geçiyor.
 
+- [ ] **F11.20 — `FinishShoppingScreen` sözleşmede yok.** Boş Durumlar çerçeve
+      04'ün başlığı birebir *"Alışveriş kapanışı · **açılmaz**"*, gerekçesi
+      *"kontrol edilecek bir belge yok; liste kendiliğinden temizlenir"*, ve
+      karar 31 pivot turunda bunu yeniden ele alıp teyit etmiş. Kodda ise ekran
+      + ViewModel + destinasyon canlı duruyor. İşaretlenmemiş satırların cevabı
+      da var, sadece başka zamanda: bir **sonraki** gezinin başında "Eksik
+      olabilir"de *"geçen sefer unuttun"* diye geri geliyorlar. Silinmesi
+      gerekiyor — ekran silmek geri dönüşü olan bir iş değil, onay bekliyor.
+- [ ] **F11.21 — Ekran 3 "Eksik olabilir (0)" ara karesi bir ihlal.** Üç ayrı
+      yerde *"ekran hiç açılmaz, doğrudan alışveriş moduna girilir, 2 sn'lik
+      toast çıkar"* yazıyor. Kodda ara kare çiziliyor.
+- [ ] **F11.22 — Dört tasarım kararını biz verip geçtik** *(soru değil, bildirim
+      — itiraz gelirse geri alınır)*. Birincil buton dolgusu maketleri esas
+      alıyor (`#B34418` ileri, `#3F6B54` onay); fiyat yönü kırmızı/yeşil kalıyor
+      (`tokens.json` makine-okunur kaynak ve o böyle diyor); "Nerede ucuz"da
+      ambalaj boyu **filtre**; tutarı hesaplanamayan özet kartı **hiç
+      çizilmiyor**. Gerekçeler `14-tasarima-sorular-6.md` B bölümünde.
+      Ayrım şu: bir yüzeyin **doğup doğmadığı** sözleşmenin işi, bir dolgunun
+      **rengi** maketin işi.
+
 ## Öncelik 6 — Tasarım sadakati
 
 - [ ] **F11.4 — Tanımlı ama kullanılmayan tasarım primitifleri.** Artık **üç**
