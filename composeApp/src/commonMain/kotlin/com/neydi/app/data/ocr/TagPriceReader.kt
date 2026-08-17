@@ -58,9 +58,18 @@ internal data class TagUnitPrice(
  * kendiliginden eliyor.
  */
 internal fun readTagPrice(ocr: TagOcr): TagPrice? {
+    // MANSET MAKUL BOYDA OLMALI. Bulanik `183808`de OCR neredeyse hicbir sey
+    // okumamis (kose verisi bozuk, yuksekliklerin cogu negatif) ve en buyuk
+    // rakam-baslangicli parca 12 piksellik bir `86.`. Boyut suzgeci olmadan
+    // okuyucu bunu `86 TL` diye donduruyordu - gurultuden uretilmis bir fiyat.
+    //
+    // Yanlis fiyat, fiyat olmamasindan KOTU: karar 26 marketler arasi fiyat
+    // gecmisi uzerine kurulu, oraya giren uydurma bir 86 TL kalici olarak
+    // yaniltir. `readTagName` de ayni esikle ayni fikstursu reddediyor.
     val lira = ocr.lines
         .filter { it.text.trimStart().firstOrNull()?.isDigit() == true }
         .maxByOrNull { it.glyphHeight() }
+        ?.takeIf { it.glyphHeight() >= ocr.sourceHeight * MIN_LIRA_RATIO }
         ?: return null
 
     val liraDigits = lira.text.trim().takeWhile { it.isDigit() }
@@ -143,6 +152,18 @@ internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
 private val UNITS = listOf("kg", "adet", "litre", "lt", "itre", "ikg", "hg")
 
 private val MONEY = Regex("""\d{1,4}[.,]\d{2}""")
+
+/**
+ * Manset fiyat glifi kaynak yuksekliginin en az bu kadari olmali.
+ *
+ * 27 etikette OLCULEN oran: saglam cekimlerde %11..%17 (447..697 piksel),
+ * bulanik `183808`de %0,3 (12 piksel). Esik iki obegin arasinda ve alt obegin
+ * bir kat ustunde - aradaki bosluk esigin kirilgan olmadigini soyluyor.
+ *
+ * `TagFieldReader` ayni sabiti kullaniyor; ad ile fiyatin ayni fotograf icin
+ * farkli karar vermesi tutarsizlik olurdu.
+ */
+internal const val MIN_LIRA_RATIO = 0.02
 
 /** Kose noktalarindan glif yuksekligi - `[0] -> [3]` kenari. */
 private fun OcrPiece.glyphHeight(): Int =
