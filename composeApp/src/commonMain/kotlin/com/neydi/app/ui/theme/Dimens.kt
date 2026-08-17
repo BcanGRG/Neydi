@@ -27,6 +27,8 @@ object NeydiExtraShapes {
     val checkRest = CircleShape                    // onay hedefi: daire
     val checkChecked = RoundedCornerShape(12.dp)   // isaretlendiginde squircle
     val card = RoundedCornerShape(24.dp)           // ozet karti, bos durum blogu
+    val snackbar = RoundedCornerShape(18.dp)       // aksiyonlu gecici serit
+    val swipeRow = RoundedCornerShape(20.dp)       // silme jestinde acilan satir
 }
 
 object SizesExtra {

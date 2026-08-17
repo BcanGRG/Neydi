@@ -1,14 +1,22 @@
 package com.neydi.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,11 +26,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,12 +43,31 @@ import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
 import com.neydi.app.ui.theme.Motion
+import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.NeydiShapes
 import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.SizesExtra
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.SpacingExtra
 import com.neydi.app.ui.theme.pressable
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
+
+/**
+ * Silme jestinde acilan alanin genisligi (tasarim: "100dp'lik alan cikiyor").
+ */
+private val SWIPE_REVEAL = 100.dp
+
+/**
+ * Silmeyi tetikleyen esik.
+ *
+ * Acilan alanin TAMAMI degil %60'i: tasarim *"esik gecilmeden birakilirsa
+ * 200 ms'de yerine donuyor"* diyor, yani esik ile acilan alan ayni sey degil.
+ * Esigi 100dp'ye esitlemek jesti ancak sonuna kadar cekince calisir hale
+ * getirirdi ve yanlislikla silmeyi zorlastirmak yerine kasitli silmeyi
+ * zorlastirirdi - geri alma zaten var.
+ */
+private val SWIPE_THRESHOLD = 60.dp
 
 /**
  * Liste satiri - uygulamanin en cok gorulen bileseni.
@@ -68,6 +100,17 @@ fun ListItemRow(
      */
     onLongPress: (() -> Unit)? = null,
     onPriceClick: (() -> Unit)? = null,
+    /**
+     * Sagdan sola cekince siler (tasarim karari 37).
+     *
+     * KAPI CAGIRAN TARAFTA, burada degil: jest **yalnizca plan modunda ve
+     * alinmamis satirda** var. Alisveris modunda reyondasin ve yanlislikla
+     * silmenin bedeli yuksek; "Alindi" bolumundeki satir da zaten alinmis.
+     * Kosulu burada kurmak, satirin kendi baglamini bilmesini istemek olurdu.
+     *
+     * `null` ise jest hic baglanmiyor - kapali bir jest degil, olmayan bir jest.
+     */
+    onSwipeDelete: (() -> Unit)? = null,
 ) {
     val styles = LocalNeydiTextStyles.current
     val extras = LocalNeydiExtraColors.current
@@ -92,8 +135,87 @@ fun ListItemRow(
         else -> 1f
     }
 
+    // --- Silme jesti (tasarim karari 37) ---------------------------------
+    //
+    // COP KUTUSU IKONU YOK, "Sil" KELIMESI VAR. Ikonografi envanterinde cop
+    // kutusu hic yok ve tasarim bunu acikca yaziyor: acilan alanda tek kelime
+    // duruyor. Ikon eklemek envanteri bir ikon buyutmek olurdu - hem de en
+    // yikici islem icin, yani en cok yanlis anlasilabilecek yerde.
+    //
+    // SOL KENARA DOKUNULMUYOR: sozlesme *"sol kenar iOS'ta geri gitmeye
+    // ayrilmistir"* diyor. Jest yalnizca sagdan sola.
+    val scope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+    val density = LocalDensity.current
+    val revealPx = with(density) { SWIPE_REVEAL.toPx() }
+    val thresholdPx = with(density) { SWIPE_THRESHOLD.toPx() }
+    val surface = MaterialTheme.colorScheme.surface
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        if (onSwipeDelete != null && offsetX.value < 0f) {
+            // Kirmizi zemin YALNIZCA surukleme sirasinda ciziliyor. Her zaman
+            // cizilseydi satirin arkasinda gorunmeyen bir katman dururdu ve
+            // yuvarlak koseler arasindan sizardi.
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(NeydiExtraShapes.swipeRow)
+                    .background(MaterialTheme.colorScheme.error),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Box(
+                    modifier = Modifier.width(SWIPE_REVEAL).fillMaxHeight(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Sil",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onError,
+                    )
+                }
+            }
+        }
+
     Row(
-        modifier = modifier
+        modifier = Modifier
+            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+            .then(
+                if (onSwipeDelete == null) {
+                    Modifier
+                } else {
+                    Modifier.draggable(
+                        orientation = Orientation.Horizontal,
+                        state = rememberDraggableState { delta ->
+                            // Yalnizca sola: saga cekmek satiri yerinden
+                            // oynatmiyor, cunku sagda gosterilecek bir sey yok.
+                            scope.launch {
+                                offsetX.snapTo((offsetX.value + delta).coerceIn(-revealPx, 0f))
+                            }
+                        },
+                        onDragStopped = {
+                            if (offsetX.value <= -thresholdPx) {
+                                onSwipeDelete()
+                                // Yerine DONDURULUYOR: satir listeden zaten
+                                // cikiyor, ama "Geri al" ile geri gelirse
+                                // acilmis halde dogmamali.
+                                offsetX.snapTo(0f)
+                            } else {
+                                offsetX.animateTo(0f, tween(Motion.ROW_DELETE_MS))
+                            }
+                        },
+                    )
+                },
+            )
+            // Surukleme sirasinda satirin KENDI zemini olmali, yoksa arkasindaki
+            // kirmizi satirin icinden gorunur ve metin okunamaz hale gelir.
+            .then(
+                if (offsetX.value < 0f) {
+                    Modifier.clip(NeydiExtraShapes.swipeRow).background(surface)
+                } else {
+                    Modifier
+                },
+            )
             .fillMaxWidth()
             .heightIn(min = height)
             .clip(NeydiShapes.large)
@@ -151,6 +273,7 @@ fun ListItemRow(
         if (row.addedByInitial != null) {
             MemberAvatar(row.addedByInitial, Modifier.padding(start = Spacing.sm))
         }
+    }
     }
 }
 

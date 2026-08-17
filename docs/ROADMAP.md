@@ -285,21 +285,19 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       kaldırdı — madde koda değil, kendi kaydına takılı kalmış.
 - [ ] **F10.7 — Odak halkasını bağla.** `Modifier.focusRing` tanımlı, çağıranı yok.
 - [ ] **F10.8 — 44dp altındaki üç kontrol.**
-- [ ] **F10.9 — Satır silme.** ⚠ **Bloke DEĞİL artık** — tek engel olan karar 8
-      çelişkisi **karar 37** ile kapandı: snackbar ikinci kullanımını aldı,
-      gerekçesi "iki yerde" diye düzeltildi. Dört alt sorunun dördü de
-      cevaplı: jest **yalnız plan modunda ve alınmamış satırda**, "Alındı"
-      bölümü jesti hiç almıyor, aksiyon etiketi **"Geri al"** (tek-kelime
-      kuralının bilinen tek istisnası), jestsiz eş **karar 38** ile Ürün
-      Detayı'nın son satırı (taşma menüsü DEĞİL — menü ekran düzeyinde
-      yaşıyor, satırı bilmiyor).
-      **Yazılacak yedi parça** ve kodda bugün ne olduğu:
-      [`16-tur6-cikarim.md`](16-tur6-cikarim.md) §3.
-      ⚠ İki tuzak: (1) mevcut "mezar kazma" yolu (`ListRepository:186`)
-      **restore değil yeniden ekleme** — `quantity`/`checked`/`addedBy`
-      sıfırlıyor, yani "Geri al" 2 kg elmayı 1 kg yapardı; gerçek bir
-      `restore` gerekiyor. (2) `Motion.CHECK_MS = 200` **işaretleme**
-      animasyonu; silme geri dönüşü ayrı sabit ister — aynı sayı, farklı iş.
+- **F10.9 ✅ — Satır silme** *(cihazda doğrulandı)*. Sağdan sola swipe,
+      arkasında 100dp'lik alan ve içinde **"Sil" kelimesi** — çöp kutusu
+      ikonu envanterde yok. Eşik 60dp; geçilmeden bırakılırsa 200 ms'de
+      yerine dönüyor. Geri alma **5 sn'lik snackbar** (`NeydiSnackbar` —
+      uygulamanın **ilk aksiyon taşıyan geçici yüzeyi**). Jestsiz eş:
+      Ürün Detayı'nın son satırı, error renginde "Listeden çıkar".
+      Jest **yalnız plan modunda**; "Alındı" satırı hiç almıyor.
+      ⚠ **Geri alma AYRI bir sorgu:** mevcut "mezar kazma" yolu satırı
+      yeniden kuruyordu (`quantity`/`checked`/`addedBy` sıfırlanıyor).
+      Onunla yazılsaydı "Geri al" 2 kg elmayı sessizce 1 kg yapardı —
+      hata vermeden, test kırmadan. `restore` bu yüzden var ve testi
+      ısırdığı kanıtlandı (sorguya `quantity = 1.0` eklenince tam iki test
+      düştü).
 - [ ] **F10.11 — Ölü kod ve ölü token temizliği.** *(bir bölümü yapıldı)*
       **Silinenler:** `ui/screens/Placeholders.kt` (86 satır, hiçbir dosya import
       etmiyordu), `ListScreen`'deki altı FileKit import'u, `formatDayMonthTime`,
@@ -391,8 +389,7 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       dosyanın kendi KDoc'u *"E18'e kadar tutar HER ZAMAN bilinmiyor"* diyor —
       karar 45 bugün uygulanırsa özet kartı **tamamen kaybolur**. **E18 ile
       aynı PR'da** yapılmalı.
-- [ ] **F11.24 — `NeydiToast.kt:27` KDoc'u bayat.** *"tek bir yerde"* → iki
-      yerde (karar 8 düzeltildi). Tek satır; F10.9 PR'ına sığar.
+- **F11.24 ✅ — `NeydiToast` KDoc'u güncellendi** (snackbar iki yerde).
 - [ ] **F11.25 — "Yaş" biçimlendiricisi.** Tarih merdivenine **istisna** girdi:
       bir gözlemin/alımın **yaşı** gün sayısıyla yazılır ("11 gün önce"), 14
       günü geçince hafta olur — çünkü "geçen hafta" yedi ile on üç arasını

@@ -20,6 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -29,11 +31,21 @@ import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiSwitch
 import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.theme.NeydiExtraShapes
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
+import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
+import com.neydi.app.ui.theme.pressable
 
 /** Sheet'in gosterdigi urun. */
 data class ProductSheetState(
     val productId: String,
+    /**
+     * Sheet'in acildigi satir - "Listeden cikar" bunu siliyor (karar 38).
+     *
+     * Nullable, cunku sheet bir gun satirdan bagimsiz da acilabilir (urun
+     * gecmisinden). O halde satir cizilmiyor: silinecek bir satir yok.
+     */
+    val rowId: String? = null,
     val name: String,
     val isStaple: Boolean,
 )
@@ -62,7 +74,28 @@ fun ProductSheetContent(
     onStapleChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     bottomPadding: Dp = 0.dp,
+    /**
+     * Satiri listeden cikarir - silme jestinin JESTSIZ ESI (tasarim karari 38).
+     *
+     * NEDEN TASMA MENUSUNDE DEGIL: tasarim sistemi bir sure *"her yikici islem
+     * icin tasma menusunde jest olmayan bir yol"* diyordu ve o vaat mekanik
+     * olarak tutulamiyordu - **menu ekran duzeyinde yasiyor, silme satir
+     * duzeyinde bir is**; menu hangi satirda oldugumuzu bilmiyor. Karar 38
+     * bunu Urun Detayi'na tasidi: sheet zaten BIR SATIRDAN aciliyor, yani
+     * baglami tasiyor.
+     *
+     * BU SATIR ERISILEBILIRLIGIN KENDISI: TalkBack ve switch access swipe
+     * uretemiyor. Olmasaydi silme, o kullanicilar icin var olmayan bir ozellik
+     * olurdu.
+     *
+     * `null` ise cizilmiyor. Bugun tek cagiran liste ekrani; karar 38 Gecmis'ten
+     * acilinca ayni yuvada kiremit *"Listeye ekle"* istiyor ama Gecmis satiri
+     * dokunulabilir DEGIL (karar 30), yani o dal bugun ulasilamaz - varmis gibi
+     * parametre acmak olu kod olurdu.
+     */
+    onRemoveFromList: (() -> Unit)? = null,
 ) {
+    val extras = LocalNeydiExtraColors.current
     Column(
         modifier
             .fillMaxWidth()
@@ -111,6 +144,25 @@ fun ProductSheetContent(
 
         Spacer(Modifier.height(Spacing.md))
 
+        onRemoveFromList?.let { remove ->
+            // 56dp, ustunde ayirici, error renginde, IKON YOK, sagda kontrol yok.
+            // Yikici satirin tek isareti RENK - tasarimin renk sozlesmesi
+            // kirmiziyi zaten "yalnizca geri alinamaz is" diye ayirmis durumda.
+            Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
+            Text(
+                text = "Listeden çıkar",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pressable(onTap = remove)
+                    .padding(horizontal = Spacing.md)
+                    .heightIn(min = 56.dp)
+                    .wrapContentHeight(Alignment.CenterVertically),
+            )
+        }
+
         NeydiSwitch(
             label = "Her zamankilere ekle",
             checked = state.isStaple,
@@ -125,7 +177,7 @@ fun ProductSheetContent(
 @Composable
 private fun ProductSheetStaplePreview() = NeydiPreview {
     ProductSheetContent(
-        state = ProductSheetState("p1", "Beyaz Peynir 600 g", isStaple = true),
+        state = ProductSheetState(productId = "p1", name = "Beyaz Peynir 600 g", isStaple = true),
         onStapleChange = {},
     )
 }
@@ -134,7 +186,7 @@ private fun ProductSheetStaplePreview() = NeydiPreview {
 @Composable
 private fun ProductSheetPlainPreview() = NeydiPreview {
     ProductSheetContent(
-        state = ProductSheetState("p2", "Kuru Kayısı", isStaple = false),
+        state = ProductSheetState(productId = "p2", name = "Kuru Kayısı", isStaple = false),
         onStapleChange = {},
     )
 }

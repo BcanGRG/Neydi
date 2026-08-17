@@ -223,11 +223,17 @@ class ListViewModel(
     private val _productSheet = MutableStateFlow<ProductSheetState?>(null)
     val productSheet: StateFlow<ProductSheetState?> = _productSheet
 
-    fun openProductSheet(productId: String) {
+    /**
+     * @param rowId sheet'in acildigi SATIR - "Listeden cikar" bunu siliyor
+     *   (tasarim karari 38). Urun kimligi yetmiyor: ayni urun baska bir gezide
+     *   de olabilir ve silinecek olan bu gezideki satir.
+     */
+    fun openProductSheet(productId: String, rowId: String? = null) {
         viewModelScope.launch {
             val product = productDao.byId(productId) ?: return@launch
             _productSheet.value = ProductSheetState(
                 productId = product.id,
+                rowId = rowId,
                 name = product.name,
                 isStaple = product.isStaple,
             )
@@ -498,8 +504,51 @@ class ListViewModel(
         }
     }
 
-    fun remove(rowId: String) {
-        viewModelScope.launch { repo.remove(rowId) }
+    private val _pendingDelete = MutableStateFlow<DeletedRow?>(null)
+
+    /**
+     * En son silinen satir - geri alma seridinin kaynagi (tasarim karari 37).
+     *
+     * SILME ANINDA KALICI, snackbar bir BEKLEME DEGIL. Satir hemen tombstone
+     * aliyor, kategori sayaci hemen dusuyor, liste hemen kapaniyor. Serit
+     * yalnizca bes saniyelik bir GERI DONUS HAKKI sunuyor; suresi dolunca
+     * ekstra bir sey olmuyor, yalnizca hak bitiyor.
+     *
+     * Tersi - "bes saniye bekle sonra sil" - listeyi yalan soyleyen bir halde
+     * birakirdi: satir duruyor ama gitmis sayiliyor, sayac hangi rakami
+     * gostereceğini bilmiyor, ve kullanici o arada uygulamayi kapatirsa silme
+     * hic olmuyor.
+     */
+    val pendingDelete: StateFlow<DeletedRow?> = _pendingDelete
+
+    private var deleteSeq = 0L
+
+    /**
+     * Satiri siler ve geri alma seridini tetikler.
+     *
+     * ADI ONCEDEN OKUNUYOR: serit *"Maydanoz silindi"* diyor, yani silinen
+     * satirin adi lazim - ve silindikten SONRA sorulsaydi sorgu `deletedAt IS
+     * NULL` filtresine takilip bos donerdi. Cagiran taraf zaten adi ekranda
+     * cizdigi icin parametre olarak geciyor; ikinci bir sorgu yazmak ayni
+     * bilgiyi iki kaynaktan almak olurdu.
+     */
+    fun remove(rowId: String, name: String) {
+        viewModelScope.launch {
+            repo.remove(rowId)
+            _pendingDelete.value = DeletedRow(rowId = rowId, name = name, seq = ++deleteSeq)
+        }
+    }
+
+    /** "Geri al" - satir miktariyla ve isaretli haliyle geri geliyor. */
+    fun undoDelete() {
+        val silinen = _pendingDelete.value ?: return
+        _pendingDelete.value = null
+        viewModelScope.launch { repo.undoRemove(silinen.rowId) }
+    }
+
+    /** Serit suresi doldu ya da kullanici baska bir sey sildi. */
+    fun dismissDeleteUndo() {
+        _pendingDelete.value = null
     }
 
     // --- Hizli ekleme (F3.3) --------------------------------------------
@@ -637,6 +686,15 @@ class ListViewModel(
  * gorebilmesinin tek yolu bu.
  */
 data class AddedRow(val rowId: String, val seq: Long)
+
+/**
+ * Silinen satir ve kacinci silme oldugu.
+ *
+ * [seq] tetikleyici: art arda iki satir silinirse serit ikincisi icin yeniden
+ * dogmali. Yalnizca [rowId]'ye bakan bir ekran, ayni satir iki kez silinip geri
+ * alindiginda kipirdamazdi.
+ */
+data class DeletedRow(val rowId: String, val name: String, val seq: Long)
 
 /** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */
 data class BasketEstimate(
