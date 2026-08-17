@@ -21,6 +21,7 @@ import kotlin.time.ExperimentalTime
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
+import com.neydi.app.ui.capture.TagCaptureViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.uuid.ExperimentalUuidApi
@@ -97,6 +98,13 @@ val dataModule = module {
 
     viewModel {
         HistoryViewModel(tripDao = get(), tripLineDao = get())
+    }
+
+    viewModel {
+        TagCaptureViewModel(
+            repo = get(), catalogSeedDao = get(), storeDao = get(),
+            priceObservationDao = get(), clock = ::now, newId = ::newUuid,
+        )
     }
 
 

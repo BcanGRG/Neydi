@@ -1,6 +1,9 @@
 package com.neydi.app.ui.capture
 
 import android.Manifest
+import androidx.compose.ui.platform.LocalConfiguration
+import android.view.Surface
+import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -69,11 +72,36 @@ actual fun CameraSurface(controller: CaptureController, modifier: Modifier) {
         if (!granted) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    // TARGET ROTATION HER KOMPOZISYONDA TAZELENIYOR - ve bu bir veri hatasinin
+    // duzeltmesi, bir incelik degil.
+    //
+    // Manifest `configChanges`e `orientation` yaziyor, yani telefon donunce
+    // Activity YENIDEN YARATILMIYOR. `ImageCapture` keyless bir `remember`
+    // icinde, `AndroidView` fabrikasi bir kez kosuyor. Yani hicbir sey
+    // `targetRotation`i guncellemiyordu ve CameraX kareye BAGLANMA anindaki
+    // donusu EXIF olarak yaziyordu. `PreviewView` kendi icinde telafi ettigi
+    // icin ONIZLEME dogru gorunuyor - yalan yalnizca dosyada.
+    //
+    // Bedeli: `downscaleForOcr` o EXIF'i piksele isliyor, ML Kit kareyi YAN
+    // goruyor. Fiste olculmustu (F4.20): sayfa sekiz dev satira cokuyor.
+    val display = LocalConfiguration.current
+    LaunchedEffect(display) {
+        val rotation = (context as? Activity)?.windowManager?.defaultDisplay?.rotation
+            ?: Surface.ROTATION_0
+        imageCapture.targetRotation = rotation
+    }
+
     DisposableEffect(controller) {
         controller.capturer = { destPath -> imageCapture.writeTo(destPath, executor) }
         onDispose {
             controller.capturer = null
             controller.ready = false
+            // KAMERAYI SERBEST BIRAKIYORUZ. Onceden yalnizca tutamak
+            // birakiliyordu; `Preview` ve `ImageCapture` lifecycle'a BAGLI
+            // kaliyordu. Ekrandan cikinca yayinin surmesi hem gizlilik
+            // gostergesini yanik birakir hem pil yakar - ve kullanicinin
+            // "kamerayi kapattim" beklentisini bosa cikarir.
+            runCatching { ProcessCameraProvider.getInstance(context).get().unbindAll() }
         }
     }
 

@@ -101,6 +101,7 @@ fun ListScreen(
     onGoShopping: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onCapture: () -> Unit,
     vm: ListViewModel = koinViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -166,6 +167,7 @@ fun ListScreen(
         onFinish = vm::finishShopping,
         onHistory = onHistory,
         onSettings = onSettings,
+        onCapture = onCapture,
         onAddFromLastTrip = vm::addFromLastTrip,
         toast = toast,
         onToastShown = onToastShown,
@@ -285,6 +287,7 @@ internal fun ListContent(
     onFinish: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onCapture: () -> Unit = {},
     onAddFromLastTrip: () -> Unit = {},
     toast: String? = null,
     onToastShown: () -> Unit = {},
@@ -376,6 +379,7 @@ internal fun ListContent(
                         onOpenSheet = onOpenSheet,
                         onHistory = onHistory,
                         onSettings = onSettings,
+                        onCapture = onCapture,
                         onLeaveShopping = { onShoppingMode(false) },
                     )
                 }
@@ -598,6 +602,7 @@ private fun ListHeader(
     onOpenSheet: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onCapture: () -> Unit = {},
     onLeaveShopping: () -> Unit,
 ) {
     Row(
@@ -645,11 +650,30 @@ private fun ListHeader(
         //
         // Moda girmek onaysiz kaliyor: ucuz hatanin karsiligi ucuz geri
         // donus, ikinci bir onay ekrani degil.
+        // KAMERA HEDEFI HER IKI MODDA (tasarim karari 27). Alisveris modunda
+        // gezinme kisitli ama BU kisitin disinda: etiket cekimi geziden
+        // bagimsiz (pivot karari 3) ve reyonda tam da o modda lazim.
+        Box(
+            modifier = Modifier
+                .clip(NeydiExtraShapes.pill)
+                .pressable(onTap = onCapture)
+                .size(Sizes.minTapTarget),
+            contentAlignment = Alignment.Center,
+        ) {
+            NeydiIcon(
+                icon = NeydiIcons.PhotoCamera,
+                contentDescription = "Etiket çek",
+                size = 22.dp,
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+
         OverflowMenu(
             shoppingMode = state.shoppingMode,
             onOpenSheet = onOpenSheet,
             onHistory = onHistory,
             onSettings = onSettings,
+            onCapture = onCapture,
             onLeaveShopping = onLeaveShopping,
         )
     }
@@ -701,6 +725,7 @@ private fun OverflowMenu(
     onOpenSheet: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
+    onCapture: () -> Unit = {},
     onLeaveShopping: () -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
