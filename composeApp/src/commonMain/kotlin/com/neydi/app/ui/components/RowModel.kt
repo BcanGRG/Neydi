@@ -58,7 +58,18 @@ data class ListRow(
     /** Satir bir oneriden geldiyse gerekcesi: "12 gundur almadin". */
     val suggestionReason: String? = null,
     val note: String? = null,
-    /** "A101'de 34,90". Liste basina EN FAZLA 3 - ustu listeyi reklam yuzeyine cevirir. */
+    /**
+     * "A101'de 34,90". Liste basina EN FAZLA 3 - ustu listeyi reklam yuzeyine cevirir.
+     *
+     * ⚠ **DOLDURAN TARAF `formatChipMinor` KULLANMALI**, `formatMinor` degil:
+     * gezinme sozlesmesi *"yalnizca 24dp cipte TL duser; cumle icinde asla"*
+     * diyor. Bu alan bugun hicbir yerden dolmuyor (E16 getirecek) ve kural
+     * cagirandan once burada duruyor ki dolduran ona uymak zorunda kalsin.
+     *
+     * Cipin ESIGI de tasarimdan (karar 41): karsi gozlem **hem %10 hem 5 TL**
+     * ucuz olacak ve **14 gunden eski olmayacak**; trendle cakisirsa cip
+     * kazanir, trend bastirilir; siralama mutlak TL tasarrufuna gore.
+     */
     val cheaperElsewhere: String? = null,
 )
 

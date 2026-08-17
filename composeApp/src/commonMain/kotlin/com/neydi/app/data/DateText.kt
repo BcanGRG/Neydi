@@ -22,6 +22,33 @@ private val MONTH_NAMES = listOf(
 // kullanimdan kaldirildi, `Month.number` commonMain'den erisilmiyor -
 // ikisini de derleyici soyledi, tahmin degil.
 
+/**
+ * Bir gozlemin ya da alimin YASI: "11 gun once", "2 hafta once".
+ *
+ * MERDIVENDEN AYRI VE BILEREK (gezinme sozlesmesi, "istisna" satiri).
+ * [formatRelativeDay] 7-13 gunu **"gecen hafta"**ya topluyor; bir yasi oyle
+ * yazmak kiyaslanabilirligi siler - *"son alim 8 gun once"* ile *"12 gun once"*
+ * ayni cumleye donusur, oysa okunan sey tam olarak o farktir. Merdiven TEK
+ * BASINA DURAN tarihler icin: gezi tarihi, kayit saati.
+ *
+ * ON DORT GUNDEN SONRA HAFTA: gun sayisi orada anlamini yitiriyor - "37 gun
+ * once" okunabilir bir sey soylemiyor, "5 hafta once" soyluyor.
+ *
+ * SIFIR VE BIR GUN: "0 gun once" Turkce'de sacma, "1 gun once" de kotu. Bu iki
+ * basamak merdivenle ayni sozcukleri kullaniyor ("bugun", "dun") - sozlesme
+ * burayi yazmiyor, ama gun HASSASIYETI 7-13 araliginda gerekiyordu ve orada
+ * korunuyor; alttaki iki basamakta gun sayisi zaten bilgi tasimiyor.
+ */
+fun formatAge(days: Int): String = when {
+    days <= 0 -> "bugün"
+    days == 1 -> "dün"
+    days < AGE_WEEK_DAYS -> "$days gün önce"
+    else -> "${days / 7} hafta önce"
+}
+
+/** Yasin haftaya dondugu esik (gezinme sozlesmesi: "14 gunu gecince"). */
+private const val AGE_WEEK_DAYS = 14
+
 /** Epoch millis -> "13 Ağustos 2026". */
 @OptIn(ExperimentalTime::class)
 fun formatDayMonthYear(epochMillis: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
