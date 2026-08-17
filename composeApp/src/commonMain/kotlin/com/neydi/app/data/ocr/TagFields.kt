@@ -1,7 +1,5 @@
 package com.neydi.app.data.ocr
 
-import com.neydi.app.data.store.chainKey
-
 /**
  * Bir etiketten okunan her sey - ve okunmadiysa NEDEN okunmadigi.
  *
@@ -54,16 +52,18 @@ internal enum class TagSkip {
  * fiyati kendisi yaziyor - tasarimin zaten ongordugu yol (duzenlenebilir fiyat
  * alani, karar 25).
  *
+ * Hangi zincirin cozuldugu [grammarFor]'da; kurallarin kendisi [TagGrammar]
+ * uygulamalarinda.
+ *
  * @param chain magazanin `Store.chain` degeri; null ise market secilmemis.
  */
 internal fun readTagFields(ocr: TagOcr, chain: String?): TagFields {
-    if (chain == null || chain != SUPPORTED_CHAIN) {
-        return TagFields(price = null, name = null, pack = null, skipped = TagSkip.UNSUPPORTED_CHAIN)
-    }
+    val grammar = grammarFor(chain)
+        ?: return TagFields(price = null, name = null, pack = null, skipped = TagSkip.UNSUPPORTED_CHAIN)
 
-    val name = readTagName(ocr)
-    val pack = readTagPack(ocr)
-    val price = readTagPrice(ocr)
+    val name = grammar.readName(ocr)
+    val pack = grammar.readPack(ocr)
+    val price = grammar.readPrice(ocr)
     if (price != null && contradictsUnitPrice(ocr, price, pack)) {
         return TagFields(
             price = null,
@@ -119,15 +119,6 @@ private fun TagPack.sizeIn(unit: String): Double? = when {
     this.unit == "ml" && unit == "lt" -> size / 1000.0
     else -> null
 }
-
-/**
- * Grameri cozulmus tek zincir.
- *
- * `chainKey`den TURETILIYOR, elle yazilmiyor: magaza tohumu (`SEED_CHAINS`) ile
- * ayni sozlugu kullanmak zorunda, yoksa kapi hicbir zaman acilmaz ve bunu
- * hicbir test yakalamaz.
- */
-private val SUPPORTED_CHAIN = chainKey("BİM")
 
 /** Manset ile birim fiyatin uyustugu sayilan bagil fark - olcum icin bkz. [contradictsUnitPrice]. */
 private const val PRICE_TOLERANCE = 0.02

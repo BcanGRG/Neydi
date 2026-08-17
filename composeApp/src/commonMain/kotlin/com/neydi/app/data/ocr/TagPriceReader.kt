@@ -66,11 +66,7 @@ internal fun readTagPrice(ocr: TagOcr): TagPrice? {
     // Yanlis fiyat, fiyat olmamasindan KOTU: karar 26 marketler arasi fiyat
     // gecmisi uzerine kurulu, oraya giren uydurma bir 86 TL kalici olarak
     // yaniltir. `readTagName` de ayni esikle ayni fikstursu reddediyor.
-    val lira = ocr.lines
-        .filter { it.text.trimStart().firstOrNull()?.isDigit() == true }
-        .maxByOrNull { it.glyphHeight() }
-        ?.takeIf { it.glyphHeight() >= ocr.sourceHeight * MIN_LIRA_RATIO }
-        ?: return null
+    val lira = ocr.readableLira() ?: return null
 
     val liraDigits = lira.text.trim().takeWhile { it.isDigit() }
     if (liraDigits.isEmpty()) return null
@@ -182,6 +178,4 @@ private val MONEY = Regex("""\d{1,4}[.,]\d{2}""")
  */
 internal const val MIN_LIRA_RATIO = 0.02
 
-/** Kose noktalarindan glif yuksekligi - `[0] -> [3]` kenari. */
-private fun OcrPiece.glyphHeight(): Int =
-    if (corners.size < 4) 0 else corners[3].y - corners[0].y
+
