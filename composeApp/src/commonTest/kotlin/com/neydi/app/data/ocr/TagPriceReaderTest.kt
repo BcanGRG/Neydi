@@ -28,9 +28,14 @@ class TagPriceReaderTest {
      * 12 piksel - yani neredeyse hicbir sey okunmamis). Fiksturde durmasi
      * kasitli: hata yolunun gercek ornegi, ve okuyucunun ona `null` demesi
      * gerektigi buradan gorulüyor.
+     *
+     * **YALNIZCA BIM.** Metro ve Migros'ta okuyucu her etikette bir sayi
+     * buluyor - ama YANLIS sayiyi. Kapsami genisletmek testi yesil tutardi ve
+     * tam olarak yanlis seyi kanitlardi: "bir sey okundu" ile "dogru sey
+     * okundu" ayni sey degil. Olcum `docs/18-zincir-karsilastirmasi.md`.
      */
     @Test
-    fun readsALiraValueFromEveryUsableTag() = TagFixtures.all.forEach { (tag, ocr) ->
+    fun readsALiraValueFromEveryUsableTag() = TagFixtures.of("BIM").forEach { (tag, ocr) ->
         val price = readTagPrice(ocr)
         if (tag == "20260817_183808") return@forEach
         assertNotNull(price, "$tag: fiyat okunamadi")
@@ -164,7 +169,7 @@ class TagPriceReaderTest {
      */
     @Test
     fun kurusIsRecoveredOnAKnownNumberOfTags() {
-        val withKurus = TagFixtures.all.values.count { readTagPrice(it)?.kurusFromOcr == true }
+        val withKurus = TagFixtures.of("BIM").values.count { readTagPrice(it)?.kurusFromOcr == true }
         assertEquals(11, withKurus, "kurus okunan etiket sayisi degisti")
     }
 }

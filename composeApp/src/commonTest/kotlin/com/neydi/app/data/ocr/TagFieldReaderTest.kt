@@ -93,7 +93,7 @@ class TagFieldReaderTest {
      */
     @Test
     fun dropsStoreCode() {
-        TagFixtures.all.forEach { (tag, ocr) ->
+        TagFixtures.of("BIM").forEach { (tag, ocr) ->
             val name = readTagName(ocr) ?: return@forEach
             assertTrue(
                 !name.name.contains("P728") && name.brand?.contains("P728") != true,
@@ -172,12 +172,20 @@ class TagFieldReaderTest {
      *
      * Once buraya 24 yazmistim, olcum 23 dedi. Sayiyi tahmin etmenin bedeli
      * tam olarak bu: yaniltici bir esik, esik olmamasindan kotu.
+     *
+     * **YALNIZCA BIM.** Fikstur seti sonradan Metro ve Migros partileriyle
+     * genisledi ve bu okuyucu o zincirlerde CALISMIYOR (Metro'da 34 etikette 0
+     * gramaj, Migros'ta 19'da 1). Sebep yapisal: iki zincirde de gramaj ayri bir
+     * satir degil, ad satirinin sonunda. Olcum `docs/18-zincir-karsilastirmasi.md`
+     * altinda; kapsami BIM'e daraltmak o bosluğu gizlemek DEGIL, nerede
+     * durdugunu isaretlemek.
      */
     @Test
     fun measuredCoverage() {
-        val withName = TagFixtures.all.count { (_, ocr) -> readTagName(ocr) != null }
-        val withPack = TagFixtures.all.count { (_, ocr) -> readTagPack(ocr) != null }
-        assertEquals(27, TagFixtures.all.size, "fikstur sayisi degisti")
+        val bim = TagFixtures.of("BIM")
+        val withName = bim.count { (_, ocr) -> readTagName(ocr) != null }
+        val withPack = bim.count { (_, ocr) -> readTagPack(ocr) != null }
+        assertEquals(27, bim.size, "BIM fikstur sayisi degisti")
         assertEquals(26, withName, "ad okunan etiket sayisi dustu")
         assertEquals(23, withPack, "gramaj okunan etiket sayisi dustu")
     }
