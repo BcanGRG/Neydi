@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.neydi.app.data.formatAge
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
 import com.neydi.app.ui.theme.Motion
@@ -355,7 +356,11 @@ private fun SecondLineContent(
             is SecondLine.Price -> when (val h = second.hint) {
                 PriceHint.None -> Unit
                 is PriceHint.Single ->
-                    MetaText("${h.store} · ${h.daysAgo} gün önce", muted, Modifier.weight(1f, false))
+                    // YAS BICIMI, merdiven DEGIL (F11.25): burada okunan sey
+                    // gozlemin yasi ve "gecen hafta" yedi ile on uc arasini
+                    // silerdi - oysa "8 gun once" ile "12 gun once" arasindaki
+                    // fark tam da kullanicinin baktigi sey.
+                    MetaText("${h.store} · ${formatAge(h.daysAgo)}", muted, Modifier.weight(1f, false))
 
                 is PriceHint.Trend -> {
                     MetaText("önce ${h.from}", muted, Modifier.weight(1f, false))

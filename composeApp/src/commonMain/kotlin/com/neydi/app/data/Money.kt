@@ -62,6 +62,21 @@ private fun groupThousands(value: Long): String = buildString {
 }
 
 /**
+ * Satir cipinin tutari: **"89,00"** - TL YOK.
+ *
+ * Kural gezinme sozlesmesinden: *"yalnizca 24dp cipte TL duser; cumle icinde
+ * asla."* Cip yirmi dort piksel yuksekliginde ve yaninda market adi tasiyor
+ * ("A101'de 89,00"); orada birim gerektiginden fazla yer kapliyor ve zaten
+ * uygulamada tek para birimi var.
+ *
+ * AYRI BIR AD, `formatMinor(x, "")` DEGIL. Ikisi ayni sonucu veriyor ama bos
+ * dize gecen bir cagri kurali TASIMIYOR - okuyan biri niye bos gectigini
+ * bilmiyor ve bir gun cumle icinde de oyle cagirir. Ad, kuralin kendisini
+ * cagri yerine tasiyor.
+ */
+fun formatChipMinor(minor: Long): String = formatMinor(minor, currency = "")
+
+/**
  * OCR metnindeki tutari kurusa cevirir: "*106.00" / "x484,58" / "1.234,56".
  *
  * [parseMinorInput]'tan farki girdinin kaynagi: bu fonksiyon KAMERADAN gelen

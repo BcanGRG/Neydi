@@ -392,17 +392,23 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       karar 45 bugün uygulanırsa özet kartı **tamamen kaybolur**. **E18 ile
       aynı PR'da** yapılmalı.
 - **F11.24 ✅ — `NeydiToast` KDoc'u güncellendi** (snackbar iki yerde).
-- [ ] **F11.25 — "Yaş" biçimlendiricisi.** Tarih merdivenine **istisna** girdi:
-      bir gözlemin/alımın **yaşı** gün sayısıyla yazılır ("11 gün önce"), 14
-      günü geçince hafta olur — çünkü "geçen hafta" yedi ile on üç arasını
-      siler. Merdiven yalnız tek başına duran tarihler için. `DateText.kt`'de
-      yaş modu yok.
-- [ ] **F11.26 — Çip para biçimi.** *"satır çipinde TL düşer; cümle içinde
-      asla."* `Money.kt`'de `formatMinor` ve `formatEstimate` var, TL sonekini
-      düşüren üçüncü varyant yok.
-- [ ] **F11.28 — Alışveriş başlığından market adı düşüyor.** Karar 28: adın
-      kaynağı o gezide çekilen son etiket; henüz çekilmediyse ad yazılmaz.
-      `ListState.kt:70-80` bu satırı üretiyor.
+- **F11.25 ✅ — Yaş biçimlendiricisi.** `formatAge(days)`: 2–13 gün "N gün
+      önce", 14+ "N hafta önce". Merdivenden **ayrı** ve sebebi tek cümle:
+      `formatRelativeDay` 7–13 günü "geçen hafta"ya topluyor, oysa bir yaşta
+      okunan şey tam olarak *"8 gün önce"* ile *"12 gün önce"* farkı.
+      Merdiven tek başına duran tarihler için (gezi tarihi, kayıt saati).
+      `ListItemRow`'daki fiyat ipucu satırı elle `"$daysAgo gün önce"`
+      yazıyordu — hafta basamağı yoktu; artık ortak fonksiyonu çağırıyor.
+- **F11.26 ✅ — Çip para biçimi.** `formatChipMinor` → `"89,00"`, TL yok.
+      `formatMinor(x, "")` ile aynı sonucu veriyor ama **ayrı bir ad**: boş
+      dize geçen bir çağrı kuralı taşımıyor, okuyan niye boş geçtiğini
+      bilmiyor ve bir gün cümle içinde de öyle çağırır.
+      **Çağıranı henüz yok** (`cheaperElsewhere`'i dolduran E16 getirecek);
+      kural çağıranından önce yazıldı ve `RowModel` KDoc'una işlendi.
+- **F11.28 ✅ — Kodda zaten doğruymuş.** Alışveriş başlığı yalnızca
+      *"N kaldı"* yazıyor; market adı hiç eklenmemişti. Karar 28 eskiydi,
+      bu turda **maket koda uydu**. `storeDisplayName` ise hâlâ ölü —
+      yalnız testi çağırıyor (F10.11 listesinde duruyor).
 - **F11.17 ✅ — Ekran 1'in beşinci çerçevesi tilde aldı.** Maket koda uydu;
       Geçmiş'teki yedi gezi tutarı da kuruşunu bıraktı. Kod işi yok.
 - **F11.18 ✅ — İkonografi karar 33'e uydu** (`#C6B6A9` → `#E4D8C9`). Kod zaten
