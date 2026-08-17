@@ -101,7 +101,6 @@ fun ListScreen(
     onGoShopping: () -> Unit,
     onHistory: () -> Unit,
     onSettings: () -> Unit,
-    onFixTaken: (String) -> Unit,
     vm: ListViewModel = koinViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -251,7 +250,6 @@ fun ListScreen(
                 amountMinor = o.amountMinor,
                 durationMinutes = o.durationMinutes,
                 onDismiss = vm::dismissSummary,
-                onFixTaken = vm.summaryTripId?.let { id -> { onFixTaken(id) } },
             )
         }
     }

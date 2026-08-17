@@ -50,6 +50,25 @@ class ListStateTest {
         assertEquals("500 g", quantityLabel(500.0, "g"))
     }
 
+    /**
+     * TARTILI URUNDE BIRIM GORUNMELI: "0,5" tek basina anlamsiz.
+     *
+     * Ondalik VIRGULE ceviriliyor (Turkce yazim) ve uc hane korunuyor -
+     * tartida gercekten uc hane cikiyor.
+     *
+     * BU IDDIALAR SILINEN `quantityBadge`'DEN TASINDI (F11.20): o fonksiyon
+     * `ui/finish/` icinde yasiyordu ve bunun neredeyse birebir kopyasiydi.
+     * Ekran silinirken iddialari birlikte gitmesin diye buraya alindi -
+     * silinen tek sey `"ad"` kisaltmasi dali, cunku `normalizeUnit` onu
+     * sinirda zaten `"adet"`e ceviriyor; o dal savunma amacli kopyaydi.
+     */
+    @Test
+    fun weighedItemsShowTheirUnit() {
+        assertEquals("0,5 kg", quantityLabel(0.5, "kg"))
+        assertEquals("0,182 kg", quantityLabel(0.182, "kg"))
+        assertEquals("1 L", quantityLabel(1.0, "L"))
+    }
+
     /** Turkce ondalik VIRGUL. Kotlin varsayilani nokta uretir. */
     @Test
     fun decimalComma() {

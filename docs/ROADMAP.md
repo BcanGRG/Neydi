@@ -338,17 +338,22 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       çağırıyordu ve sinyali kimse yazmıyordu — öneri şeridinden ekleme hiç
       kaydırmıyordu. Sinyal artık tek kapıdan (`signalAdded`) geçiyor.
 
-- [ ] **F11.20 — `FinishShoppingScreen` sözleşmede yok.** Boş Durumlar çerçeve
-      04'ün başlığı birebir *"Alışveriş kapanışı · **açılmaz**"*, gerekçesi
-      *"kontrol edilecek bir belge yok; liste kendiliğinden temizlenir"*, ve
-      karar 31 pivot turunda bunu yeniden ele alıp teyit etmiş. Kodda ise ekran
-      + ViewModel + destinasyon canlı duruyor. İşaretlenmemiş satırların cevabı
-      da var, sadece başka zamanda: bir **sonraki** gezinin başında "Eksik
-      olabilir"de *"geçen sefer unuttun"* diye geri geliyorlar. Silinmesi
-      gerekiyor — ekran silmek geri dönüşü olan bir iş değil, onay bekliyor.
-- [ ] **F11.21 — Ekran 3 "Eksik olabilir (0)" ara karesi bir ihlal.** Üç ayrı
-      yerde *"ekran hiç açılmaz, doğrudan alışveriş moduna girilir, 2 sn'lik
-      toast çıkar"* yazıyor. Kodda ara kare çiziliyor.
+- **F11.20 ✅ — `FinishShoppingScreen` silindi** (231 satır + ViewModel +
+      destinasyon + Koin kaydı + özet kartındaki "Hepsini almadım" hedefi).
+      Boş Durumlar çerçeve 04'ün başlığı birebir *"Alışveriş kapanışı ·
+      **açılmaz**"*; karar 31 pivot turunda teyit etti. İşaretlenmemiş
+      satırların cevabı bir **sonraki** gezinin başında "Eksik olabilir"de.
+      ⚠ **Test bir şey yakaladı:** `quantityBadge` o pakette yaşıyordu ve
+      `quantityLabel`'ın neredeyse birebir kopyasıydı. İddiaları silmek
+      yerine `ListStateTest`'e taşıdım — `0,182 kg` gibi üç ondalıklı
+      vakalar yalnızca orada vardı. `"ad"` kısaltması dalı düştü:
+      `normalizeUnit` onu sınırda zaten `"adet"`e çeviriyor.
+- **F11.21 ✅ — Ara kare çizilmiyor** *(cihazda doğrulandı)*. Sebebi inceydi:
+      `shouldSkip = !loading && rows.isEmpty()`, yani **yüklenirken henüz
+      `false`** — ekran o arada sıfır satırla çizilip sonra atlanıyordu.
+      Artık `!loading && !shouldSkip` olmadan hiç çizilmiyor. Yerine bir şey
+      konmuyor: *"kurulum dışında hiçbir ekran tam ekran yükleme
+      göstermez"* + *"boş ekran açılmaz"*.
 - **F11.22 ✅ — Dört kararımızın dördü de onaylandı**, sıfır itiraz; karar
       42/43/44/45 olarak deftere girdi. Karar 44 eşiği ("iki market")
       sayısallaştırarak onayladı. Ayrımımız tutmuş: yüzeyin doğup doğmadığı

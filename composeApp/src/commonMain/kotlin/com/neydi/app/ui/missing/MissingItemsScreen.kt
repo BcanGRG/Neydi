@@ -69,12 +69,26 @@ fun MissingItemsRoute(
         if (state.shouldSkip) vm.skipToShopping { onEnterShopping(true) }
     }
 
-    MissingItemsScreen(
-        state = state,
-        onToggle = vm::toggle,
-        onAdd = { vm.addSelected { onEnterShopping(false) } },
-        onCancel = onCancel,
-    )
+    // ARA KARE CIZILMIYOR (F11.21). Uc ayri yerde yazili: *"ekran hic
+    // acilmaz, dogrudan alisveris moduna girilir, 2 sn'lik toast cikar."*
+    //
+    // ONCEKI HALI IHLAL EDIYORDU ve sebebi ince: `shouldSkip` = `!loading &&
+    // rows.isEmpty()`, yani YUKLENIRKEN henuz false. Ekran o arada sifir
+    // satirla ciziliyordu - kullanici "Eksik olabilir (0)" diye bos bir kare
+    // gorup sonra atlanidigini yasiyordu.
+    //
+    // Yerine hicbir sey konmuyor: sozlesme *"kurulum disinda hicbir ekran tam
+    // ekran yukleme gostermez"* ve *"bos ekran acilmaz"* diyor. Yukleme bir
+    // veritabani sorgusu kadar suruyor; oraya iskelet koymak da bir kare
+    // olurdu.
+    if (!state.loading && !state.shouldSkip) {
+        MissingItemsScreen(
+            state = state,
+            onToggle = vm::toggle,
+            onAdd = { vm.addSelected { onEnterShopping(false) } },
+            onCancel = onCancel,
+        )
+    }
 }
 
 @Composable
