@@ -22,9 +22,9 @@
 <div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;color:#221A14">
 
   <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
-    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">15 Ağustos 2026 · karar defteri</div>
-    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Açık kalan yirmi altı madde</div>
-    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">Kodun ölçtüğü yirmi altı yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var. Defter yalnızca bugün geçerli olan kararları taşıyor: ürün raf etiketi okuyor, önceki döneme ait kararlar tamamen çıkarıldı.</div>
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">17 Ağustos 2026 · karar defteri</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Otuz dört geçerli karar</div>
+    <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">İlk turda kodun ölçtüğü yirmi altı yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var. Defter yalnızca bugün geçerli olan kararları taşıyor: ürün raf etiketi okuyor, önceki döneme ait kararlar tamamen çıkarıldı.</div>
     <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Gezinme Sozlesmesi.dc.html">Gezinme sözleşmesi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
   </div>
 
@@ -32,11 +32,11 @@
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Karar defteri</div>
-      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Yirmi altı karar. Her biri bugünkü üründe geçerli.</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Otuz dört karar, 45'e kadar numaralı. Her biri bugünkü üründe geçerli.</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:20px;max-width:1400px">
-      <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="26">
+      <sc-for list="{{ decisions }}" as="d" hint-placeholder-count="45">
         <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;align-items:center;gap:12px">
             <div style="width:28px;height:28px;border-radius:999px;background:#221A14;display:flex;align-items:center;justify-content:center;font:700 13px/1 'Plus Jakarta Sans';color:#F5EDE6;flex:none;font-variant-numeric:tabular-nums">{{ d.no }}</div>
@@ -148,7 +148,7 @@ class Component extends DCLogic {
           title: "\"Liste hazır, eksik görünmüyor\"",
           rule: "Ekran 3 boşsa açılmıyor, doğrudan alışveriş moduna giriliyor ve 2 saniyelik koyu bir pill görünüyor.",
           decision: "Yeni bir toast bileşeni: aksiyonsuz, 2 sn, zemin #221A14, köşe 18dp, gölge yok, floating toolbar'ın 12dp üstünde. Snackbar ayrı kalıyor.",
-          why: "Snackbar aksiyon taşıyor ve uygulamada tek bir yerde kullanılıyor: alışveriş kendiliğinden kapandığında \"Geçmiş'te gör\". Bu mesajda dokunulacak bir şey yok — olan bitti bilgisi. İkisini aynı bileşene bindirmek, işaretlemede snackbar yasağını da bulanıklaştırırdı. Toast'ın kuyruğu yok: iki mesaj çakışırsa ikincisi hiç çizilmiyor.",
+          why: "Snackbar aksiyon taşıyor ve uygulamada iki yerde kullanılıyor: alışveriş kendiliğinden kapandığında \"Geçmiş'te gör\", satır silindiğinde \"Geri al\" (karar 37). Bu mesajda dokunulacak bir şey yok — olan bitti bilgisi. İkisini aynı bileşene bindirmek, işaretlemede snackbar yasağını da bulanıklaştırırdı. Toast'ın kuyruğu yok: iki mesaj çakışırsa ikincisi hiç çizilmiyor.",
           where: "Tasarım sistemi · bileşenler",
           href: "Neydi - Tasarim Sistemi.dc.html"
         },
@@ -273,8 +273,8 @@ class Component extends DCLogic {
           no: "32",
           title: "İkon eksen ayarı kodda ifade edilemiyor",
           rule: "İkonografi çalışmasının A yolu: tek bir IconDefaults ile wght 300, opsz 24, karanlıkta GRAD 100 — \"tek satırlık kod değişikliği\".",
-          decision: "A yolu düştü. Üç seçenekten üçüncüsü seçildi: on beş ikon Phosphor Regular çizimleriyle elle ImageVector olarak taşınıyor. Değişken font paketlenmiyor, ikonlar Text olarak çizilmiyor, hazır bir ikon paketi bağımlılığı eklenmiyor.",
-          why: "Eksenler yalnızca değişken fontta yaşıyor; uygulamanın kullandığı çizimler derlenmiş ve eksen taşımıyor, yani A'nın tek avantajı olan ucuzluk gerçek değildi. Font paketleme yolu Fraunces'te bir kez reddedilmişti — iOS'ta ayarlar sessizce varsayılana düşüyor ve ikonlar yanlış ağırlıkta çizilir; ikonlarda bu risk metinden daha görünür olur. Kalan iki seçenek aynı mekanik işi istiyor (on beş çizimi taşımak), fark yalnızca hangi setin çizimleri olduğu. İş eşitken kimlik kazancı olan taraf seçilir: Phosphor'un yuvarlak uçları 999px çip ve 44px köşe diliyle aynı aileden, fill ağırlığı da onay durumlarını karşılıyor.",
+          decision: "A yolu düştü. Üç seçenekten üçüncüsü seçildi: on yedi ikon Phosphor Regular çizimleriyle elle ImageVector olarak taşınıyor. Değişken font paketlenmiyor, ikonlar Text olarak çizilmiyor, hazır bir ikon paketi bağımlılığı eklenmiyor.",
+          why: "Eksenler yalnızca değişken fontta yaşıyor; uygulamanın kullandığı çizimler derlenmiş ve eksen taşımıyor, yani A'nın tek avantajı olan ucuzluk gerçek değildi. Font paketleme yolu Fraunces'te bir kez reddedilmişti — iOS'ta ayarlar sessizce varsayılana düşüyor ve ikonlar yanlış ağırlıkta çizilir; ikonlarda bu risk metinden daha görünür olur. Kalan iki seçenek aynı mekanik işi istiyor (on yedi çizimi taşımak), fark yalnızca hangi setin çizimleri olduğu. İş eşitken kimlik kazancı olan taraf seçilir: Phosphor'un yuvarlak uçları 999px çip ve 44px köşe diliyle aynı aileden, fill ağırlığı da onay durumlarını karşılıyor.",
           where: "İkonografi · iki yol",
           href: "Neydi - Ikonografi.dc.html"
         },
@@ -289,9 +289,9 @@ class Component extends DCLogic {
         },
         {
           no: "34",
-          title: "Envanter on beş ikon",
-          rule: "Envanter on ikiye indirilmişti; kodda karşılığı olan üç ikon listede yoktu.",
-          decision: "Envanter on beş: eski on ikiye check, push_pin ve content_paste eklendi. check ile check_circle ayrı kalıyor — çıplak check satırda \"işaretlendi\", check_circle yalnızca çipte ve seçicide \"seçili\". push_pin \"her listeye giriyor\" demek, content_paste kurulumun tek ikonu.",
+          title: "Envanter on yedi ikon",
+          rule: "Envanter on ikiye indirilmişti; kodda ve maketlerde karşılığı olan beş ikon listede yoktu.",
+          decision: "Envanter on yedi: eski on ikiye check, push_pin, content_paste ve delta çipinin iki oku (arrow_upward, arrow_downward) eklendi. check ile check_circle ayrı kalıyor — çıplak check satırda \"işaretlendi\", check_circle yalnızca çipte ve seçicide \"seçili\". push_pin \"her listeye giriyor\" demek, content_paste kurulumun tek ikonu.",
           why: "Üçü de bugün bir iş yapıyor ve karşılığı başka bir ikonda yok: check_circle'ı satıra taşımak \"seçili\" ile \"işaretlendi\"yi tek işarete indirir, oysa biri kalıcı bir durum diğeri anlık bir eylem. Envanteri on ikide tutmak için gerçekten kullanılan bir ikonu listeden saklamak, envanteri belge olmaktan çıkarır.",
           where: "İkonografi · envanter",
           href: "Neydi - Ikonografi.dc.html"
@@ -313,6 +313,87 @@ class Component extends DCLogic {
           why: "Eşik, mağazanın ancak gerçek veriden sonra var olabildiği dönemde yazılmıştı; tohum bu ontolojiyi değiştirdi ve iki cümle aynı anda doğru olamaz hâle geldi. Bölümü gizlemek karar 11'in kendi amacına ters: tohum tam da kullanıcı neyi seçebileceğini bilsin diye var. Yanlış olan tek şey iddiaydı — \"takip edilen\" hiçbiri takip edilmiyorken karar 24'ün reddettiği desenin aynısı: henüz doğru olmayan bir şeyi vaat etmek. Renkle ayrım, sayı rozetinden ucuz ve bölümü tek satır olarak korur.",
           where: "Ekran 7 · Ayarlar",
           href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "37",
+          title: "Satır silme ve geri alma",
+          rule: "Sözleşme silmeyi swipe'a ve 5 sn'lik snackbar'a bağlıyordu; karar 8 ise snackbar'ın uygulamada tek bir yerde olduğunu söylüyordu.",
+          decision: "Snackbar ikinci kullanımını alıyor: satır silinince 5 sn, tek aksiyon, etiket \"Geri al\". Swipe yalnızca plan modunda ve yalnızca alınmamış satırda; alışveriş modunda ve \"Alındı\" bölümünde jest yok.",
+          why: "Geri alması olmayan bir silme, 48dp hedefli bir listede kaza demek — tombstone altyapısı da geri almayı zaten taşıyor. Alışveriş modunda jestin kapanması bedelin asimetrik olmasından: reyonda yanlış silinen satır o gezide bir daha hatırlanmaz, yanlış işaretleme ise ikinci dokunuşla düzelir. \"Alındı\" bölümü artık bir kayıt; orada silmek olmuş bir işi geçmişten çıkarmak olurdu. \"Geri al\" tek kelime kuralının bilinen tek istisnası: tek kelimelik karşılığı (\"Geri\") gezinmeyle karışıyor.",
+          where: "Ekran 1 · liste satırı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "38",
+          title: "Silmenin jest olmayan eşi",
+          rule: "Tasarım sistemi ve Compose spec \"her yıkıcı işlemin taşma menüsünde jest olmayan bir eşi var\" diyordu; iki moddaki menü envanterinde silme yok.",
+          decision: "Eş taşma menüsünde değil, Ürün Detayı'nda: sheet'in son satırı error renginde \"Listeden çıkar\". Sheet Geçmiş'ten açıldığında satırın yerine \"Listeye ekle\" geliyor. İki dosyadaki \"taşma menüsünde\" ibaresi düzeltildi.",
+          why: "Menü ekran düzeyinde yaşıyor, silme satır düzeyinde bir iş: menü hangi satırda olduğumuzu bilmiyor. Ürün Detayı zaten satıra uzun dokunuşla açılıyor, yani bağlamı taşıyan tek yüzey o. Swipe üretemeyen kullanıcı için de bu yol jestsiz. Yalnızca ekran okuyucuya açılan gizli bir eylem vaadi karşılamazdı: görsel yüzeyi olmayan yol, kimsenin bulamadığı yoldur.",
+          where: "Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "39",
+          title: "Onay kartındaki marka satırı",
+          rule: "Kart kuralları markayı \"düzenlenebilir ve boş bırakılabilir\" diyordu; düzenlemenin açtığı yüzey hiçbir dosyada yoktu.",
+          decision: "Marka satırı klavyesiz bir çip sheet'i açıyor: bu ürün için görülmüş markalar, en sık görülen önde, son çip \"Marka yok\". Metin girişi yok; OCR'ın tahmini kesik çerçeveli çip olarak listenin başında duruyor.",
+          why: "Marka satır kimliğinin yarısı (karar 26): \"DST\" gibi bir OCR artığı düzeltilemezse aynı ürün iki satıra bölünür ve \"Nerede ucuz\" yanlış çizilir. Çözüm klavye olamazdı — koridorda tek elle seri çekim yapan biri harf yazmıyor, tek klavye de fiyata ayrılmış. Görülmüş markalar listesi hem yazmayı gereksiz kılıyor hem yeni artıkların çoğalmasını engelliyor: seçim var olan bir değere bağlanıyor. \"Marka yok\" ise manav ve pazar için, boş bırakmayı bir eylem hâline getiriyor.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "40",
+          title: "\"+ Yeni market\" ve arama alanları",
+          rule: "Market seçicinin son satırı çizilmişti; adın nerede yazıldığı çizilmemişti ve \"tek klavye\" değişmezi metin girişini iki yere kapatıyordu.",
+          decision: "Market seçici ürün seçicinin ikizi: sheet'in başında arama alanı var, uyan zincir yoksa \"+ Yeni market «AKYURT»\" tek dokunuşla ekliyor. Tek klavye istisnası artık \"arama alanları\" — Ekle, ürün seçici, market seçici. Var olan bir adın başka yazımı (BIM / BİM) sessizce var olan zincire bağlanıyor; marka seçicide arama yok.",
+          why: "Sekizinci market — bakkal, pazar, yerel indirimci — tam o satırın arkasında; yazılmazsa gözlemler ya yanlış zincire yazılır ya hiç çekilmez, ikisi de düzeltilemeyen kayıt. Kalan iki yol daha pahalıydı: ayrı bir pencere sıfır dialog değişmezini deler, klavyesiz liste sekizinci marketi hiç mümkün kılmaz. Değişmezi delmek yerine doğru okumak gerekiyordu — yasak serbest metin alanına, aramaya değil: arama bir alan değil filtre, girdiği veri kaydedilmiyor. Yazım eşlemesinin sessiz olması da ilk günün kararı: \"BIM\" için ikinci bir zincir açmak listeyi baştan bozar.",
+          where: "Ekran 4 · market seçici",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "41",
+          title: "\"Başka markette ucuz\" çipinin eşiği",
+          rule: "Çip \"liste başına en fazla 3\" diye çizilmişti; eşiği, bayatlığı ve trendle çakışması yazılmamıştı.",
+          decision: "Çip iki koşulu birden istiyor: karşı gözlem en az %10 ve en az 5 TL daha ucuz, ve 14 günden eski değil. Aynı satırda hem trend hem çip doğruysa çip kazanıyor, trend bastırılıyor. Sıralama mutlak TL tasarrufuna göre, liste başına en fazla 3.",
+          why: "İki koşul birden, çünkü tek başına yüzde 3 TL'lik ürünü 30 kuruş için ihbar eder, tek başına mutlak TL de pahalı üründe %2'yi büyük gösterir. 14 gün, tarih merdivenindeki \"geçen hafta\"nın bir adım ötesi: 24dp'lik satır çipinde tarih yazacak yer yok, bayatlığı gösteremiyorsak hiç göstermemek gerekiyor. Çakışmada çipin kazanması ikisinin farklı iş yapmasından: trend bilgi, çip eylem — reyonda \"burada 12 TL fazla veriyorsun\", \"geçen ay 38,50'ydi\"den acil.",
+          where: "Ekran 1 · fiyat ipucu",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "42",
+          title: "Dolgulu birincil buton kiremit",
+          rule: "§11 kiremit için \"asla dolgulu buton zemini\" diyor ve yeşili birincil butonun tek rengi sayıyordu; dört maket altı ayrı dolgulu kiremit buton çiziyor.",
+          decision: "Maketler geçerli. #B34418 dolgu ileri götüren birincil aksiyon (üstünde onPrimary), #3F6B54 dolgu onay ve bitirme (Bitir, Kaydet), #8A7666 kenarlık üçüncü varyant. #2E6B45 buton zemini olarak hiç kullanılmıyor; §11'in kiremit \"asla\" satırı düzeltildi.",
+          why: "Renk \"neyin göründüğü\" tarafında ve orada maket kazanır: altı çizilmiş örnek tek satırlık bir yasaktan ağır basar. onPrimary rolünün varlığı da dolgulu birincil butonu ispatlıyor — aksi hâlde o rol boşta kalırdı. İki dolgunun anlamı ayrı kaldığı sürece renk hâlâ tek cümle söylüyor: kiremit devam ettirir, yeşil bitirir.",
+          where: "Tasarım sistemi · butonlar",
+          href: "Neydi - Tasarim Sistemi.dc.html"
+        },
+        {
+          no: "43",
+          title: "Fiyat yönü kırmızı ve yeşil",
+          rule: "§11 kırmızı için \"asla fiyat artışı\" diyordu; rol tablosu, tokens.json ve iki maket delta çipini kırmızı/yeşil çiziyor.",
+          decision: "Delta çipi ve trend oku kırmızı/yeşil kalıyor: artış #B3261E, düşüş #2E6B45. §11'in kırmızı \"asla\" satırındaki \"fiyat artışı\" kalktı; yeşilin yasağı rozet yasağı olarak duruyor — ucuzluğu rozetleyen bileşen amber \"başka markette ucuz\" çipi.",
+          why: "Üç bağımsız kaynak tek satıra karşı, ve biri makine okunur: kod tokens.json'ı okuyor. Yön oku bir değer yargısı değil ölçüm — fiyat arttı ya da azaldı. Yasak başka bir şeye karşıydı: ucuzu yeşil rozetle işaretlemek kullanıcının yerine karar vermek olurdu, o iş sırada ve amberde kaldı.",
+          where: "Tasarım sistemi · fiyat ipucu",
+          href: "Neydi - Tasarim Sistemi.dc.html"
+        },
+        {
+          no: "44",
+          title: "\"Nerede ucuz\" ambalaj boyu",
+          rule: "Başlık \"14:20 itibarıyla · 4 L\" diyor; \"· 4 L\"nin filtre mi bağlam damgası mı olduğu çizilmemişti.",
+          decision: "Filtre. O üründe yalnızca eski boydan gözlemi olan market listeden düşüyor; geriye iki market kalmazsa bölüm hiç çizilmiyor. Grafiğin aralık çipleri bu bölümü daraltmıyor.",
+          why: "Tasarımın kendi ilkesi: ambalaj boyu değiştiyse trend gösterilmez. İki boyu tek listede fiyata göre sıralamak aynı türden yanlış bilgi olurdu — 5 L pahalı görünür, oysa daha ucuz. Filtre olması karar 26'daki \"sıralama fiyata göre\" belirsizliğini de kapatıyor: tek boy kalınca paket fiyatı ile birim fiyat aynı sırayı veriyor.",
+          where: "Ekran 5 · Nerede ucuz",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "45",
+          title: "Tutarı hesaplanamayan özet kartı",
+          rule: "Alışveriş sonrası özet kartı yalnızca ~ tutarı bilinen hâlde çizilmişti.",
+          decision: "36sp manşet düşüyorsa kart hiç görünmüyor, yerine hiçbir şey konmuyor. İlk gezide \"Geçen sefer\", gözlemsiz gezide \"En çok artan\" satırları da sessizce düşüyor.",
+          why: "Kartın var oluş sebebi manşet; o düşünce geriye kalan iki satır kart açmayı hak etmiyor. \"Boş bölüm çizilmez\" değişmezi ile \"yanlış bir şey göstermektense hiçbir şey gösterme\" ilkesi aynı yere çıkıyor, ve eşik tablosunun delta kuralı bunun kopyasını zaten taşıyor: çip yok, \"ilk gözlem\" ibaresi de yok.",
+          where: "Ekran 1 · özet kartı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
         }
       ]
     };

@@ -3,17 +3,16 @@
 **16 Ağustos 2026.** Design pivot turunu tamamladı ve karar defterini **yirmi
 maddeye** indirdi: fiş dönemine ait on bir karar (4, 9, 13–21) defterden
 tamamen çıkarıldı. İki de yeni dosya geldi — **Gezinme sözleşmesi** ve
-**İkonografi**. Beşinci turda defter **36 karara** çıktı.
+**İkonografi**. Altıncı turda defter **45 karara** çıktı.
 
 Bu dosya karar defterinin kopyası değil; **her kararın kodda karşılığı ne, hangi
 adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 [`tasarim/Neydi - Kararlar.dc.html`](tasarim/) altında.
 
-> **Ayna durumu: temiz.** `docs/tasarim/` altındaki dokuz `.dc.html` ile
-> `github.md`, beşinci tur sonrası hâlleriyle indirildi — Kararlar, Gezinme
-> sözleşmesi, Boş durumlar, Ekran 1, Ekranlar 5-8, Compose spec değişti;
-> **İkonografi ilk kez geldi**; Ekranlar 2-4 ile Tasarım sistemi zaten
-> günceldi.
+> **Ayna durumu: temiz** (altıncı tur sonrası). Dokuz `.dc.html` ile
+> `github.md` yeniden indirildi; **dokuzunun dokuzu da değişti** — silme
+> jesti ve geri alma çerçeveleri, marka çip sheet'i, market seçicide arama
+> alanı, Ürün Detayı'na "Listeden çıkar", envanter 17.
 >
 > **Ayna denetlenmeli, güvenilmemeli.** Önceki turda ROADMAP F11.12'yi
 > "tazelendi" diye kapatmıştı ama bayt kopyası indirilmemişti: dosyada hâlâ
@@ -25,7 +24,7 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 
 ---
 
-## Otuz altı kararın kod durumu
+## Kırk beş kararın kod durumu
 
 | # | Karar | Kod durumu |
 |---|---|---|
@@ -35,7 +34,7 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 5 | İlk gün 12 ürün çipi, `commonalityRank`'tan | ✅ var |
 | 6 | Kurulum iki adım; tetikleyici `setupCompletedAt` + ürün sayısı | ✅ var |
 | 7 | Ekran 3'ün üç bölüm notu | ✅ var |
-| 8 | Toast: aksiyonsuz, 2 sn, kuyruksuz | ✅ var |
+| 8 | Toast: aksiyonsuz, 2 sn, kuyruksuz. **Gerekçesi düzeltildi:** snackbar artık **iki yerde** (kapanış + "Geri al") | ✅ var · KDoc **F11.24** |
 | 10 | Avatar tek kişilik hanede de; `priceChip` 14sp / `priceRow` 17sp | ✅ var |
 | 11 | **Revize:** 7 zincir tohumlanır, market çekimde seçilir, yapışkan | ✅ E13 · yapışkan seçim **E15** |
 | 12 | Ekle sheet'indeki işaret "bu listede var" | ✅ var |
@@ -49,11 +48,20 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 29 | Fotoğraf Kaydet'e basıldığı anda silinir; hiçbir yüzey çizmez | ⏳ **E15** · planla aynı |
 | 30 | Geçmiş'te gözlem satırı yok; gezi satırı tarih + kalem + `~` tutar | ✅ E8 · `~` tutar **E18** |
 | 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | ✅ tasarım tazeledi |
-| **32** | **İkon A yolu düştü** — 15 ikon Phosphor Regular çizimleriyle elle `ImageVector` | ✅ **F11.11** |
+| **32** | **İkon A yolu düştü** — ikonlar Phosphor Regular çizimleriyle elle `ImageVector`; **`Text` olarak çizilmiyor** | ✅ F11.11 · oklar **F11.29** |
 | **33** | **Yeniden yazıldı:** kural mutlak renk değil **ilişki** — ikon yanındaki metinden bir kademe açık; palet değişmiyor | ✅ **okumamız onaylandı** |
-| **34** | Envanter **15** — `check`/`push_pin`/`content_paste` geri girdi; `check` ile `check_circle` ayrı | ✅ kodda zaten öyle |
+| **34** | Envanter **17** — delta çipinin `arrow_upward`/`arrow_downward` okları girdi; `check` ile `check_circle` ayrı | ⏳ **F11.29** (15 taşındı) |
 | **35** | Gizlilik notu + katılma kodu metni onaylandı | ✅ **birebir uygulandı** |
 | **36** | **Mağazalar bölümü kalıyor**, eşik kalktı; satır "Zincirler"; gözlemi olan zincir metin renginde, yalnızca seçilebilir olan soluk | ✅ **bu turda** |
+| **37** | Satır silme: sağdan sola swipe, **yalnız plan modu ve alınmamış satır**; geri alma 5 sn snackbar, aksiyon **"Geri al"** | ⏳ **F10.9** |
+| **38** | Jestsiz eş **taşma menüsünde değil**, Ürün Detayı'nın son satırı: error renkli "Listeden çıkar" | ⏳ **F10.9** |
+| **39** | Marka satırı **klavyesiz çip sheet'i** açıyor: görülmüş markalar + "Marka yok"; OCR tahmini kesik çerçeveli | ⏳ **E15** |
+| **40** | Market seçici ürün seçicinin ikizi: arama alanı + `+ Yeni market «AKYURT»`. Tek-klavye istisnası artık **"arama alanları"** | ⏳ **E15** |
+| **41** | "Başka markette ucuz" çipi: **≥%10 VE ≥5 TL**, karşı gözlem **14 günden eski değil**; çip trendi bastırır | ⏳ **F5.5/E16** |
+| **42** | `#B34418` dolgu = ileri götüren birincil, `#3F6B54` = onay/bitirme, `#8A7666` kenarlık = üçüncü | ✅ kod zaten öyle |
+| **43** | Delta çipi ve trend oku kırmızı/yeşil; §11'in kırmızı "asla"sından *"fiyat artışı"* kalktı | ✅ kod zaten öyle |
+| **44** | "Nerede ucuz"da ambalaj boyu **filtre**; geriye **2 market** kalmazsa bölüm çizilmez | ⏳ **E17** |
+| **45** | 36sp manşet düşüyorsa özet kartı **hiç görünmüyor** | ⏳ **F11.23** (E18 ile) |
 
 **Karar 29 planı doğruladı:** fotoğrafın kayıttan sonra silinmesi benim önerimdi
 ve açık karar olarak duruyordu — design aynı sonuca vardı, gerekçesi de aynı:

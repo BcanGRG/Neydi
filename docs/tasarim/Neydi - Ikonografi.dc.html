@@ -39,13 +39,13 @@
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Önce budama</div>
-      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">En iyi ikon iyileştirmesi, çizilmeyen ikondur. Pivot altı tanesini öldürdü, üç tanesi envantere sonradan girdi.</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">En iyi ikon iyileştirmesi, çizilmeyen ikondur. Pivot altı tanesini öldürdü, beş tanesi envantere sonradan girdi.</div>
     </div>
     <div style="background:#FBF7F2;border:1px solid #E7DACB;border-radius:24px;overflow:hidden">
       <div style="display:grid;grid-template-columns:56px 150px 1.1fr 1fr 92px;gap:16px;padding:14px 20px;background:#F1E7DB;font:700 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">
         <div></div><div>İş</div><div>Nerede</div><div>Karar</div><div>Durum</div>
       </div>
-      <sc-for list="{{ inventory }}" as="i" hint-placeholder-count="16">
+      <sc-for list="{{ inventory }}" as="i" hint-placeholder-count="18">
         <div style="display:grid;grid-template-columns:56px 150px 1.1fr 1fr 92px;gap:16px;padding:12px 20px;border-top:1px solid #E7DACB;align-items:center">
           <div style="font-family:'Material Symbols Rounded';font-size:26px;font-variation-settings:'opsz' 24,'wght' 300,'FILL' 0,'GRAD' 0" data-dim="{{ i.dropped }}">{{ i.ms }}</div>
           <div style="font:600 14px/1.4 'Plus Jakarta Sans'">{{ i.job }}</div>
@@ -55,13 +55,13 @@
         </div>
       </sc-for>
     </div>
-    <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">Kalan sayı 15. Bir uygulamanın ikon envanteri iki düzineyi geçtiğinde ikonlar birbirinden ayırt edilemez hâle gelir; on beş ikon, her biri tek bir işe bağlı olduğu sürece öğrenilebilir bir dil kurar.</div>
+    <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">Kalan sayı 17. Bir uygulamanın ikon envanteri iki düzineyi geçtiğinde ikonlar birbirinden ayırt edilemez hâle gelir; on yedi ikon, her biri tek bir işe bağlı olduğu sürece öğrenilebilir bir dil kurar.</div>
   </div>
 
   <div style="display:flex;flex-direction:column;gap:16px">
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">02</div>
-      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Aynı on beş iş, dört set</div>
+      <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Aynı on yedi iş, dört set</div>
       <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Gerçek fontlarla, gerçek boyutta (26px ≈ 24dp). Sağdaki üç sütun taşıma için birebir eşleme listesi.</div>
     </div>
 
@@ -202,8 +202,8 @@
     </div>
     <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:10px">
       <div style="font:700 16px/1.28 'Plus Jakarta Sans'">Karar · 16 Ağustos</div>
-      <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">A yolu düştü: eksen ayarı ancak değişken fontla mümkün, uygulama ise derlenmiş statik çizimler kullanıyor — yani "tek satırlık değişiklik" diye bir şey yok. Her iki yol da aynı mekanik işi, on beş ikonun elle taşınmasını gerektiriyor. İş aynıysa kimlik kazancı olan taraf seçilir: <span style="font-weight:600;color:#221A14">Phosphor Regular</span>. Yuvarlak uçlar 999px çip ve 44px köşe diliyle aynı aileden; fill ağırlığı da onay durumları için hazır. Değişken font yolu ayrıca Fraunces'te bir kez reddedilmişti (iOS'ta sessizce varsayılana düşüyor) — aynı riski ikonlarda almaya değmez.</div>
-      <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch;border-top:1px solid #C9B9A5;padding-top:12px"><span style="font-weight:600;color:#221A14">GRAD'ın yerine ne geçiyor:</span> ikinci bir ağırlık seti değil — iki set iki ikon dili demek. Karanlık temada ikon rengi metinden bir kademe açık alınır (metin #E4D8C9 iken ikon #F5EDE6). Çizgi kalınlığı sabit kalır, algılanan ağırlık eşitlenir ve maliyet tek bir renk token'ı olur. Fill'li ikonlarda telafi gerekmez, dolgu zaten ağırlığı taşır.</div>
+      <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">A yolu düştü: eksen ayarı ancak değişken fontla mümkün, uygulama ise derlenmiş statik çizimler kullanıyor — yani "tek satırlık değişiklik" diye bir şey yok. Her iki yol da aynı mekanik işi, on yedi ikonun elle taşınmasını gerektiriyor. İş aynıysa kimlik kazancı olan taraf seçilir: <span style="font-weight:600;color:#221A14">Phosphor Regular</span>. Yuvarlak uçlar 999px çip ve 44px köşe diliyle aynı aileden; fill ağırlığı da onay durumları için hazır. Değişken font yolu ayrıca Fraunces'te bir kez reddedilmişti (iOS'ta sessizce varsayılana düşüyor) — aynı riski ikonlarda almaya değmez.</div>
+      <div style="font:400 15px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch;border-top:1px solid #C9B9A5;padding-top:12px"><span style="font-weight:600;color:#221A14">GRAD'ın yerine ne geçiyor:</span> ikinci bir ağırlık seti değil — iki set iki ikon dili demek. Karanlık temada ikon rengi metinden bir kademe açık alınır: ikincil metin #C6B6A9 iken ikon #E4D8C9; birincil metin (#F5EDE6) rampanın tepesinde olduğu için orada telafi yok. Çizgi kalınlığı sabit kalır, algılanan ağırlık eşitlenir ve maliyet tek bir renk token'ı olur. Fill'li ikonlarda telafi gerekmez, dolgu zaten ağırlığı taşır.</div>
     </div>
   </div>
 
@@ -273,6 +273,8 @@ class Component extends DCLogic {
         { ms: "check", job: "İşaretlendi", where: "Liste satırı, Ekle sheet'i", note: "Çıplak check satırda; check_circle yalnızca çipte ve seçicide", state: "kalıyor", dropped: false },
         { ms: "push_pin", job: "Sabit ürün", where: "Ayarlar · her zamankiler", note: "\"Bu her listeye giriyor\" demek; seçili demek değil", state: "kalıyor", dropped: false },
         { ms: "content_paste", job: "Listeyi yapıştır", where: "Kurulum", note: "Tek kez görünen akışın tek ikonu", state: "kalıyor", dropped: false },
+        { ms: "arrow_upward", job: "Fiyat arttı", where: "Delta çipi, trend oku", note: "Yalnızca çipin içinde, 12sp metinle birlikte; çipin rengini alır", state: "kalıyor", dropped: false },
+        { ms: "arrow_downward", job: "Fiyat düştü", where: "Delta çipi, trend oku", note: "Yukarı okun ikizi; ikisi hiçbir zaman aynı satırda değil", state: "kalıyor", dropped: false },
         { ms: "receipt_long", job: "Belge", where: "Geçmiş satırı", note: "Pivotla öldü — okunacak bir belge yok", state: "düştü", dropped: true },
         { ms: "error_outline", job: "Okuma sorunlu", where: "Geçmiş satırı", note: "Gezi ikonu tamamen kalktı", state: "düştü", dropped: true },
         { ms: "functions", job: "Toplam hesaplandı", where: "Aritmetik çipi", note: "Çip metni zaten söylüyor; ikon fazlalıktı", state: "düştü", dropped: true },
@@ -298,6 +300,8 @@ class Component extends DCLogic {
         { job: "Aç", ms: "expand_more", ph: "ph-caret-down", phName: "caret-down", ti: "ti-chevron-down", tiName: "chevron-down", ri: "ri-arrow-down-s-line", riName: "arrow-down-s-line" },
         { job: "Alışverişi bırak", ms: "logout", ph: "ph-sign-out", phName: "sign-out", ti: "ti-logout", tiName: "logout", ri: "ri-logout-box-line", riName: "logout-box-line" },
         { job: "Flaş", ms: "bolt", ph: "ph-lightning", phName: "lightning", ti: "ti-bolt", tiName: "bolt", ri: "ri-flashlight-line", riName: "flashlight-line" },
+        { job: "Fiyat arttı", ms: "arrow_upward", ph: "ph-arrow-up", phName: "arrow-up", ti: "ti-arrow-up", tiName: "arrow-up", ri: "ri-arrow-up-line", riName: "arrow-up-line" },
+        { job: "Fiyat düştü", ms: "arrow_downward", ph: "ph-arrow-down", phName: "arrow-down", ti: "ti-arrow-down", tiName: "arrow-down", ri: "ri-arrow-down-line", riName: "arrow-down-line" },
         { job: "Eksik bilgi", ms: "info", ph: "ph-info", phName: "info", ti: "ti-info-circle", tiName: "info-circle", ri: "ri-information-line", riName: "information-line" },
         { job: "İşaretlendi", ms: "check", ph: "ph-check", phName: "check", ti: "ti-check", tiName: "check", ri: "ri-check-line", riName: "check-line" },
         { job: "Sabit ürün", ms: "push_pin", ph: "ph-push-pin", phName: "push-pin", ti: "ti-pin", tiName: "pin", ri: "ri-pushpin-line", riName: "pushpin-line" },
@@ -346,8 +350,8 @@ class Component extends DCLogic {
           tag: "B", name: "Phosphor — seçildi",
           what: "Phosphor Regular'a geçilir; fill ağırlığı seçili durumlar için kullanılır.",
           rows: [
-            { k: "paket", v: "CMP için hazır artefaktlar var (composables.com ve topluluk portları); yalnızca kullanılan 15 ikon taşınırsa bağımlılık bile gerekmez — 15 ImageVector yeter." },
-            { k: "boyut", v: "15 ikon elle taşındığında APK etkisi birkaç KB; tüm paket eklenirse yüzlerce dosya gelir, gerek yok." },
+            { k: "paket", v: "CMP için hazır artefaktlar var (composables.com ve topluluk portları); yalnızca kullanılan 17 ikon taşınırsa bağımlılık bile gerekmez — 17 ImageVector yeter." },
+            { k: "boyut", v: "17 ikon elle taşındığında APK etkisi birkaç KB; tüm paket eklenirse yüzlerce dosya gelir, gerek yok." },
             { k: "risk", v: "Değişken eksen yok; karanlık tema telafisi renk kademesiyle çözülüyor (aşağıda)." },
             { k: "kazanç", v: "Uygulama sistem varsayılanı gibi görünmeyi bırakır; ikonlar Fraunces ve yuvarlak çiplerle aynı ailedenmiş gibi durur." }
           ]
