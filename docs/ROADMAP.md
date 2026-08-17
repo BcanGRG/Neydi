@@ -87,23 +87,37 @@ Fiş silinmeden önce, fişe ait olmayan parçaları çıkarma işi.
 
 ## E-C · Etiket akışı *(sıradaki iş burada)*
 
-### ▸ E12 — Etiket ölçümü · **KULLANICI BEKLENİYOR**
+### ▸ E12 — Etiket ölçümü ✅ *(27 gerçek BİM etiketi)*
 
-*Faz 0 disiplini: ayrıştırıcı gerçek veriyle yazılır.*
+Rapor: [`17-e12-etiket-olcumu.md`](17-e12-etiket-olcumu.md). Ham OCR çıktısı
+`composeApp/src/commonTest/etiket-fikstur/` altında, 27/27 okundu, sıfır hata.
 
-**Kullanıcının yapacağı:** markette ~10 raf etiketi fotoğrafı — en az **BİM,
-A101, Migros**; farklı tipler karışsın (ambalajlı ürün, tartı/manav, kampanyalı
-sarı etiket, uzun ürün adı).
+**Soru 1 — kuruş üstsimgesi tek parça mı iki parça mı?** İkisi de değil:
+**21/27'de hiç okunmuyor.** 6 etikette lira ayırıcıyla bitişik geliyor (`74,`),
+yalnız 1 etikette kuruş ayrı parça olarak bulundu (`501` ← `50`), birinde
+kuruş **derece işaretine** dönüşmüş (`2,°`).
+⚠ **`parseMinor` bu 27 etiketin hiçbirinin manşet fiyatını okuyamıyor** — tam
+iki ondalık hane şart koşuyor, etiket `74,` veriyor. E14'ün *"para desenine
+uyanlar arasından en büyük glifli"* kuralı bugünkü hâliyle **hiçbir şey
+seçmiyor**.
 
-**Benim yapacağım:** fotoğrafları ML Kit'ten geçirip **ham OCR çıktısını**
-`commonTest` fikstürü olarak commit'lemek.
+**Soru 2 — yön düzeltmesi gerekiyor mu?** Evet, zorunlu. 26/27 fotoğraf EXIF=6
+(telefon dikey tutulmuş) ve `downscaleForOcr` onları döndürüyor: kaynak
+4032×3024 → OCR'a giren 3024×4032. Düzeltme olmasaydı 26 fotoğraf ML Kit'e
+**yan** girecekti. Ölçek hiç devreye girmedi (4032 < 4096), yani yönün
+ölçekten bağımsız işlenmesi tam da bu yüzden önemliydi.
 
-**Bitti sayılır:** şu iki soru kanıtla cevaplı —
-1. Kuruş üstsimgesi (`129⁹⁰`) OCR'da tek parça mı, iki parça mı geliyor?
-2. Elde çekimde yön düzeltmesi gerekiyor mu?
+**Beklenmeyen bulgu:** "en büyük glif = fiyat" kuralı **6/27'de yanılıyor** —
+aktüel etiketlerde marka adı fiyattan büyük basılıyor (`Krena` h=1032,
+`Kar` h=1244).
 
-> ⚠ **Sentetik örnek yasak.** Fiş ayrıştırıcısının ilk sürümü kendi yazdığı
-> örneklerle doğrulanmıştı, 17 test geçiyordu ve hiçbiri bir şey kanıtlamıyordu.
+**Dördüncü bulgu:** birim fiyat satırı etiketteki **en temiz sayı** —
+10 etikette iki ondalık hanesiyle okundu ve `parseMinor` orada **çalışıyor**.
+Bir etikette manşet fiyata eşit, yani doğrulama kaynağı olabilir.
+
+**Eksik:** Metro (toptan) örneği ve kasıtlı 90°/eğik kontrol karesi yok.
+İkincisi `VisualRows`'un köşe sıralaması sözleşmesini kapatabilirdi — bu 27
+fotoğrafta metin dik olduğu için iki okuma çakışıyor.
 
 ### ▸ E13 — Mağaza tohumu ✅ *(cihazda doğrulandı)*
 
