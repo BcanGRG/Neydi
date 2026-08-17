@@ -247,8 +247,22 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 
 - [ ] **Faz 7 — Senkron** (7.1 Supabase+RLS · 7.2 Auth · 7.3 Realtime v1 ·
       7.4 `updated_at` · 7.5 outbox+tombstone+add-beats-remove · 7.6 keep-alive).
-      `syncPhotos` kolonunun kaderi burada karara bağlanır — bugün senkron
-      edilecek fotoğraf yok.
+      **Supabase projesi açıldı:** `vjinflzmjcsaicaeatic`, **eu-central-1**
+      (Frankfurt — bölge sonradan değiştirilemiyor), ücretsiz plan. Şema
+      **boş**, hiçbir migration uygulanmadı.
+      **Tasarım turu bitti** → [`15-faz7-sema-plani.md`](15-faz7-sema-plani.md):
+      üç bağımsız öneri, her biri ayrı yargıçla çürütülmeye çalışıldı,
+      **üçünün de doğruluk puanı düşük çıktı** (4 · 5 · 3) — hiçbiri olduğu
+      gibi uygulanabilir değildi. Yirmi beş ölümcül kusur kayıtlı.
+      ⚠ **En ağırı mimari:** iki kişi çevrimdışıyken aynı geziye aynı ürünü
+      eklerse `(tripId, productId)` UNIQUE çakışıyor, ikinci push 23505
+      alıyor ve `pending_op` FIFO olduğu için **outbox kalıcı olarak
+      tıkanıyor** — hem de uygulamanın en olası eşzamanlı eylemi bu.
+      Çözüm yönü doğal anahtardan türetilen deterministik id, yani çakışma
+      red değil upsert olur. F7.5'in "add-beats-remove"u zaten oraya
+      işaret ediyordu.
+      `syncPhotos` kolonu **ölü** (karar 29 fotoğrafı siliyor); sunucuya
+      taşınmıyor, yerelden de düşürülebilir.
 - [ ] **Faz 8 — Marka varlıkları** (8.1–8.6). ⚠ Logo konsepti **C ("Fişin
       Kuyruğu") elenmeli** — fiş artık ürünün parçası değil.
 - [ ] **Faz 9 — iOS** (9.1 kabuk · 9.2 **etiket hattı**: `downscaleForOcr` +
@@ -320,6 +334,26 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       bekleme 2 sn ile sınırlı. (2) `addFromEngine` `repo.add`'i doğrudan
       çağırıyordu ve sinyali kimse yazmıyordu — öneri şeridinden ekleme hiç
       kaydırmıyordu. Sinyal artık tek kapıdan (`signalAdded`) geçiyor.
+
+- [ ] **F11.20 — `FinishShoppingScreen` sözleşmede yok.** Boş Durumlar çerçeve
+      04'ün başlığı birebir *"Alışveriş kapanışı · **açılmaz**"*, gerekçesi
+      *"kontrol edilecek bir belge yok; liste kendiliğinden temizlenir"*, ve
+      karar 31 pivot turunda bunu yeniden ele alıp teyit etmiş. Kodda ise ekran
+      + ViewModel + destinasyon canlı duruyor. İşaretlenmemiş satırların cevabı
+      da var, sadece başka zamanda: bir **sonraki** gezinin başında "Eksik
+      olabilir"de *"geçen sefer unuttun"* diye geri geliyorlar. Silinmesi
+      gerekiyor — ekran silmek geri dönüşü olan bir iş değil, onay bekliyor.
+- [ ] **F11.21 — Ekran 3 "Eksik olabilir (0)" ara karesi bir ihlal.** Üç ayrı
+      yerde *"ekran hiç açılmaz, doğrudan alışveriş moduna girilir, 2 sn'lik
+      toast çıkar"* yazıyor. Kodda ara kare çiziliyor.
+- [ ] **F11.22 — Dört tasarım kararını biz verip geçtik** *(soru değil, bildirim
+      — itiraz gelirse geri alınır)*. Birincil buton dolgusu maketleri esas
+      alıyor (`#B34418` ileri, `#3F6B54` onay); fiyat yönü kırmızı/yeşil kalıyor
+      (`tokens.json` makine-okunur kaynak ve o böyle diyor); "Nerede ucuz"da
+      ambalaj boyu **filtre**; tutarı hesaplanamayan özet kartı **hiç
+      çizilmiyor**. Gerekçeler `14-tasarima-sorular-6.md` B bölümünde.
+      Ayrım şu: bir yüzeyin **doğup doğmadığı** sözleşmenin işi, bir dolgunun
+      **rengi** maketin işi.
 
 ## Öncelik 6 — Tasarım sadakati
 
