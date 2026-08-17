@@ -138,17 +138,36 @@ yaratmıyor, önce gelen kazanıyor.
 > "Takip edilen zincirler" satırını okunamaz yapar. Kod hatası değil, veri
 > kalıntısı — temizlik kararı kullanıcının, bkz. **F10.17**.
 
-### ▸ E14 — TagReader + TagParser *(cihazsız · E12'ye bağlı)*
+### ▸ E14 — TagReader + TagParser *(okuyucu ✅ · ayrıştırıcı sürüyor)*
 
-- `expect fun readTag(imagePath): TagOcr` + Android actual: **tek bitmap, tek
-  ML Kit çağrısı**. Şerit/yön oylaması/mükerrer eleme YOK — o makine metrelik
-  fiş içindi
-- `groupVisualRows` yeniden kullanılıyor (köşe noktası geometrisi)
-- **Fiyat** = para desenine uyan parçalar arasından en büyük glifli
-- **Birim fiyat satırı** → `priceUnit` + `packSize` çıkarımı; yoksa null
-- **Marka** = ad satırının ilk kelimesi, yalnızca ÖNERİ
+**Yapıldı:**
+- `readTag` — tek bitmap, tek ML Kit çağrısı. Şerit/yön oylaması/mükerrer eleme
+  yok; o makine metrelik fiş içindi. Android actual yazıldı, iOS **F9.2**'ye
+  bırakıldı (patlıyor, sessizce boş dönmüyor).
+- **`readTagPrice` — ayrı bir etiket fiyatı okuyucusu.** `parseMinor`
+  kullanmıyor ve sebebi ölçüldü: E12'de **27 gerçek etiketin hiçbirinin**
+  manşet fiyatı ondan geçmiyor (tam iki ondalık hane şartı; etiket `74,`
+  veriyor). O kural fişin kendi doğrusu ve orada geçerli — iki yüzeyin iki
+  doğrusunu tek fonksiyona bindirmek ikisini de zayıflatırdı.
+  - Lira = **rakamla başlayan** en büyük glifli satır. "Para desenine uyanlar"
+    değil, çünkü o süzgeç kümeyi önce boşaltıyor. Yan fayda: 6 etikette en
+    büyük glif marka adı (`Kar` 1244px) ve "rakamla başlar" onları eliyor.
+  - Kuruş = **iki rakam + en fazla bir çöp karakter** (`50t` `90%` `501` —
+    ₺ simgesi `t`/`%`/`1` diye okunuyor), liranın sağ-üst bandında, ondan
+    küçük. **Ayırıcı taşıyan aday reddediliyor**: `89,s6` üstü çizili eski
+    fiyat ve kuruştan BÜYÜK glifli, `82:` saat parçası.
+  - **26/27 etikette lira, 11/27'de kuruş** okundu. Kuruş okunmadıysa `,00`
+    varsayılıyor ama **işaretleniyor** (`kurusFromOcr = false`) — onay kartı
+    o bayrağa bakıp fiyat alanına odaklanacak (E15).
+- `readTagUnitPrice` — birim fiyat satırı `parseMinor` ile okunuyor; orada iki
+  ondalık hane gerçekten var (normal punto). Birim sözcüğü şart: `74,50t`
+  gibi sözcüksüz satır null dönüyor, çünkü "1 KG" ayrı bir satır ve ikisini
+  birleştirmek tahmin olurdu.
+- Fikstür `TagFixtures.kt` olarak **üretildi** (elle yazılmadı); ham dökümler
+  `commonTest/etiket-fikstur/` altında ve her sayı orada doğrulanabilir.
 
-**Bitti sayılır:** E12'nin her fikstürü doğru fiyatı veriyor.
+**Kalan:** ürün adı, marka önerisi, `packSize`/`priceUnit` çıkarımı,
+`groupVisualRows` ile satır gruplaması.
 
 ### ▸ E15 — TagCapture ekranı *(pivotun canlandığı adım)*
 
