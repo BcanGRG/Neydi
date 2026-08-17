@@ -33,6 +33,15 @@ import com.neydi.app.ui.theme.pressable
  * yok sayilabildigi icin duzen yalnizca tnum'a guvenmiyor. Rakamlar hizalanmazsa
  * bile sutun hizali kalir.
  */
+/**
+ * Delta cipindeki okun boyu.
+ *
+ * 12sp'lik `labelSmall` metnin yanina oturuyor. Tasarim bu olcuyu dp olarak
+ * YAZMIYOR ("12sp metinle birlikte" diyor) - deger cihazda gozle ayarlandi,
+ * turetilmedi.
+ */
+private val DELTA_ARROW = 14.dp
+
 @Composable
 fun PriceChip(
     text: String,
@@ -76,10 +85,20 @@ fun DeltaChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(
-            text = if (rising) "↑" else "↓",
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
+        // IKON, UNICODE GLIFI DEGIL. Once `Text("↑")` yaziyordu ve iki sorunu
+        // vardi: karar 32 *"ikonlar `Text` olarak cizilmiyor"* diyor, ve glif
+        // sistem fontundan cozuldugu icin Skia'nin yedek zinciri Android ile
+        // iOS'ta ayni sekli vermiyordu - kalinligi da yanindaki 12sp metinle
+        // eslesmiyordu.
+        //
+        // `tint = color` cipin kendi rengini tasiyor (priceUp / priceDown),
+        // yani Ikonografi'nin *"ikon icinde bulundugu metnin rengini alir"*
+        // kurali korunuyor.
+        NeydiIcon(
+            icon = if (rising) NeydiIcons.ArrowUpward else NeydiIcons.ArrowDownward,
+            contentDescription = null,
+            size = DELTA_ARROW,
+            tint = color,
         )
         Text(
             text = "%$percent",

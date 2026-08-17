@@ -369,15 +369,17 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       iki ikonun aynı çizimi taşımadığı, yalnızca yön taşıyanların
       `autoMirror` olduğu. Cihazda beş ikon gözle doğrulandı; on beşinin
       atlası `NeydiIcon.kt`'de `@PreviewLightDark` olarak duruyor.
-- [ ] **F11.29 — İkon envanteri 15 → 17.** Karar 34 delta çipinin
-      `arrow_upward`/`arrow_downward` oklarını envantere aldı. Oklar
-      **F11.11'de değil, pivot turunda** (`95c0f45`) silinmişti ve o sırada
-      henüz Material ikonuydular — yani **Phosphor formunda hiç var
-      olmadılar.** `Chips.kt:78` bugün oku **Unicode metin glifi** (`↑`/`↓`)
-      olarak çiziyor; karar 32 *"ikonlar `Text` olarak çizilmiyor"* diyor,
-      üstelik glif sistem fontuna bağlı ve Skia'nın fallback zinciri iki
-      platformda aynı şekli vermiyor. İki Phosphor path'i taşınacak,
-      **`autoMirror` KAPALI** (dikey yön taşıyorlar).
+- **F11.29 ✅ — İkon envanteri 17.** İki Phosphor oku (`ph-arrow-up` /
+      `ph-arrow-down`) taşındı, `autoMirror` **kapalı** — dikey yön taşıyorlar.
+      `Chips.kt` artık Unicode glif (`↑`) yerine ikon çiziyor: karar 32
+      *"ikonlar `Text` olarak çizilmiyor"* diyor, üstelik glif sistem
+      fontundan çözülüyordu ve Skia'nın yedek zinciri iki platformda aynı
+      şekli vermiyordu. Testin `autoMirror` vakası iki taraflı: hepsine
+      `autoMirror` veren bir değişiklik burada düşer.
+      ⚠ **Cihazda görülemedi** — delta çipi ≥2 gözlem istiyor ve gözlem
+      üretebilen yüzey yok. **F11.19 ile aynı kuyrukta**, E15'te bakılacak.
+      Ok boyu (14dp) tasarımda dp olarak yazılı değil (*"12sp metinle
+      birlikte"*); gözle seçildi, türetilmedi.
 - **F11.12 ✅ · F11.13 ✅ · F11.14 ✅ · F11.15 ✅ · F11.16 ✅ — beşinci tur kapandı.**
       Ayna dokuz dosyayla tazelendi (**İkonografi ilk kez geldi**), Ekran 1
       başlık örneği merdivene uydu, karar 33 ilişki olarak yeniden yazıldı ve
@@ -410,7 +412,7 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       (8 yeni) ve önizleme yerinde; ama uygulamada bugün **gözlem üretebilen
       bir yüzey yok**, yani karışık liste (kimi koyu, kimi soluk) çalışan
       uygulamada ulaşılamaz bir hâl. Sıfır gözlemli hâl cihazda doğrulandı.
-      **E15** gelince gözle bakılacak.
+      **E15** gelince gözle bakılacak — **F11.29'un delta oku da aynı kuyrukta**.
 - **F11.10 → E19'a devroldu.**
 
 ---
