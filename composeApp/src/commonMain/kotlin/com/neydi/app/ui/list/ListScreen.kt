@@ -66,6 +66,7 @@ import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.NeydiSnackbar
 import com.neydi.app.ui.components.NeydiToast
 import com.neydi.app.ui.components.SectionHeader
 import com.neydi.app.ui.product.ProductSheetContent
@@ -121,6 +122,7 @@ fun ListScreen(
     val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
     val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
+    val pendingDelete by vm.pendingDelete.collectAsStateWithLifecycle()
 
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -169,6 +171,10 @@ fun ListScreen(
         toast = toast,
         onToastShown = onToastShown,
         lastAdded = lastAdded,
+        onDeleteRow = vm::remove,
+        pendingDelete = pendingDelete,
+        onUndoDelete = vm::undoDelete,
+        onUndoDismissed = vm::dismissDeleteUndo,
     )
 
     // Sheet, EKRAN DEGIL: liste arkada gorunur kaliyor.
@@ -220,6 +226,14 @@ fun ListScreen(
                 state = sheet,
                 onStapleChange = { vm.setStaple(sheet.productId, it) },
                 bottomPadding = bottomInset,
+                // Sheet kapaniyor VE satir siliniyor: serit sheet'in arkasinda
+                // dogar, kullanici kapatinca onu gorur ve geri alabilir.
+                onRemoveFromList = sheet.rowId?.let { rowId ->
+                    {
+                        vm.closeProductSheet()
+                        vm.remove(rowId, sheet.name)
+                    }
+                },
             )
         }
     }
@@ -263,7 +277,7 @@ internal fun ListContent(
     starters: List<CatalogSeed> = emptyList(),
     onToggleChecked: (String, Boolean) -> Unit,
     /** Satira uzun basma - Urun Detayi sheet'ini aciyor (F6.8). */
-    onRowLongPress: (String) -> Unit,
+    onRowLongPress: (String, String) -> Unit,
     onClipboard: () -> Unit,
     onShoppingMode: (Boolean) -> Unit,
     /** Ekran 3'e gider (evden cikmadan son kontrol). */
@@ -278,6 +292,12 @@ internal fun ListContent(
     onToastShown: () -> Unit = {},
     /** En son eklenen satir; gorunur degilse listeye kaydiriliyor. Bkz. [AddedRow]. */
     lastAdded: AddedRow? = null,
+    /** Satiri siler (tasarim karari 37). Ad da geciyor - serit onu yaziyor. */
+    onDeleteRow: (String, String) -> Unit = { _, _ -> },
+    /** En son silinen satir; varsa geri alma seridi ciziliyor. */
+    pendingDelete: DeletedRow? = null,
+    onUndoDelete: () -> Unit = {},
+    onUndoDismissed: () -> Unit = {},
     /**
      * Simdiki an - basligin "8 gun once" hesabi icin.
      *
@@ -419,6 +439,14 @@ internal fun ListContent(
                     }
                     items(section.rows, key = { it.id }) { row ->
                         ListItemRow(
+                            // JEST YALNIZ PLAN MODUNDA (karar 37). Alisveris
+                            // modunda reyondasin: yanlislikla silmenin bedeli
+                            // yuksek ve geri alma penceresi bes saniye.
+                            onSwipeDelete = if (state.shoppingMode) {
+                                null
+                            } else {
+                                { onDeleteRow(row.id, row.row.name) }
+                            },
                             // ISARETLENEN SATIR "Alindi"ya KAYARAK iner.
                             // Anahtar iki bolumde de ayni (TripLine id), o yuzden
                             // LazyColumn bunu yeni bir oge degil YER DEGISIMI
@@ -427,6 +455,10 @@ internal fun ListContent(
                             // "ne oldu, nereye gitti" hissi kaliyor.
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
+                                // Silinen satir 200 ms'de kayboluyor ve
+                                // altindakiler tek hareketle toplaniyor
+                                // (tasarim karari 37).
+                                fadeOutSpec = tween(Motion.ROW_DELETE_MS),
                             ),
                             row = row.row,
                             shoppingMode = state.shoppingMode,
@@ -441,7 +473,7 @@ internal fun ListContent(
                             // Uzun basma Urun Detayi sheet'ini aciyor (F6.8).
                             // Tasarimin belirledigi acici fiyat cipi ama o
                             // ancak F5.2 ile gorunecek - bkz. ListItemRow.
-                            onLongPress = { onRowLongPress(row.productId) },
+                            onLongPress = { onRowLongPress(row.productId, row.id) },
                         )
                     }
                 }
@@ -466,7 +498,7 @@ internal fun ListContent(
                                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onToggleChecked(row.id, false)
                             },
-                            onLongPress = { onRowLongPress(row.productId) },
+                            onLongPress = { onRowLongPress(row.productId, row.id) },
                         )
                     }
                 }
@@ -478,6 +510,17 @@ internal fun ListContent(
             NeydiToast(
                 message = toast,
                 onShown = onToastShown,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+
+            // GERI ALMA SERIDI de alt blogun 12dp ustunde (tasarim karari 37).
+            // Toast ile ayni yerde durmalari catisma degil: ikisi ayni anda
+            // dogamiyor - toast alisveris kapanisinda, serit satir silmede.
+            NeydiSnackbar(
+                message = pendingDelete?.let { "${it.name} silindi" },
+                actionLabel = "Geri al",
+                onAction = onUndoDelete,
+                onDismiss = onUndoDismissed,
                 modifier = Modifier.padding(bottom = 12.dp),
             )
 
@@ -850,7 +893,7 @@ private fun ListPreviewHost(
     engineSuggestions = emptyList(), onEngineSuggestion = {}, categories = emptyList(),
     clipboardText = clipboard,
     onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
-    onToggleChecked = { _, _ -> }, onRowLongPress = {}, onClipboard = {}, onShoppingMode = {},
+    onToggleChecked = { _, _ -> }, onRowLongPress = { _, _ -> }, onClipboard = {}, onShoppingMode = {},
     onGoShopping = {},
     estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},
 )

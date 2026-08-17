@@ -38,6 +38,17 @@ object Motion {
     /** Isaretlenen satirin "Alindi" bolumune kaymasi. Isinlanmaz - goz takip edebilmeli. */
     const val REORDER_MS = 260
 
+    /**
+     * Silme jesti: esik gecilmeden birakilan satirin yerine donusu, ve silinen
+     * satirin yukseklik daralmasi (tasarim: "200 ms'de yerine donuyor").
+     *
+     * [CHECK_MS] ILE AYNI SAYI AMA AYRI SABIT. O isaretleme animasyonu; bu
+     * silme. Ikisini tek sabite baglamak, biri degistiginde otekini de sessizce
+     * degistirmek demek olurdu - Motion.kt'nin butun dosyasi bu ayrimin uzerine
+     * kurulu (bkz. REORDER_MS'in CHECK_MS'ten farkli olmasi).
+     */
+    const val ROW_DELETE_MS = 200
+
     const val PRESSED_SCALE = 0.97f
     const val CHECK_SCALE_DIP = 0.96f
     const val DISABLED_ALPHA = 0.38f

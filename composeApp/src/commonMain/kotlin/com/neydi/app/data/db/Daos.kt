@@ -397,6 +397,21 @@ interface TripLineDao {
     @Query("UPDATE trip_line SET deletedAt = :at WHERE id = :id")
     suspend fun softDelete(id: String, at: Long)
 
+    /**
+     * Silmeyi geri alir - satirin GERI KALANINA DOKUNMADAN (tasarim karari 37).
+     *
+     * NEDEN AYRI BIR SORGU, `ListRepository.add` DEGIL: o yol mezar kazmayi
+     * zaten biliyor ama satiri YENIDEN KURUYOR - `quantity`, `checked`,
+     * `checkedAt`, `addedByMemberId`, `fromSuggestion` sifirlaniyor. "Geri al"
+     * ile o yoldan donen bir satir 2 kg elmayi 1 kg yapardi ve kullanici bunu
+     * ancak markette fark ederdi.
+     *
+     * `updatedAt` de yaziliyor: LWW'nin karsilastiracagi damga olmadan senkron
+     * bu diriltmeyi kaybedip satiri yeniden silebilir.
+     */
+    @Query("UPDATE trip_line SET deletedAt = NULL, updatedAt = :at WHERE id = :id")
+    suspend fun restore(id: String, at: Long)
+
     @Delete
     suspend fun delete(line: TripLine)
 }

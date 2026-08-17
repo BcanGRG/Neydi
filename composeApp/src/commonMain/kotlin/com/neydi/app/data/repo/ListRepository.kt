@@ -263,6 +263,9 @@ class ListRepository(
 
     suspend fun remove(rowId: String) = tripLineDao.softDelete(rowId, clock())
 
+    /** Silmeyi geri alir; satirin miktari ve isaretli hali korunur (karar 37). */
+    suspend fun undoRemove(rowId: String) = tripLineDao.restore(rowId, clock())
+
     /**
      * Adiyla urun bulur, yoksa olusturur. matchKey uzerinden bakiyor ki
      * "Ekmek" ile "EKMEK" ayri urun olmasin (F2.4).

@@ -24,10 +24,11 @@ private const val TOAST_MS = 2_000L
  * Toast - "oldu bitti, dokunacak bir sey yok" bildirimi (tasarim kararı 8).
  *
  * SNACKBAR'DAN AYRI BIR BILESEN ve ayrimi tasarim acikca ciziyor:
- * snackbar AKSIYON tasiyor ve uygulamada tek bir yerde kullaniliyor
- * (alisveris kendiliginden kapandiginda **"Gecmis'te gor"** - karar 8 pivotla
- * guncellendi, eski hedef fis detayiydi ve o ekran kalmadi). Burada dokunulacak bir
- * sey yok. Ikisini ayni bilesene bindirmek, isaretlemede snackbar
+ * snackbar AKSIYON tasiyor ve uygulamada **iki yerde** yasiyor - alisveris
+ * kendiliginden kapandiginda "Gecmis'te gor", satir silindiginde "Geri al"
+ * ([NeydiSnackbar]). Karar 8'in gerekcesi bir sure "tek bir yerde" diyordu ve
+ * o cumle satir silmeyi imkansiz kiliyordu; altinci turda duzeltildi. Burada
+ * dokunulacak bir sey yok. Ikisini ayni bilesene bindirmek, isaretlemede snackbar
  * yasagini da bulanıklastirirdi - "bir gezide 20 isaretleme var".
  *
  * DOKUNMA HEDEFI YOK: kullanicinin yapacagi bir sey olmadigi icin tiklanabilir
