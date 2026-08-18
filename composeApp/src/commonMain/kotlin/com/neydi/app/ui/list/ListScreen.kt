@@ -121,6 +121,7 @@ fun ListScreen(
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
     val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
     val pendingDelete by vm.pendingDelete.collectAsStateWithLifecycle()
+    val pendingObservationDelete by vm.pendingObservationDelete.collectAsStateWithLifecycle()
 
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -168,6 +169,9 @@ fun ListScreen(
         lastAdded = lastAdded,
         onDeleteRow = vm::remove,
         pendingDelete = pendingDelete,
+        observationDeleted = pendingObservationDelete != null,
+        onUndoObservationDelete = vm::undoObservationDelete,
+        onObservationUndoDismissed = vm::dismissObservationUndo,
         onUndoDelete = vm::undoDelete,
         onUndoDismissed = vm::dismissDeleteUndo,
     )
@@ -218,6 +222,7 @@ fun ListScreen(
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             ProductSheetContent(
+                onDeleteObservation = vm::deleteObservation,
                 state = sheet,
                 onStapleChange = { vm.setStaple(sheet.productId, it) },
                 bottomPadding = bottomInset,
@@ -287,6 +292,10 @@ internal fun ListContent(
     onDeleteRow: (String, String) -> Unit = { _, _ -> },
     /** En son silinen satir; varsa geri alma seridi ciziliyor. */
     pendingDelete: DeletedRow? = null,
+    /** Bir gozlem silindi - snackbar'in UCUNCU kullanimi (karar 46). */
+    observationDeleted: Boolean = false,
+    onUndoObservationDelete: () -> Unit = {},
+    onObservationUndoDismissed: () -> Unit = {},
     onUndoDelete: () -> Unit = {},
     onUndoDismissed: () -> Unit = {},
     /**
@@ -508,6 +517,17 @@ internal fun ListContent(
             // GERI ALMA SERIDI de alt blogun 12dp ustunde (tasarim karari 37).
             // Toast ile ayni yerde durmalari catisma degil: ikisi ayni anda
             // dogamiyor - toast alisveris kapanisinda, serit satir silmede.
+            // GOZLEM SERIDI SATIR SERIDININ USTUNDE degil, ONUNDE: ikisi ayni
+            // anda gorunemez (biri Urun Detayi acikken, oteki listede) ama
+            // ayni yuvayi paylasiyorlar, yani ust uste binmeleri imkansiz.
+            NeydiSnackbar(
+                message = if (observationDeleted) "Gözlem silindi" else null,
+                actionLabel = "Geri al",
+                onAction = onUndoObservationDelete,
+                onDismiss = onObservationUndoDismissed,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+
             NeydiSnackbar(
                 message = pendingDelete?.let { "${it.name} silindi" },
                 actionLabel = "Geri al",

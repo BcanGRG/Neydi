@@ -555,6 +555,28 @@ interface PriceObservationDao {
     suspend fun lastUsedProductName(householdId: String): String?
 
     /**
+     * Yanlis yazilmis gozlemi siler (karar 46).
+     *
+     * ## Neden bu kapi ACILMAK ZORUNDAYDI
+     *
+     * `deletedAt` kolonu bastan beri vardi ve HICBIR yerden yazilmiyordu.
+     * Yanlis bir sayinin tek caresi Ayarlar'daki *"Verilerimi sil"*di - yani
+     * bir hane butun fiyat hafizasini kaybetmeden tek bir hatayi
+     * duzeltemiyordu. Olcum 4389 TL'lik bir satirin gercekten uretildigini
+     * gosterdi; boyle bir satir duruyorken hafiza guvenilmez.
+     *
+     * DUZENLEME YOK, yalnizca SILME: dogrusu rafta duruyor ve yeni bir cekim
+     * hem daha hizli hem daha dogru. Yerinde duzenleme, elle fiyat girmenin
+     * ikinci kapisini acardi.
+     */
+    @Query("UPDATE price_observation SET deletedAt = :at WHERE id = :id AND deletedAt IS NULL")
+    suspend fun softDelete(id: String, at: Long)
+
+    /** Bes saniyelik geri donus hakki (karar 46, snackbar'in ucuncu yeri). */
+    @Query("UPDATE price_observation SET deletedAt = NULL WHERE id = :id")
+    suspend fun undoDelete(id: String)
+
+    /**
      * Hanenin butun gozlemleri, en yenisi once.
      *
      * E17'nin `history(productId, 9)` sorgusunun genel hali; simdilik tek
@@ -638,6 +660,7 @@ interface PriceObservationDao {
         SELECT
             po.observedAt      AS observedAt,
             po.unitPriceMinor  AS unitPriceMinor,
+            po.id              AS id,
             po.brand           AS brand,
             s.name             AS storeName,
             po.packSize        AS packSize,

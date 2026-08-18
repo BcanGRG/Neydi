@@ -585,6 +585,40 @@ class ListViewModel(
         viewModelScope.launch { repo.undoRemove(silinen.rowId) }
     }
 
+    /**
+     * Yazilmis gozlemi siler ve GERI ALMA hakki verir (karar 46).
+     *
+     * Silme ANINDA kalici, snackbar bir bekleme degil - satir silmenin kendi
+     * kurali burada da gecerli ([pendingDelete] KDoc'u). Gozlem hemen mezar
+     * aliyor, fiyat cipi hemen tazeleniyor; serit yalnizca bes saniyelik bir
+     * geri donus hakki sunuyor.
+     *
+     * Ayni `_pendingDelete` akisini KULLANMIYOR: o satir silmeye ait ve
+     * `undoDelete` farkli bir tabloya gidiyor. Ikisini tek akista birlestirmek,
+     * "Geri al"in hangi seyi geri alacagini calisma zamaninda cozmek olurdu.
+     */
+    fun deleteObservation(id: String) {
+        viewModelScope.launch {
+            priceObservationDao.softDelete(id, clock())
+            _pendingObservationDelete.value = id
+        }
+    }
+
+    fun undoObservationDelete() {
+        val id = _pendingObservationDelete.value ?: return
+        _pendingObservationDelete.value = null
+        viewModelScope.launch { priceObservationDao.undoDelete(id) }
+    }
+
+    fun dismissObservationUndo() {
+        _pendingObservationDelete.value = null
+    }
+
+    private val _pendingObservationDelete = MutableStateFlow<String?>(null)
+
+    /** Silinen gozlem - snackbar'in UCUNCU kullanimi (karar 46). */
+    val pendingObservationDelete: StateFlow<String?> = _pendingObservationDelete
+
     /** Serit suresi doldu ya da kullanici baska bir sey sildi. */
     fun dismissDeleteUndo() {
         _pendingDelete.value = null
