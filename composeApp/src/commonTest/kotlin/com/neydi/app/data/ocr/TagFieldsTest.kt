@@ -47,14 +47,15 @@ class TagFieldsTest {
     }
 
     /**
-     * METRO VE MIGROS'TA HICBIR SEY OKUNMUYOR.
+     * GRAMERI YAZILMAMIS ZINCIRDE HICBIR SEY OKUNMUYOR.
      *
-     * Olcum: bu iki zincirde okuyucu her etikette bir sayi buluyordu ama yanlis
-     * sayiyi - patatese 4389,00 TL. Kapi tam bunun icin var.
+     * Once Metro ve Migros birlikteydi. Migros'un grameri yazilinca liste
+     * daraldi - bu bir gerileme degil, kapinin isini bitirdigi yer. Metro
+     * hala icerde: olcumde her etikette bir sayi buluyor ama yanlis sayiyi.
      */
     @Test
     fun unsolvedChainsYieldNothing() {
-        listOf("Metro", "Migros").forEach { chain ->
+        listOf("Metro").forEach { chain ->
             val tags = TagFixtures.of(chain)
             assertTrue(tags.isNotEmpty(), "$chain fiksturu bos - test dayanaksiz")
             tags.forEach { (tag, ocr) ->
@@ -67,16 +68,18 @@ class TagFieldsTest {
     }
 
     /**
-     * MIGROS PATATESI: kapi olmasaydi 4389,00 TL yazilacakti.
+     * MIGROS PATATESI 4389,00 TL DEGIL - once kapi, simdi gramer sayesinde.
      *
-     * Vakayi ismen kilitliyorum cunku ustteki dongu bir gun daraltilirsa bu
-     * satir hala kirmizi yanar. Etiketin gercegi 43,95 TL/kg.
+     * Bu test once `null` bekliyordu: Migros'un grameri yoktu ve kapi her seyi
+     * kesiyordu. Simdi gramer var ve DOGRU cevabi veriyor. Iddia degismedi,
+     * karsilandigi yol degisti - o yuzden hem BIM okuyucusunun hala 4389
+     * dedigini hem borunun 43,95 verdigini birlikte kilitliyorum.
      */
     @Test
     fun theMigrosPotatoIsNotWrittenAsFourThousandLira() {
         val ocr = TagFixtures.all.getValue("20260817_211114")
-        assertEquals(438_900L, readTagPrice(ocr)?.minor, "ham okuyucu artik baska sey donuyor")
-        assertNull(readTagFields(ocr, chainKey("Migros")).price)
+        assertEquals(438_900L, readTagPrice(ocr)?.minor, "BIM kurali artik baska sey donuyor")
+        assertEquals(4_395L, readTagFields(ocr, chainKey("Migros")).price?.minor)
     }
 
     /**

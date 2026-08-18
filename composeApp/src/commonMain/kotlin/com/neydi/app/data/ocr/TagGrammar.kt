@@ -45,6 +45,7 @@ internal interface TagGrammar {
 internal fun grammarFor(chain: String?): TagGrammar? = when (chain) {
     null -> null
     chainKey("BİM") -> BimGrammar
+    chainKey("Migros") -> MigrosGrammar
     else -> null
 }
 

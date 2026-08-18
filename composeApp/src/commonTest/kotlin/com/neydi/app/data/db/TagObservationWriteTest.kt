@@ -91,19 +91,23 @@ class TagObservationWriteTest {
     }
 
     /**
-     * MIGROS PATATESI VERITABANINA GIRMIYOR.
+     * GRAMERI OLMAYAN ZINCIRDE YAZILACAK BIR SEY YOK.
      *
-     * Kapinin varlik sebebi tam olarak bu satir: kapi olmasaydi 4389,00 TL
-     * yazilacakti (gercegi 43,95/kg). Testi yazma yolunda tutuyorum, cunku
-     * ayristirici testinde gecen bir kural bile cagiran tarafta atlanabilir.
+     * Vaka ONCE Migros patatesiydi (kapi olmasaydi 4389,00 TL yazilacakti).
+     * Migros'un grameri yazilinca o etiket artik DOGRU fiyati veriyor, yani
+     * bu testin ornegi Metro'ya tasindi - iddia ayni, yalnizca hangi zincirin
+     * cozulmedigi degisti.
+     *
+     * Testi yazma yolunda tutuyorum cunku ayristirici testinde gecen bir kural
+     * cagiran tarafta atlanabilir.
      */
     @Test
     fun anUnreadableChainProducesNothingToWrite() = runTest {
         val fields = readTagFields(
-            TagFixtures.all.getValue("20260817_211114"),
-            chainKey("Migros"),
+            TagFixtures.all.getValue("20260817_202408"),
+            chainKey("Metro"),
         )
-        assertNull(fields.price, "kapi acik kalmis - 4389,00 TL yazilmak uzere")
+        assertNull(fields.price, "kapi acik kalmis")
         assertNull(fields.name)
     }
 
