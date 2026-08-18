@@ -158,6 +158,53 @@ class TagFieldReaderTest {
     }
 
     /**
+     * URETILEN HER MARKA VE AD SOZCUK GORUNUMLU.
+     *
+     * ## Bu testin kaniti FIKSTURDE DEGIL, CIHAZDA
+     *
+     * Kural gercek bir BIM turundan geldi: uygulamadan cekilen 12 gozlemin
+     * markalari arasinda `oOoao000`, `Tntkn` ve `A.Ş.` vardi, ve bir muz
+     * etiketi `KG` adiyla katalogda kalici bir urun yaratti. O fotograflar
+     * fiksturde YOK - silindiler (karar 29).
+     *
+     * Yani bu test kurali KANITLAMIYOR, KORUYOR: 27 BIM etiketinin urettigi
+     * hicbir marka/ad kuralin disina dusmuyor, dolayisiyla kural mevcut dogru
+     * ciktilari kirmadan duruyor. Kanit cihaz turunun kendisi.
+     *
+     * Ayrimi yaziyorum cunku "test var" ile "kural olculdu" ayni sey degil ve
+     * bu projede o ayrim daha once pahaliya patladi.
+     */
+    @Test
+    fun everyEmittedBrandAndNameLooksLikeAWord() {
+        TagFixtures.of("BIM").forEach { (tag, ocr) ->
+            val name = readTagName(ocr) ?: return@forEach
+            name.brand?.let { brand ->
+                assertTrue(brand.none(Char::isDigit), "$tag: markada rakam -> $brand")
+                assertTrue(brand.count(Char::isLetter) >= 3, "$tag: marka cok kisa -> $brand")
+            }
+            assertTrue(name.name.count(Char::isLetter) >= 3, "$tag: ad cok kisa -> ${name.name}")
+        }
+    }
+
+    /**
+     * RAKAM ADDA MESRU, MARKADA DEGIL.
+     *
+     * Ilk yazdigimda tek kural vardi ve `30'LU YUMURTA`, `SÜT %0,1 YAĞLI`,
+     * `PARF.TUV.KAĞIDI 3 KATLI 12Lİ` gibi gercek adlari reddetti - dort test
+     * birden kirmizi yandi. Rakam markada suphe isareti, adda siradan.
+     */
+    @Test
+    fun digitsAreOrdinaryInNamesEvenThoughTheyAreSuspectInBrands() {
+        listOf(
+            "20260817_183635" to "30'LU YUMURTA",
+            "20260817_184031" to "SÜT %0,1 YAĞLI",
+            "20260817_184300" to "PARF.TUV.KAĞIDI 3 KATLI 12Lİ",
+        ).forEach { (tag, expected) ->
+            assertEquals(expected, readTagName(TagFixtures.all.getValue(tag))?.name, tag)
+        }
+    }
+
+    /**
      * 27 ETIKETIN KACINDA CALISIYOR - olculen oran, iddia degil.
      *
      * Sayiyi teste yaziyorum ki bir degisiklik onu SESSIZCE dusuremesin.

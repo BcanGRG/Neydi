@@ -102,13 +102,51 @@ internal fun readTagName(ocr: TagOcr): TagName? {
     // satirin kimligini market+marka cifti yapiyor: yanlis marka kalici bir
     // ayrisma demek.
     val first = block.first().text.trim()
-    val brandable = block.size >= 2 && first.length > 1
+    val brandable = block.size >= 2 && looksLikeBrand(first)
     val brand = if (brandable) first else null
     val nameLines = if (brandable) block.drop(1) else block
-    return TagName(
-        brand = brand,
-        name = nameLines.joinToString(" ") { it.text.trim() },
-    )
+    val name = nameLines.joinToString(" ") { it.text.trim() }
+    // AD DA SOZCUK OLMALI. Cihazda bir muz etiketi `KG` adiyla urun yaratti -
+    // katalogda kalici olarak "KG" diye bir urun duruyor artik. Iki harflik,
+    // sesli harfsiz bir dizgi urun adi degil.
+    if (!looksLikeName(name)) return null
+    return TagName(brand = brand, name = name)
+}
+
+/**
+ * Marka olabilir mi?
+ *
+ * CIHAZDA OLCULDU: gercek bir BIM turunda yazilan 12 gozlemin markalari
+ * arasinda `oOoao000`, `Tntkn` ve `A.Ş.` vardi. Karar 26 satirin kimligini
+ * market+marka cifti yapiyor, yani bunlar KALICI birer ayrisma - ayni urun
+ * ikinci kez cekildiginde baska bir satira duser.
+ *
+ * Uc sart, ucu de o uc vakadan:
+ * - **Rakam yok**: `oOoao000` yari rakam. (Bu sart ADA uygulanamaz - `30'LU
+ *   YUMURTA` ve `SÜT %0,1 YAĞLI` mesru adlar.)
+ * - **En az uc harf**: `A.Ş.` iki harf tasiyor.
+ * - **En az bir sesli**: `Tntkn` hicbir sesli tasimiyor.
+ *
+ * Marka yalnizca ONERI (karar 39) ve `null` mesru bir cevap; suphede kalmak
+ * bu yuzden ucuz.
+ */
+private fun looksLikeBrand(text: String): Boolean =
+    !text.any { it.isDigit() } && looksLikeName(text)
+
+/**
+ * Urun adi olabilir mi?
+ *
+ * RAKAM SERBEST ve bu bir duzeltme: ilk hali markayla ayni kurali kullaniyordu
+ * ve `30'LU YUMURTA`, `PARF.TUV.KAĞIDI 3 KATLI 12Lİ`, `SÜT %0,1 YAĞLI` gibi
+ * gercek adlari reddetti. Rakam markada suphe, adda normal.
+ *
+ * Kalan iki sart cihazda bir muz etiketinin `KG` adiyla urun yaratmasindan:
+ * iki harflik, sesli harfsiz bir dizgi urun adi degil.
+ */
+private fun looksLikeName(text: String): Boolean {
+    val letters = text.trim().filter { it.isLetter() }
+    if (letters.length < 3) return false
+    return letters.any { it.lowercaseChar() in "aeıioöuü" }
 }
 
 /**
