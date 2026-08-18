@@ -93,10 +93,11 @@ bunun nasıl öğretileceği yazılmalı.
 tanımıyor**. Karar 11 yedi zinciri eşit tohumluyor, durum makinesi her çekim
 için *"Fiyat, ürün, marka dolar"* diyor.
 
-**Gerçek.** `grammarFor` yalnızca **BİM ve Migros**'u tanıyor. Yani tohumlanan
-yedi zincirin **beşi** (A101, ŞOK, CarrefourSA, File, Tarım Kredi) ve
-*"+ Yeni market"* ile eklenen her market `UNSUPPORTED_CHAIN` kapısına düşüyor:
-kart boş açılıyor.
+**Gerçek.** `grammarFor` yalnızca **BİM ve Migros**'u tanıyor. `SEED_CHAINS`
+ise bugün **dokuz** zincir tohumluyor (karar 11'in yedisi + `Fullgross`,
+`Gimat` — bkz. madde 24), yani **yedisi** `UNSUPPORTED_CHAIN` kapısına
+düşüyor: kart boş açılıyor. Tohumda olmayan bir markette çekim yapmanın yolu
+zaten yok (madde 21).
 
 İki tasarım kuralı burada çarpışıyor:
 
@@ -107,20 +108,38 @@ Sonuç: A101'de çekim yapan kullanıcı **bir** amber şerit, üç sessiz boş 
 ve pasif bir Kaydet görüyor. Ekranda o marketin desteklenmediğini söyleyen
 hiçbir şey yok — kullanıcı OCR'ın bozuk olduğunu sanıyor.
 
+**Kapının kendisi onaylandı — kullanıcı tarafından, tasarım tarafından değil.**
+`ROADMAP`'in zincir önceliği bölümü (18 Ağustos) kararı veriyor: *"O iki
+markette bugün kart **boş açılıyor** ve fiyatı kullanıcı yazıyor — yanlış
+değil, **eksik**."* Yani aşağıdaki 1. şık kapandı; kalan ikisi hâlâ tasarımın.
+
+Aynı bölüm bu maddeye **yeni bir soru** ekliyor ve doğrudan tasarımı
+ilgilendiriyor:
+
+> *"Yedi zincir için yedi gramer sürdürülebilir mi, yoksa 'OCR yalnızca emin
+> olduğunda doldursun, gerisini kullanıcı yazsın' tek akışı mı?"*
+
+Bu, kapının zincir başına mı yoksa **alan başına** mı çalışacağı sorusu. İkinci
+yol seçilirse `UNSUPPORTED_CHAIN` diye bir hâl kalmaz — her alan kendi
+güveniyle dolar ya da dolmaz, ve amber şeridin *"yalnızca ilki vurgulanır"*
+kuralı bambaşka bir yükün altına girer.
+
 **Soru.**
-1. Kapı onaylanıyor mu? (*"Yanlış fiyat, fiyat olmamasından kötü"* kuralının
-   devamı.)
-2. Onaylanıyorsa **desteklenmeyen zincirin kendi hâli** çizilecek mi — kartın
-   başında tek cümle (*"BİM ve Migros etiketlerini okuyabiliyoruz; burada
-   fiyatı sen yaz"*) gibi? Yoksa "yalnızca ilki vurgulanır" kuralı bu hâlde
-   askıya mı alınıyor?
+1. ~~Kapı onaylanıyor mu?~~ — **cevaplandı** (kullanıcı; yukarıya bkz.)
+2. **Desteklenmeyen zincirin kendi hâli** çizilecek mi — kartın başında tek
+   cümle (*"BİM ve Migros etiketlerini okuyabiliyoruz; burada fiyatı sen
+   yaz"*) gibi? Yoksa "yalnızca ilki vurgulanır" kuralı bu hâlde askıya mı
+   alınıyor?
 3. Market seçicide desteklenen zincir ayırt ediliyor mu? Karar 36 Ayarlar'da
    aynı işi **renkle** yapıyor (gözlemli / gözlemsiz); aynı jest burada da
    kullanılabilir.
+4. Kapı **zincir başına** mı kalıyor, yoksa **alan başına** güvene mi
+   dönüşüyor? Migros'ta ürün adı için bu karar zaten bir kez verildi
+   (madde 5): yarısı doğru bir ad, hiç ad olmamasından kötü.
 
 > **Neden soruluyor:** kararın kendisi ölçüme dayanıyor ve sağlam, ama
-> tasarımın *"her zincir aynı"* varsayımını çürütüyor. Kullanıcı yedi zincirin
-> ikisinde çalışan bir özelliği yedisinde de çalışıyor sanıyor.
+> tasarımın *"her zincir aynı"* varsayımını çürütüyor. Kullanıcı dokuz
+> zincirin ikisinde çalışan bir özelliği dokuzunda da çalışıyor sanıyor.
 
 ### 4. C3 · Manşet birim fiyatla çelişirse fiyat yazılmıyor
 
@@ -134,12 +153,27 @@ okunamadi' ile 'fiyat okundu ama guvenilmez' kullaniciya ayni gorunse de bize
 ayni degil"* diyor. **Kullanıcıya aynı görünüyor**, çünkü tasarımda ikinci
 cümle yok.
 
-Daha ciddisi: kontrol **çalıştığı yerde gereksiz, gerektiği yerde ölü.**
-`contradictsUnitPrice` gramajı bilmeden çarpanı kuramıyor
-(`pack?.sizeIn(...) ?: return false`). Ölçüme göre gramaj **BİM'de 23/27** ama
-**Migros'ta 1/19, Metro'da 0/34**. Yani 4389 TL'yi üreten etiketin tam
-sınıfında kontrol hiç tetiklenmiyor; sessiz kapsam kaybı ise iki **doğru** BİM
-etiketinde yaşanıyor.
+Kontrolün kapsamı **gramaja bağlı**: `contradictsUnitPrice` gramajı bilmeden
+çarpanı kuramıyor (`pack?.sizeIn(...) ?: return false`). Ama bu bir ölü kural
+değil — iki testte gerçek fikstürde çalıştığı kilitli:
+
+- `aSpuriousDigitIsCaughtByTheCrossCheck` — Migros süt etiketi `211219`:
+  gramer **799,50** okuyor, çapraz kontrol yakalıyor, alan boş dönüyor ve
+  sebep `PRICE_CONTRADICTS_UNIT_PRICE`.
+- `theMigrosPotatoIsNotWrittenAsFourThousandLira` — patates artık **43,95**;
+  bunu çapraz kontrol değil, **MigrosGrammar'ın kendisi** çözüyor. BİM
+  okuyucusunun aynı etikette hâlâ 4389 dediği de aynı testte kilitli.
+
+Sessiz kapsam kaybı ise duruyor: iki **doğru** BİM manşeti eleniyor ve
+kullanıcı fiyatı elle yazıyor.
+
+> **Düzeltme.** Bu madde ilk yazıldığında *"kontrol gerektiği yerde ölü,
+> 4389'u üreten sınıfta hiç tetiklenmiyor"* diyordu ve dayanağı `docs/18`'in
+> **Migros 1/19 gramaj** rakamıydı. İkisi de yanlış: o rakam
+> `MigrosGrammar` yazılmadan önce ölçüldü (gramer bugün `30 Lİ`yi bile doğru
+> okuyor, bkz. `thirtyEggsAreNotThirtyLitres`) ve kontrol Migros'ta fiilen
+> çalışıyor. **Gramer sonrası gramaj oranı henüz ölçülmedi** — tasarıma bir
+> sayı olarak verilmemeli.
 
 **Soru.**
 1. Kural onaylanıyor mu?
@@ -150,8 +184,8 @@ etiketinde yaşanıyor.
    düzeltecek bir şey verir; birincisi sıfırdan yazdırır.
 
 > **Neden soruluyor:** karar "sus" diyor ama tasarımda susmanın iki farklı
-> sebebini ayıran bir dil yok — ve kod ayrımı zaten üretiyor, yalnızca
-> gösterecek yeri yok.
+> sebebini ayıran bir dil yok — ve kod ayrımı yalnızca üretmiyor, gerçek bir
+> fikstürde **tetikliyor** da. Gösterecek yeri yok.
 
 ### 5. C4 · Migros'ta ürün adı hiç okunmuyor
 
@@ -290,17 +324,21 @@ tablosu dokuz satırın her birinde ikisini birden gösteriyor.
 
 Karar 44 üstüne bir üçüncü şey daha istiyor: ambalaj boyu **filtre**
 (*"yalnızca eski boydan gözlemi olan market listeden düşüyor"*) — bu da
-`packSize`'ın **güvenilir** olmasını gerektiriyor. Ölçüm: gramaj Metro'da
-**0/34**, Migros'ta **1/19**.
+`packSize`'ın **güvenilir** olmasını gerektiriyor. Gramaj her zincirde
+okunmuyor: `docs/18`'in ölçümü Metro'da **0/34**, Migros'ta **1/19** demişti.
+Migros rakamı `MigrosGrammar` yazılmadan öncesine ait ve artık geçerli değil
+(bkz. madde 4); yenisi ölçülmedi. Metro'nun grameri hiç yazılmadı, yani orada
+`packSize` **her zaman** null.
 
 **Soru.**
 1. `unitPriceMinor` **etiketin manşet fiyatı** mı? (Öneri: evet — okunan şey o.)
 2. Öyleyse birim fiyatın **tutarı** için ikinci bir kolon açılıyor mu
    (`unitPriceAmountMinor` + `unitPriceUnit`)? Ekran 5'in iki sütunu ve C3'ün
    çapraz kontrolü ikisini de gerektiriyor.
-3. `packSize` iki zincirde okunamıyorken karar 44'ün filtresi ne yapıyor —
-   boyu bilinmeyen gözlem **düşüyor** mu, **kalıyor** mu? Düşerse Metro/Migros
-   gözlemleri "Nerede ucuz"da hiç görünmez; kalırsa filtre bir işe yaramaz.
+3. `packSize` okunamayan zincirlerde karar 44'ün filtresi ne yapıyor — boyu
+   bilinmeyen gözlem **düşüyor** mu, **kalıyor** mu? Düşerse grameri olmayan
+   yedi zincirin gözlemleri "Nerede ucuz"da hiç görünmez; kalırsa filtre bir
+   işe yaramaz.
 
 > **Neden soruluyor:** E17 "paket mi kg mı" sorusunu depolanmış veriden
 > cevaplayamaz durumda ve Ekran 5 tasarımın en çok sütun içeren yüzeyi. Kolon
@@ -554,31 +592,42 @@ kullanıcı ürünü yanlışlıkla "alındı" yapıyor.
 > tasarımın *"chevron dokunulabilirliğin tek işareti"* kuralını da bozuyor. Ve
 > alışveriş modunda bedeli somut: yanlış işaretleme.
 
-### 21. Yanlışlıkla yaratılan market düzeltilemiyor
+### 21. Market yaratmanın kodda hiçbir yolu yok — karar 40'ın yarısı
 
 **Tasarımın verdiği.** Market seçici tek dokunuşla market yaratıyor: *"uyan
 zincir yoksa **'+ Yeni market «AKYURT»'** tek dokunuşla ekliyor"* (karar 40).
 Ayarlar'daki Zincirler satırından ise **chevron kaldırıldı** (karar 23):
 *"mağaza ekranı çizilmeyecek. Satır kendi başına tamam."*
 
-**Gerçek.** Kullanıcı arama alanına `AKYRUT` yazıp yeni market eklerse:
+**Gerçek.** Karar 40'ın bu yarısı yazılmadı ve `StoreSeed.kt` bunu açıkça
+kayda geçiriyor:
 
-- market kalıcı olarak listeye giriyor,
-- karar 26 fiyat geçmişinin kimliğini o markete bağlıyor,
-- ve onu **silecek, yeniden adlandıracak ya da birleştirecek hiçbir yüzey yok**.
+> *"uygulamada market **EKLEME yolu yok** (`storeDao.insert` yalnızca burası),
+> yani tohumda olmayan bir markette çekim yapmak demek gözlemi marketsiz ya da
+> YANLIŞ marketle yazmak demek."*
 
-*"Var olan bir adın başka yazımı (BIM / BİM) sessizce var olan zincire
-bağlanıyor"* kuralı yalnızca **bilinen** adları kurtarıyor; yazım hatası zaten
-bilinmeyen bir addır.
+Yani tohum **tek kaynak**. Tohumda olmayan bir markete giden kullanıcının iki
+seçeneği var: gözlemi marketsiz yazmak ya da yanlış zinciri seçmek — ikisi de
+karar 26'nın market+marka kimliğini bozuyor. Toptancılar (`Fullgross`,
+`Gimat`) tam bu sebeple tohuma elle eklendi.
 
-**Soru.** Yanlış market nereden düzeltilir? Seçenekler: (a) Zincirler satırına
-chevron geri gelir ve karar 23 düşer, (b) market seçicide gözlemsiz bir
-markete uzun dokunuş silme sunar, (c) yeni market yaratmak ikinci bir dokunuş
-ister (*"«AKYRUT» diye yeni market"* onayı).
+Karar 23 ile birlikte ele alındığında yüzey tamamen kapalı: market ne
+yaratılabiliyor, ne yeniden adlandırılabiliyor, ne siliniyor.
 
-> **Neden soruluyor:** madde 1'in ikizi — tek dokunuşla yaratılan, hiçbir
-> dokunuşla yok edilemeyen kalıcı bir varlık. Ve zincir listesi Ayarlar'da
-> görünür olduğu için hata her açılışta görünüyor.
+**Soru.**
+1. *"+ Yeni market"* v1'de yazılıyor mu? Yazılıyorsa yaratılan marketin geri
+   dönüşü ne — madde 1'in aynı sorusu, bu kez market için.
+2. Yazılmıyorsa tohum listesi nasıl büyüyor? Her yeni market bir sürüm mü
+   bekliyor?
+3. *"Var olan bir adın başka yazımı (BIM / BİM) sessizce var olan zincire
+   bağlanıyor"* kuralı yaratma yolu olmadan neyi koruyor?
+
+> **Düzeltme.** Bu madde ilk yazıldığında *"tek dokunuşla yaratılan, hiçbir
+> dokunuşla yok edilemeyen kalıcı bir varlık"* diyordu. Tersi doğru: yaratma
+> yolu hiç yok. Tuzak yazım hatasında değil, **tohumda olmayan markette**.
+
+> **Neden soruluyor:** tasarım bir kapı çizmiş, kod o kapıyı açmamış ve
+> açmadığını KDoc'ta gerekçelendirmiş. İkisinden biri değişmeli.
 
 ### 22. `MİGROS ATAŞEHİR` — şube kavramı nereden geliyor?
 
@@ -621,25 +670,48 @@ filtresi eşiği hangi sayıya uyguluyor — filtreden **önce** mi sonra mı?
 > **Neden soruluyor:** eşik tablosu kodlanacak sayılar listesi olarak yazıldı;
 > bu satırın birimi kararla uyuşmuyor ve kodda iki farklı sorguya çıkıyor.
 
-### 24. Metro tohum listesinde yok — ama ölçümün üçte biri Metro
+### 24. Üç ayrı "yedi zincir" listesi var, üçü de aynı yedi değil
 
 **Tasarımın verdiği.** Karar 11 yedi zinciri tohumluyor: BİM, A101, ŞOK,
 Migros, CarrefourSA, File, Tarım Kredi.
 
-**Gerçek.** Kullanıcının ölçtüğü 80 etiketin **34'ü Metro** — en büyük parti.
-Metro listede yok, dolayısıyla *"+ Yeni market"* ile serbest metin olarak
-giriyor ve `grammarFor` onu asla tanımıyor. Üstelik Metro toptancı:
-*"KDV Dahildir"* şeridi bazı etiketlerde var, bazılarında yok; koli fiyatı ve
-çok-al fiyatı ayrı basılıyor (madde 9).
+**Gerçek.** Bu denetim yazılırken soru *"Metro neden listede yok"*du.
+Kullanıcı bunu **cevapladı** (`ROADMAP`, zincir önceliği, 18 Ağustos): ölçüt
+**gerçekten gidilen marketler** ve listede olmayana gramer yazılmıyor —
+Metro dahil. Cevap alındı, ama yerine daha büyük bir çelişki koydu. Şimdi
+ortada üç küme var:
 
-**Soru.** Metro tohum listesine ekleniyor mu? Eklenirse KDV'li/KDV'siz fiyat
-sorusu D1'in (Money) kardeşi olarak açılıyor: **hangi sayı kaydediliyor?**
-Eklenmezse tohum listesinin ölçütü nedir — kullanıcının gerçekten gittiği
-marketler mi, perakende zincirleri mi?
+| Kaynak | Sayı | Fark |
+|---|---|---|
+| **Karar 11** (tasarım) | 7 | `CarrefourSA`, `File` **var**; toptancılar yok |
+| **Zincir önceliği** (kullanıcı) | 7 | `FullGross`, `Gimat` **var**; CarrefourSA / File yok |
+| **`SEED_CHAINS`** (kod) | **9** | ikisinin birleşimi |
 
-> **Neden soruluyor:** tohum listesi tasarımın kararı ve kullanıcının en çok
-> etiket çektiği market listede yok. Liste ölçütü yazılı olmadığı için
-> sekizinci zincir sorusu her yeni markette tekrar sorulur.
+Kod ikisini de tohumluyor, yani kullanıcının hiç gitmediği iki zincir
+(`CarrefourSA`, `File`) market seçicide duruyor ve karar 36 gereği "yalnızca
+seçilebilir" renginde çizilecek — kalıcı olarak.
+
+Bir de yazım çatışması: kodda **`Fullgross`**, `ROADMAP`'te **`FullGross`**.
+Karar 22 zincir adını *"etikette ve kasada yazdığı gibi"* şart koşuyor, yani
+biri yanlış — ve `chainKey` eşleşmesi bu dizeye bakıyor.
+
+**Soru.**
+1. Karar 11'in yedilisi **güncelleniyor mu**? Toptancılar giriyor, CarrefourSA
+   ve File çıkıyor mu — yoksa dokuzu da kalıyor mu?
+2. Kullanıcının gitmediği zincir tohumda durmalı mı? Karar 36 gözlemli /
+   gözlemsiz ayrımını renkle yapıyor ama *"hiç gidilmeyecek"* diye üçüncü bir
+   hâl yok.
+3. Toptancı fiyatı D1'in (Money) kardeşi: `KDV Dahildir` şeridi bazı
+   etiketlerde var, bazılarında yok. **Hangi sayı kaydediliyor?**
+
+> **Düzeltme.** Bu madde ilk yazıldığında *"Metro tohum listesinde yok"*
+> başlığını taşıyordu ve *"+ Yeni market ile serbest metin olarak giriyor"*
+> diyordu. İkincisi yanlıştı — madde 21'de görüldüğü gibi yaratma yolu hiç
+> yok. Birincisi ise kullanıcı tarafından cevaplandı.
+
+> **Neden soruluyor:** tohum listesi tasarımın kararı, kullanım sırası
+> kullanıcının bilgisi, kod ikisini birleştirmiş. Üçünün aynı yediye inmesi
+> gerekiyor — yoksa "yedi zincir" cümlesi üç dosyada üç şey demek.
 
 ### 25. A1 · Deklanşöre basınca hiçbir geri bildirim yok
 
@@ -955,17 +1027,37 @@ atlas önizlemesi on yediyi listeliyor). F11.29 kapanmış, `docs/11` bayat.
 **Denetimin kendi bulduğu on dokuz case:** 1 (gözlemin geri dönüşü),
 12 (amber iki anlam), 13 (iki yeşil), 14 (44 / 48dp), 15 (60 sn / aynı dakika),
 16 (gözlem fiyatı ve tilde), 17 (kategori kutucuğu iki harf), 18 (ikon rengi),
-19 (iki amber token), 20 (fiyat çipi kenarı), 21 (market düzeltilemiyor),
-22 (şube), 23 ("Nerede ucuz" eşiği), 24 (Metro), 26 (flaş), 31 (tek klavye
-incelemesi), 32 (alt giriş), 33 (beş bayat ayna maddesi), 36 (on yedi ikon).
+19 (iki amber token), 20 (fiyat çipi kenarı), 21 (market yaratma yolu yok),
+22 (şube), 23 ("Nerede ucuz" eşiği), 24 (üç ayrı zincir listesi), 26 (flaş),
+31 (tek klavye incelemesi), 32 (alt giriş), 33 (beş bayat ayna maddesi),
+36 (on yedi ikon).
+
+### Denetim yazıldıktan sonra gelen düzeltmeler
+
+Dosya yazıldıktan sonra `ROADMAP`'e zincir önceliği girdi ve `SEED_CHAINS`
+toptancılarla genişledi. Dört madde buna göre düzeltildi; hiçbiri düşmedi ama
+üçünün dayanağı değişti:
+
+| Madde | Ne değişti |
+|---|---|
+| **3** | Kapının onayı **kullanıcıdan geldi** (1. şık kapandı); yerine "zincir başına mı, alan başına mı" sorusu 4. şık olarak girdi |
+| **4** | *"Kontrol gerektiği yerde ölü"* iddiası **geri çekildi** — iki test çapraz kontrolün Migros'ta çalıştığını gösteriyor; dayanak aldığım 1/19 gramaj rakamı gramer öncesine ait |
+| **21** | Premis **ters çevrildi** — market yaratma yolu hiç yok, tuzak yazım hatasında değil tohumda olmayan markette |
+| **24** | *"Metro listede yok"* cevaplandı; yerini **üç ayrı yedili liste** çelişkisi aldı |
+
+Ölçülmesi gereken bir sayı kaldı: `MigrosGrammar.readPack` yazıldıktan sonra
+Migros fikstürlerinde gramajın kaç etikette okunduğu. `docs/18`'in 1/19'u artık
+geçerli değil ve yenisi henüz alınmadı — bu sayı madde 4'ün kapsamını
+belirliyor.
 
 ---
 
 ## Kapsam notu
 
 Otuz altı case incelendi ve hepsi bu dosyada — **açık case bırakılmadı.**
-Otuz ikisi tasarımdan cevap bekliyor; ikisi durum kaydı (35, 36), dördü ise
-iddiaydı ve dördü de doğrulandı (8–11).
+Otuz biri tasarımdan cevap bekliyor; ikisi durum kaydı (35, 36), dördü iddiaydı
+ve dördü de doğrulandı (8–11), biri de (madde 3'ün kapı şıkkı) kullanıcı
+tarafından cevaplandı.
 
 Öncelik sırası, cevap gelmezse ne bloke olduğuna göre:
 
