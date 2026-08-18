@@ -29,6 +29,38 @@ Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda k
 
 *E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ — yedisi de kapandı.*
 
+## Zincir önceliği *(kullanıcı verdi, 18 Ağustos)*
+
+Sıra kullanıcının **gerçekten gittiği** marketlere göre; listede olmayanlar
+için gramer **yazılmayacak** (Metro, CarrefourSA, File dahil).
+
+| # | Zincir | Gramer | Fotoğraf | Not |
+|---|---|---|---|---|
+| 1 | **FullGross** | ❌ | ❌ **yok** | toptancı — Metro sınıfı, en zoru |
+| 2 | **Gimat** | ❌ | ❌ **yok** | toptancı — Metro sınıfı |
+| 3 | **BİM** | ✅ | ✅ 27 | 24/27 fiyat, sıfır yanlış |
+| 4 | **A101** | ❌ | ❌ **yok** | BİM sınıfı olabilir |
+| 5 | **ŞOK** | ❌ | ❌ **yok** | BİM sınıfı olabilir |
+| 6 | **Tarım Kredi** | ❌ | ❌ **yok** | |
+| 7 | **Migros** | ✅ | ✅ 19 | 16/19 fiyat, sıfır yanlış |
+
+**Yedi zincirin beşi fotoğraf bekliyor.** Görmediğim bir etiketin gramerini
+yazamam — E14'ün kuralları 27 BİM etiketinden çıkarıldı ve 53 Metro/Migros
+etiketi onların BİM'e özel olduğunu gösterdi (`docs/18`). Tahminle yazılmış
+bir gramer, ölçülmüş bir gramerin verdiği güveni vermez.
+
+**İlk iki sıra aynı anda en değerli ve en zor.** Toplu alışveriş fiyat
+geçmişinin en çok işe yaradığı yer, ama toptancı etiketi Metro'da ölçüldüğü
+gibi davranıyorsa (34 etiketin 23'ünde fiyat "bulunuyor", yalnızca 14'ünde
+kuruş gerçekten okunuyor, üçü ispatlanabilir şekilde yanlış) oradaki kural
+"okuyamadım" demeyi öğrenmek zorunda. O iki markette bugün kart **boş
+açılıyor** ve fiyatı kullanıcı yazıyor — yanlış değil, eksik.
+
+**Açık soru elden geçirmeye kalıyor:** yedi zincir için yedi gramer
+sürdürülebilir mi, yoksa "OCR yalnızca emin olduğunda doldursun, gerisini
+kullanıcı yazsın" tek akışı mı? Migros'ta ürün adı için bu karar zaten
+verildi — yarısı doğru bir ad, hiç ad olmamasından kötüydü.
+
 **Bilinçli olarak ertelenen:** Metro grameri. Ölçüldü ve yazılmadı — önerilen
 kural 34 etiketin 23'ünde fiyat veriyor ama yalnızca 14'ünde kuruş gerçekten
 okunuyor, üçü etiketin kendi birim fiyatına karşı ispatlanabilir şekilde
