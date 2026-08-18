@@ -565,7 +565,7 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       başlık örneği merdivene uydu, karar 33 ilişki olarak yeniden yazıldı ve
       okumamız birebir benimsendi, ekran haritasındaki ölü fiş yolları düştü.
       Eşik çelişkisini **karar 36** kapattı → aşağıda F11.19.
-- [ ] **F11.23 — Özet kartı tutar yokken çiziliyor, karar 45'in tersi.**
+- [x] **F11.23 — Özet kartı tutar yokken çiziliyor, karar 45'in tersi.** ✅ Ertelenme gerekçesi E18'in kapanmasıyla düştü.
       `BasketAndSummary.kt:141` yalnızca *manşeti* koşula bağlıyor; kart ve
       "8 ürün · 24 dakika" satırı her hâlde çiziliyor. ⚠ **Sıralama tuzağı:**
       dosyanın kendi KDoc'u *"E18'e kadar tutar HER ZAMAN bilinmiyor"* diyor —

@@ -3,6 +3,8 @@ package com.neydi.app.ui.capture
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -197,7 +200,7 @@ internal fun TagCaptureScreen(
                     shutterCount++
                     onShutter()
                 },
-                onSelectStore = onSelectStore,
+                onOpenPicker = { onOpenPicker(TagPicker.STORE) },
                 onBack = onBack,
             )
         } else {
@@ -239,6 +242,7 @@ internal fun TagCaptureScreen(
                 onDelete = onDeleteStore,
                 onPropose = onProposeStore,
                 onConfirmNew = onConfirmNewStore,
+                onDismiss = onClosePicker,
             )
 
             TagPicker.BRAND -> BrandPicker(
@@ -246,6 +250,7 @@ internal fun TagCaptureScreen(
                 selected = state.card?.brand,
                 pool = state.brandPool,
                 onPick = onPickBrand,
+                onDismiss = onClosePicker,
             )
 
             null -> Unit
@@ -314,7 +319,7 @@ private fun BoxScope.CameraLayer(
     flashOn: Boolean,
     onShutter: () -> Unit,
     onToggleFlash: () -> Unit,
-    onSelectStore: (String) -> Unit,
+    onOpenPicker: () -> Unit,
     onBack: () -> Unit,
 ) {
     Column(
@@ -340,7 +345,7 @@ private fun BoxScope.CameraLayer(
             // MARKET CIPI CEKIMDEN ONCE ve tek parca - yapiskan market yanlissa
             // kullanici burada duzeltiyor. Karti bekletmek, yanlis markete
             // yazilmis bir gozlemi sonradan duzeltmek demekti.
-            StorePill(stores.firstOrNull { it.id == storeId }?.name)
+            StorePill(stores.firstOrNull { it.id == storeId }?.name, onTap = onOpenPicker)
 
             // FLAS: iki hal, oturumluk (karar 60). ACIK hal DOLU bir daireyle
             // gosteriliyor - ikon rengini degistirmek yetmezdi: canli kamera
@@ -396,21 +401,24 @@ private fun BoxScope.CameraLayer(
         }
     }
 
-    // Market secici acilinca cipler kartin ustunde degil, seridin altinda.
-    if (stores.isNotEmpty()) {
-        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 120.dp)) {
-            StoreChips(stores, storeId, onSelectStore)
-        }
-    }
 }
 
-/** Ust seritteki market cipi: ad + `expand_more`. */
+/**
+ * Ust seritteki market cipi: ad + `expand_more`, DOKUNUNCA SECICI ACILIR.
+ *
+ * `expand_more` bir SOZ: "buraya dokun, bir liste acilacak". Hap o oku
+ * cizmesine ragmen hicbir sey yapmiyordu - secim, deklansorun uzerine cizilen
+ * ayri bir cip seridinden yapiliyordu. O serit iki sorun birden uretiyordu:
+ * ikonun sozunu bos cikariyordu VE deklansorun ortasini kapatiyordu, yani
+ * dugmeye basinca fotograf cekilmiyor, market degisiyordu. Cihazda goruldu.
+ */
 @Composable
-private fun StorePill(name: String?) {
+private fun StorePill(name: String?, onTap: () -> Unit) {
     Row(
         Modifier
-            .height(34.dp)
+            .heightIn(min = Sizes.minTapTarget)
             .clip(CircleShape)
+            .pressable(onTap = onTap)
             .background(Flow.viewfinderChrome.copy(alpha = 0.14f))
             .border(1.dp, Flow.viewfinderChrome.copy(alpha = 0.34f), CircleShape)
             .padding(start = 14.dp, end = 12.dp),
@@ -450,31 +458,6 @@ private fun Shutter(onShutter: () -> Unit, enabled: Boolean) {
 }
 
 @Composable
-private fun StoreChips(stores: List<Store>, storeId: String?, onSelect: (String) -> Unit) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-        contentPadding = PaddingValues(horizontal = Spacing.md),
-    ) {
-        items(stores.size) { i ->
-            val store = stores[i]
-            val selected = store.id == storeId
-            Text(
-                text = store.name,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (selected) Flow.viewfinderInk else Flow.viewfinderChrome,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .pressable(onTap = { onSelect(store.id) })
-                    .background(
-                        if (selected) Flow.viewfinderChrome else Flow.viewfinderChrome.copy(alpha = 0.18f),
-                    )
-                    .padding(horizontal = Spacing.md, vertical = Spacing.xs),
-            )
-        }
-    }
-}
-
-@Composable
 private fun BoxScope.ConfirmCardLayer(
     card: ConfirmCard,
     stores: List<Store>,
@@ -494,6 +477,21 @@ private fun BoxScope.ConfirmCardLayer(
             // her yandan 16dp bosluklu yuzen bir kutu olarak ciziyordu.
             .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
             .background(Flow.cardBackground)
+            // KAYDIRMA VAR AMA YUKSEKLIK ZORLANMIYOR.
+            //
+            // Kart normalde ekrana SIGIYOR ve sigdigi kadar yer kapliyor -
+            // kirpim 92dp'lik bir serit oldugu icin (bkz. [TagThumbnail]).
+            // Ilk denemem kirpimi 3:2 cizmis, karti ekrandan tasirmis ve ben
+            // de sabit %86 yukseklik + kaydirma ile ortmustum; kullanici
+            // cihazda "geri kalanlar asagida kaliyor" diye bildirdi ve
+            // haliydi - onay karti reyonda tek elle kullaniliyor, Kaydet'e
+            // ulasmak icin kaydirmak istemezsin.
+            //
+            // `verticalScroll` yine de duruyor: erisilebilirlik yazi olceginde
+            // ya da kucuk ekranda kart tasabilir ve o zaman kaydirmak, bir
+            // dugmeyi ulasilmaz birakmaktan iyi. Sigdiginda hic devreye
+            // girmiyor.
+            .verticalScroll(rememberScrollState())
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 30.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

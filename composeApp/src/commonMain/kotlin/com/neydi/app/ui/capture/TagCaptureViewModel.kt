@@ -148,7 +148,17 @@ internal class TagCaptureViewModel(
     fun openPicker(picker: TagPicker) {
         _state.value = _state.value.copy(picker = picker, storeQuery = "", pendingStoreName = null)
         when (picker) {
-            TagPicker.PRODUCT -> searchProducts(_state.value.card?.productName.orEmpty())
+            // ARAMA BOS ACILIYOR, mevcut urun adiyla DEGIL.
+            //
+            // Once kartin urun adi sorguya yaziliyordu ve secici katalogu
+            // KENDI onerisiyle suzuyordu: yapiskan ad katalogda yoksa - ki
+            // eski OCR yolundan kalma adlarin cogu oyle - liste bombos
+            // aciliyordu. Cihazda goruldu: "cici BEBE BEBEK BISKUVIsi"
+            // yazili bir arama alani ve altinda hicbir urun.
+            //
+            // Secicinin isi katalogdan SECTIRMEK; bos sorgu en yaygin
+            // urunleri getiriyor ve kullanici oradan daraltiyor.
+            TagPicker.PRODUCT -> searchProducts("")
             TagPicker.BRAND -> loadBrandPool()
             TagPicker.STORE -> Unit
         }

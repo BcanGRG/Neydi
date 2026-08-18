@@ -470,14 +470,27 @@ class ListViewModel(
             // dogru olan da o: kart kapanmadan once cizilecek.
             val estimate = priceObservationDao.observeEstimate(trip.id).first()
             val priced = priceObservationDao.observePricedCount(trip.id).first()
-            _summary.value = ShoppingSummary(
-                takenCount = rows.count { it.checked },
-                totalCount = rows.size,
-                // ESIGIN ALTINDA NULL: karar F11.23 - ozet karti tutarsiz
-                // cizilmemeli. `0 TL` yazmak bedava alisveris demek olurdu.
-                amountMinor = estimate.takeIf { priced >= MIN_PRICED_ITEMS },
-                durationMinutes = null,
-            )
+            // TUTAR YOKSA KART HIC ACILMIYOR (karar 45).
+            //
+            // Once yalnizca TUTAR null'laniyordu ve kart yine aciliyordu:
+            // mansetsiz, "Alisveris bitti." ve "N urun alindi" satirlariyla.
+            // Karar 45 birebir soyle diyor: *"36sp manset dusuyorsa kart hic
+            // gorunmuyor, yerine hicbir sey konmuyor"*; gerekcesi de acik -
+            // *"kartin var olus sebebi manset; o dusunce geriye kalan iki
+            // satir kart acmayi hak etmiyor"*.
+            //
+            // ROADMAP bunu F11.23 diye tasiyordu ve ertelenme gerekcesi
+            // "E18 ile ayni PR'da olmali, yoksa kart tamamen kaybolur"di.
+            // E18 kapandi; erteleme gerekcesi de kapandi.
+            val amount = estimate.takeIf { priced >= MIN_PRICED_ITEMS }
+            _summary.value = amount?.let {
+                ShoppingSummary(
+                    takenCount = rows.count { row -> row.checked },
+                    totalCount = rows.size,
+                    amountMinor = it,
+                    durationMinutes = null,
+                )
+            }
             // TEK CIHAZ KAPATIR. Donen deger onemli: false ise gezi baska bir
             // cihazda zaten kapanmis ve BU cagri hicbir sey yazmadi. Ozet
             // kartini yine gosteriyoruz - kullanici bitirdigini gormeli - ama

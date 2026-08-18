@@ -23,6 +23,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -207,12 +209,13 @@ internal fun StorePicker(
     onDelete: (String) -> Unit,
     onPropose: (String) -> Unit,
     onConfirmNew: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     // Arama YALNIZCA suzuyor - eslesme yoksa liste bos kalir ve "+ Yeni market"
     // gorunur hale gelir; tasarimin akisi bu.
     val shown = stores.filter { it.name.contains(query.trim(), ignoreCase = true) }
 
-    PickerSheet(title = "Market") {
+    PickerSheet(title = "Market", onDismiss = onDismiss) {
         SearchField(value = query, placeholder = "market ara", onChange = onQueryChange)
 
         Column(Modifier.fillMaxWidth()) {
@@ -289,10 +292,12 @@ internal fun BrandPicker(
     selected: String?,
     pool: List<String>,
     onPick: (String?) -> Unit,
+    onDismiss: () -> Unit,
 ) {
     PickerSheet(
         title = "Marka",
         subtitle = if (productName.isBlank()) "bu markette görülenler" else "$productName · bu markette görülenler",
+        onDismiss = onDismiss,
     ) {
         // Sarilan cip izgarasi: liste kisa oldugu icin kaydirma yerine sarma.
         // FlowRow yerine elle satirlama YOK - FlowRow deneysel degil ve
@@ -357,14 +362,51 @@ private fun BrandChip(text: String, selected: Boolean, onTap: () -> Unit) {
 
 // ------------------------------------------------------------------- ortaklar
 
-/** Alta yapisik, yalnizca UST koseleri yuvarlak sheet - kartin ikizi. */
+/**
+ * Alta yapisik, yalnizca UST koseleri yuvarlak sheet - kartin ikizi.
+ *
+ * ## KARARTMA VE DISARI DOKUNUSU
+ *
+ * Ilk halinde sheet yalnizca CIZIYORDU: ne karartma vardi, ne disari
+ * dokununca kapanma, ne de dokunusu durduran bir sey. Iki sonucu birden
+ * uretiyordu ve ikincisi sessizdi:
+ *
+ * 1. Sheet'ten cikmanin tek yolu bir secim yapmakti - "fikrimi degistirdim"
+ *    diye bir cikis yoktu.
+ * 2. Sheet'in USTUNDEKI bosluga dokunmak, dokunusu ALTTAKI karta geciriyordu:
+ *    marka sheet'i acikken bosluga basmak kartin urun satirina denk gelip
+ *    urun secicisini aciyordu. Kullanici bir sheet kapatmak isterken baska
+ *    bir sheet aciyordu.
+ *
+ * Karartma ayni anda ucuncu isi yapiyor: sheet'in altindakinin ETKISIZ
+ * oldugunu soyluyor. Tasarimin sheet golgesi (`0 -8px 24px rgba(0,0,0,.28)`)
+ * zaten bunu varsayiyor.
+ */
 @Composable
-private fun PickerSheet(title: String, subtitle: String? = null, content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+private fun PickerSheet(
+    title: String,
+    subtitle: String? = null,
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            // KARARTMA HEM KAPATIYOR HEM DURDURUYOR: `pressable` degil cunku
+            // karartmanin bir basma animasyonu olmamali - dokunulan sey o
+            // degil, kapattigi sey o.
+            .background(Flow.viewfinderInk.copy(alpha = 0.46f))
+            .pointerInput(Unit) { detectTapGestures { onDismiss() } },
+        contentAlignment = Alignment.BottomCenter,
+    ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(topStart = SHEET_CORNER.dp, topEnd = SHEET_CORNER.dp))
+                // SHEET DOKUNUSU YUTUYOR: bos bir `detectTapGestures`, altindaki
+                // karartmanin "kapat"ini gormesin diye. Olmasaydi sheet'in
+                // kendi bosluguna basmak da onu kapatirdi.
+                .pointerInput(Unit) { detectTapGestures { } }
                 .background(Flow.cardBackground)
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .imePadding()
@@ -452,7 +494,7 @@ private fun StorePickerPreview() = NeydiPreview {
             storeId = "1",
             query = "",
             pendingName = null,
-            onQueryChange = {}, onSelect = {}, onDelete = {}, onPropose = {}, onConfirmNew = {},
+            onQueryChange = {}, onSelect = {}, onDelete = {}, onPropose = {}, onConfirmNew = {}, onDismiss = {},
         )
     }
 }
@@ -466,7 +508,7 @@ private fun StorePickerPendingPreview() = NeydiPreview {
             storeId = null,
             query = "akyrut",
             pendingName = "akyrut",
-            onQueryChange = {}, onSelect = {}, onDelete = {}, onPropose = {}, onConfirmNew = {},
+            onQueryChange = {}, onSelect = {}, onDelete = {}, onPropose = {}, onConfirmNew = {}, onDismiss = {},
         )
     }
 }
@@ -480,6 +522,7 @@ private fun BrandPickerPreview() = NeydiPreview {
             selected = "Dost",
             pool = listOf("Dost", "Sütaş", "Pınar", "İçim"),
             onPick = {},
+            onDismiss = {},
         )
     }
 }

@@ -5,3 +5,15 @@ actual suspend fun writeBytesTo(destPath: String, bytes: ByteArray): Boolean = f
 
 /** iOS dosya silme Faz 8'de. */
 actual suspend fun deleteFileAt(path: String): Boolean = false
+
+/** iOS klasor temizligi Faz 8'de - digerlerinin ikizi. */
+actual suspend fun deleteFilesIn(dirPath: String): Int = 0
+
+/**
+ * iOS dosya yollari Faz 8'de.
+ *
+ * TRUE DONUYOR, false degil: iOS'ta cekim yolu HENUZ YOK, yani burada false
+ * demek olmayan bir kareyi bozuk ilan etmek olurdu. Faz 8'de gercek kontrol
+ * gelene kadar bu fonksiyon hicbir sey iddia etmiyor.
+ */
+actual suspend fun jpegIsComplete(path: String): Boolean = true

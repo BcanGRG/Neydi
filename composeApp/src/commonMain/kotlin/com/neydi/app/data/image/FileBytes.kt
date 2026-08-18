@@ -19,3 +19,47 @@ expect suspend fun writeBytesTo(destPath: String, bytes: ByteArray): Boolean
  * hem daha az dolayli.
  */
 expect suspend fun deleteFileAt(path: String): Boolean
+
+/**
+ * Bir klasordeki HER SEYI siler; kac dosya silindigini doner.
+ *
+ * ## Neden gerekti
+ *
+ * Karar 29 fotografi saklamiyor ve kod bunu iki yerde tutuyordu: kaydedince ve
+ * vazgecince. Ucuncu bir yol var ve orada kimse silmiyordu - kart acikken
+ * uygulamanin OLDURULMESI. Cihazda dort yetim kare bulundu, toplam 25 MB, en
+ * eskisi dort saatlik. "Fotograf saklanmiyor" sozu o dosyalar dururken
+ * yaridan fazlasi kadar dogruydu.
+ *
+ * Sureci olen kartin durumu ZATEN kaybediliyor (`SavedStateHandle` yok), yani
+ * ekran acilirken klasorde bulunan her sey tanimi geregi yetim: hicbir kart
+ * onlari sahiplenmiyor.
+ */
+expect suspend fun deleteFilesIn(dirPath: String): Int
+
+/**
+ * Diskteki JPEG EKSIKSIZ MI - son iki bayti `FFD9` (EOI) mi.
+ *
+ * ## Neden gerekiyor: "basardim" diyen bir yalan
+ *
+ * `ImageCapture.OnImageSavedCallback.onImageSaved` cagrildi, `capture()` true
+ * dondu, kart acildi - ve dosya YARIM YAZILMISTI. Cihazda olculdu: kullanicinin
+ * cektigi kare 4.127.687 bayt ve EOI TASIMIYOR; ayni oturumdaki digerleri
+ * 5,4-5,9 MB ve duzgun bitiyor. Aralikli, ama sessiz.
+ *
+ * Bozulmanin tehlikeli tarafi KENDINI TEMIZLEMESI: `BitmapFactory` eksik
+ * veriyi okuyabildigi kadar okuyup gerisini duz griyle dolduruyor, sonra
+ * `downscaleForOcr` bunu GECERLI bir JPEG olarak yeniden yaziyor. Yani
+ * kucultulmus kopya saglam gorunuyor ve asagi akista hicbir tuketici -
+ * ne OCR, ne kirpim - bir sey oldugunu anlayamiyor. Raf etiketinde kaybolan
+ * alt ucte bir FIYATIN KENDISI olabilir; "yanlis fiyat, fiyat olmamasindan
+ * kotu" kurali tam olarak bunu yasakliyor.
+ *
+ * SON IKI BAYT OKUNUYOR, dosyanin tamami DEGIL: kare bes megabayt ve onu
+ * yalnizca kontrol icin bellege almak, tam da kacinmak istedigimiz ikinci
+ * kopya olurdu.
+ *
+ * Bu kontrol JPEG'in ICERIGINI dogrulamiyor - bozuk ama EOI'li bir dosya
+ * gecer. Kapatabildigi sey OLCULEN hata: yarida kesilmis yazma.
+ */
+expect suspend fun jpegIsComplete(path: String): Boolean
