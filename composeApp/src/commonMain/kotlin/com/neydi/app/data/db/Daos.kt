@@ -551,6 +551,40 @@ interface PriceObservationDao {
     suspend fun allObservations(householdId: String): List<PriceObservation>
 
     /**
+     * Bir urunun gozlem gecmisi, YENIDEN ESKIYE (E17, Ekran 5).
+     *
+     * MAGAZA ADI JOIN'DEN, gozlemden degil: gozlem yalnizca `storeId` tasiyor
+     * ve kullanici magazayi yeniden adlandirirsa gecmis de yeni adi
+     * gostermeli - fiyat gecmisi bir arsiv degil, yasayan bir kayit.
+     *
+     * `LEFT JOIN`: marketi secilmemis gozlem de gecmiste GORUNMELI. `INNER`
+     * olsaydi kullanicinin acele edip market secmedigi cekimler sessizce
+     * kaybolurdu - hem de kendi kaydettigi seyler.
+     *
+     * Limit cagirandan: Ekran 5 dokuz satir gosteriyor, "nerede ucuz" bolumu
+     * ise daha genis bir pencere isteyebilir.
+     */
+    @Query(
+        """
+        SELECT
+            po.observedAt      AS observedAt,
+            po.unitPriceMinor  AS unitPriceMinor,
+            po.brand           AS brand,
+            s.name             AS storeName,
+            po.packSize        AS packSize,
+            po.packUnit        AS packUnit
+        FROM price_observation po
+        LEFT JOIN store s ON s.id = po.storeId
+        WHERE po.productId = :productId
+          AND po.householdId = :householdId
+          AND po.deletedAt IS NULL
+        ORDER BY po.observedAt DESC
+        LIMIT :limit
+        """,
+    )
+    fun history(householdId: String, productId: String, limit: Int): Flow<List<ObservationRow>>
+
+    /**
      * Gozlem kaydedilmis zincirlerin id'leri (tasarim karari 36).
      *
      * Ayarlar'daki Zincirler satiri iki rengi bununla ayiriyor: gozlemi olan

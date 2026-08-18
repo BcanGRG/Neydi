@@ -24,6 +24,7 @@ import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.product.ProductSheetState
+import com.neydi.app.ui.product.toPriceSection
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -239,6 +240,16 @@ class ListViewModel(
                 name = product.name,
                 isStaple = product.isStaple,
             )
+            // FIYAT BOLUMU AYRI VE SONRA: sheet gozlemleri BEKLEMEDEN aciliyor.
+            // Tek atisla beklenseydi dokunusla acilis arasinda bir sorgu
+            // gecikmesi olurdu; sheet zaten sifir-gozlem halini cizebiliyor.
+            priceObservationDao.history(household, product.id, HISTORY_LIMIT)
+                .collect { rows ->
+                    _productSheet.update { current ->
+                        if (current?.productId != product.id) return@update current
+                        current.copy(price = rows.toPriceSection())
+                    }
+                }
         }
     }
 
@@ -717,3 +728,6 @@ private data class HeaderData(
     val selfInitials: String?,
     val hasPartner: Boolean,
 )
+
+/** Ekran 5'in alim gecmisi dokuz satir gosteriyor (tasarim). */
+private const val HISTORY_LIMIT = 9

@@ -9,7 +9,7 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** Faz E 15/19 · **E15 kod olarak bitti, cihazda 12 gözlem üretti**; sıradaki **E16**.
 Etiket okuyucusu **iki zincirde** çalışıyor (BİM, Migros), Metro bilinçli olarak ertelendi.
-Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **307 test yeşil**,
+Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **317 test yeşil**,
 **sıfır derleyici uyarısı**.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -23,11 +23,11 @@ Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda k
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **E17** — Ekran 5 fiyat bölümü | "nerede ucuz" satırı market+marka çiftiyle; E16 verisi hazır | — |
+| 1 | **E18** — `~` tahminleri | gözlem artık üretiliyor; E8/E11'de boşa düşürülen üç yer geri gelebilir | — |
 | 2 | **F11.19 + F11.29** — cihazda göz kontrolü | aynı üründen iki gözlem çekilince ikisi birden bakılabilir | E16 |
-| 3 | **E18** — `~` tahminleri | gözlemlerden tutar; E8/E11'de boşa düşürülen üç yer | E17 |
+| 3 | **E19** — tasarım revizyonu | ölen ekranların dokümanları hâlâ duruyor | E18 |
 
-*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ — beşi de kapandı.*
+*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ — altısı da kapandı.*
 
 **Bilinçli olarak ertelenen:** Metro grameri. Ölçüldü ve yazılmadı — önerilen
 kural 34 etiketin 23'ünde fiyat veriyor ama yalnızca 14'ünde kuruş gerçekten
@@ -276,14 +276,30 @@ görünür ve hiçbir şey patlamazdı.
 ⚠ Cihazda **henüz görülmedi** — mevcut 12 gözlemin hepsi ayrı ürün, yani
 hiçbir üründe iki gözlem yok. Aynı üründen ikinci çekim gerekiyor.
 
-### ▸ E17 — Ekran 5 fiyat bölümü
+### ▸ E17 — Ekran 5 fiyat bölümü ✅ *(kod; cihaz doğrulaması 2 market bekliyor)*
 
-`history(productId, 9)`; 0/1/9 gözlem hâlleri. **"Nerede ucuz" satırının
-kimliği market + marka çifti** (karar 26): aynı marketten iki marka = iki
-satır, en son fiyat, sıralama fiyata göre en ucuz üstte. Eşikler: sparkline
-3 gözlem, bölüm 2 market, delta çipi 2 gözlem.
+`history(householdId, productId, 9)` — mağaza adı **join**'den geliyor,
+gözlemden değil: kullanıcı marketi yeniden adlandırırsa geçmiş de yeni adı
+göstermeli. `LEFT JOIN`, çünkü marketi seçilmemiş gözlem de geçmişte
+**görünmeli** — `INNER` olsaydı kullanıcının kendi kaydettiği çekimler
+sessizce kaybolurdu.
+
+**"Nerede ucuz" kimliği market + marka çifti** (karar 26): aynı marketten iki
+marka **iki satır**. Yalnızca markete göre gruplamak *"BİM'de 100 TL"* derdi
+ve hangi marka olduğunu söylemezdi — oysa fiyat farkının büyük kısmı marka
+farkı. Her çift için **en son** fiyat, ortalama değil: soru *"şimdi nerede
+ucuz"*, ortalama zam yapmış marketi ucuz göstermeye devam ederdi.
+
+Eşikler ve her birinin engellediği şey:
+- **Bölüm 2 market** — tek marketle "nerede ucuz" cevabı olmayan bir soru
+- **Sparkline 3 gözlem** — iki nokta bir doğru parçası çizer ve olmayan bir
+  trendi varmış gibi gösterir
+- **Delta çipi 2 gözlem** — E16'da, satır tarafında
 
 **Bitti sayılır:** `BİM · Dost · 100 TL` / `Migros · Pınar · 130 TL` çiziliyor.
+⚠ Testte çiziliyor (tasarımın kendi örneği), **cihazda henüz değil** — mevcut
+12 gözlemin hepsi BİM'de, yani bölüm eşiği açılmadı. Migros'ta çekim
+gerekiyor.
 
 ### ▸ E18 — `~` tahminleri
 
