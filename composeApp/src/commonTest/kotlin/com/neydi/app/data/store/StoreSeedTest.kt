@@ -31,18 +31,22 @@ class StoreSeedTest {
     ).setDriver(BundledSQLiteDriver()).build()
 
     @Test
-    fun seedsSevenChains() = runTest {
+    fun seedsEveryChainInTheList() = runTest {
         val db = db()
         db.bootstrap(newId = { "m1" }, clock = { 0 })
 
         val stores = db.storeDao().observeAll(home).first()
-        assertEquals(7, stores.size)
+        // SAYI KAYNAKTAN OKUNUYOR, elle yazilmiyor. Ilk hali `7` idi ve zincir
+        // listesine iki toptanci eklenince dort test birden kirmizi yandi -
+        // haklıydilar ama iddialari "yedi zincir var" degil "tohum listeyi
+        // eksiksiz yaziyor" olmaliydi.
+        assertEquals(SEED_CHAINS.size, stores.size)
         // KUME KARSILASTIRMASI, sirali liste DEGIL: `sorted()` kod noktasina
         // gore siraliyor ve "ŞOK" (U+015E) Turkce'de T'den once gelmesi
         // gerekirken sonra dusuyor. Projenin locale kurali burada da gecerli -
-        // testin konusu yedi zincirin varligi, siralamasi degil.
+        // testin konusu zincirlerin varligi, siralamasi degil.
         assertEquals(
-            setOf("A101", "BİM", "CarrefourSA", "File", "Migros", "ŞOK", "Tarım Kredi"),
+            SEED_CHAINS.toSet(),
             stores.map { it.name }.toSet(),
         )
     }
@@ -70,7 +74,7 @@ class StoreSeedTest {
         val db = db()
         repeat(3) { db.bootstrap(newId = { "m1" }, clock = { it.toLong() }) }
 
-        assertEquals(7, db.storeDao().observeAll(home).first().size)
+        assertEquals(SEED_CHAINS.size, db.storeDao().observeAll(home).first().size)
     }
 
     /**
@@ -98,7 +102,7 @@ class StoreSeedTest {
         // Once gelen kazaniyor: tohum eski satiri EZMIYOR.
         assertEquals("BIM", bim.single().name)
         // Diger alti zincir yine geldi.
-        assertEquals(7, db.storeDao().observeAll(home).first().size)
+        assertEquals(SEED_CHAINS.size, db.storeDao().observeAll(home).first().size)
     }
 
     /** Ayni zincir `findByChain` ile bulunuyor - "+ Yeni market" tekillestirmesi buna dayaniyor. */
