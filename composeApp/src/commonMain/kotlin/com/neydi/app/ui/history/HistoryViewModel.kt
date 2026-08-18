@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.db.TripDao
+import com.neydi.app.ui.list.shownMinor
+import com.neydi.app.data.db.TripEstimate
+import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.TripLineDao
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,16 +21,20 @@ import kotlinx.coroutines.flow.stateIn
  * durumu ve fisten okunan magaza adi tasiyordu; pivotla dordu de kaynaksiz
  * kaldi. Gezi kendi basina anlamli: NE ZAMAN ve KAC KALEM.
  *
- * TUTAR GECICI OLARAK YOK. `Trip.totalMinor`i yalnizca fis toplami yaziyordu
- * ve E11'de kolonuyla birlikte siliniyor; yerine E18'de gozlemlerden
- * hesaplanan `~` tahmini geliyor. Arada bir sey UYDURMAK - ornegin sifir
- * yazmak - "bedava alisveris" demek olurdu.
+ * TUTAR ARTIK VAR ve gozlemlerden hesaplaniyor (E18). Fis toplami E11'de
+ * kolonuyla birlikte silinmisti; arada gecen surede satirda tutar HIC
+ * yazilmadi - sifir yazmak "bedava alisveris" demek olurdu.
+ *
+ * `null` OLMAYA DEVAM EDIYOR ve mesru: gezinin fiyatlanmis urun sayisi esigin
+ * altindaysa tutar gosterilmiyor.
  */
 data class HistoryTrip(
     val id: String,
     val closedAt: Long,
     /** *"14 Agu · 18 urun"* satirindaki adet. */
     val itemCount: Int = 0,
+    /** Gozlemlerden TAHMIN, kurus. `~` ile gosteriliyor; null ise yazilmiyor. */
+    val estimateMinor: Long? = null,
 )
 
 /**
@@ -40,6 +47,7 @@ data class HistoryTrip(
 class HistoryViewModel(
     tripDao: TripDao,
     tripLineDao: TripLineDao,
+    priceObservationDao: PriceObservationDao,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -55,10 +63,12 @@ class HistoryViewModel(
         combine(
             tripDao.observeHistory(household),
             tripLineDao.observeLineCounts(household),
-        ) { geziler, sayilar ->
+            priceObservationDao.observeTripEstimates(household),
+        ) { geziler, sayilar, tahminler ->
             combineTrips(
                 trips = geziler,
                 lineCounts = sayilar.associate { it.tripId to it.lineCount },
+                estimates = tahminler.associateBy { it.tripId },
             )
         }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -67,6 +77,7 @@ class HistoryViewModel(
 internal fun combineTrips(
     trips: List<Trip>,
     lineCounts: Map<String, Int> = emptyMap(),
+    estimates: Map<String, TripEstimate> = emptyMap(),
 ): List<HistoryTrip> = trips.map { trip ->
     HistoryTrip(
         id = trip.id,
@@ -75,5 +86,6 @@ internal fun combineTrips(
         // ki liste bir sira anahtari kaybetmesin.
         closedAt = trip.completedAt ?: trip.startedAt,
         itemCount = lineCounts[trip.id] ?: 0,
+        estimateMinor = estimates[trip.id].shownMinor(),
     )
 }

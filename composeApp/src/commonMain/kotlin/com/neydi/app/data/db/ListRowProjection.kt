@@ -80,3 +80,15 @@ data class ObservationRow(
     val packSize: Double?,
     val packUnit: String?,
 )
+
+/**
+ * Bir gezinin tahmini tutari (E18).
+ *
+ * @property pricedCount tutara GIREN urun sayisi. Tahmini gostermenin sarti
+ *   bu - fiyati bilinen urun sayisi esigin altindaysa tutar hic yazilmiyor.
+ */
+data class TripEstimate(
+    val tripId: String,
+    val estimateMinor: Long,
+    val pricedCount: Int,
+)

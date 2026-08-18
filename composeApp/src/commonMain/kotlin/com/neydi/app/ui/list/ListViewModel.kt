@@ -113,24 +113,22 @@ class ListViewModel(
         tripDao.observeHistory(household, limit = 1),
         memberDao.observeSelf(household),
         memberDao.observeAll(household),
-    ) { trips, self, all ->
+        priceObservationDao.observeTripEstimates(household),
+    ) { trips, self, all, estimates ->
+        val byTrip = estimates.associateBy { it.tripId }
         HeaderData(
             lastTrip = trips.firstOrNull()?.let { trip ->
-                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = null) }
+                trip.completedAt?.let {
+                    // TUTAR ESIGI GECMIYORSA NULL ve baslik onu hic yazmiyor
+                    // (`lastTripSummary`). "Son alisveris: dun · ~40 TL" on
+                    // sekiz urunluk bir gezide yanlis bir guven verirdi.
+                    LastTrip(closedAt = it, totalMinor = byTrip[trip.id].shownMinor())
+                }
             },
             selfInitials = self?.displayName?.let { turkishInitials(it) },
             hasPartner = all.size > 1,
         )
     }
-
-    private val lastTrip: Flow<LastTrip?> = tripDao.observeHistory(household, limit = 1)
-        .map { trips ->
-            trips.firstOrNull()?.let { trip ->
-                // completedAt burada asla null olamaz (sorgunun kendisi eliyor)
-                // ama sozlesmeyi kod seviyesinde de tutuyoruz.
-                trip.completedAt?.let { LastTrip(closedAt = it, totalMinor = null) }
-            }
-        }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<ListState> =
@@ -444,12 +442,18 @@ class ListViewModel(
             val memberId = selfMemberId() ?: return@launch
             val trip = repo.openOrGetActiveTrip(household, memberId)
             val rows = tripLineDao.observeList(trip.id).first()
+            // TUTAR AKTIF SEPETIN TAHMINI (E18). Gezi HENUZ kapanmadigi icin
+            // `observeTripEstimates` onu gormuyor - o sorgu `completedAt`
+            // dolu geziler icin. Aktif sepetin kendi tahmini zaten var ve
+            // dogru olan da o: kart kapanmadan once cizilecek.
+            val estimate = priceObservationDao.observeEstimate(trip.id).first()
+            val priced = priceObservationDao.observePricedCount(trip.id).first()
             _summary.value = ShoppingSummary(
                 takenCount = rows.count { it.checked },
                 totalCount = rows.size,
-                // TUTAR E18'DE GELECEK: gozlemlerden hesaplanan `~` tahmini.
-                // Fis toplami olan `Trip.totalMinor` E11'de kolonuyla silindi.
-                amountMinor = null,
+                // ESIGIN ALTINDA NULL: karar F11.23 - ozet karti tutarsiz
+                // cizilmemeli. `0 TL` yazmak bedava alisveris demek olurdu.
+                amountMinor = estimate.takeIf { priced >= MIN_PRICED_ITEMS },
                 durationMinutes = null,
             )
             // TEK CIHAZ KAPATIR. Donen deger onemli: false ise gezi baska bir

@@ -1,6 +1,7 @@
 package com.neydi.app.ui.list
 
 import com.neydi.app.data.db.ListRowProjection
+import com.neydi.app.data.db.TripEstimate
 import com.neydi.app.data.formatChipMinor
 import com.neydi.app.ui.components.PriceHint
 import kotlin.math.abs
@@ -107,3 +108,18 @@ private const val DAY_MS = 24L * 60 * 60 * 1000
 
 /** Gozlem marketsiz kaydedilmis - kullanici acele etmis, secmemis. */
 private const val BILINMEYEN_MARKET = "market yok"
+
+/**
+ * Gezinin tahmini tutari - ESIGI GECIYORSA (E18).
+ *
+ * `null` iki AYRI sebeple donebilir ve ikisi de dogru cevabi ayni yapiyor:
+ * gezinin hic fiyatlanmis urunu yok, ya da esigin altinda var. Ikisinde de
+ * ekranda tutar YAZILMIYOR - "0 TL" yazmak bedava alisveris demek, esigin
+ * altindaki bir toplami yazmak ise on sekiz urunluk sepetin yanina
+ * *"~40 TL"* koymak olurdu.
+ *
+ * Esik `EstimatedBasket` ile AYNI sabit: iki yerde iki farkli sayi olsaydi
+ * ayni gezi listede tutarli, baslikta tutarsiz gorunurdu.
+ */
+internal fun TripEstimate?.shownMinor(): Long? =
+    this?.takeIf { it.pricedCount >= MIN_PRICED_ITEMS }?.estimateMinor
