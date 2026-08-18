@@ -551,6 +551,53 @@ interface PriceObservationDao {
     suspend fun allObservations(householdId: String): List<PriceObservation>
 
     /**
+     * Kapanmis her gezinin TAHMINI tutari (E18).
+     *
+     * ## Fiyat GEZININ ZAMANINDAN aliniyor
+     *
+     * `po.observedAt <= t.completedAt` sarti bu sorgunun en onemli satiri.
+     * Aktif sepetin tahmini "en son gorulen fiyat" kullaniyor cunku soru
+     * *"kasada ne odeyecegim"*; gecmis bir gezide ise soru *"ne odedim"* ve
+     * bugunku fiyati kullanmak gecen ayin alisverisini her zam sonrasi biraz
+     * daha pahali gostermek olurdu - kullanicinin hic yasamadigi bir tutar.
+     *
+     * ## FIYATI BILINMEYEN URUN TOPLAMA GIRMIYOR
+     *
+     * `JOIN` bilincli olarak `LEFT` degil: fiyati olmayan satir dusuyor.
+     * Sonuc her zaman EKSIK yonde yanlis olabilir, o yuzden [pricedCount] de
+     * donuyor - cagiran kac urunun gercekten fiyatlandigini bilmeden tutari
+     * gosteremez. Uc urunluk esigin gerekcesi `EstimatedBasket`'te yazili:
+     * on sekiz urunluk bir sepetin yanindaki *"~40 TL"* yanlis bir guven verir.
+     *
+     * Hicbir urunun fiyati yoksa gezi bu sonucta HIC GORUNMEZ (grup olusmaz),
+     * yani cagiran icin dogal olarak `null` - sifir DEGIL. Sifir yazmak
+     * "bedava alisveris" demek olurdu.
+     */
+    @Query(
+        """
+        SELECT
+            tl.tripId                              AS tripId,
+            SUM(tl.quantity * po.unitPriceMinor)   AS estimateMinor,
+            COUNT(*)                               AS pricedCount
+        FROM trip_line tl
+        JOIN trip t ON t.id = tl.tripId
+        JOIN price_observation po ON po.id = (
+            SELECT id FROM price_observation
+            WHERE productId = tl.productId
+              AND deletedAt IS NULL
+              AND observedAt <= t.completedAt
+            ORDER BY observedAt DESC LIMIT 1
+        )
+        WHERE t.householdId = :householdId
+          AND t.completedAt IS NOT NULL
+          AND tl.deletedAt IS NULL
+          AND t.deletedAt IS NULL
+        GROUP BY tl.tripId
+        """,
+    )
+    fun observeTripEstimates(householdId: String): Flow<List<TripEstimate>>
+
+    /**
      * Bir urunun gozlem gecmisi, YENIDEN ESKIYE (E17, Ekran 5).
      *
      * MAGAZA ADI JOIN'DEN, gozlemden degil: gozlem yalnizca `storeId` tasiyor

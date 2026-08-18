@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
+import com.neydi.app.data.formatEstimate
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -159,8 +160,9 @@ private fun EmptyHistory(modifier: Modifier = Modifier) {
  * ama TAHMIN; tasarima soruldu (10-tasarima-pivot.md, "Ekran 6") ve cevap
  * gelene kadar uydurmuyoruz.
  *
- * TUTAR DA GECICI OLARAK YOK - bkz. HistoryTrip KDoc'u. E18 gozlemlerden
- * hesaplanan `~` tahminini getirecek.
+ * TUTAR ARTIK VAR (E18) ve gozlemlerden hesaplaniyor. HER ZAMAN TILDE ILE:
+ * uygulamada kesin tutar diye bir veri yok. Tahmin esigin altindaysa satirda
+ * HIC yazilmiyor - "0 TL" yazmak bedava alisveris demek olurdu.
  */
 @Composable
 private fun TripRow(trip: HistoryTrip) {
@@ -184,6 +186,14 @@ private fun TripRow(trip: HistoryTrip) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            trip.estimateMinor?.let { minor ->
+                Text(
+                    text = formatEstimate(minor),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
         Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
     }
@@ -196,7 +206,7 @@ private fun TripRow(trip: HistoryTrip) {
 private fun HistoryPreview() = NeydiPreview {
     HistoryScreen(
         trips = listOf(
-            HistoryTrip(id = "t1", closedAt = 1_755_100_000_000, itemCount = 18),
+            HistoryTrip(id = "t1", closedAt = 1_755_100_000_000, itemCount = 18, estimateMinor = 64_250),
             HistoryTrip(id = "t2", closedAt = 1_754_900_000_000, itemCount = 3),
         ),
         onBack = {},

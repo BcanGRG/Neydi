@@ -7,9 +7,9 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 15/19 · **E15 kod olarak bitti, cihazda 12 gözlem üretti**; sıradaki **E16**.
+**Durum:** Faz E 18/19 · **E15 kod olarak bitti, cihazda 12 gözlem üretti**; sıradaki **E16**.
 Etiket okuyucusu **iki zincirde** çalışıyor (BİM, Migros), Metro bilinçli olarak ertelendi.
-Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **317 test yeşil**,
+Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **325 test yeşil**,
 **sıfır derleyici uyarısı**.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -23,11 +23,11 @@ Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda k
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **E18** — `~` tahminleri | gözlem artık üretiliyor; E8/E11'de boşa düşürülen üç yer geri gelebilir | — |
+| 1 | **E19** — tasarım revizyonu | Faz E'nin son adımı; ölen ekranların dokümanları hâlâ duruyor | tasarım denetimi |
 | 2 | **F11.19 + F11.29** — cihazda göz kontrolü | aynı üründen iki gözlem çekilince ikisi birden bakılabilir | E16 |
 | 3 | **E19** — tasarım revizyonu | ölen ekranların dokümanları hâlâ duruyor | E18 |
 
-*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ — altısı da kapandı.*
+*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ — yedisi de kapandı.*
 
 **Bilinçli olarak ertelenen:** Metro grameri. Ölçüldü ve yazılmadı — önerilen
 kural 34 etiketin 23'ünde fiyat veriyor ama yalnızca 14'ünde kuruş gerçekten
@@ -301,13 +301,28 @@ Eşikler ve her birinin engellediği şey:
 12 gözlemin hepsi BİM'de, yani bölüm eşiği açılmadı. Migros'ta çekim
 gerekiyor.
 
-### ▸ E18 — `~` tahminleri
+### ▸ E18 — `~` tahminleri ✅ *(kod; cihaz doğrulaması 3 fiyatlı ürün bekliyor)*
 
-`LastTrip` ve `HistoryTrip` tutarları gözlemlerden, **her zaman tilde ile**.
-E8 ve E11'de bilerek boşa düşürülen üç yerin geri gelmesi: başlık alt satırı,
-Geçmiş satırı, özet kartı manşeti.
+E8 ve E11'de bilerek boşa düşürülen **üç yer** geri geldi: başlık alt satırı,
+Geçmiş satırı, özet kartı manşeti. Hepsi `formatEstimate` ile — **her zaman
+tilde, hiç kuruş**: uygulamada kesin tutar diye bir veri yok ve iki ondalık
+hane bir kesinlik iddiasıdır, tildenin söylediğini aynı satırda geri alır.
+
+**Geçmiş gezinin tutarı O GÜNKÜ fiyattan.** `observeTripEstimates`
+`observedAt <= completedAt` şartını taşıyor. Bugünkü fiyat kullanılsaydı geçen
+ayın alışverişi her zamdan sonra biraz daha pahalı görünürdü — kullanıcının
+hiç yaşamadığı bir tutar. Aktif sepet ise "en son fiyat" kullanmaya devam
+ediyor, çünkü oradaki soru *"kasada ne ödeyeceğim"*.
+
+**Eşik `EstimatedBasket` ile aynı sabit** (`MIN_PRICED_ITEMS = 3`): fiyatı
+bilinen ürün sayısı altındaysa tutar **hiç yazılmıyor**. İki yerde iki farklı
+sayı olsaydı aynı gezi listede tutarlı, başlıkta tutarsız görünürdü. Hiçbir
+ürünün fiyatı yoksa gezi sorguda hiç görünmüyor — sıfır değil, yok.
 
 **Bitti sayılır:** başlık *"Son alışveriş: dün · ~642 TL"*.
+⚠ Cihazda **henüz görülmedi** — bir gezide en az üç fiyatlı ürün gerekiyor;
+mevcut 12 gözlem hiçbir geziye bağlı değil (etiketler geziden bağımsız
+çekildi, pivot kararı 3).
 
 ### ▸ E19 — Tasarım revizyonu
 

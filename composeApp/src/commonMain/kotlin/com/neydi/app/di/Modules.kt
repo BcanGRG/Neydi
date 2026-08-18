@@ -97,7 +97,7 @@ val dataModule = module {
     }
 
     viewModel {
-        HistoryViewModel(tripDao = get(), tripLineDao = get())
+        HistoryViewModel(tripDao = get(), tripLineDao = get(), priceObservationDao = get())
     }
 
     viewModel {

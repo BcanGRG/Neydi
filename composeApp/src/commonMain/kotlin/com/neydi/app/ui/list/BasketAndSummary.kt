@@ -225,4 +225,4 @@ private fun SummaryWithoutTotalPreview() = NeydiPreview {
 }
 
 /** Sepet tahmininin cizilmesi icin gereken en az fiyatli urun (tasarim esigi). */
-private const val MIN_PRICED_ITEMS = 3
+internal const val MIN_PRICED_ITEMS = 3
