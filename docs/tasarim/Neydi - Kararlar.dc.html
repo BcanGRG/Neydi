@@ -22,8 +22,8 @@
 <div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;color:#221A14">
 
   <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
-    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">17 Ağustos 2026 · karar defteri</div>
-    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Otuz dört geçerli karar</div>
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">18 Ağustos 2026 · karar defteri</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Elli iki geçerli karar</div>
     <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">İlk turda kodun ölçtüğü yirmi altı yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var. Defter yalnızca bugün geçerli olan kararları taşıyor: ürün raf etiketi okuyor, önceki döneme ait kararlar tamamen çıkarıldı.</div>
     <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Gezinme Sozlesmesi.dc.html">Gezinme sözleşmesi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
   </div>
@@ -32,7 +32,7 @@
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Karar defteri</div>
-      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Otuz dört karar, 45'e kadar numaralı. Her biri bugünkü üründe geçerli.</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Elli iki karar, 63'e kadar numaralı. Her biri bugünkü üründe geçerli.</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:20px;max-width:1400px">
@@ -71,7 +71,7 @@
   <sc-if value="{{ showOpen }}" hint-placeholder-val="{{ true }}">
     <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:32px;padding:32px;display:flex;flex-direction:column;gap:12px;max-width:1400px">
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Defterin bugünkü hâli</div>
-      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde yirmi altı karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde elli iki karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
     </div>
   </sc-if>
 </div>
@@ -104,7 +104,7 @@ class Component extends DCLogic {
           rule: "Gizlilik bölümünde düz bir satır, error renginde · v1'de sıfır modal dialog.",
           decision: "Satır chevron kazandı ve tam ekran bir onay destinasyonuna gidiyor. Dialog yasağı bozulmuyor, silme onaysız da çalışmıyor.",
           why: "Geri alınamaz bir işi snackbar süresine sıkıştırmak olmazdı; satır içi iki aşamalı dokunuş ise kazayı yalnızca bir dokunuş uzağa taşıyor. Destinasyon üç şeyi birden yapıyor: geri tuşu doğal bir vazgeçme yolu oluyor, ekran neyin gideceğini sayıyla yazıyor, ve \"Sil\" tek başına duruyor. Kapsam hanenin tamamı: liste, geziler, ürünler, fiyat gözlemleri ve mağazalar. Saklanan bir fotoğraf yok (karar 29).",
-          where: "Ekran 4 · etiket çekimi",
+          where: "Ekran 7 · Ayarlar → Gizlilik",
           href: "Neydi - Ekranlar 2-4.dc.html"
         },
         {
@@ -183,7 +183,7 @@ class Component extends DCLogic {
           no: "22",
           title: "Zincir adının harf düzeni",
           rule: "Örneklerde \"File\" ve \"Migros\" — başlık düzeni.",
-          decision: "Zincir adı etikette ve kasada yazdığı gibi kalıyor: AKYURT, FiLE, BİM, MİGROS ATAŞEHİR. Tüm ekranlarda uygulandı; caps satırlar 500 ağırlıkta kalıyor, punto büyütülmüyor.",
+          decision: "Zincir adı etikette ve kasada yazdığı gibi kalıyor: AKYURT, FiLE, BİM, MİGROS — şube yok (karar 58). Tüm ekranlarda uygulandı; caps satırlar 500 ağırlıkta kalıyor, punto büyütülmüyor.",
           why: "Başlık düzeni bu tasarımda estetik bir tercihti; karşılığı her platformda ayrı bir İ/ı köprüsü, yani bir iş kalemi — ve yanlış yapıldığında \"İNCİR\" beş harf yerine yedi kod noktası oluyor. Doğruluğu bozan bir güzellik tasarımın istediği şey değil. Üstelik ekrandaki adın fişte yazanla aynı olmasının kendi değeri var: kullanıcı eşleştirmeyi gözle yapıyor.",
           where: "Tüm ekranlar",
           href: "Neydi - Ekranlar 2-4.dc.html"
@@ -394,6 +394,168 @@ class Component extends DCLogic {
           why: "Kartın var oluş sebebi manşet; o düşünce geriye kalan iki satır kart açmayı hak etmiyor. \"Boş bölüm çizilmez\" değişmezi ile \"yanlış bir şey göstermektense hiçbir şey gösterme\" ilkesi aynı yere çıkıyor, ve eşik tablosunun delta kuralı bunun kopyasını zaten taşıyor: çip yok, \"ilk gözlem\" ibaresi de yok.",
           where: "Ekran 1 · özet kartı",
           href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "46",
+          title: "Yazılmış gözlemin geri dönüşü",
+          rule: "Kaydet'ten sonra gözleme dokunan yüzey yoktu; yanlış bir sayının tek çaresi \"Verilerimi sil\"di.",
+          decision: "Ürün Detayı'ndaki gözlem satırına uzun dokunuş → error renginde \"Bu gözlemi sil\". Geri alma 5 sn'lik snackbar'da — snackbar'ın üçüncü yeri. Düzenleme yok: doğrusu rafta, yeni bir çekim.",
+          why: "Fiyat hafızası uygulamanın ikinci varlık sebebi ve ölçüm 4389 TL'lik satırın gerçekten üretildiğini gösterdi. Bütün haneyi silmek tek çareyse hafıza güvenilmez; silme + yeniden çekim, yerinde düzenlemenin açacağı ikinci elle-fiyat kapısından ucuz.",
+          where: "Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "47",
+          title: "Kaydedilen fiyat: etikette büyük basılan",
+          rule: "Migros normal + Money, Metro tek ürün + çok-al/koli fiyatı basıyor; tasarım \"tek fiyat\" varsayıyordu.",
+          decision: "Her etikette manşet fiyat — kartsız, koşulsuz, herkesin gördüğü büyük rakam — kaydedilir. Money, çok-al ve koli fiyatı v1'de veri değildir; promosyon şeridi sözlüğü yazılmaz.",
+          why: "Karşılaştırılabilir olan tek sayı o: kart ve koşul kişiye bağlı, raf fiyatı herkese aynı. Kurulum da iki adımda kalır.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "48",
+          title: "Metro tohuma girer; tohum ölçütü",
+          rule: "Ölçümün 34/80'i Metro'ydu ve tohum listesinde yoktu; liste ölçütü yazılı değildi.",
+          decision: "Metro sekizinci zincir. Ölçüt: kullanıcının gerçekten etiket çektiği zincirler — perakende/toptancı ayrımı yok. Grameri çözülmemiş her zincir karar 49'un hâliyle açılır.",
+          why: "Ölçüt yazılmazsa sekizinci zincir sorusu her yeni markette yeniden sorulur.",
+          where: "Kurulum + market seçici",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "49",
+          title: "Desteklenmeyen zincirin kendi hâli",
+          rule: "Grameri olmayan zincirde kart sessizce boş açılıyordu; kullanıcı OCR'ı bozuk sanıyor.",
+          decision: "Kapı onaylandı. Kartın başında tek cümle: \"BİM ve Migros etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.\" Bu hâlde amber şerit çizilmez — cümle onun yerine. Market seçicide renk ayrımı yok.",
+          why: "Yanlış fiyat, fiyat olmamasından kötü; ama sessiz boşluk kullanıcıya kendi hatası gibi görünür. Tek cümle hem öğretir hem \"yalnızca ilki vurgulanır\" kuralını konu dışı bırakır.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "50",
+          title: "Fiyat okundu ama güvenilmez",
+          rule: "Kod iki susma sebebini ayırıyordu (okunamadı / birim fiyatla çelişiyor); tasarımda ikinci cümle yoktu.",
+          decision: "İkinci şerit cümlesi: \"okunan fiyat etiketin birim fiyatıyla uyuşmuyor — doğrula.\" Alan boş gelmez; okunan sayı kesik çerçeveli gelir (marka önerisinin jesti).",
+          why: "Düzeltilecek bir şey vermek sıfırdan yazdırmaktan ucuz; ve iki farklı susma sebebine tek cümle, kullanıcıya iki farklı yalan söyler.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "51",
+          title: "Ürün kimliği ve gürültülü etiket",
+          rule: "\"Aynı etiket metni bir kez sorulur\" Migros'ta hiç eşleşmiyordu; aynı süt cihazda iki ürün oldu.",
+          decision: "Ürün kimliği katalog jeneriğidir; OCR metni asla ürün adı olmaz. Etiket metni güvenilirse eşleşme ona bağlanır; gürültülüyse ad önerilmez, son seçilen ürün hazır gelir (market yapışkanlığının ikizi). İki aday yakınsa tek satır sorulur: \"Bu 'Süt %0,5 Yağlı 1 L' mi?\" Birleştirme yüzeyi v1'de yok — yanlış satır karar 46 ile silinir. Arama alanına odak kendiliğinden gitmez.",
+          why: "Eşik tablosundaki dokuz eşiğin hepsi ürün kimliğine bağlı; kimliği OCR gürültüsüne bırakmak hepsini bozar. Sessiz birleştirme de sessiz bölme de dürüst değil — soru dürüst.",
+          where: "Ekran 4 · ürün seçici",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "52",
+          title: "Marka havuzu markete genişler",
+          rule: "Marka sheet'inin kaynağı \"bu ürün için görülmüş\" + OCR'dı; ölçümde o kapıdan çöp geliyor — yeni marka doğru adıyla giremiyordu.",
+          decision: "Sözcük kapısı onaylandı. Sheet klavyesiz kalır; aday havuzu o markette görülmüş tüm markalara genişler — BİM'de bir kez okunan \"Dost\" her üründe aday. v1'de markalar OCR'ın doğru okuduğu + çipten onaylanan kadardır; bu kabul edilen bir sınır.",
+          why: "Klavye açmak karar 39'un gerekçesini (hız, kirlilik) geri getirirdi; havuzu genişletmek aynı kapıdan geçen doğru okumaları çoğaltıyor.",
+          where: "Ekran 4 · marka sheet'i",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "53",
+          title: "İlk gözlemin izi",
+          rule: "E15 ölçütü \"tek etiketle satır görünsün\" diyordu; sepet eşiği 3, delta çipi 2 — ilk çekim ekranda iz bırakmıyordu.",
+          decision: "Sepet eşiği 3'te kalır. İz fiyat çipidir: satırın fiyat çipi ilk gözlemle belirir. \"İlk gözlem\" ibaresi yine yazılmaz.",
+          why: "Kullanıcı çalıştığını ilk çekimde görmeli; çip zaten \"son görülen fiyat\" demek, tek gözlemle de doğru.",
+          where: "Ekran 1 · liste satırı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "54",
+          title: "Birim fiyat kendi kolonunu alır",
+          rule: "unitPriceMinor KDoc'u hem manşet hem birim fiyat diyordu; Ekran 5 ikisini birden çiziyor.",
+          decision: "unitPriceMinor etiketin manşet fiyatıdır. Birim fiyatın tutarı + birimi için ikinci kolon açılır. Karar 44 filtresi boyu bilinmeyen gözlemi düşürmez — yalnızca eski boydan olduğu bilinen gözlemin marketi düşer.",
+          why: "Ekran 5'in iki sütunu ve karar 50'nin çapraz kontrolü ikisini birden gerektiriyor. Gramaj Metro'da 0/34 okunurken \"bilinmeyen düşer\" demek bölümü boşaltırdı.",
+          where: "Ekran 5 · Nerede ucuz",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "55",
+          title: "Deklanşör geri bildirimi",
+          rule: "Hareket tablosunda deklanşör satırı yoktu; kod boşluğu \"Kaydediliyor...\" ile dolduruyordu.",
+          decision: "120 ms örtücü flaşı + hafif haptik darbe; yakalanan kare küçülerek kartın başındaki kırpıma uçar (260 ms kart açılışının parçası). Kaydet beklemesi: buton pasifleşir, alanlar iskelet, metin değişmez. Haptik üç olay sayar: işaretleme, çekim, kaydet.",
+          why: "Kullanıcının kendi cümlesiyle bildirdiği tek hata buydu (\"çalışmıyormuş hissi\") ve 1,15 sn'lik boşlukta ekranda hiçbir şey değişmiyordu. \"Kaydediliyor...\" hem buton hem bekleme kuralına aykırı.",
+          where: "Ekran 4 · kamera",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "56",
+          title: "En küçük dokunma hedefi 48dp",
+          rule: "Sözleşme ve İkonografi 48 diyordu; Tasarım sistemi ve Compose Spec 44.",
+          decision: "Tek sayı 48dp, iOS dahil. 44 geçen satırlar düzeltildi; fiyat çipinin hedefi 48dp ve dokunuşu Ürün Detayı açar, alışveriş satırının chevron'u matrise aynı hedefle girdi.",
+          why: "İki sayı iki platform geleneğiydi; tek ürün tek sayı ister, yoksa her satır iki kez tartışılır. Büyük olan kazandı: yürürken dokunulan bir uygulama.",
+          where: "Dört dosya",
+          href: "Neydi - Compose Spec.dc.html"
+        },
+        {
+          no: "57",
+          title: "Amber tek anlam",
+          rule: "Amber hem \"eksik/belirsiz\" hem \"başka markette ucuz\" diyordu — §11 kendi başlığındaki kuralı çiğniyordu.",
+          decision: "\"Başka markette ucuz\" çipi kiremit kenarlıklı nötr çipe geçti: #FBF7F2 zemin, 1.5dp #B34418 kenarlık, kiremit metin. Amber yalnızca eksik/belirsiz. Işıkta amber-metin işi tek token: warning #96560A; şeritteki info ikonu da o renk, amber dolgu üstünde onAccent.",
+          why: "İkisi aynı oturumda görünüyor: kartta \"doldur\" diye öğrenilen renk listede \"ucuz\" okunamaz. Ucuzluk ileri götüren bir iştir — kiremit zaten o cümle. accentOutline ile warning'in aynı iddiayı taşıması da bitti.",
+          where: "Ekran 1 + Tasarım sistemi",
+          href: "Neydi - Tasarim Sistemi.dc.html"
+        },
+        {
+          no: "58",
+          title: "Şube yok; \"Nerede ucuz\" eşiği 2 satır",
+          rule: "Geçmiş şube yazıyordu (MİGROS ATAŞEHİR), Ekran 5 ve seçici zincir; eşik market sayıyor, bölüm satır çiziyordu.",
+          decision: "Market = zincir; şube v1'de yok, Geçmiş maketleri şubesiz oldu ve karar 22'nin örneği düzeltildi. \"Nerede ucuz\" eşiği 2 satır (market+marka): tek markette iki marka geçerli bir karşılaştırmadır. Ambalaj filtresi eşikten önce uygulanır.",
+          why: "Karar 26'nın kimliği ve iki eşik buna bağlıydı; iki maket birbirini yalanlıyordu. Şube, fiyat kimliğini bölüp eşikleri geciktirmekten başka iş yapmıyordu.",
+          where: "Ekran 5–6",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "59",
+          title: "Yanlış market düzeltilir",
+          rule: "\"+ Yeni market\" tek dokunuşla kalıcı varlık yaratıyordu; silen, adlandıran, birleştiren yüzey yoktu.",
+          decision: "Yeni market ikinci bir dokunuş ister: \"«AKYRUT» diye yeni market\" onay çipi. Gözlemsiz markete seçicide uzun dokunuş → sil; gözlemli market silinmez. Karar 23 (Zincirler satırı chevron'suz) korunur.",
+          why: "Karar 46'nın ikizi: tek dokunuşla yaratılan, hiçbir dokunuşla yok edilemeyen varlık olmaz. Onay dokunuşu yazım hatasını kaynağında yakalar.",
+          where: "Ekran 4 · market seçici",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "60",
+          title: "Flaş",
+          rule: "bolt envanterdeydi ama davranışı hiçbir dosyada yoktu — tek ölü ikon.",
+          decision: "v1'de var: iki hâl (kapalı/açık), sağ üst köşe, oturumluk — market gibi yapışkan değil. Etiketsiz istisna yediye çıktı.",
+          why: "Raf etiketi parlak, market ışığı düşük; ölçümdeki tek başarısız çekim muhtemelen bulanıklık. Üçüncü hâl (otomatik) OCR'a değişken ışık verir — iki hâl yeter.",
+          where: "Ekran 4 · kamera",
+          href: "Neydi - Ikonografi.dc.html"
+        },
+        {
+          no: "61",
+          title: "Yatayda onay kartı",
+          rule: "\"Gerçek yatay düzen\" yalnızca kontrolleri tarif ediyordu; kart, klavye ve şerit boştaydı.",
+          decision: "Kart yatayda sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü) örter, kartı asla örtmez; amber şerit kartın içinde kalır.",
+          why: "Etiket yatay bir dikdörtgen, yatay tutuş beklenen davranış; sözleşme vaadi verilmişti, tarif eksikti. Dikeye kilitlemek vaadi bozar.",
+          where: "Ekran 4",
+          href: "Neydi - Gezinme Sozlesmesi.dc.html"
+        },
+        {
+          no: "62",
+          title: "Etiket akışının paleti ve doğrulama",
+          rule: "\"Her iki temada koyu\" satırı gerekçesizdi; \"donar, karartılmaz\" ile \"kırpım kartın başında\" aynı işi iki kez yapıyordu; 1,5 sn iskelet eşiği ölçümde hiç tetiklenmiyordu.",
+          decision: "Akış temadan bağımsız tek palet: vizör koyu (göz karanlık rafa uyumlu kalır), kart açık (alanlar warning'in ışık değerleriyle okunur). \"Ne çektim\" doğrulaması kırpımdadır; arkadaki donmuş kare kararabilir. 1,5 sn eşiği düştü: alanlar OCR dönene kadar iskelet.",
+          why: "Kullanıcı koyu akışı iki kez hata sandı — gerekçesi yazılmayan kural her turda yeniden bildirilir. Aynı bilgiyi iki mekanizmayla vermek kart yüksekliğine mal oluyordu; kırpım alanların yanında, göz ikisini birlikte okuyor.",
+          where: "Ekran 4",
+          href: "Neydi - Gezinme Sozlesmesi.dc.html"
+        },
+        {
+          no: "63",
+          title: "Alt giriş bir buton",
+          rule: "Matris hedef, Tasarım sistemi yazılabilir alan çiziyordu — biri kodlanınca diğeri yanlış olacaktı.",
+          decision: "Buton: dokunuş Ekle sheet'ini açar, kök ekranda metin alanı yok. Odaklı hâl ve otomatik tamamlama Ekle sheet'inin arama alanına aittir; bileşen yeniden etiketlendi.",
+          why: "Kökte dördüncü bir metin alanı, Ekle sheet'iyle aynı işi yapan ikinci bir yol demekti — gereksiz karmaşa. \"Hiçbir ekran açılırken klavye açmaz\" da böyle en temiz korunuyor.",
+          where: "Ekran 1",
+          href: "Neydi - Tasarim Sistemi.dc.html"
         }
       ]
     };
