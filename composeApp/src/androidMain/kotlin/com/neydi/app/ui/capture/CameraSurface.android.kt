@@ -2,8 +2,8 @@ package com.neydi.app.ui.capture
 
 import android.Manifest
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
 import android.view.Surface
-import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -84,11 +84,14 @@ actual fun CameraSurface(controller: CaptureController, modifier: Modifier) {
     //
     // Bedeli: `downscaleForOcr` o EXIF'i piksele isliyor, ML Kit kareyi YAN
     // goruyor. Fiste olculmustu (F4.20): sayfa sekiz dev satira cokuyor.
-    val display = LocalConfiguration.current
-    LaunchedEffect(display) {
-        val rotation = (context as? Activity)?.windowManager?.defaultDisplay?.rotation
-            ?: Surface.ROTATION_0
-        imageCapture.targetRotation = rotation
+    // Donusu GORUNUMDEN okuyoruz, `windowManager.defaultDisplay`den degil:
+    // ikincisi API 30'da deprecate edildi ve projenin sifir-uyari kurali var.
+    // `View.getDisplay()` deprecate degil ve zaten dogru ekrani veriyor -
+    // coklu ekranda pencerenin gercekte hangi ekranda oldugunu bilen o.
+    val view = LocalView.current
+    val configuration = LocalConfiguration.current
+    LaunchedEffect(configuration) {
+        imageCapture.targetRotation = view.display?.rotation ?: Surface.ROTATION_0
     }
 
     DisposableEffect(controller) {

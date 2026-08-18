@@ -7,10 +7,10 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 13/19 · sıradaki **E12** (kullanıcının etiket fotoğrafları bekliyor). Tasarım beşinci turu da
-kapattı (**36 karar**), ayna dokuz dosyayla tazelendi. Uygulama derleniyor, cihazda kurulu, **222 test yeşil**,
-**sıfır derleyici uyarısı** (F10.10 kapandı). İkon seti Phosphor'a taşındı — `material-icons-extended`
-ve `coil` bağımlılıkları düştü.
+**Durum:** Faz E 15/19 · **E15 kod olarak bitti, cihazda 12 gözlem üretti**; sıradaki **E16**.
+Etiket okuyucusu **iki zincirde** çalışıyor (BİM, Migros), Metro bilinçli olarak ertelendi.
+Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **296 test yeşil**,
+**sıfır derleyici uyarısı**.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
 > Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -23,11 +23,19 @@ ve `coil` bağımlılıkları düştü.
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **E15** — TagCapture ekranı | pivotun canlandığı adım; E12–E14 hattı hazır | — |
-| 2 | **F11.19 + F11.29** — cihazda göz kontrolü | gözlem üretebilen yüzey ilk kez olacak | E15 |
-| 3 | **Metro örneği** — toptancı etiketi + yan tutulmuş kare | köşe sırası sözleşmesi hâlâ açık | **Kullanıcı** |
+| 1 | **E16** — satır fiyat ipucu | gözlem artık gerçekten üretiliyor; delta çipi ilk kez veri buluyor | — |
+| 2 | **F11.19 + F11.29** — cihazda göz kontrolü | aynı üründen iki gözlem çekilince ikisi birden bakılabilir | E16 |
+| 3 | **E17** — Ekran 5 fiyat bölümü | "nerede ucuz" satırı market+marka çiftiyle | E16 |
 
-*E12 ✅ · E13 ✅ · E14 ✅ — üçü de kapandı.*
+*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ — dördü de kapandı.*
+
+**Bilinçli olarak ertelenen:** Metro grameri. Ölçüldü ve yazılmadı — önerilen
+kural 34 etiketin 23'ünde fiyat veriyor ama yalnızca 14'ünde kuruş gerçekten
+okunuyor, üçü etiketin kendi birim fiyatına karşı ispatlanabilir şekilde
+yanlış. Ayrıca çapraz kontrol Metro'da hiç çalışmıyor: `readTagUnitPrice`
+34 etiketin 0'ında sonuç veriyor, çünkü Metro birim sözcüğünü ve sayıyı ayrı
+OCR parçalarına basıyor. Dürüst hâli *"kuruş ölçülmediyse reddet"* (~14/34).
+Ölçüm [`18-zincir-karsilastirmasi.md`](18-zincir-karsilastirmasi.md).
 
 **Tasarım cevapladı** (16 Ağu): karar defteri 20 maddeye indi, iki yeni dosya
 geldi (gezinme sözleşmesi + ikonografi). Kararların kod karşılığı ve kalan beş
@@ -214,8 +222,37 @@ silindi, yerine ölçülmüş bir kural kondu.
 - Giriş: **liste başlığında kalıcı kamera hedefi**, her iki modda (karar 27)
 - Geri sırası: klavye → sheet → kart → menü → destinasyon → çıkış
 
-**Bitti sayılır:** cihazda 1 etiket → 1 dokunuş → 1 gözlem satırı → listede
-**"Tahmini sepet" ilk kez görünüyor** (`EstimatedBasket` sıfır kodla yanacak).
+**Durum (18 Ağustos, cihazda 12 etiket çekildikten sonra):**
+
+| Madde | Durum |
+|---|---|
+| Parametresiz nav key | ✅ |
+| `CameraSurface` + çerçeve rehberi | ✅ |
+| Kart: Fiyat (düzenlenebilir) · Ürün · Market (yapışkan) | ✅ |
+| Kart: Marka, kesik çerçeve | ✅ |
+| Kart: Tarih | ✅ |
+| Amber şerit, yalnızca ilk eksik alan | ✅ |
+| Kaydet → gözlem → fotoğraf silinir | ✅ *(cihazda doğrulandı)* |
+| **Kamera kayıttan sonra hazır** | ✅ *(seri çekim; ilk sürüm ekrandan çıkıyordu)* |
+| Kaydet sırasında geri = kayıt tamamlanır | ✅ |
+| Geri sırası: kart → destinasyon | ✅ |
+| 60 sn mükerrer koruması | ✅ |
+| Başlıkta kamera hedefi, iki modda | ✅ |
+| OCR 1,5 sn'yi geçerse iskelet | ⚠️ iskelet var, **eşik yok** — OCR süresince duruyor |
+| Kart fotoğrafın üstünde | ⚠️ kamera karartılıyor, çekilen kare gösterilmiyor |
+| Yatay düzen | ❌ (`Gezinme Sozlesmesi:587`) |
+
+**Bitti sayılır — ÖLÇÜT DÜZELTİLDİ.** Önce *"1 etiket → Tahmini sepet
+görünüyor"* yazıyordu ve bu **ulaşılamaz**: `BasketAndSummary.kt:228`
+`MIN_PRICED_ITEMS = 3` ve gerekçesi kodda yazılı (*"~40 TL yazan bir satır, on
+sekiz ürünlük bir sepetin yanında yanlış bir güven veriyor"*). Eşiği düşürüp
+kutuyu yeşile boyamak yerine ölçüt ikiye ayrıldı:
+
+- **Kapı A — bir gözlem yazıldı:** Ayarlar → Zincirler satırında o zincir
+  soluktan normale döner. Sıfır kod; `observeStoreIdsWithObservations` zaten
+  okuyor. ✅ *cihazda 12 gözlemle doğrulandı*
+- **Kapı B — Tahmini sepet:** listede **üç** fiyatlı ürün gerekir. Bu E16'nın
+  satır ipucuyla birlikte doğal olarak gelir.
 
 ### ▸ E16 — Satır fiyat ipucu
 

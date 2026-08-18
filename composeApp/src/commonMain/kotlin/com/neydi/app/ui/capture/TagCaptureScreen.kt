@@ -29,8 +29,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,6 +47,7 @@ import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.components.NeydiToast
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
@@ -74,7 +79,10 @@ internal fun TagCaptureScreen(
     onProductChange: (String) -> Unit,
     onSave: () -> Unit,
     onDismissCard: () -> Unit,
+    onToastShown: () -> Unit,
     onBack: () -> Unit,
+    /** Kartta gosterilecek tarih - "bugun" (sartname). */
+    today: String = "Bugün",
     modifier: Modifier = Modifier,
     cameraContent: @Composable () -> Unit = {},
 ) {
@@ -118,8 +126,19 @@ internal fun TagCaptureScreen(
                 onProductChange = onProductChange,
                 onSave = onSave,
                 onDismiss = onDismissCard,
+                today = today,
             )
         }
+
+        // BILDIRIM EKRANIN KENDISINDE: seri cekimde Liste'ye donulmuyor.
+        NeydiToast(
+            message = state.toast,
+            onShown = onToastShown,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(bottom = Spacing.xl),
+        )
 
         state.failure?.let {
             Text(
@@ -228,6 +247,7 @@ private fun BoxScope.ConfirmCardLayer(
     onProductChange: (String) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
+    today: String,
 ) {
     val extras = LocalNeydiExtraColors.current
     Column(
@@ -312,18 +332,43 @@ private fun BoxScope.ConfirmCardLayer(
             }
         }
 
-        // MARKA KESIK CERCEVEDE degil, soluk yazida: kesik cerceve tasarimin
-        // istedigi ama `Modifier.border` kesikli desen almiyor, uydurma bir
-        // cizim yapmaktansa "bu bir tahmin" bilgisini renkle veriyorum.
-        // Tasarima soru olarak kaydedilecek.
-        card.brand?.let {
+        // MARKA KESIK CERCEVEDE - "bu bir tahmin" demenin tasarimdaki yolu
+        // (karar 39: marka yalnizca oneri). `Modifier.border` kesikli desen
+        // alabiliyor: `Stroke.pathEffect` degil, `BorderStroke` + dashed
+        // `PathEffect` gerekmiyor - kenarlik cizimi `drawBehind` ile yapiliyor.
+        card.brand?.let { brand ->
             CardField(label = "Marka") {
-                Text(it, style = MaterialTheme.typography.bodyLarge, color = CARD_FOREGROUND.copy(alpha = 0.65f))
+                Text(
+                    text = brand,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = CARD_FOREGROUND,
+                    modifier = Modifier
+                        .drawBehind {
+                            drawRoundRect(
+                                color = CARD_FOREGROUND.copy(alpha = 0.45f),
+                                cornerRadius = CornerRadius(8.dp.toPx()),
+                                style = Stroke(
+                                    width = 1.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(
+                                        floatArrayOf(6.dp.toPx(), 4.dp.toPx()),
+                                    ),
+                                ),
+                            )
+                        }
+                        .padding(horizontal = Spacing.xs, vertical = 2.dp),
+                )
             }
         }
 
         CardField(label = "Market") {
             StoreChips(stores, storeId, onSelectStore)
+        }
+
+        // TARIH DOKUNULAMAZ ve cipsiz - etikette basili tarih yok, "simdi" tek
+        // dogru cevap (`PriceObservation.observedAt` KDoc'u). Cizilmesinin
+        // sebebi kullanicinin NE kaydedildigini gormesi.
+        CardField(label = "Tarih") {
+            Text(today, style = MaterialTheme.typography.bodyLarge, color = CARD_FOREGROUND)
         }
 
         Spacer(Modifier.height(Spacing.md))
@@ -387,7 +432,7 @@ private fun TagCaptureCameraPreview() = NeydiPreview {
         cameraReady = true,
         cameraDenied = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onBack = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
     )
 }
 
@@ -409,7 +454,7 @@ private fun TagCaptureCardPreview() = NeydiPreview {
         ),
         cameraReady = true, cameraDenied = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onBack = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
     )
 }
 
@@ -428,7 +473,7 @@ private fun TagCaptureUnreadChainPreview() = NeydiPreview {
         ),
         cameraReady = true, cameraDenied = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onBack = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
     )
 }
 
