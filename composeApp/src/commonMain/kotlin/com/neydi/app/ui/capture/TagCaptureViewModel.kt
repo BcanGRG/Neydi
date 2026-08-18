@@ -99,6 +99,10 @@ internal class TagCaptureViewModel(
         }
     }
 
+    fun toastShown() {
+        _state.value = _state.value.copy(toast = null)
+    }
+
     fun editPrice(text: String) = updateCard { it.copy(priceText = text) }
 
     fun editProductName(text: String) = updateCard { it.copy(productName = text) }
@@ -111,12 +115,20 @@ internal class TagCaptureViewModel(
     }
 
     /**
-     * Gozlemi yazar.
+     * Gozlemi yazar ve KAMERAYA DONER - ekrandan cikmadan.
      *
-     * @param onSaved toast metni - MUKERRER ILE YENI AYRI cumleler. Kullanici
-     *   deklansore basti, bir sey olmali; ama "kaydedildi" demek yanlis olurdu.
+     * ## SERI CEKIM
+     *
+     * Ilk surum kaydettikten sonra Liste'ye donuyordu. Kullanici bir BIM
+     * turunda 12 etiket cekti ve kameraya 12 KEZ yeniden girdi; sartname
+     * *"kamera 300 ms icinde hazir"* diyor, yani tam tersi. Reyonda deger
+     * egrisi kac etiket cekilebildigine bagli (ROADMAP risk maddesi) ve her
+     * kayittan sonra ekran degistirmek o egriyi dogrudan kiriyor.
+     *
+     * Kart kapaniyor, bildirim BU ekranda cikiyor, kamera zaten bagli kaliyor -
+     * `ImageCapture` yeniden baglanmadigi icin hazir olma suresi pratikte sifir.
      */
-    fun save(onSaved: (String) -> Unit) {
+    fun save() {
         val card = _state.value.card ?: return
         val minor = parseMinorInput(card.priceText) ?: return
         if (!card.canSave || _state.value.saving) return
@@ -135,8 +147,13 @@ internal class TagCaptureViewModel(
                 newId = newId,
             )
             deleteFileAt(card.photoPath)
-            _state.value = _state.value.copy(card = null, saving = false)
-            onSaved(if (written) "Fiyat kaydedildi" else "Aynı fiyat az önce kaydedilmişti")
+            _state.value = _state.value.copy(
+                card = null,
+                saving = false,
+                // MUKERRER ILE YENI AYRI CUMLELER: kullanici deklansore basti,
+                // bir sey soylenmeli - ama "kaydedildi" demek yanlis olurdu.
+                toast = if (written) "Fiyat kaydedildi" else "Aynı fiyat az önce kaydedilmişti",
+            )
         }
     }
 

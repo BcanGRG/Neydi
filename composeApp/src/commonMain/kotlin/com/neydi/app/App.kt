@@ -86,12 +86,10 @@ fun App() {
                     )
                 }
                 entry<TagCapture> {
-                    TagCaptureRoute(
-                        onBack = { back() },
-                        // Toast'i LISTE gosteriyor: mesaji ureten hedef
-                        // kapaniyor, gosterecek yuzey ondan sonra geliyor.
-                        onSaved = { message -> toast = message },
-                    )
+                    // Toast'i EKRANIN KENDISI gosteriyor: seri cekimde hedef
+                    // kapanmiyor, dolayisiyla Liste'ye mesaj tasimanin anlami
+                    // yok - ve tasinsaydi kullanici onu hic gormezdi.
+                    TagCaptureRoute(onBack = { back() })
                 }
                 entry<MissingItems> {
                     // IKI TEL HATASI DUZELTILDI (F6.4):

@@ -24,15 +24,27 @@ import org.koin.compose.viewmodel.koinViewModel
  * ViewModel dosya sistemini bilmiyor, yalnizca bir yol aliyor - `commonTest`
  * cekimden gozleme kadar butun yolu cihazsiz kosturabilsin diye.
  *
- * @param onSaved toast metnini gezinme katmanina tasiyor: mesaji URETEN yer
- *   (bu ekran) ile GOSTEREN yer (Liste) farkli destinasyonlar.
+ * ## Kaydettikten sonra EKRANDAN CIKILMIYOR
+ *
+ * Bildirim gezinme katmanina verilmiyor, bu ekranda gosteriliyor - seri cekim
+ * icin ekranin acik kalmasi sart (bkz. [TagCaptureViewModel.save]).
  */
 @Composable
-internal fun TagCaptureRoute(onBack: () -> Unit, onSaved: (String) -> Unit) {
+internal fun TagCaptureRoute(onBack: () -> Unit) {
     val vm: TagCaptureViewModel = koinViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
     val controller = rememberCaptureController()
     val scope = rememberCoroutineScope()
+
+    // GERI SIRASI: once KART, sonra destinasyon (gezinme sozlesmesi).
+    //
+    // Kart aciksa geri tusu ekrandan cikmamali - cekilen kare cope giderdi.
+    // Kaydetme SURERKEN geri de yutuluyor: sartname *"kaydet sirasinda geri =
+    // kayit tamamlanir"* diyor ve yazma zaten `viewModelScope`ta, yani ekrani
+    // kapatmamak tek yapilmasi gereken.
+    CaptureBackHandler(enabled = state.card != null || state.saving) {
+        if (!state.saving) vm.dismissCard()
+    }
 
     val dir = remember { FileKit.filesDir / "tags" }
     LaunchedEffect(Unit) { dir.createDirectories() }
@@ -52,7 +64,8 @@ internal fun TagCaptureRoute(onBack: () -> Unit, onSaved: (String) -> Unit) {
         onSelectStore = vm::selectStore,
         onPriceChange = vm::editPrice,
         onProductChange = vm::editProductName,
-        onSave = { vm.save { message -> onSaved(message); onBack() } },
+        onSave = vm::save,
+        onToastShown = vm::toastShown,
         onDismissCard = vm::dismissCard,
         onBack = onBack,
         modifier = Modifier.fillMaxSize(),

@@ -18,6 +18,14 @@ internal data class TagCaptureState(
     val saving: Boolean = false,
     /** Cekim ya da yazma basarisiz oldu; kullaniciya soylenmek zorunda. */
     val failure: String? = null,
+    /**
+     * Kaydetme bildirimi - EKRANIN KENDISINDE gosteriliyor.
+     *
+     * Once mesaj gezinme katmanina veriliyor ve Liste gosteriyordu; o tasarim
+     * ekrandan CIKMAYI varsayiyordu. Seri cekimde ekrandan cikilmiyor, yani
+     * bildirimin de burada durmasi gerekiyor.
+     */
+    val toast: String? = null,
 )
 
 /**
