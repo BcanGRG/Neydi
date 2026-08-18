@@ -106,8 +106,6 @@ fun ListScreen(
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    val input by vm.input.collectAsStateWithLifecycle()
-    val suggestions by vm.suggestions.collectAsStateWithLifecycle()
     val engineSuggestions by vm.engineSuggestions.collectAsStateWithLifecycle()
     val categories by vm.categories.collectAsStateWithLifecycle()
     val estimate by vm.estimate.collectAsStateWithLifecycle()
@@ -142,15 +140,11 @@ fun ListScreen(
 
     ListContent(
         state = state,
-        input = input,
-        suggestions = suggestions,
         engineSuggestions = engineSuggestions,
         onEngineSuggestion = vm::addFromEngine,
         categories = categories,
         clipboardText = clipboardText,
-        onInputChange = vm::onInputChanged,
         onAdd = vm::add,
-        onSuggestionSelected = vm::addFromSuggestion,
         onCategorySelected = vm::onCategorySelected,
         onStarterSelected = vm::addFromSheet,
         starters = starters,
@@ -211,7 +205,7 @@ fun ListScreen(
                 onCategory = vm::selectSheetCategory,
                 onBackToCategories = vm::sheetBack,
                 onProduct = vm::addFromSheet,
-                onFreeText = vm::closeSheet,
+                onFreeText = vm::addSheetQuery,
             )
         }
     }
@@ -261,16 +255,12 @@ fun ListScreen(
 @Composable
 internal fun ListContent(
     state: ListState,
-    input: String,
-    suggestions: List<CatalogSeed>,
     /** Motorun onerileri - girdi bosken cizilen serit (F6.3). */
     engineSuggestions: List<Suggestion>,
     onEngineSuggestion: (Suggestion) -> Unit,
     categories: List<Category>,
     clipboardText: String?,
-    onInputChange: (String) -> Unit,
     onAdd: (String) -> Unit,
-    onSuggestionSelected: (CatalogSeed) -> Unit,
     onCategorySelected: (Category) -> Unit,
     /** Ilk gun cipinden ekleme (tasarim karari 5). */
     onStarterSelected: (CatalogSeed) -> Unit = {},
@@ -535,13 +525,9 @@ internal fun ListContent(
                     ),
                 ) {
                     QuickAdd(
-                        input = input,
-                        suggestions = suggestions,
                         engineSuggestions = engineSuggestions,
-                        onInputChange = onInputChange,
-                        onAdd = onAdd,
-                        onSuggestionSelected = onSuggestionSelected,
                         onEngineSuggestion = onEngineSuggestion,
+                        onOpenAdd = onOpenSheet,
                     )
                     // BIRINCIL AKSIYON EN ALTTA (tasarim: "tum birincil
                     // aksiyonlar ekranin alt %40'inda"). Onceden yalnizca
@@ -912,10 +898,10 @@ private fun ListPreviewHost(
     clipboard: String? = null,
     estimate: BasketEstimate = BasketEstimate(),
 ) = ListContent(
-    state = state, input = "", suggestions = emptyList(),
+    state = state,
     engineSuggestions = emptyList(), onEngineSuggestion = {}, categories = emptyList(),
     clipboardText = clipboard,
-    onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
+    onAdd = {}, onCategorySelected = {},
     onToggleChecked = { _, _ -> }, onRowLongPress = { _, _ -> }, onClipboard = {}, onShoppingMode = {},
     onGoShopping = {},
     estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},

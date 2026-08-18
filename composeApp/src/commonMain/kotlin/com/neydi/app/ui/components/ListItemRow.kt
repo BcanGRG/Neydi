@@ -381,7 +381,9 @@ private fun SecondLineContent(
             }
         }
 
-        if (cheaper != null) AccentChip(cheaper)
+        // KIREMIT, AMBER DEGIL (karar 57): ayni oturumda amber "doldur" diye
+        // ogrenilirse listede "ucuz" diye okunamaz.
+        if (cheaper != null) CheaperChip(cheaper)
     }
 }
 
