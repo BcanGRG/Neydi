@@ -14,6 +14,7 @@ import io.github.vinceglb.filekit.createDirectories
 import io.github.vinceglb.filekit.div
 import io.github.vinceglb.filekit.filesDir
 import kotlinx.coroutines.launch
+import com.neydi.app.ui.theme.RequestDarkSystemBars
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -35,6 +36,10 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val controller = rememberCaptureController()
     val scope = rememberCoroutineScope()
+
+    // CUBUKLAR KOYU: bu ekran her iki temada da koyu (tasarim). Acik temada
+    // temanin siyah ikonlari siyah onizlemenin uzerinde okunmuyordu.
+    RequestDarkSystemBars()
 
     // GERI SIRASI: once KART, sonra destinasyon (gezinme sozlesmesi).
     //

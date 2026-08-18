@@ -9,6 +9,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
@@ -110,7 +115,18 @@ fun NeydiTheme(
     // enableEdgeToEdge yetmiyor: manifest'te configChanges=uiMode oldugu icin
     // karanlik moda gecince Activity yeniden yaratilmiyor ve cubuklar acilistaki
     // stilde kaliyor. Detay: SystemBars.kt
-    ApplySystemBarAppearance(darkTheme)
+    // ISTEK TEMADAN GELIYOR AMA EKRAN BASTIRABILIYOR.
+    //
+    // Kamera ekrani her iki temada da KOYU (tasarim: gezinme sozlesmesi,
+    // "Karanlik tema - kamera"). Acik temada uygulamanin temasina bakan bir
+    // cubuk stili orada siyah ikonlar veriyor ve siyah onizlemenin uzerinde
+    // okunmuyor. Cubugun rengi artik ekranin talebine bagli; talep yoksa tema
+    // ne diyorsa o.
+    //
+    // Tutucu BURADA cunku CompositionLocal asagi akar, yukari akmaz: alt bir
+    // ekranin istegini efektin durdugu yere tasimanin yolu paylasilan bir state.
+    val barsDark = remember { mutableStateOf<Boolean?>(null) }
+    ApplySystemBarAppearance(barsDark.value ?: darkTheme)
 
     // Font aileleri Compose Resources uzerinden @Composable olarak cozuluyor,
     // o yuzden tipografi top-level val degil, burada kuruluyor.
@@ -129,9 +145,39 @@ fun NeydiTheme(
     ) {
         CompositionLocalProvider(
             LocalNeydiExtraColors provides extras,
+            LocalSystemBarsDarkRequest provides barsDark,
             LocalNeydiTextStyles provides textStyles,
             LocalIndication provides NeydiIndication,
             content = content,
         )
+    }
+}
+
+/**
+ * Bir ekranin sistem cubuklari icin acik/koyu TALEBI.
+ *
+ * `null` = talep yok, tema ne diyorsa o. Bir ekran bastirmak isterse
+ * [RequestDarkSystemBars] kullaniyor; cikinca kendiliginden geri aliniyor.
+ *
+ * Neden `MutableState` saglaniyor da deger degil: efekt [NeydiTheme]'in
+ * icinde ve CompositionLocal yukari akmiyor. Paylasilan state tek yol.
+ */
+internal val LocalSystemBarsDarkRequest = staticCompositionLocalOf<MutableState<Boolean?>> {
+    error("LocalSystemBarsDarkRequest yalnizca NeydiTheme icinde kullanilabilir")
+}
+
+/**
+ * Bu ekran acikken sistem cubuklari KOYU zemin varsayar (acik ikonlar).
+ *
+ * Ekrandan cikilinca talep birakiliyor, yani cubuklar temaya doner - bunu
+ * `DisposableEffect` garanti ediyor. `SideEffect` ile yapilsaydi geri alma
+ * bir sonraki rastgele recomposition'a kalirdi.
+ */
+@Composable
+fun RequestDarkSystemBars() {
+    val request = LocalSystemBarsDarkRequest.current
+    DisposableEffect(Unit) {
+        request.value = true
+        onDispose { request.value = null }
     }
 }
