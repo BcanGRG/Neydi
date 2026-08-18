@@ -73,6 +73,8 @@ data class TripLineCount(
  * kullanici acele edip market secmemis, ya da manavda marka yok.
  */
 data class ObservationRow(
+    /** Gozlemin kimligi - silme bu satiri bulabilmeli (karar 46). */
+    val id: String,
     val observedAt: Long,
     val unitPriceMinor: Long,
     val brand: String?,

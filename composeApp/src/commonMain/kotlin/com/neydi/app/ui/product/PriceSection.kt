@@ -23,6 +23,8 @@ data class CheapRow(
 /** Alim gecmisi satiri: tarih · market · fiyat. */
 @Immutable
 data class HistoryRow(
+    /** Uzun dokunusla silinebilmesi icin (karar 46). */
+    val id: String,
     val observedAt: Long,
     val store: String,
     val price: String,
@@ -53,7 +55,11 @@ data class PriceSection(
  *
  * ## Esikler tasarimdan, ve her biri BIR seyi engelliyor
  *
- * - **Bolum 2 market**: tek marketle "nerede ucuz" anlamsiz bir baslik.
+ * - **Bolum 2 SATIR**: karsilastirilacak iki secenek. Once iki MARKET
+ *   sayiliyordu ve bu, bolumun kendi ciziminden farkliydi: bolum market+marka
+ *   ciftlerini satir satir ciziyor, esik ise marketleri sayiyordu. Karar 58
+ *   ikisini esitledi - *"tek markette iki marka gecerli bir
+ *   karsilastirmadir"*, cunku kullanicinin sorusu "hangisini alayim".
  * - **Sparkline 3 gozlem**: iki nokta bir dogru parcasi cizer ve olmayan bir
  *   trendi varmis gibi gosterir.
  * - **Delta cipi 2 gozlem**: E16'da, satir tarafinda.
@@ -70,7 +76,7 @@ internal fun List<ObservationRow>.toPriceSection(): PriceSection {
     // Gozlemler YENIDEN ESKIYE geliyor, yani her ciftin ILK gorulen kaydi en
     // sonuncusu. `groupBy` giris sirasini korudugu icin fazladan siralama yok.
     val byPair = groupBy { it.storeName to it.brand }
-    val cheapest = if (map { it.storeName }.distinct().size < MIN_STORES) {
+    val cheapest = if (byPair.size < MIN_ROWS) {
         emptyList()
     } else {
         byPair.values
@@ -90,6 +96,7 @@ internal fun List<ObservationRow>.toPriceSection(): PriceSection {
         cheapest = cheapest,
         history = map {
             HistoryRow(
+                id = it.id,
                 observedAt = it.observedAt,
                 store = it.storeName ?: MARKET_YOK,
                 price = formatChipMinor(it.unitPriceMinor),
@@ -110,8 +117,8 @@ private fun packLabel(size: Double?, unit: String?): String? {
     return "$number $unit"
 }
 
-/** Bolumun cizilmesi icin gereken en az FARKLI market sayisi (tasarim). */
-private const val MIN_STORES = 2
+/** Bolumun cizilmesi icin gereken en az SATIR - market+marka cifti (karar 58). */
+private const val MIN_ROWS = 2
 
 /** Sparkline'in cizilmesi icin gereken en az gozlem (tasarim). */
 private const val MIN_SPARKLINE = 3

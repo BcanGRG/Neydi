@@ -61,10 +61,60 @@ class ProductPriceSectionTest {
     private suspend fun section(db: NeydiDatabase) =
         db.priceObservationDao().history(home, "p1", 9).first().toPriceSection()
 
+    /**
+     * SILINEN GOZLEM GECMISTEN DUSUYOR (karar 46).
+     *
+     * `deletedAt` kolonu bastan beri vardi ve hicbir yerden YAZILMIYORDU; yani
+     * "yumusak silme" bu tabloda bir sozden ibaretti. Test iki seyi birden
+     * kilitliyor: silme yaziliyor VE sorgu onu suzuyor. Ikincisi olmadan
+     * silinen satir ekranda durmaya devam ederdi.
+     */
+    @Test
+    fun aDeletedObservationLeavesTheHistory() = runTest {
+        val db = ready()
+        observe(db, 10_000, day, id = "keep")
+        observe(db, 438_900, 2 * day, id = "wrong")
+        assertEquals(2, section(db).history.size)
+
+        db.priceObservationDao().softDelete("wrong", 3 * day)
+        assertEquals(listOf("keep"), section(db).history.map { it.id })
+
+        // BES SANIYELIK GERI DONUS HAKKI: satiri AYNEN geri getiriyor.
+        db.priceObservationDao().undoDelete("wrong")
+        assertEquals(setOf("keep", "wrong"), section(db).history.map { it.id }.toSet())
+    }
+
     /** Gozlem yoksa bolum HIC cizilmiyor - "fiyat yok" da yazilmiyor. */
     @Test
     fun noObservationsMeansNoSection() = runTest {
         assertTrue(section(ready()).isEmpty)
+    }
+
+    /**
+     * TEK MARKET, IKI MARKA - bolum CIZILIYOR (karar 58).
+     *
+     * Esik once iki farkli MARKET sayiyordu ve bu hal dusuyordu: BIM'de Dost
+     * ile Pinar'i karsilastiran biri "nerede ucuz" bolumunu goremiyordu. Oysa
+     * kullanicinin sorusu "hangisini alayim" ve iki marka o soruya tam olarak
+     * cevap veriyor. Esik artik SATIR sayiyor, tipki bolumun kendi cizimi gibi.
+     */
+    @Test
+    fun twoBrandsAtOneStoreAreAComparison() = runTest {
+        val db = ready()
+        observe(db, 10_000, day, store = "s-bim", brand = "Dost")
+        observe(db, 13_000, 2 * day, store = "s-bim", brand = "Pınar")
+        val rows = section(db).cheapest
+        assertEquals(2, rows.size)
+        assertEquals("Dost", rows.first().brand)
+    }
+
+    /** TEK SATIR karsilastirma DEGIL: kendisiyle kiyaslanan tek secenek. */
+    @Test
+    fun oneRowIsNotAComparison() = runTest {
+        val db = ready()
+        observe(db, 10_000, day, store = "s-bim", brand = "Dost")
+        observe(db, 11_000, 2 * day, store = "s-bim", brand = "Dost")
+        assertTrue(section(db).cheapest.isEmpty())
     }
 
     /**

@@ -533,6 +533,50 @@ interface PriceObservationDao {
     suspend fun lastUsedStoreId(householdId: String): String?
 
     /**
+     * Son gozlenen urunun ADI - market yapiskanliginin IKIZI (karar 51).
+     *
+     * Etiket metni gurultuluyse ad ONERILMEZ; onun yerine son secilen urun
+     * hazir gelir. Sebep karar 51'in kendi gerekcesi: esik tablosundaki dokuz
+     * esigin hepsi urun kimligine bagli ve kimligi OCR gurultusune birakmak
+     * hepsini bozuyor - Migros'ta ayni sut cihazda IKI urun oldu.
+     *
+     * Ad donuyor, id degil: kart adla calisiyor ve kaydederken `resolveProduct`
+     * zaten ada bakiyor. Id dondurmek kartin bilmedigi bir kimligi tasimasi
+     * olurdu.
+     */
+    @Query(
+        """
+        SELECT p.name FROM price_observation po
+        JOIN product p ON p.id = po.productId
+        WHERE po.householdId = :householdId AND po.deletedAt IS NULL AND p.deletedAt IS NULL
+        ORDER BY po.observedAt DESC LIMIT 1
+        """,
+    )
+    suspend fun lastUsedProductName(householdId: String): String?
+
+    /**
+     * Yanlis yazilmis gozlemi siler (karar 46).
+     *
+     * ## Neden bu kapi ACILMAK ZORUNDAYDI
+     *
+     * `deletedAt` kolonu bastan beri vardi ve HICBIR yerden yazilmiyordu.
+     * Yanlis bir sayinin tek caresi Ayarlar'daki *"Verilerimi sil"*di - yani
+     * bir hane butun fiyat hafizasini kaybetmeden tek bir hatayi
+     * duzeltemiyordu. Olcum 4389 TL'lik bir satirin gercekten uretildigini
+     * gosterdi; boyle bir satir duruyorken hafiza guvenilmez.
+     *
+     * DUZENLEME YOK, yalnizca SILME: dogrusu rafta duruyor ve yeni bir cekim
+     * hem daha hizli hem daha dogru. Yerinde duzenleme, elle fiyat girmenin
+     * ikinci kapisini acardi.
+     */
+    @Query("UPDATE price_observation SET deletedAt = :at WHERE id = :id AND deletedAt IS NULL")
+    suspend fun softDelete(id: String, at: Long)
+
+    /** Bes saniyelik geri donus hakki (karar 46, snackbar'in ucuncu yeri). */
+    @Query("UPDATE price_observation SET deletedAt = NULL WHERE id = :id")
+    suspend fun undoDelete(id: String)
+
+    /**
      * Hanenin butun gozlemleri, en yenisi once.
      *
      * E17'nin `history(productId, 9)` sorgusunun genel hali; simdilik tek
@@ -616,6 +660,7 @@ interface PriceObservationDao {
         SELECT
             po.observedAt      AS observedAt,
             po.unitPriceMinor  AS unitPriceMinor,
+            po.id              AS id,
             po.brand           AS brand,
             s.name             AS storeName,
             po.packSize        AS packSize,
@@ -649,6 +694,43 @@ interface PriceObservationDao {
         """,
     )
     fun observeStoreIdsWithObservations(householdId: String): Flow<List<String>>
+
+    /**
+     * Marka sheet'inin aday havuzu - O MARKETTE gorulmus TUM markalar (karar 52).
+     *
+     * ## Neden urun degil market
+     *
+     * Havuz once *"bu urun icin gorulmus"* markalardi ve olcumde o kapidan cop
+     * geliyordu: yeni bir marka dogru adiyla giremiyordu, cunku girebilmesi icin
+     * once ayni urunde bir kez okunmus olmasi gerekiyordu - kisir dongu. Markete
+     * genisletince BIM'de bir kez okunan "Dost" her uruncte aday oluyor.
+     *
+     * `DISTINCT` sart: ayni marka on kez gozlenmisse sheet'te bir kez cikmali.
+     * Sirasi son gorulme; en son onaylanan marka en ustte, cunku kullanici
+     * genellikle ayni markayi arka arkaya cekiyor.
+     */
+    @Query(
+        """
+        SELECT brand FROM price_observation
+        WHERE householdId = :householdId AND storeId = :storeId
+          AND brand IS NOT NULL AND deletedAt IS NULL
+        GROUP BY brand
+        ORDER BY MAX(observedAt) DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun brandsSeenAt(householdId: String, storeId: String, limit: Int = 24): List<String>
+
+    /** Bu markete hic gozlem yazilmis mi - gozlemli market SILINMEZ (karar 59). */
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM price_observation
+            WHERE householdId = :householdId AND storeId = :storeId AND deletedAt IS NULL
+        )
+        """,
+    )
+    suspend fun hasObservationsAt(householdId: String, storeId: String): Boolean
 
     /**
      * Ayni market + urun + fiyat, [since]'dan sonra yazilmis mi (tasarim: etiket akisi).
@@ -793,4 +875,18 @@ interface StoreDao {
         """,
     )
     fun observeAll(householdId: String): Flow<List<Store>>
+
+    /**
+     * Gozlemsiz marketi siler - seciciden UZUN DOKUNUSLA (karar 59).
+     *
+     * "Tek dokunusla yaratilan, hicbir dokunusla yok edilemeyen varlik olmaz."
+     * `+ Yeni market` kalici bir satir yaziyordu ve geri alacak hicbir yuzey
+     * yoktu; yazim hatasi ("AKYRUT") sonsuza kadar listede kaliyordu.
+     *
+     * YUMUSAK SILME, cunku market bir gozleme baglanabilir; gozlemli marketin
+     * silinmesini cagiran taraf `hasObservationsAt` ile engelliyor - burada
+     * degil, cunku bu sorgu Ayarlar'daki yollardan da cagrilabilir olmali.
+     */
+    @Query("UPDATE store SET deletedAt = :at WHERE id = :id AND deletedAt IS NULL")
+    suspend fun softDelete(id: String, at: Long)
 }

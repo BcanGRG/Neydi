@@ -58,19 +58,32 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
         state = state,
         cameraReady = controller.ready,
         cameraDenied = controller.denied,
+        cameraPermanentlyDenied = controller.permanentlyDenied,
+        flashOn = controller.torch,
+        onToggleFlash = { controller.torch = !controller.torch },
+        onOpenSettings = controller::openSettings,
         onShutter = {
             scope.launch {
                 // Ad CEKIM ANINDAN: iki kare ayni saniyede cekilse bile
                 // ViewModel'in `photoPath` karsilastirmasi onlari ayirabilmeli.
                 val path = (dir / "tag-${nowStamp()}.jpg").absolutePath()
-                if (controller.capture(path)) vm.onCaptured(path)
+                if (controller.capture(path)) vm.onCaptured(path) else vm.captureFailed()
             }
         },
         onSelectStore = vm::selectStore,
         onPriceChange = vm::editPrice,
-        onProductChange = vm::editProductName,
         onSave = vm::save,
         onToastShown = vm::toastShown,
+        onFailureShown = vm::failureShown,
+        onOpenPicker = vm::openPicker,
+        onClosePicker = vm::closePicker,
+        onPickProduct = vm::pickProduct,
+        onSearchProducts = vm::searchProducts,
+        onPickBrand = vm::pickBrand,
+        onSearchStores = vm::searchStores,
+        onProposeStore = vm::proposeStore,
+        onConfirmNewStore = vm::confirmNewStore,
+        onDeleteStore = vm::deleteStore,
         onDismissCard = vm::dismissCard,
         onBack = onBack,
         modifier = Modifier.fillMaxSize(),

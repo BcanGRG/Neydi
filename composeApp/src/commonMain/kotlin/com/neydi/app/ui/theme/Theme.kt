@@ -38,7 +38,15 @@ object Sizes {
     val rowCollapsed = 56.dp
     val rowWithMeta = 68.dp
     val rowShopping = 72.dp
-    val minTapTarget = 44.dp
+    /**
+     * EN KUCUK DOKUNMA HEDEFI - TEK SAYI, iOS dahil (karar 56).
+     *
+     * 44 ile 48 iki platform gelenegiydi ve dort tasarim dosyasinin ikisi 44,
+     * ikisi 48 yaziyordu. Tek urun tek sayi ister, yoksa her satir iki kez
+     * tartisilir. BUYUK OLAN KAZANDI: bu, yururken tek elle dokunulan bir
+     * uygulama.
+     */
+    val minTapTarget = 48.dp
     val toolbarAction = 56.dp
     val hairline = 1.dp          // 0.5dp ASLA - iOS 3x'te alt-piksele dusup kaybolur
     val accentOutline = 1.5.dp   // isik modunda amber dolgu icin ZORUNLU

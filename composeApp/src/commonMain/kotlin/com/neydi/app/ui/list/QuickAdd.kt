@@ -37,6 +37,7 @@ import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.SizesExtra
 import com.neydi.app.ui.theme.Spacing
+import com.neydi.app.ui.theme.pressable
 
 /**
  * Alta sabit hizli ekleme alani.
@@ -48,19 +49,24 @@ import com.neydi.app.ui.theme.Spacing
  * ONERILER SKORA GORE sirali (alfabetik DEGIL) - siralamayi ViewModel yapiyor,
  * burasi yalnizca ciziyor.
  *
- * Material3 TextField DEGIL BasicTextField: M3'un metin alani kendi kapsayicisini
- * ve etkilesim davranisini getiriyor; bu tasarimda kapsayici ve basili hal
- * temadan gelmek zorunda (bkz. calisma sozlesmesi, Material3 Surface kurali).
+ * ## ARTIK BIR BUTON, metin alani DEGIL (karar 63)
+ *
+ * Burada bir `BasicTextField` duruyordu ve tasarimin iki dosyasi birbiriyle
+ * celisiyordu: matris bir HEDEF, tasarim sistemi YAZILABILIR bir alan
+ * ciziyordu. Karar 63 butonu secti - kokte metin alani yok; odakli hal ve
+ * otomatik tamamlama Ekle sheet'inin arama alanina ait.
+ *
+ * Gerekcesi tekrar: kokteki alan, Ekle sheet'iyle AYNI isi yapan ikinci bir
+ * yoldu. Ustelik *"hicbir ekran acilirken klavye acmaz"* kurali en temiz
+ * boyle korunuyor - klavyeyi acabilecek dorduncu bir alan kalmiyor.
+ *
+ * Motor onerileri seridi KALIYOR: o bir girdi degil, listenin kendi teklifi.
  */
 @Composable
 fun QuickAdd(
-    input: String,
-    suggestions: List<CatalogSeed>,
     engineSuggestions: List<Suggestion>,
-    onInputChange: (String) -> Unit,
-    onAdd: (String) -> Unit,
-    onSuggestionSelected: (CatalogSeed) -> Unit,
     onEngineSuggestion: (Suggestion) -> Unit,
+    onOpenAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val extras = LocalNeydiExtraColors.current
@@ -74,8 +80,11 @@ fun QuickAdd(
         // Motor cipinin gerekcesi DUZ TURKCE ("14 gun oldu") - gerekcesiz cip
         // reklam gibi okunur. Otomatik tamamlama cipi ise birim gosteriyor;
         // o bir oneri degil, yazilani tamamlama.
-        val showEngine = input.isBlank() && engineSuggestions.isNotEmpty()
-        if (showEngine) {
+        // TEK MOD KALDI. Once iki mod vardi - bos girdide motorun onerileri,
+        // yazarken otomatik tamamlama - ve modu girdinin doluluğu seciyordu.
+        // Kokte girdi kalmayinca ikinci mod da kalmadi: otomatik tamamlama
+        // Ekle sheet'inin arama alaninda (karar 63).
+        if (engineSuggestions.isNotEmpty()) {
             LazyRow(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = Spacing.md,
@@ -91,40 +100,24 @@ fun QuickAdd(
                     )
                 }
             }
-        } else if (suggestions.isNotEmpty()) {
-            LazyRow(
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = Spacing.md,
-                    vertical = Spacing.sm,
-                ),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            ) {
-                items(suggestions, key = { it.id }) { seed ->
-                    SuggestionChip(
-                        label = seed.name,
-                        reason = seed.defaultUnit,
-                        onClick = { onSuggestionSelected(seed) },
-                    )
-                }
-            }
         }
 
-        Box(
+        // BUTON: dokunusu Ekle sheet'ini aciyor. Gorunum alanin gorunumunu
+        // KORUYOR - ayni yukseklik, ayni koseler, ayni `add` ikonu - cunku
+        // degisen sey neye BENZEDIGI degil, ne YAPTIGI.
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.md)
                 .padding(bottom = Spacing.sm)
                 .heightIn(min = SizesExtra.quickAddField)
                 .clip(NeydiExtraShapes.textField)
+                .pressable(onTap = onOpenAdd)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(1.dp, extras.hairline, NeydiExtraShapes.textField)
                 .padding(horizontal = Spacing.md),
-            contentAlignment = Alignment.CenterStart,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-            // TASARIMIN `add` IKONU (22sp, outline rengi). Alanin ne ise
-            // yaradigini yer isaretinden ONCE soyluyor: klavye acildiginda
-            // yer isareti kayboluyor ama ikon kaliyor.
             NeydiIcon(
                 icon = NeydiIcons.Add,
                 contentDescription = null,
@@ -132,89 +125,41 @@ fun QuickAdd(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(10.dp))
-            BasicTextField(
-                value = input,
-                onValueChange = onInputChange,
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                ),
-                singleLine = true,
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(
-                    MaterialTheme.colorScheme.primary,
-                ),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                // Klavye kapanMIYOR: pes pese ekleme normal davranis.
-                // Her eklemeden sonra klavyeyi kapatmak listeyi doldurmayi
-                // iki kat yavaslatirdi.
-                keyboardActions = KeyboardActions(onDone = { onAdd(input) }),
-                decorationBox = { content ->
-                    if (input.isEmpty()) {
-                        Text(
-                            text = "Ne lazım? \"2 kg elma\"",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    content()
-                },
+            Text(
+                text = "Ne lazım?",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            }
         }
     }
 }
 
 // --- Preview ---------------------------------------------------------------
 
-private fun seed(id: String, name: String, unit: String) =
-    CatalogSeed(id = id, name = name, matchKey = name.lowercase(), categoryId = "temel-gida", commonalityRank = 1, defaultUnit = unit)
-
-@PreviewLightDark
-@Composable
-private fun QuickAddEmptyPreview() = NeydiPreview {
-    QuickAdd(
-        input = "",
-        suggestions = emptyList(),
-        engineSuggestions = emptyList(),
-        onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onEngineSuggestion = {},
-    )
-}
-
 /**
- * SERIDIN ONERI MODU: girdi bos, motor konusuyor - "Yumurta · 14 gun oldu".
- * Bu onizleme tek seridin iki modundan gorunmeyenini tutuyor; cihazda ancak
- * gunler arayla alisveris birikince cizilebilir.
+ * SERIDIN ONERI MODU: motor konusuyor - "Yumurta · 14 gun oldu".
+ *
+ * ONCE IKI ONIZLEME VARDI, ikincisi otomatik tamamlamayi tutuyordu. O mod
+ * kokten kalkti (karar 63) ve onizlemesi de kalkti - artik Ekle sheet'inin
+ * isi. Duran bir onizleme, olmayan bir hali cizmeye devam ederdi.
  */
 @PreviewLightDark
 @Composable
 private fun QuickAddEngineSuggestionsPreview() = NeydiPreview {
     QuickAdd(
-        input = "",
-        suggestions = emptyList(),
         engineSuggestions = listOf(
             Suggestion("p1", "Yumurta", 1.9, daysSince = 14, intervalDays = 10, forgottenLastTrip = false),
             Suggestion("p2", "Çay", 1.6, daysSince = 21, intervalDays = 14, forgottenLastTrip = false),
             Suggestion("p3", "Ekmek", 1.5, daysSince = 4, intervalDays = 3, forgottenLastTrip = true),
         ),
-        onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onEngineSuggestion = {},
+        onEngineSuggestion = {},
+        onOpenAdd = {},
     )
 }
 
+/** Motorun soyleyecegi bir sey yokken: yalnizca buton. */
 @PreviewLightDark
 @Composable
-private fun QuickAddWithSuggestionsPreview() = NeydiPreview {
-    QuickAdd(
-        input = "ek",
-        suggestions = listOf(
-            seed("1", "Ekmek", "adet"),
-            seed("2", "Tam Buğday Ekmek", "adet"),
-            seed("3", "Ekşi Maya Ekmek", "adet"),
-        ),
-        engineSuggestions = emptyList(),
-        onInputChange = {},
-        onAdd = {},
-        onSuggestionSelected = {},
-        onEngineSuggestion = {},
-    )
-    Box(Modifier.height(Spacing.sm))
+private fun QuickAddEmptyPreview() = NeydiPreview {
+    QuickAdd(engineSuggestions = emptyList(), onEngineSuggestion = {}, onOpenAdd = {})
 }

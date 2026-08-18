@@ -158,9 +158,9 @@ class ListViewModel(
     /**
      * Motorun onerileri - TEK SERIT yaklasiminin veri yarisi (F6.3).
      *
-     * Serit girdi BOSKEN bunlari, kullanici yazarken otomatik tamamlamayi
-     * gosteriyor. Iki ayri serit tasarimda ust uste binerdi; tek seridin modu
-     * girdinin bos olup olmamasi.
+     * SERIDIN TEK MODU KALDI. Ikinci mod otomatik tamamlamaydi ve kokteki
+     * metin alanina baglaydi; karar 63 o alani kaldirdi, tamamlama Ekle
+     * sheet'inin arama alanina tasindi.
      *
      * `rows` akisina bagli: liste her degistiginde (ekleme, isaretleme, yeni
      * gezi) yeniden hesaplaniyor - boylece cipten eklenen urun aninda seritten
@@ -299,12 +299,16 @@ class ListViewModel(
     val categories: StateFlow<List<Category>> = categoryDao.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** Bir reyona dokununca o reyonun en yaygin urunleri oneri olur. */
+    /**
+     * Bos durumdaki bir reyona dokunus - o reyonun urunleri EKLE SHEET'INDE.
+     *
+     * Once kokteki oneri seridini dolduruyordu; karar 63 o seridi tek moda
+     * (motorun onerileri) indirdi ve katalog gezinmesini sheet'e verdi.
+     * Reyondan urun secmek zaten sheet'in kendi akisi.
+     */
     fun onCategorySelected(category: Category) {
-        viewModelScope.launch {
-            _suggestions.value = catalogSeedDao.byCategory(category.id, limit = 8)
-            _input.value = ""
-        }
+        openSheet()
+        selectSheetCategory(category)
     }
 
     // --- Ekle sheet (F3.7) -----------------------------------------------
@@ -382,6 +386,24 @@ class ListViewModel(
         // Sayac her acilista SIFIRLANIYOR: "3 urun eklendi" bu oturumun
         // sayisi, hanenin toplam gecmisi degil.
         _sheetAddedCount.value = 0
+    }
+
+    /**
+     * Sheet'teki `"kuru kayısı" ekle` butonu - GERCEKTEN EKLIYOR.
+     *
+     * Once yalnizca sheet'i KAPATIYORDU ve o zaman anlasilabilirdi: kokte bir
+     * metin alani vardi, kullanici oraya donup yazabilirdi. Karar 63 o alani
+     * kaldirdi; buton eskisi gibi kalsaydi katalogda olmayan bir urun
+     * uygulamaya HIC girilemez olurdu.
+     *
+     * [add] cagriliyor, `addFromSheet` degil: sheet'in arama metni serbest bir
+     * cumle ("2 kg kuru kayisi") ve miktar ayristirmasi orada.
+     */
+    fun addSheetQuery() {
+        val text = _sheetQuery.value
+        if (text.isBlank()) return
+        add(text)
+        closeSheet()
     }
 
     fun closeSheet() {
@@ -563,23 +585,45 @@ class ListViewModel(
         viewModelScope.launch { repo.undoRemove(silinen.rowId) }
     }
 
+    /**
+     * Yazilmis gozlemi siler ve GERI ALMA hakki verir (karar 46).
+     *
+     * Silme ANINDA kalici, snackbar bir bekleme degil - satir silmenin kendi
+     * kurali burada da gecerli ([pendingDelete] KDoc'u). Gozlem hemen mezar
+     * aliyor, fiyat cipi hemen tazeleniyor; serit yalnizca bes saniyelik bir
+     * geri donus hakki sunuyor.
+     *
+     * Ayni `_pendingDelete` akisini KULLANMIYOR: o satir silmeye ait ve
+     * `undoDelete` farkli bir tabloya gidiyor. Ikisini tek akista birlestirmek,
+     * "Geri al"in hangi seyi geri alacagini calisma zamaninda cozmek olurdu.
+     */
+    fun deleteObservation(id: String) {
+        viewModelScope.launch {
+            priceObservationDao.softDelete(id, clock())
+            _pendingObservationDelete.value = id
+        }
+    }
+
+    fun undoObservationDelete() {
+        val id = _pendingObservationDelete.value ?: return
+        _pendingObservationDelete.value = null
+        viewModelScope.launch { priceObservationDao.undoDelete(id) }
+    }
+
+    fun dismissObservationUndo() {
+        _pendingObservationDelete.value = null
+    }
+
+    private val _pendingObservationDelete = MutableStateFlow<String?>(null)
+
+    /** Silinen gozlem - snackbar'in UCUNCU kullanimi (karar 46). */
+    val pendingObservationDelete: StateFlow<String?> = _pendingObservationDelete
+
     /** Serit suresi doldu ya da kullanici baska bir sey sildi. */
     fun dismissDeleteUndo() {
         _pendingDelete.value = null
     }
 
-    // --- Hizli ekleme (F3.3) --------------------------------------------
-
-    private val _input = MutableStateFlow("")
-    val input: StateFlow<String> = _input
-
-    /**
-     * Otomatik tamamlama. SKORA GORE siralaniyor, alfabetik DEGIL - kullanici
-     * "ek" yazinca once Ekmek gormeli. Bu, algilanan zekanin buyuk kismini
-     * sifir maliyetle veriyor; alfabetik siralamak ayni veriyle aptal gorunur.
-     */
-    private val _suggestions = MutableStateFlow<List<CatalogSeed>>(emptyList())
-    val suggestions: StateFlow<List<CatalogSeed>> = _suggestions
 
     private val _lastAdded = MutableStateFlow<AddedRow?>(null)
 
@@ -622,36 +666,11 @@ class ListViewModel(
         _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
     }
 
-    fun onInputChanged(value: String) {
-        _input.value = value
-        viewModelScope.launch {
-            // Miktar onekini ATIP arama yapiyoruz: "2 kg el" yazan biri
-            // "el" ile eslesme bekler, "2 kg el" ile degil.
-            val name = parseQuantity(value).name
-            _suggestions.value = if (name.isBlank()) {
-                emptyList()
-            } else {
-                catalogSeedDao.search(matchKey(name), limit = 6)
-            }
-        }
-    }
-
     /** Serbest metinden ekle: "2 kg elma" gibi. */
     fun add(text: String) {
         val m = parseQuantity(text)
         if (m.name.isBlank()) return
         addInternal(name = m.name, categoryId = null, unit = m.unit, count = m.count)
-    }
-
-    /** Oneri cipinden ekle: kategori ve birim katalogdan gelir. */
-    fun addFromSuggestion(seed: CatalogSeed) {
-        val m = parseQuantity(_input.value)
-        addInternal(
-            name = seed.name,
-            categoryId = seed.categoryId,
-            unit = m.unit ?: seed.defaultUnit,
-            count = m.count,
-        )
     }
 
     private fun addInternal(name: String, categoryId: String?, unit: String?, count: Double) {
@@ -664,33 +683,31 @@ class ListViewModel(
      * acmayi deneyip UNIQUE kisitina carpardi.
      */
     private suspend fun addAndAwait(name: String, categoryId: String?, unit: String?, count: Double) {
-            // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
-            // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
-            val memberId = selfMemberId() ?: return
-            val trip = repo.openOrGetActiveTrip(household, memberId)
+        // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
+        // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
+        val memberId = selfMemberId() ?: return
+        val trip = repo.openOrGetActiveTrip(household, memberId)
 
-            // Kategori/kanonik ad cozumlemesi ORTAK: etiket onayi da ayni
-            // fonksiyondan geciyor (ProductResolver), yoksa iki kapi ayni urunu
-            // iki farkli yazimla olusturabilirdi.
-            val product = resolveProduct(
-                repo = repo,
-                catalogSeedDao = catalogSeedDao,
+        // Kategori/kanonik ad cozumlemesi ORTAK: etiket onayi da ayni
+        // fonksiyondan geciyor (ProductResolver), yoksa iki kapi ayni urunu
+        // iki farkli yazimla olusturabilirdi.
+        val product = resolveProduct(
+            repo = repo,
+            catalogSeedDao = catalogSeedDao,
+            householdId = household,
+            name = name,
+            categoryId = categoryId,
+            unit = unit,
+        )
+        signalAdded(
+            repo.add(
                 householdId = household,
-                name = name,
-                categoryId = categoryId,
-                unit = unit,
-            )
-            signalAdded(
-                repo.add(
-                    householdId = household,
-                    tripId = trip.id,
-                    product = product,
-                    memberId = memberId,
-                    count = count,
-                ),
-            )
-            _input.value = ""
-            _suggestions.value = emptyList()
+                tripId = trip.id,
+                product = product,
+                memberId = memberId,
+                count = count,
+            ),
+        )
     }
 
 }

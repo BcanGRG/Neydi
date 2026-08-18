@@ -70,6 +70,40 @@ fun AccentChip(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
+ * "A101'de 34,90" - BASKA MARKETTE UCUZ cipi.
+ *
+ * ## Neden AMBER DEGIL
+ *
+ * Amber [AccentChip] ile ayni oturumda gorunuyordu ve iki farkli sey
+ * soyluyordu: kartta *"bir sey eksik, doldur"*, listede *"burada ucuz"*.
+ * Karar 57 amberi tek anlama kilitledi - eksik/belirsiz - ve ucuzlugu
+ * KIREMIDE verdi: ucuzluk ILERI GOTUREN bir is, kiremit zaten o cumle.
+ *
+ * Nasil gorunecegi tasarimda sayiyla yazili: notr `#FBF7F2` zemin, 1.5dp
+ * kiremit kenarlik, kiremit metin. Zemin ve metin temadan geliyor
+ * (`surface` / `primary`), kenarlik kalinligi [Sizes.accentOutline] ile ayni
+ * cunku ikisi de "ince cipin kenari" isini yapiyor.
+ */
+@Composable
+fun CheaperChip(text: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .heightIn(min = 24.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(Sizes.accentOutline, MaterialTheme.colorScheme.primary, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/**
  * Sol serit (fis kontrolunde "yeni urun" ve "emin degil" satirlari).
  * Serit de bir amber DOLGUDUR: isik modunda kenarligi ayni kural geregi tasir.
  */
@@ -94,8 +128,9 @@ private val StripShape = RoundedCornerShape(2.dp)
 @PreviewLightDark
 @Composable
 private fun AccentPreview() = NeydiPreview {
-    AccentChip("A101'de 159,90")
+    // AMBER ARTIK YALNIZCA EKSIK/BELIRSIZ (karar 57); ucuzluk kiremitte.
     AccentChip("3 gündür listede")
+    CheaperChip("A101'de 159,90")
     // Serit dar ve dolgusuz; kenarlik kuralini en cok burada kaybetmek kolay.
     AccentStrip(Modifier.width(4.dp).height(40.dp))
 }

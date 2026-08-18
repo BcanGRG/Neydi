@@ -2,6 +2,7 @@ package com.neydi.app.ui.capture
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -21,12 +22,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,8 +58,10 @@ import com.neydi.app.data.db.Store
 import com.neydi.app.data.ocr.TagSkip
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
+import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiToast
+import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
 
@@ -81,19 +90,52 @@ internal fun TagCaptureScreen(
     state: TagCaptureState,
     cameraReady: Boolean,
     cameraDenied: Boolean,
+    cameraPermanentlyDenied: Boolean,
+    flashOn: Boolean,
     onShutter: () -> Unit,
     onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onProductChange: (String) -> Unit,
+    onOpenPicker: (TagPicker) -> Unit,
+    onClosePicker: () -> Unit,
+    onPickProduct: (String) -> Unit,
+    onSearchProducts: (String) -> Unit,
+    onPickBrand: (String?) -> Unit,
+    onSearchStores: (String) -> Unit,
+    onProposeStore: (String) -> Unit,
+    onConfirmNewStore: () -> Unit,
+    onDeleteStore: (String) -> Unit,
     onSave: () -> Unit,
     onDismissCard: () -> Unit,
     onToastShown: () -> Unit,
+    onFailureShown: () -> Unit,
+    onToggleFlash: () -> Unit,
+    onOpenSettings: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     /** Kartta gosterilecek tarih - "bugun" (sartname). */
     today: String = "Bugün",
     cameraContent: @Composable () -> Unit = {},
 ) {
+    val haptics = LocalHapticFeedback.current
+
+    // DEKLANSOR FLASI: 120 ms ortucu (karar 55).
+    //
+    // Kullanicinin bildirdigi eksik buydu - deklansore basinca hicbir sey
+    // degismiyordu ve ekran donmus gibi hissettiriyordu. Olculen bosluk
+    // gercek: cekimden karta ~1,15 sn geciyor (docs/17) ve o surede tek
+    // hareket `pressable`in %97 olcek darbesiydi, yani BASMA anini
+    // gosteriyordu, CEKIMIN oldugunu degil.
+    //
+    // Sayac ekranin kendi hali: flas bir sunum olayi, state'e girmesi
+    // gerekmiyor - ViewModel'in bundan haberi olmamali.
+    var shutterCount by remember { mutableIntStateOf(0) }
+    val flash = remember { Animatable(0f) }
+    LaunchedEffect(shutterCount) {
+        if (shutterCount == 0) return@LaunchedEffect
+        flash.snapTo(1f)
+        flash.animateTo(0f, tween(FLASH_MS))
+    }
+
     Box(modifier.fillMaxSize().background(Flow.viewfinderInk)) {
         cameraContent()
 
@@ -101,13 +143,42 @@ internal fun TagCaptureScreen(
         // KDoc'u bunu sart kosuyor ve Android tarafi izin yoksa HICBIR SEY
         // cizmiyor - yani bu metni yazmak tamamen bu ekranin sorumlulugu.
         if (cameraDenied) {
-            Text(
-                text = "Kamera izni olmadan etiket çekilemez",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Flow.viewfinderChrome,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center).padding(Spacing.lg),
-            )
+            Column(
+                Modifier.align(Alignment.Center).padding(Spacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            ) {
+                // TEK CUMLE (sozlesme). Onceki hali iki cumleydi ve ikincisi
+                // kullaniciya yapabilecegi bir sey soylemiyordu.
+                Text(
+                    text = "Etiket çekmek için kamera izni gerekiyor",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Flow.viewfinderChrome,
+                    textAlign = TextAlign.Center,
+                )
+                // KALICI RETTE AYARLAR, geciciDE degil. Gecici retten sonra
+                // sistem tekrar soruyor - ekrana donmek yetiyor; kalici retten
+                // sonra sistem BIR DAHA SORMUYOR ve Ayarlar tek yol. Ikisine
+                // ayni dugmeyi koymak, birinde hicbir sey yapmayan bir dugme
+                // demekti.
+                if (cameraPermanentlyDenied) {
+                    Box(
+                        Modifier
+                            .height(Sizes.minTapTarget)
+                            .clip(NeydiExtraShapes.pill)
+                            .pressable(onTap = onOpenSettings)
+                            .background(Flow.viewfinderChrome)
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Ayarları aç",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Flow.viewfinderInk,
+                        )
+                    }
+                }
+            }
         }
 
         if (state.card == null) {
@@ -115,7 +186,17 @@ internal fun TagCaptureScreen(
                 stores = state.stores,
                 storeId = state.storeId,
                 ready = cameraReady && !cameraDenied,
-                onShutter = onShutter,
+                flashOn = flashOn,
+                onToggleFlash = onToggleFlash,
+                onShutter = {
+                    // HAPTIK UC OLAYDA SAYILIYOR (sozlesme): isaretleme, CEKIM,
+                    // kaydet. Cekim ve kaydet ayni darbeyi kullaniyor cunku
+                    // ikisi de "bir sey yazildi" diyor; isaretleme listede
+                    // daha hafif olani kullaniyor.
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    shutterCount++
+                    onShutter()
+                },
                 onSelectStore = onSelectStore,
                 onBack = onBack,
             )
@@ -129,11 +210,54 @@ internal fun TagCaptureScreen(
                 storeId = state.storeId,
                 saving = state.saving,
                 today = today,
-                onSelectStore = onSelectStore,
                 onPriceChange = onPriceChange,
-                onProductChange = onProductChange,
+                onOpenPicker = onOpenPicker,
                 onSave = onSave,
                 onDismiss = onDismissCard,
+            )
+        }
+
+        // SECICI KATMANI: kartin uzerinde, cunku secici karta cevap veriyor -
+        // altinda kalsaydi kullanici hangi karta secim yaptigini goremezdi.
+        when (state.picker) {
+            TagPicker.PRODUCT -> ProductPicker(
+                tagText = state.card?.tagText,
+                query = state.productQuery,
+                picks = state.productPicks,
+                onQueryChange = onSearchProducts,
+                onPick = onPickProduct,
+                onBack = onClosePicker,
+            )
+
+            TagPicker.STORE -> StorePicker(
+                stores = state.stores,
+                storeId = state.storeId,
+                query = state.storeQuery,
+                pendingName = state.pendingStoreName,
+                onQueryChange = onSearchStores,
+                onSelect = onSelectStore,
+                onDelete = onDeleteStore,
+                onPropose = onProposeStore,
+                onConfirmNew = onConfirmNewStore,
+            )
+
+            TagPicker.BRAND -> BrandPicker(
+                productName = state.card?.productName.orEmpty(),
+                selected = state.card?.brand,
+                pool = state.brandPool,
+                onPick = onPickBrand,
+            )
+
+            null -> Unit
+        }
+
+        // FLAS EN USTTE: karti ve toast'i da bir an icin ortuyor, cunku
+        // ortucu flasi fiziksel bir olayin taklidi - kamera bir kare aldi.
+        if (flash.value > 0f) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Flow.viewfinderChrome.copy(alpha = flash.value)),
             )
         }
 
@@ -146,16 +270,38 @@ internal fun TagCaptureScreen(
                 .padding(bottom = Spacing.xl),
         )
 
-        state.failure?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Flow.amber,
+        // HATA SERIDI: `failure` bugune kadar HIC yazilmadigi icin bu dal
+        // calismamisti ve ciplak metin olarak kalmisti. Canli kamera
+        // goruntusunun uzerinde ciplak metin okunmaz - kadraj neyse metnin
+        // rengi o olur. Zeminli serit, vizorun kendi kromunu kullaniyor.
+        state.failure?.let { failure ->
+            LaunchedEffect(failure) {
+                delay(FAILURE_MS)
+                onFailureShown()
+            }
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(Spacing.md),
-            )
+                    .padding(top = Sizes.minTapTarget + Spacing.sm, start = Spacing.md, end = Spacing.md)
+                    .clip(NeydiExtraShapes.pill)
+                    .background(Flow.viewfinderChrome)
+                    .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                NeydiIcon(
+                    icon = NeydiIcons.Info,
+                    contentDescription = null,
+                    size = 18.dp,
+                    tint = Flow.amberText,
+                )
+                Text(
+                    text = failure,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Flow.amberText,
+                )
+            }
         }
     }
 }
@@ -165,7 +311,9 @@ private fun BoxScope.CameraLayer(
     stores: List<Store>,
     storeId: String?,
     ready: Boolean,
+    flashOn: Boolean,
     onShutter: () -> Unit,
+    onToggleFlash: () -> Unit,
     onSelectStore: (String) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -183,7 +331,7 @@ private fun BoxScope.CameraLayer(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Box(
-                Modifier.size(TAP_TARGET).pressable(onTap = onBack),
+                Modifier.size(Sizes.minTapTarget).pressable(onTap = onBack),
                 contentAlignment = Alignment.Center,
             ) {
                 NeydiIcon(NeydiIcons.Close, contentDescription = "kapat", size = 24.dp, tint = Flow.viewfinderChrome)
@@ -194,13 +342,23 @@ private fun BoxScope.CameraLayer(
             // yazilmis bir gozlemi sonradan duzeltmek demekti.
             StorePill(stores.firstOrNull { it.id == storeId }?.name)
 
-            // FLAS: iki hal, oturumluk (karar 60). Bugun yalnizca cizilmis
-            // durumda - davranisi CameraSurface'a bagli ve o F9.2 kuyrugunda.
+            // FLAS: iki hal, oturumluk (karar 60). ACIK hal DOLU bir daireyle
+            // gosteriliyor - ikon rengini degistirmek yetmezdi: canli kamera
+            // goruntusunun uzerinde "biraz daha parlak sari" bir hal degildir.
             Box(
-                Modifier.size(TAP_TARGET),
+                Modifier
+                    .size(Sizes.minTapTarget)
+                    .clip(NeydiExtraShapes.pill)
+                    .pressable(onTap = onToggleFlash)
+                    .background(if (flashOn) Flow.viewfinderChrome else Color.Transparent),
                 contentAlignment = Alignment.Center,
             ) {
-                NeydiIcon(NeydiIcons.Bolt, contentDescription = "flaş", size = 24.dp, tint = Flow.viewfinderChrome)
+                NeydiIcon(
+                    icon = NeydiIcons.Bolt,
+                    contentDescription = if (flashOn) "flaşı kapat" else "flaşı aç",
+                    size = 24.dp,
+                    tint = if (flashOn) Flow.viewfinderInk else Flow.viewfinderChrome,
+                )
             }
         }
 
@@ -323,16 +481,11 @@ private fun BoxScope.ConfirmCardLayer(
     storeId: String?,
     saving: Boolean,
     today: String,
-    onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onProductChange: (String) -> Unit,
+    onOpenPicker: (TagPicker) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Hangi satir acik - bir seferde YALNIZCA biri, varsayilan hicbiri: kart
-    // acilinca kullanici once OKUYOR, duzeltme istisna.
-    var open by remember(card.photoPath) { mutableStateOf<String?>(null) }
-
     Column(
         Modifier
             .align(Alignment.BottomCenter)
@@ -345,6 +498,21 @@ private fun BoxScope.ConfirmCardLayer(
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 30.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // KIRPIM KARTIN BASINDA (karar 62) - "ne cektim"in tek cevabi.
+        TagThumbnail(photoPath = card.photoPath)
+
+        // DESTEKLENMEYEN ZINCIR CUMLESI kartin BASINDA, seridin YERINE
+        // (karar 49). Amber serit bu halde hic cizilmiyor - cumle onun isini
+        // zaten yapiyor ve iki uyari ust uste iki is varmis gibi gorunurdu.
+        card.unsupportedChainMessage()?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Flow.cancel,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+            )
+        }
+
         // AMBER SERIT: fiyat blogunun SOLUNDA 4dp'lik dikey cubuk, ustunde
         // kutu degil. Kod tam genislikte dolgulu bir kutu ciziyordu ve
         // `warning` token'ini kullaniyordu - o amber METNIN rengi.
@@ -381,40 +549,50 @@ private fun BoxScope.ConfirmCardLayer(
             }
         }
 
+        // UC SATIR UC SECICI ACIYOR - satir ici duzenleyici ve cip seridi
+        // KALKTI. Sebep tasarimin kendi akisi: urun kimligi katalogdan gelmek
+        // zorunda (karar 51), marka klavyesiz bir cip sheet'i (karar 52),
+        // market ise arama alanli bir liste (karar 40). Uc is de kartin
+        // icindeki 56dp'lik satira sigmiyordu.
         CardRow(
             label = "Ürün",
             value = card.productName.ifBlank { "—" },
             reading = card.reading,
-            onTap = { open = if (open == "urun") null else "urun" },
+            onTap = { onOpenPicker(TagPicker.PRODUCT) },
         )
-        if (open == "urun") {
-            InlineEditor(
-                value = card.productName,
-                placeholder = "Ürün adı",
-                onChange = onProductChange,
-            )
-        }
 
-        card.brand?.let { brand ->
-            CardRow(label = "Marka", value = brand, reading = card.reading, dashed = true)
-        }
+        // MARKA SATIRI HER ZAMAN VAR. Once yalnizca OCR bir marka onerdiyse
+        // ciziliyordu ve bu kisir dongunun ta kendisiydi: markayi degistirmek
+        // icin once dogru okunmus olmasi gerekiyordu.
+        CardRow(
+            label = "Marka",
+            value = card.brand ?: "—",
+            reading = card.reading,
+            dashed = card.brand != null,
+            onTap = { onOpenPicker(TagPicker.BRAND) },
+        )
 
         CardRow(
             label = "Market",
             value = stores.firstOrNull { it.id == storeId }?.name ?: "—",
             reading = false,
             store = true,
-            onTap = { open = if (open == "market") null else "market" },
+            onTap = { onOpenPicker(TagPicker.STORE) },
         )
-        if (open == "market") {
-            StoreChips(stores, storeId) { onSelectStore(it); open = null }
-        }
 
         // TARIH DOKUNULAMAZ ve chevron TASIMIYOR - etikette basili tarih yok,
         // "simdi" tek dogru cevap (`PriceObservation.observedAt`).
         CardRow(label = "Tarih", value = today, reading = false, plain = true)
 
-        SaveButton(enabled = card.canSave && !saving, saving = saving, onSave = onSave)
+        val haptics = LocalHapticFeedback.current
+        SaveButton(
+            enabled = card.canSave && !saving,
+            saving = saving,
+            onSave = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onSave()
+            },
+        )
 
         // VAZGEC GERI GELDI. Kaldirmistim cunku maket yalnizca Kaydet
         // ciziyordu; yanlis olan yari maketmis - sozlesme onu baştan beri iki
@@ -422,7 +600,7 @@ private fun BoxScope.ConfirmCardLayer(
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(TAP_TARGET)
+                .height(Sizes.minTapTarget)
                 .pressable(onTap = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
@@ -637,8 +815,11 @@ private fun Skeleton(width: Dp, height: Dp = 22.dp) {
     )
 }
 
-/** En kucuk dokunma hedefi TEK SAYI 48dp (karar 56). */
-private val TAP_TARGET = 48.dp
+/** Ortucu flasinin suresi (karar 55). */
+private const val FLASH_MS = 120
+
+/** Hata seridi ne kadar durur - toast ile ayni omur. */
+private const val FAILURE_MS = 4000L
 
 /** Kart satiri - tasarimin `min-height:56px`i. */
 private val ROW_HEIGHT = 56.dp
@@ -649,9 +830,13 @@ private fun TagCaptureCameraPreview() = NeydiPreview {
     TagCaptureScreen(
         state = TagCaptureState(stores = previewStores(), storeId = "s1"),
         cameraReady = true,
-        cameraDenied = false,
-        onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
+        cameraDenied = false, cameraPermanentlyDenied = false, flashOn = false,
+        onShutter = {}, onSelectStore = {}, onPriceChange = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onToggleFlash = {}, onOpenSettings = {},
+        onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
+        onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
+        onDeleteStore = {},
     )
 }
 
@@ -671,9 +856,13 @@ private fun TagCaptureCardPreview() = NeydiPreview {
             stores = previewStores(),
             storeId = "s1",
         ),
-        cameraReady = true, cameraDenied = false,
-        onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
+        cameraReady = true, cameraDenied = false, cameraPermanentlyDenied = false, flashOn = false,
+        onShutter = {}, onSelectStore = {}, onPriceChange = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onToggleFlash = {}, onOpenSettings = {},
+        onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
+        onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
+        onDeleteStore = {},
     )
 }
 
@@ -690,9 +879,13 @@ private fun TagCaptureUnreadChainPreview() = NeydiPreview {
             stores = previewStores(),
             storeId = "s2",
         ),
-        cameraReady = true, cameraDenied = false,
-        onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
+        cameraReady = true, cameraDenied = false, cameraPermanentlyDenied = false, flashOn = false,
+        onShutter = {}, onSelectStore = {}, onPriceChange = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onToggleFlash = {}, onOpenSettings = {},
+        onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
+        onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
+        onDeleteStore = {},
     )
 }
 

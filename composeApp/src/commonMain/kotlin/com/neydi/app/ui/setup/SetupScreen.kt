@@ -320,7 +320,7 @@ private fun TempoChip(label: String, selected: Boolean, onClick: () -> Unit) {
                 if (selected) MaterialTheme.colorScheme.secondary
                 else MaterialTheme.colorScheme.surfaceVariant,
             )
-            .heightIn(min = 44.dp)
+            .heightIn(min = Sizes.minTapTarget)
             .padding(horizontal = 18.dp),
         contentAlignment = Alignment.Center,
     ) {

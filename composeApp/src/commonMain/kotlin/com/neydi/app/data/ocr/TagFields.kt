@@ -30,6 +30,27 @@ internal enum class TagSkip {
      *
      * Iki sayidan hangisinin dogru oldugunu bilmiyoruz, dolayisiyla ikisi de
      * yazilmiyor.
+     *
+     * ## TASARIMDAN BILINCLI SAPMA (karar 50)
+     *
+     * Karar 50 *"alan bos gelmez; okunan sayi kesik cerceveli gelir"* diyor ve
+     * gerekcesi *"duzeltilecek bir sey vermek sifirdan yazdirmaktan ucuz"*.
+     * Bu gerekce, okunan sayinin YAKLASIK dogru oldugunu varsayiyor - bir harf
+     * hatasi gibi. Olculen uc vakada oyle degil:
+     *
+     * | Fikstur | Okunan | Gercegi | Kat |
+     * |---|---|---|---|
+     * | `20260817_183746` | 6,00 | 106,00 | 1/17 |
+     * | `20260817_183847` | 7,50/hg | 57,50/kg | 1/7 |
+     * | `20260817_211219` | 799,50 | 79,95 | 10x |
+     *
+     * Ilk satir tehlikeli olani: 6,00 TL bir urun icin MAKUL gorunuyor ve
+     * kullanici kesik cerceveyi fark etmeden kaydedebilir. Karar 49'un kendi
+     * gerekcesi *"yanlis fiyat, fiyat olmamasindan kotu"* diyor - 50 ile 49
+     * burada birbiriyle celisiyor ve olcum 49'un yaninda.
+     *
+     * Kararin CUMLESI alindi (`missingFieldMessage`, "dogrula"), sayiyi
+     * gostermesi ALINMADI. Sapma tasarima bildirilecek.
      */
     PRICE_CONTRADICTS_UNIT_PRICE,
 }

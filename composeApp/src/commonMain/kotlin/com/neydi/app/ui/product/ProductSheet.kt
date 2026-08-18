@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -98,6 +102,13 @@ fun ProductSheetContent(
      * parametre acmak olu kod olurdu.
      */
     onRemoveFromList: (() -> Unit)? = null,
+    /**
+     * Yazilmis bir gozlemi siler (karar 46) - uzun dokunusla aciliyor.
+     *
+     * Varsayilani BOS DEGIL ama zararsiz: onizlemeler ve gozlemsiz cagiranlar
+     * gecmis satiri hic cizmiyor, dolayisiyla hicbir zaman cagrilmiyor.
+     */
+    onDeleteObservation: (String) -> Unit = {},
 ) {
     val extras = LocalNeydiExtraColors.current
     Column(
@@ -147,7 +158,7 @@ fun ProductSheetContent(
                 modifier = Modifier.padding(horizontal = Spacing.md),
             )
         } else {
-            PriceBlock(state.price)
+            PriceBlock(state.price, onDeleteObservation)
         }
 
         Spacer(Modifier.height(Spacing.md))
@@ -191,7 +202,7 @@ fun ProductSheetContent(
  * gelen listeyi ciziyor.
  */
 @Composable
-private fun PriceBlock(price: PriceSection) {
+private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Unit) {
     val extras = LocalNeydiExtraColors.current
 
     if (price.cheapest.isNotEmpty()) {
@@ -233,24 +244,66 @@ private fun PriceBlock(price: PriceSection) {
     }
 
     SectionHeader(title = "Alım geçmişi", count = price.history.size)
+
+    // UZUN DOKUNUS SILME KAPISINI ACIYOR (karar 46).
+    //
+    // Yazilmis bir gozleme dokunan hicbir yuzey yoktu: yanlis bir sayinin tek
+    // caresi Ayarlar'daki "Verilerimi sil"di. Kapi UZUN dokunusta cunku
+    // gecmis satirlari OKUNMAK icin var; kisa dokunusa silme koymak, listeyi
+    // gozden gecirirken yanlislikla silmek demekti.
+    //
+    // BIR SEFERDE TEK SATIR aciliyor: iki kirmizi satir ust uste, hangisinin
+    // silinecegini belirsizlestirirdi.
+    var armed by remember(price.history) { mutableStateOf<String?>(null) }
+
     price.history.forEach { row ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.md, vertical = Spacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = row.store,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = row.price,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+        if (armed == row.id) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pressable(
+                        onLongPress = { armed = null },
+                        onTap = { onDeleteObservation(row.id); armed = null },
+                    )
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                    .heightIn(min = Sizes.minTapTarget),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Bu gözlemi sil",
+                    style = MaterialTheme.typography.bodyMedium,
+                    // ERROR RENGI, kiremit DEGIL: kiremit ileri goturen isin
+                    // rengi (karar 42) ve silme geri goturuyor.
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "${row.store} · ${row.price}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pressable(onLongPress = { armed = row.id }, onTap = {})
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                    .heightIn(min = Sizes.minTapTarget),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = row.store,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = row.price,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
     }
 
@@ -295,9 +348,9 @@ private fun ProductSheetPricePreview() = NeydiPreview {
                     CheapRow(store = "Migros", brand = "Pınar", price = "130,00", pack = null),
                 ),
                 history = listOf(
-                    HistoryRow(observedAt = 0, store = "BİM", price = "100,00"),
-                    HistoryRow(observedAt = 0, store = "Migros", price = "130,00"),
-                    HistoryRow(observedAt = 0, store = "BİM", price = "95,00"),
+                    HistoryRow(id = "h-BİM-10000", observedAt = 0, store = "BİM", price = "100,00"),
+                    HistoryRow(id = "h-Migros-13000", observedAt = 0, store = "Migros", price = "130,00"),
+                    HistoryRow(id = "h-BİM-9500", observedAt = 0, store = "BİM", price = "95,00"),
                 ),
                 sparkline = listOf(95f, 130f, 100f),
             ),

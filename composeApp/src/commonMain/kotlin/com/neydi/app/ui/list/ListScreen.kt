@@ -106,8 +106,6 @@ fun ListScreen(
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    val input by vm.input.collectAsStateWithLifecycle()
-    val suggestions by vm.suggestions.collectAsStateWithLifecycle()
     val engineSuggestions by vm.engineSuggestions.collectAsStateWithLifecycle()
     val categories by vm.categories.collectAsStateWithLifecycle()
     val estimate by vm.estimate.collectAsStateWithLifecycle()
@@ -123,6 +121,7 @@ fun ListScreen(
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
     val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
     val pendingDelete by vm.pendingDelete.collectAsStateWithLifecycle()
+    val pendingObservationDelete by vm.pendingObservationDelete.collectAsStateWithLifecycle()
 
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -142,15 +141,11 @@ fun ListScreen(
 
     ListContent(
         state = state,
-        input = input,
-        suggestions = suggestions,
         engineSuggestions = engineSuggestions,
         onEngineSuggestion = vm::addFromEngine,
         categories = categories,
         clipboardText = clipboardText,
-        onInputChange = vm::onInputChanged,
         onAdd = vm::add,
-        onSuggestionSelected = vm::addFromSuggestion,
         onCategorySelected = vm::onCategorySelected,
         onStarterSelected = vm::addFromSheet,
         starters = starters,
@@ -174,6 +169,9 @@ fun ListScreen(
         lastAdded = lastAdded,
         onDeleteRow = vm::remove,
         pendingDelete = pendingDelete,
+        observationDeleted = pendingObservationDelete != null,
+        onUndoObservationDelete = vm::undoObservationDelete,
+        onObservationUndoDismissed = vm::dismissObservationUndo,
         onUndoDelete = vm::undoDelete,
         onUndoDismissed = vm::dismissDeleteUndo,
     )
@@ -211,7 +209,7 @@ fun ListScreen(
                 onCategory = vm::selectSheetCategory,
                 onBackToCategories = vm::sheetBack,
                 onProduct = vm::addFromSheet,
-                onFreeText = vm::closeSheet,
+                onFreeText = vm::addSheetQuery,
             )
         }
     }
@@ -224,6 +222,7 @@ fun ListScreen(
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             ProductSheetContent(
+                onDeleteObservation = vm::deleteObservation,
                 state = sheet,
                 onStapleChange = { vm.setStaple(sheet.productId, it) },
                 bottomPadding = bottomInset,
@@ -261,16 +260,12 @@ fun ListScreen(
 @Composable
 internal fun ListContent(
     state: ListState,
-    input: String,
-    suggestions: List<CatalogSeed>,
     /** Motorun onerileri - girdi bosken cizilen serit (F6.3). */
     engineSuggestions: List<Suggestion>,
     onEngineSuggestion: (Suggestion) -> Unit,
     categories: List<Category>,
     clipboardText: String?,
-    onInputChange: (String) -> Unit,
     onAdd: (String) -> Unit,
-    onSuggestionSelected: (CatalogSeed) -> Unit,
     onCategorySelected: (Category) -> Unit,
     /** Ilk gun cipinden ekleme (tasarim karari 5). */
     onStarterSelected: (CatalogSeed) -> Unit = {},
@@ -297,6 +292,10 @@ internal fun ListContent(
     onDeleteRow: (String, String) -> Unit = { _, _ -> },
     /** En son silinen satir; varsa geri alma seridi ciziliyor. */
     pendingDelete: DeletedRow? = null,
+    /** Bir gozlem silindi - snackbar'in UCUNCU kullanimi (karar 46). */
+    observationDeleted: Boolean = false,
+    onUndoObservationDelete: () -> Unit = {},
+    onObservationUndoDismissed: () -> Unit = {},
     onUndoDelete: () -> Unit = {},
     onUndoDismissed: () -> Unit = {},
     /**
@@ -518,6 +517,17 @@ internal fun ListContent(
             // GERI ALMA SERIDI de alt blogun 12dp ustunde (tasarim karari 37).
             // Toast ile ayni yerde durmalari catisma degil: ikisi ayni anda
             // dogamiyor - toast alisveris kapanisinda, serit satir silmede.
+            // GOZLEM SERIDI SATIR SERIDININ USTUNDE degil, ONUNDE: ikisi ayni
+            // anda gorunemez (biri Urun Detayi acikken, oteki listede) ama
+            // ayni yuvayi paylasiyorlar, yani ust uste binmeleri imkansiz.
+            NeydiSnackbar(
+                message = if (observationDeleted) "Gözlem silindi" else null,
+                actionLabel = "Geri al",
+                onAction = onUndoObservationDelete,
+                onDismiss = onObservationUndoDismissed,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+
             NeydiSnackbar(
                 message = pendingDelete?.let { "${it.name} silindi" },
                 actionLabel = "Geri al",
@@ -535,13 +545,9 @@ internal fun ListContent(
                     ),
                 ) {
                     QuickAdd(
-                        input = input,
-                        suggestions = suggestions,
                         engineSuggestions = engineSuggestions,
-                        onInputChange = onInputChange,
-                        onAdd = onAdd,
-                        onSuggestionSelected = onSuggestionSelected,
                         onEngineSuggestion = onEngineSuggestion,
+                        onOpenAdd = onOpenSheet,
                     )
                     // BIRINCIL AKSIYON EN ALTTA (tasarim: "tum birincil
                     // aksiyonlar ekranin alt %40'inda"). Onceden yalnizca
@@ -912,10 +918,10 @@ private fun ListPreviewHost(
     clipboard: String? = null,
     estimate: BasketEstimate = BasketEstimate(),
 ) = ListContent(
-    state = state, input = "", suggestions = emptyList(),
+    state = state,
     engineSuggestions = emptyList(), onEngineSuggestion = {}, categories = emptyList(),
     clipboardText = clipboard,
-    onInputChange = {}, onAdd = {}, onSuggestionSelected = {}, onCategorySelected = {},
+    onAdd = {}, onCategorySelected = {},
     onToggleChecked = { _, _ -> }, onRowLongPress = { _, _ -> }, onClipboard = {}, onShoppingMode = {},
     onGoShopping = {},
     estimate = estimate, onOpenSheet = {}, onFinish = {}, onHistory = {}, onSettings = {},
