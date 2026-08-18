@@ -64,3 +64,19 @@ data class TripLineCount(
     val tripId: String,
     val lineCount: Int,
 )
+
+/**
+ * Bir fiyat gozlemi, Ekran 5'in ihtiyaci kadar (E17).
+ *
+ * `storeName` ve `brand` AYRI ve ikisi de null olabilir - karar 26 satirin
+ * kimligini market+marka cifti yapiyor ama gercekte ikisi de eksik olabiliyor:
+ * kullanici acele edip market secmemis, ya da manavda marka yok.
+ */
+data class ObservationRow(
+    val observedAt: Long,
+    val unitPriceMinor: Long,
+    val brand: String?,
+    val storeName: String?,
+    val packSize: Double?,
+    val packUnit: String?,
+)

@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiSwitch
+import com.neydi.app.ui.components.Sparkline
+import com.neydi.app.ui.components.SectionHeader
 import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
@@ -48,6 +50,8 @@ data class ProductSheetState(
     val rowId: String? = null,
     val name: String,
     val isStaple: Boolean,
+    /** Fiyat bolumu (E17). Bos ise bolum HIC cizilmiyor. */
+    val price: PriceSection = PriceSection(),
 )
 
 /**
@@ -132,15 +136,19 @@ fun ProductSheetContent(
             )
         }
 
-        // SIFIR GOZLEM: grafik yok, manset yok, yuzde yok. Tasarimin kurali
-        // "yanlis bir sey gostermektense hicbir sey gostermemek" ve tek
-        // noktadan trend cizmek yalan olurdu.
-        Text(
-            text = "Etiket çektikçe burada fiyat geçmişi birikecek.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = Spacing.md),
-        )
+        if (state.price.isEmpty) {
+            // SIFIR GOZLEM: grafik yok, manset yok, yuzde yok. Tasarimin kurali
+            // "yanlis bir sey gostermektense hicbir sey gostermemek" ve tek
+            // noktadan trend cizmek yalan olurdu.
+            Text(
+                text = "Etiket çektikçe burada fiyat geçmişi birikecek.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = Spacing.md),
+            )
+        } else {
+            PriceBlock(state.price)
+        }
 
         Spacer(Modifier.height(Spacing.md))
 
@@ -171,6 +179,88 @@ fun ProductSheetContent(
     }
 }
 
+
+/**
+ * Fiyat bolumu: "Nerede ucuz" + alim gecmisi (E17).
+ *
+ * ## Bos bolum BASLIGIYLA BIRLIKTE yok
+ *
+ * "Nerede ucuz" tek market varken cevabi olmayan bir soru, ve tasarimin genel
+ * degismezi *"bos bir bolum basligi, olmayan bir isi varmis gibi gosterir"*.
+ * Esik verinin kendisinde ([PriceSection]), cizimde degil - ekran yalnizca
+ * gelen listeyi ciziyor.
+ */
+@Composable
+private fun PriceBlock(price: PriceSection) {
+    val extras = LocalNeydiExtraColors.current
+
+    if (price.cheapest.isNotEmpty()) {
+        SectionHeader(title = "Nerede ucuz", count = price.cheapest.size)
+        price.cheapest.forEach { row ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = row.store,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    // MARKA VE AMBALAJ ALT SATIRDA: karar 26 kimligi
+                    // market+marka cifti yapiyor, yani marka satirin bir
+                    // suslemesi degil AYIRT EDICI bilgisi. Ikisi de eksik
+                    // olabiliyor (manavda marka yok) - o zaman satir cizilmiyor.
+                    listOfNotNull(row.brand, row.pack).takeIf { it.isNotEmpty() }?.let { parts ->
+                        Text(
+                            text = parts.joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                Text(
+                    text = row.price,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+        Spacer(Modifier.height(Spacing.sm))
+    }
+
+    SectionHeader(title = "Alım geçmişi", count = price.history.size)
+    price.history.forEach { row ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Spacing.md, vertical = Spacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = row.store,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = row.price,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+
+    if (price.sparkline.isNotEmpty()) {
+        Box(Modifier.padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
+            Sparkline(values = price.sparkline, color = extras.priceUp)
+        }
+    }
+}
+
 // --- Onizlemeler ------------------------------------------------------------
 
 @PreviewLightDark
@@ -187,6 +277,31 @@ private fun ProductSheetStaplePreview() = NeydiPreview {
 private fun ProductSheetPlainPreview() = NeydiPreview {
     ProductSheetContent(
         state = ProductSheetState(productId = "p2", name = "Kuru Kayısı", isStaple = false),
+        onStapleChange = {},
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun ProductSheetPricePreview() = NeydiPreview {
+    ProductSheetContent(
+        state = ProductSheetState(
+            productId = "p1",
+            name = "Ayçiçek Yağı",
+            isStaple = true,
+            price = PriceSection(
+                cheapest = listOf(
+                    CheapRow(store = "BİM", brand = "Dost", price = "100,00", pack = "4 lt"),
+                    CheapRow(store = "Migros", brand = "Pınar", price = "130,00", pack = null),
+                ),
+                history = listOf(
+                    HistoryRow(observedAt = 0, store = "BİM", price = "100,00"),
+                    HistoryRow(observedAt = 0, store = "Migros", price = "130,00"),
+                    HistoryRow(observedAt = 0, store = "BİM", price = "95,00"),
+                ),
+                sparkline = listOf(95f, 130f, 100f),
+            ),
+        ),
         onStapleChange = {},
     )
 }
