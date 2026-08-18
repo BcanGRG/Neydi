@@ -44,6 +44,12 @@ internal val SEED_CHAINS = listOf(
     // yaradigi yer.
     "Fullgross",
     "Gimat",
+    // METRO TOHUMA GIRMIYOR ve bu tasarimdan BILINCLI bir sapma. Karar 48
+    // Metro'yu sekizinci zincir yapiyor, olcutu "kullanicinin gercekten etiket
+    // cektigi zincirler" - ve kullanici orada 34 etiket cekmisti. Ama o cekim
+    // tek seferlikti: kullanici Metro'ya duzenli gitmedigini soyledi ve oraya
+    // efor harcanmamasini istedi. Olcut kullanicinin kendi aliskanligi
+    // oldugu icin, olcutun cevabini da kullanici veriyor.
 )
 
 /**
