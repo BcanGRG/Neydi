@@ -66,11 +66,7 @@ internal fun readTagPrice(ocr: TagOcr): TagPrice? {
     // Yanlis fiyat, fiyat olmamasindan KOTU: karar 26 marketler arasi fiyat
     // gecmisi uzerine kurulu, oraya giren uydurma bir 86 TL kalici olarak
     // yaniltir. `readTagName` de ayni esikle ayni fikstursu reddediyor.
-    val lira = ocr.lines
-        .filter { it.text.trimStart().firstOrNull()?.isDigit() == true }
-        .maxByOrNull { it.glyphHeight() }
-        ?.takeIf { it.glyphHeight() >= ocr.sourceHeight * MIN_LIRA_RATIO }
-        ?: return null
+    val lira = ocr.readableLira() ?: return null
 
     val liraDigits = lira.text.trim().takeWhile { it.isDigit() }
     if (liraDigits.isEmpty()) return null
@@ -134,6 +130,11 @@ private fun OcrPiece.isKurusFor(lira: OcrPiece): Boolean {
  * Iki ondalik hane burada gercekten var (normal punto), o yuzden ayri bir
  * ayristirici gerekmiyor. Bastaki/sondaki cop temizleniyor: `T06,00 kg`,
  * `E7,50hg`, `239,44B | kg` - para birimi simgesi metne siziyor.
+ *
+ * BIRIM NORMALIZE EDILMIS DONUYOR. Once eslesen ham sozcugu donduruyordu ve
+ * bu bir sizintiydi: cagiran `itre` ile `lt`yi ayri birim saniyordu, yani
+ * `93,80 / litre` ile `5 LT` ambalaji capraz kontrolde eslesmiyordu. OCR
+ * copunu temizlemek bu fonksiyonun isi, cagiranin degil.
  */
 internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
     UNITS.forEach { unit ->
@@ -141,8 +142,8 @@ internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
             val t = piece.text
             if (!t.contains(unit, ignoreCase = true)) return@forEach
             val m = MONEY.find(t) ?: return@forEach
-            val minor = parseMinor(m.value) ?: return@forEach
-            return TagUnitPrice(minor = minor, unit = unit)
+            val minor = moneyMinor(m.value) ?: return@forEach
+            return TagUnitPrice(minor = minor, unit = unitKey(unit))
         }
     }
     return null
@@ -151,7 +152,49 @@ internal fun readTagUnitPrice(ocr: TagOcr): TagUnitPrice? {
 /** Etikette gorulen birim sozcukleri. `itre`/`ikg` OCR copu, olculdu. */
 private val UNITS = listOf("kg", "adet", "litre", "lt", "itre", "ikg", "hg")
 
-private val MONEY = Regex("""\d{1,4}[.,]\d{2}""")
+/**
+ * Birim sozcugunu tek bir anahtara indirger.
+ *
+ * `ikg` ve `hg` bastaki `/`nin harfe karismasi, `itre` `litre`nin bas harfinin
+ * dusmesi - ucu de [UNITS] listesine gercek olcumden girdi.
+ */
+private fun unitKey(raw: String): String = when (raw.lowercase()) {
+    "kg", "ikg", "hg" -> "kg"
+    "litre", "itre", "lt" -> "lt"
+    else -> raw
+}
+
+/**
+ * Birim fiyat sayisi - BINLIK AYIRICISIYLA birlikte.
+ *
+ * ONCEKI HALI `\d{1,4}[.,]\d{2}` IDI VE BOZUKTU. `1.512,84` uzerinde soldan
+ * saga tarayip `1.51`i yakaliyordu - yani 1512,84 TL/kg olan bir birim fiyati
+ * **1,51 TL/kg** diye okuyordu. Hata sessizdi: sayi makul gorunuyor ve
+ * yalnizca capraz kontrolu bozuyordu, o da fiyati REDDEDEREK. Yani pahali
+ * urunlerde manset dogru okunuyor ama "celiskili" diye atiliyordu.
+ *
+ * Iki bicim de olculdu: `1.512,84TLKG` (nokta binlik) ve `2 999,38TLKG`
+ * (bosluk binlik). Sondaki `(?!\d)` bir sayinin ON EKINI eslemeyi engelliyor -
+ * asil kusur oydu.
+ */
+private val MONEY = Regex("""(\d{1,3}(?:[.\s]\d{3})+|\d{1,4})[.,]\d{2}(?!\d)""")
+
+/**
+ * Para dizgisini kurusa cevirir - binlik ayiricilarini atarak.
+ *
+ * `parseMinor` binlik ayiricisi TANIMIYOR (`1.512,84` uc parcaya bolunup null
+ * donuyor) ve bu fisin kendi dogrusu: orada binlik ayirici basilmiyordu.
+ * Etikette basiliyor, dolayisiyla temizlik burada.
+ *
+ * SON AYIRICI ONDALIK, oncekiler binlik - basamak sayisina bakmadan.
+ */
+private fun moneyMinor(raw: String): Long? {
+    val t = raw.replace(" ", "")
+    val lastSep = t.lastIndexOfAny(charArrayOf('.', ','))
+    if (lastSep < 0) return null
+    val whole = t.substring(0, lastSep).filter { it.isDigit() }
+    return parseMinor("$whole,${t.substring(lastSep + 1)}")
+}
 
 /**
  * Manset fiyat glifi kaynak yuksekliginin en az bu kadari olmali.
@@ -165,6 +208,4 @@ private val MONEY = Regex("""\d{1,4}[.,]\d{2}""")
  */
 internal const val MIN_LIRA_RATIO = 0.02
 
-/** Kose noktalarindan glif yuksekligi - `[0] -> [3]` kenari. */
-private fun OcrPiece.glyphHeight(): Int =
-    if (corners.size < 4) 0 else corners[3].y - corners[0].y
+

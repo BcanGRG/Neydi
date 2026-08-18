@@ -81,8 +81,8 @@ internal fun readTagName(ocr: TagOcr): TagName? {
         .sortedBy { it.corners[0].y }
     if (left.isEmpty()) return null
 
-    val pack = left.lastOrNull { PACK.matches(it.text.trim()) && it.corners[0].y < lira.bottom() }
-    val limit = pack?.corners?.get(0)?.y ?: lira.bottom()
+    val pack = left.lastOrNull { PACK.matches(it.text.trim()) && it.corners[0].y < lira.bottomY() }
+    val limit = pack?.corners?.get(0)?.y ?: lira.bottomY()
 
     val block = left.filter {
         it.corners[0].y < limit &&
@@ -123,7 +123,7 @@ internal fun readTagPack(ocr: TagOcr): TagPack? {
     val lira = ocr.readableLira() ?: return null
     val priceX = lira.corners[0].x
     val line = ocr.lines
-        .filter { it.corners[1].x < priceX && it.corners[0].y < lira.bottom() }
+        .filter { it.corners[1].x < priceX && it.corners[0].y < lira.bottomY() }
         .lastOrNull { PACK.matches(it.text.trim()) }
         ?: return null
 
@@ -150,24 +150,6 @@ private val PACK = Regex(
 )
 
 private val PACK_PARTS = Regex("""(\d+([.,]\d+)?)\s*(G|GR|KG|ML|L|LT|CC)""", RegexOption.IGNORE_CASE)
-
-/**
- * Mansetin okunabilir sayildigi tek yer.
- *
- * En buyuk glifli sayi-baslangicli satir, ama sadece **makul boyda** ise.
- * Boyut suzgeci olmadan bulanik bir etiket uydurma bir ad donduruyordu.
- *
- * Esik [MIN_LIRA_RATIO], `TagPriceReader` ile PAYLASILIYOR: iki okuyucunun ayni
- * fikstur icin farkli karar vermesi tutarsizlik olurdu.
- */
-private fun TagOcr.readableLira(): OcrPiece? = lines
-    .filter { it.text.trimStart().firstOrNull()?.isDigit() == true }
-    .maxByOrNull { it.height() }
-    ?.takeIf { it.height() >= sourceHeight * MIN_LIRA_RATIO }
-
-private fun OcrPiece.height(): Int = if (corners.size < 4) 0 else corners[3].y - corners[0].y
-
-private fun OcrPiece.bottom(): Int = if (corners.size < 4) 0 else corners[3].y
 
 /**
  * Magaza/yazici kodu mu (`P728`)?

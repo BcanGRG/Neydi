@@ -487,6 +487,24 @@ interface PriceObservationDao {
     suspend fun lastUsedStoreId(householdId: String): String?
 
     /**
+     * Hanenin butun gozlemleri, en yenisi once.
+     *
+     * E17'nin `history(productId, 9)` sorgusunun genel hali; simdilik tek
+     * cagirani yazma yolunun testi. Test icin eklenmis gibi gorunmesin diye
+     * gerekcesi acik olsun: yazilan satiri GERI OKUMADAN yazma yolu
+     * dogrulanamiyor ve mevcut API bunu yalnizca dolayli yoldan yapabiliyordu
+     * (ayni koordinatlarla `countRecentDuplicates` cagirmak).
+     */
+    @Query(
+        """
+        SELECT * FROM price_observation
+        WHERE householdId = :householdId AND deletedAt IS NULL
+        ORDER BY observedAt DESC
+        """,
+    )
+    suspend fun allObservations(householdId: String): List<PriceObservation>
+
+    /**
      * Gozlem kaydedilmis zincirlerin id'leri (tasarim karari 36).
      *
      * Ayarlar'daki Zincirler satiri iki rengi bununla ayiriyor: gozlemi olan

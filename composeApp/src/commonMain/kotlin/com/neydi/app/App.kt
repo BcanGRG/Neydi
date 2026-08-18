@@ -18,12 +18,14 @@ import com.neydi.app.nav.MissingItems
 import com.neydi.app.nav.History
 import com.neydi.app.nav.Setup
 import com.neydi.app.nav.Liste
+import com.neydi.app.nav.TagCapture
 import com.neydi.app.nav.NeydiSavedStateConfig
 import com.neydi.app.ui.settings.DeleteDataRoute
 import com.neydi.app.ui.settings.SettingsRoute
 import com.neydi.app.ui.missing.MissingItemsRoute
 import com.neydi.app.ui.history.HistoryRoute
 import com.neydi.app.ui.setup.SetupRoute
+import com.neydi.app.ui.capture.TagCaptureRoute
 import com.neydi.app.ui.list.ListScreen
 import com.neydi.app.ui.theme.NeydiTheme
 import org.koin.compose.koinInject
@@ -80,6 +82,15 @@ fun App() {
                         onGoShopping = { go(MissingItems) },
                         onHistory = { go(History) },
                         onSettings = { go(Settings) },
+                        onCapture = { go(TagCapture) },
+                    )
+                }
+                entry<TagCapture> {
+                    TagCaptureRoute(
+                        onBack = { back() },
+                        // Toast'i LISTE gosteriyor: mesaji ureten hedef
+                        // kapaniyor, gosterecek yuzey ondan sonra geliyor.
+                        onSaved = { message -> toast = message },
                     )
                 }
                 entry<MissingItems> {

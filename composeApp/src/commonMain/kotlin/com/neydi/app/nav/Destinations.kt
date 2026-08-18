@@ -30,8 +30,20 @@ data object Liste : NeydiKey
 @Serializable
 data object MissingItems : NeydiKey
 
-// Cekim hedefi E6'da oldu; yerine E15'te `TagCapture` geliyor - PARAMETRESIZ,
-// cunku etiket cekimi geziden bagimsiz (pivot karari 3).
+/**
+ * Etiket cekimi (Ekran 4).
+ *
+ * PARAMETRESIZ ve bu pivot karari 3: cekim bir GEZIYE bagli degil. Fis
+ * doneminde `Capture(tripId)` vardi cunku fis bir alisverisin ciktisiydi;
+ * raf etiketi ise rafta duruyor ve alisverise cikmadan da fotograflanabiliyor.
+ * Parametre eklemek o bagimsizligi sessizce geri alirdi.
+ *
+ * KAMERA VE ONAY KARTI TEK HEDEF: kart kameranin USTUNDE aciliyor (karar 25),
+ * ayri bir destinasyon olsaydi geri tusu karti kapatmak yerine ekrani
+ * degistirirdi.
+ */
+@Serializable
+data object TagCapture : NeydiKey
 
 @Serializable
 data object History : NeydiKey
@@ -74,6 +86,7 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(Liste::class)
+            subclass(TagCapture::class)
             subclass(MissingItems::class)
             subclass(History::class)
             subclass(Settings::class)
@@ -99,6 +112,7 @@ val NeydiSavedStateConfig: SavedStateConfiguration = SavedStateConfiguration {
 @Suppress("unused")
 private fun NeydiKey.hasSerializerRegistration(): Unit = when (this) {
     is Liste -> Unit
+    is TagCapture -> Unit
     is MissingItems -> Unit
     is History -> Unit
     is Settings -> Unit
