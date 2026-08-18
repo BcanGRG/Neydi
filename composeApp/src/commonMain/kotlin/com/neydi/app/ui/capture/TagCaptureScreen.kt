@@ -61,6 +61,7 @@ import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiToast
+import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
 
@@ -163,7 +164,7 @@ internal fun TagCaptureScreen(
                 if (cameraPermanentlyDenied) {
                     Box(
                         Modifier
-                            .height(TAP_TARGET)
+                            .height(Sizes.minTapTarget)
                             .clip(NeydiExtraShapes.pill)
                             .pressable(onTap = onOpenSettings)
                             .background(Flow.viewfinderChrome)
@@ -282,7 +283,7 @@ internal fun TagCaptureScreen(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(top = TAP_TARGET + Spacing.sm, start = Spacing.md, end = Spacing.md)
+                    .padding(top = Sizes.minTapTarget + Spacing.sm, start = Spacing.md, end = Spacing.md)
                     .clip(NeydiExtraShapes.pill)
                     .background(Flow.viewfinderChrome)
                     .padding(horizontal = Spacing.md, vertical = Spacing.sm),
@@ -330,7 +331,7 @@ private fun BoxScope.CameraLayer(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Box(
-                Modifier.size(TAP_TARGET).pressable(onTap = onBack),
+                Modifier.size(Sizes.minTapTarget).pressable(onTap = onBack),
                 contentAlignment = Alignment.Center,
             ) {
                 NeydiIcon(NeydiIcons.Close, contentDescription = "kapat", size = 24.dp, tint = Flow.viewfinderChrome)
@@ -346,7 +347,7 @@ private fun BoxScope.CameraLayer(
             // goruntusunun uzerinde "biraz daha parlak sari" bir hal degildir.
             Box(
                 Modifier
-                    .size(TAP_TARGET)
+                    .size(Sizes.minTapTarget)
                     .clip(NeydiExtraShapes.pill)
                     .pressable(onTap = onToggleFlash)
                     .background(if (flashOn) Flow.viewfinderChrome else Color.Transparent),
@@ -599,7 +600,7 @@ private fun BoxScope.ConfirmCardLayer(
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(TAP_TARGET)
+                .height(Sizes.minTapTarget)
                 .pressable(onTap = onDismiss),
             contentAlignment = Alignment.Center,
         ) {
@@ -819,9 +820,6 @@ private const val FLASH_MS = 120
 
 /** Hata seridi ne kadar durur - toast ile ayni omur. */
 private const val FAILURE_MS = 4000L
-
-/** En kucuk dokunma hedefi TEK SAYI 48dp (karar 56). */
-private val TAP_TARGET = 48.dp
 
 /** Kart satiri - tasarimin `min-height:56px`i. */
 private val ROW_HEIGHT = 56.dp

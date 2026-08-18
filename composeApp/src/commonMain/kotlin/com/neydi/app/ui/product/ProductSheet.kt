@@ -266,7 +266,7 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
                         onTap = { onDeleteObservation(row.id); armed = null },
                     )
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs)
-                    .heightIn(min = TAP_TARGET),
+                    .heightIn(min = Sizes.minTapTarget),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -289,7 +289,7 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
                     .fillMaxWidth()
                     .pressable(onLongPress = { armed = row.id }, onTap = {})
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs)
-                    .heightIn(min = TAP_TARGET),
+                    .heightIn(min = Sizes.minTapTarget),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -313,9 +313,6 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
         }
     }
 }
-
-/** En kucuk dokunma hedefi TEK SAYI 48dp (karar 56). */
-private val TAP_TARGET = 48.dp
 
 // --- Onizlemeler ------------------------------------------------------------
 

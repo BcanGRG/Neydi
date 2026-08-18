@@ -36,6 +36,7 @@ import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.components.NeydiPreview
+import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -64,9 +65,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
  * gerekcesini - hiz ve kirlilik - geri getirirdi. Liste kisa kaliyor.
  */
 private const val SHEET_CORNER = 28
-
-/** Arama alani ve cip yuksekligi: TEK SAYI 48dp (karar 56). */
-private val FIELD_HEIGHT = 48.dp
 
 /** Maket 44 ciziyor; karar 56 "44 gecen satirlar duzeltildi" diyor. */
 private val ROW_STORE = 56.dp
@@ -114,7 +112,7 @@ internal fun ProductPicker(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
-                Modifier.fillMaxWidth().height(FIELD_HEIGHT),
+                Modifier.fillMaxWidth().height(Sizes.minTapTarget),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -253,7 +251,7 @@ internal fun StorePicker(
             // "yeni market" degil, TAM OLARAK BU AD.
             Row(
                 Modifier
-                    .height(FIELD_HEIGHT)
+                    .height(Sizes.minTapTarget)
                     .clip(NeydiExtraShapes.pill)
                     .pressable(onTap = onConfirmNew)
                     .background(Flow.brandBackground)
@@ -312,7 +310,7 @@ internal fun BrandPicker(
             // kullaniciya cikis birakmazdi.
             Row(
                 Modifier
-                    .height(FIELD_HEIGHT)
+                    .height(Sizes.minTapTarget)
                     .clip(NeydiExtraShapes.pill)
                     .pressable(onTap = { onPick(null) })
                     .background(Flow.cardBackground)
@@ -338,7 +336,7 @@ internal fun BrandPicker(
 private fun BrandChip(text: String, selected: Boolean, onTap: () -> Unit) {
     Row(
         Modifier
-            .height(FIELD_HEIGHT)
+            .height(Sizes.minTapTarget)
             .clip(NeydiExtraShapes.pill)
             .pressable(onTap = onTap)
             .background(if (selected) Flow.brandBackground else Flow.chipBackground)
@@ -395,7 +393,7 @@ private fun SearchField(value: String, placeholder: String, onChange: (String) -
     Row(
         Modifier
             .fillMaxWidth()
-            .height(FIELD_HEIGHT)
+            .height(Sizes.minTapTarget)
             .clip(RoundedCornerShape(14.dp))
             .background(Flow.chipBackground)
             .border(1.dp, Flow.chipBorder, RoundedCornerShape(14.dp))
@@ -429,7 +427,7 @@ private fun AddRow(label: String, onTap: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .pressable(onTap = onTap)
-            .height(FIELD_HEIGHT),
+            .height(Sizes.minTapTarget),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
