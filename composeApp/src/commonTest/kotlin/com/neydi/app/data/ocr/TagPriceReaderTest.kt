@@ -154,6 +154,27 @@ class TagPriceReaderTest {
     }
 
     /**
+     * BINLIK AYIRICILI BIRIM FIYAT - eski desenin sessizce bozdugu yer.
+     *
+     * `\d{1,4}[.,]\d{2}` soldan saga tarayip `1.512,84` icinden `1.51`i
+     * cekiyordu, yani 1512,84 TL/kg'i **1,51 TL/kg** okuyordu. Sayi makul
+     * gorundugu icin hicbir sey patlamiyordu; tek etkisi capraz kontrolun
+     * dogru manseti "celiskili" diye ATMASIYDI.
+     *
+     * Vakayi Migros fiksturlerinden aliyorum ama hata zincire ozel DEGIL -
+     * bin liralik bir birim fiyat BIM etiketinde de basilabilir.
+     */
+    @Test
+    fun aUnitPriceWithThousandsSeparatorsIsReadWhole() {
+        val dotted = assertNotNull(readTagUnitPrice(TagFixtures.all.getValue("20260817_211234")))
+        assertEquals(151_284L, dotted.minor, "nokta binlik ayirici: 1.512,84")
+        assertEquals("kg", dotted.unit)
+
+        val spaced = assertNotNull(readTagUnitPrice(TagFixtures.all.getValue("20260817_211236")))
+        assertEquals(299_938L, spaced.minor, "bosluklu binlik ayirici: 2 999,38")
+    }
+
+    /**
      * OLCUMUN KENDISI: kac etikette kurus OKUNDU.
      *
      * Bu sayi bir hedef degil, bulunan bir gercek. Testte durmasinin sebebi
