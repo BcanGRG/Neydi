@@ -19,6 +19,13 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 > `undo`/`filter_list` ve sıfır `~` tutar vardı. Tasarımın yapması ile bizde
 > olması ayrı iki olay; ✅ ancak ikincisinden sonra yazılır.
 >
+> **Ayna aynanın kendisiyle de çelişebiliyor** (yedinci tur, `docs/20`). E15
+> sonrası denetim dokuz dosyayı karşılaştırdı ve aynı sayının/kuralın iki
+> dosyada iki türlü yazıldığı **on üç yer** buldu: iki yeşil, 44dp / 48dp,
+> 60 sn / "aynı dakika", ikon renginin üç ayrı kuralı, kategori kutucuğunda
+> ürün mü kategori mi baş harfi. Bu dosyanın da iki satırı yanlış aktarımdı
+> — biçim ve değişmez satırları aşağıda düzeltildi.
+>
 > Canlı kaynak:
 > [design projesi](https://claude.ai/design/p/8eea982a-c3f6-4008-8789-81aaf478b51d).
 
@@ -50,7 +57,7 @@ adımda yapılıyor** onu söylüyor. Kararların kendisi ve gerekçeleri
 | 31 | Boş durum 04 kategorisi değişmedi, yalnızca gerekçe metni | ✅ tasarım tazeledi |
 | **32** | **İkon A yolu düştü** — ikonlar Phosphor Regular çizimleriyle elle `ImageVector`; **`Text` olarak çizilmiyor** | ✅ F11.11 · oklar **F11.29** |
 | **33** | **Yeniden yazıldı:** kural mutlak renk değil **ilişki** — ikon yanındaki metinden bir kademe açık; palet değişmiyor | ✅ **okumamız onaylandı** |
-| **34** | Envanter **17** — delta çipinin `arrow_upward`/`arrow_downward` okları girdi; `check` ile `check_circle` ayrı | ⏳ **F11.29** (15 taşındı) |
+| **34** | Envanter **17** — delta çipinin `arrow_upward`/`arrow_downward` okları girdi; `check` ile `check_circle` ayrı | ✅ **F11.29** · 17 taşındı |
 | **35** | Gizlilik notu + katılma kodu metni onaylandı | ✅ **birebir uygulandı** |
 | **36** | **Mağazalar bölümü kalıyor**, eşik kalktı; satır "Zincirler"; gözlemi olan zincir metin renginde, yalnızca seçilebilir olan soluk | ✅ **bu turda** |
 | **37** | Satır silme: sağdan sola swipe, **yalnız plan modu ve alınmamış satır**; geri alma 5 sn snackbar, aksiyon **"Geri al"** | ⏳ **F10.9** |
@@ -110,7 +117,16 @@ erken kapatmaz · kökte "çıkmak için tekrar bas" göstermez.
 **tahmin `~642 TL`** — tilde bitişik, **kuruş yazılmaz** ·
 birim fiyat `92,48/lt` · ağırlık `1,206 kg` (üç ondalık yalnızca tartıda) ·
 sayaç `12/18` boşluksuz · saat `15:38` 24 saatlik.
-**Kesin tutar diye bir biçim yok** — her tutar gözlemden hesaplanır.
+**Gözlem fiyatı `100,00 TL`** — etiketten okunan tek fiyat kesindir, tilde
+almaz, kuruş yazılır. Tilde yalnızca **ondan türetilen** tutarlarda (sepet,
+gezi, ortalama).
+
+> **Düzeltme (yedinci tur).** Burada önceden *"kesin tutar diye bir biçim yok"*
+> yazıyordu; bu tasarımın biçim tablosunun yanlış aktarımıydı. Tablo
+> *"gözlem fiyatı — 100,00 TL · etiketten okunan tek fiyat kesindir, tilde
+> almaz, kuruş yazılır"* diyor ve değişmez de aynı ayrımı taşıyor. Compose
+> Spec'in inceleme listesi hâlâ *"her tutarın önünde ~"* diyor — o çelişki
+> tasarıma soruldu (`docs/20`, madde 16).
 
 ### Etiket akışı (E15'in sözleşmesi)
 
@@ -134,9 +150,10 @@ depolama dolu → kart açılmaz, toast · çevrimdışı → **hiçbir şey**.
 
 Tek modal dialog yok · boş bölüm çizilmez, boş ekran açılmaz · geri her zaman
 bir şey kapatır, asla soru sormaz · alışveriş modu gezinin durumudur ·
-**etiket fotoğrafı kayıttan sonra silinir** · **her tutar tahmindir ve önünde
-`~` vardır** · **marka gözlemin alanıdır** · aynı etiket metni aynı markette
-bir kez sorulur · işaretleme snackbar açmaz · toast kuyruğu yoktur.
+**etiket fotoğrafı kayıttan sonra silinir** · **tek gözlem fiyatı kesindir,
+ondan türetilen her tutar `~` alır** · **marka gözlemin alanıdır** · aynı
+etiket metni aynı markette bir kez sorulur · işaretleme snackbar açmaz · toast
+kuyruğu yoktur.
 
 ---
 
@@ -152,10 +169,14 @@ Kalan 12: `add` · `photo_camera` · `more_vert` · `arrow_back` · `close` ·
 **Yapıldı:** kod envanteri önce **23 → 13**'e indi (silinenler: `ArrowUpward`,
 `ArrowDownward` — DeltaChip kendi okunu çiziyor —, `Undo`, `FilterList`
 (karar 3), `Functions`, `ContentCopy` (karar 24), `LightMode`, `DragIndicator`,
-`HourglassTop`, `Error`), sonra karar 34 ile **15**'e sabitlendi.
+`HourglassTop`, `Error`), sonra karar 34 ile **17**'ye sabitlendi.
 
-Karar 34 üç ikonu geri getirdi: `push_pin`, `check`, `content_paste` — üçü de
-kullanımdaydı ama tasarım envanterinde yoktu. `check` ile `check_circle`
+Karar 34 beş ikonu geri getirdi: `push_pin`, `check`, `content_paste` — üçü de
+kullanımdaydı ama tasarım envanterinde yoktu — ve delta çipinin iki oku,
+`arrow_upward` / `arrow_downward`. Oklar bir ara silinmişti (*"DeltaChip kendi
+okunu çiziyor"*); karar 34 onları envantere geri koyunca çizim de setin içine
+alındı, çünkü çipin oku Phosphor değilse denetlenmemiş bir çizim olarak kalır.
+`check` ile `check_circle`
 **ayrı kalıyor** ve bu kasıtlı: çıplak `check` satırda *"işaretlendi"*,
 `check_circle` çipte/seçicide *"seçili"*. İkisini tek ikona indirmek iki farklı
 fiili aynı sözcükle söylemek olurdu.
@@ -177,12 +198,12 @@ bir kez reddedilmişti (iOS'ta `FontVariation` güvenilir değil).
 
 Design bu itirazı kabul etti (karar 32) ve gerekçesinde aynı akışı kullandı:
 kalan iki seçenek **aynı mekanik işi** istediğine göre, kimlik kazancı olan
-taraf seçilir. Sonuç: **15 ikon Phosphor Regular 2.1.1 (MIT) çizimleriyle elle
+taraf seçilir. Sonuç: **17 ikon Phosphor Regular 2.1.1 (MIT) çizimleriyle elle
 `ImageVector` olarak taşındı.**
 
 Kazanç yalnızca kimlik değil: `material-icons-extended` bağımlılığı tamamen
 düştü — o artifact JetBrains tarafında **1.7.3'te donmuştu** ve tek kullanıcısı
-`NeydiIcon.kt`'ydi. Şimdi 15 path dizesi, birkaç KB kaynak.
+`NeydiIcon.kt`'ydi. Şimdi 17 path dizesi, birkaç KB kaynak.
 
 **Ara katman sınandı ve tuttu:** set baştan sona değişti, `NeydiIcons.ArrowBack`
 diyen 17 çağrı yerinin **hiçbiri** değişmedi. `NeydiIcons`'un varlık sebebi tam
@@ -191,7 +212,7 @@ olarak buydu ve ilk kez gerçek bir taşımada ödendi.
 **Elle taşımanın iki sessiz hata modu** teste bağlandı: kırpılmış bir `d` dizesi
 boş vektör üretir ve hiçbir şey şikâyet etmez; satır kopyalanıp path değiştirmeyi
 unutmak iki ikona aynı çizimi verir. `NeydiIconsTest` ikisini de yakalıyor.
-Testin *ölçemediği* şey çizimin ne olduğu — onun için `NeydiIcon.kt`'de on beş
+Testin *ölçemediği* şey çizimin ne olduğu — onun için `NeydiIcon.kt`'de on yedi
 ikonun `@PreviewLightDark` atlası var, ve beşi cihazda gözle doğrulandı.
 
 ---
@@ -233,10 +254,36 @@ taşıyıcısı renk olsaydı renk görmeyen kullanıcıya hiç ulaşmazdı.
 
 **1 · Ekran 1'in beşinci çerçevesi hâlâ tildesiz.** Dört maket *"~642 TL"*
 oldu ama biri *"Son alışveriş: bugün · 642,50 TL"* — tilde yok, kuruş var.
-Türetilmiş bir tutar olduğu için biçim kuralına aykırı. → **F11.17**
+**Gezi toplamı türetilmiş bir tutar** olduğu için biçim kuralına aykırı; tek
+gözlem fiyatı olsaydı doğru olurdu. → **F11.17**
 
 **2 · İkonografi dosyası karar 33'ü eski çiftiyle örnekliyor.** Karar defteri
 ilişkiyi doğru yazıyor (*"ikon yanındaki metinden bir kademe açık"*) ama
 İkonografi aynı kuralı hâlâ *"metin `#E4D8C9`, ikon `#F5EDE6`"* diye
 örnekliyor. İki ayna kuralda hemfikir, örnekte değil; defter esas alındı.
 → **F11.18**
+
+> **Yedinci tur bunu genişletti.** Çelişki yalnızca örnekte değil, **kuralın
+> kendisinde**: aynı İkonografi dosyası bir yerde *"ikon içinde bulunduğu
+> metnin rengini alır"*, başka yerde delta oku için *"çipin rengini alır"*
+> diyor, karar 33 ise *"bir kademe açık"* diyor. Üç kural, tek dosya. F11.18
+> kapatılırken üçü birden tek cümleye indirilmeli — `docs/20` madde 18.
+
+---
+
+## Yedinci tur açıldı — denetim çıktısı `docs/20`
+
+E15 cihazda koştu ve on iki gözlem üretti; girdiler
+[`19-tasarim-denetimi-girdileri.md`](19-tasarim-denetimi-girdileri.md)'de
+toplandı, denetim [`20-tasarima-sorular-7.md`](20-tasarima-sorular-7.md)
+olarak yazıldı: **36 case, 32'si tasarımdan cevap bekliyor.**
+
+Karar defterini doğrudan ilgilendiren, cevap gelmeden kodlanamayacak dört
+madde:
+
+| Konu | Etkilediği karar | `docs/20` |
+|---|---|---|
+| Yazılmış gözlem düzeltilemiyor / silinemiyor — `deletedAt` var, kapı yok | 26 · 29 | **1** |
+| Onay kartında "Vazgeç" — tasarım üç yerde istiyor, kodda yok | 25 | **2** |
+| Marka sheet'i klavyesiz, marka yalnızca OCR'dan gelebiliyor (kısır döngü) | 39 · 26 | **6** |
+| Birim fiyatın **tutarı** için kolon yok; Ekran 5 iki sayıyı birden çiziyor | 44 | **10** |
