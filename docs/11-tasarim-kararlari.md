@@ -287,3 +287,68 @@ madde:
 | Onay kartında "Vazgeç" — tasarım üç yerde istiyor, kodda yok | 25 | **2** |
 | Marka sheet'i klavyesiz, marka yalnızca OCR'dan gelebiliyor (kısır döngü) | 39 · 26 | **6** |
 | Birim fiyatın **tutarı** için kolon yok; Ekran 5 iki sayıyı birden çiziyor | 44 | **10** |
+
+---
+
+## Yedinci tur kapandı ✅ — kararlar 46–63
+
+Canlı tasarım projesi 18 Ağustos'ta yedinci turu cevapladı: **36 case ve 13 iç
+çelişki kapandı, tasarıma sorulacak açık madde kalmadı.** Aşağıdaki tablo her
+kararın **koddaki** durumunu tutuyor.
+
+| # | Karar | Kod | Nerede |
+|---|---|---|---|
+| 46 | Gözlem uzun dokunuşla silinir, 5 sn geri alma | ✅ | `ProductSheet.kt`, `ListViewModel.deleteObservation` |
+| 47 | Kaydedilen fiyat = etiketin manşet fiyatı | ✅ | `TagGrammar` (zaten böyleydi) |
+| 48 | Metro sekizinci zincir, tohuma girer | ❌ **bilinçli sapma** | aşağıda |
+| 49 | Desteklenmeyen zincirin tek cümlesi, şerit yok | ✅ | `ConfirmCard.unsupportedChainMessage` |
+| 50 | Güvenilmez fiyat: cümle + kesik çerçeveli sayı | ⚠️ **yarısı** | aşağıda |
+| 51 | Ürün kimliği katalogdan; OCR metni asla ad değil | ✅ | `ProductPicker`, `ConfirmCard.tagText` |
+| 52 | Marka havuzu markete genişler, sheet klavyesiz | ✅ | `BrandPicker`, `brandsSeenAt` |
+| 53 | İlk gözlemin izi fiyat çipi; sepet eşiği 3 | ✅ | zaten öyleydi (`PriceHint.Single`) |
+| 54 | Birim fiyat kendi kolonunu alır | ❌ | Faz 4 (şema) |
+| 55 | 120 ms örtücü flaşı + haptik, üç olay | ✅ | `TagCaptureScreen` |
+| 56 | En küçük dokunma hedefi tek sayı 48dp | ✅ | `Sizes.minTapTarget` |
+| 57 | Amber tek anlam; ucuzluk kiremit çipe geçti | ✅ | `CheaperChip` |
+| 58 | Şube yok; "Nerede ucuz" eşiği 2 satır | ✅ | `PriceSection.MIN_ROWS` |
+| 59 | Yeni market ikinci dokunuş ister; gözlemsiz market silinir | ✅ | `StorePicker`, `deleteStore` |
+| 60 | Flaş: iki hâl, oturumluk | ✅ | `CaptureController.torch` |
+| 61 | Yatayda kart sağ yarıda dikey panel | ❌ | aşağıda |
+| 62 | Vizör koyu / kart açık; doğrulama kırpımda | ✅ | `FlowPalette`, `TagThumbnail` |
+| 63 | Alt giriş bir buton | ✅ | `QuickAdd` |
+
+### Karar 50 — yarısı alındı, gerekçesi ölçüm
+
+Karar *"alan boş gelmez; okunan sayı kesik çerçeveli gelir"* diyor ve gerekçesi
+*"düzeltilecek bir şey vermek sıfırdan yazdırmaktan ucuz"*. Bu gerekçe okunan
+sayının **yaklaşık doğru** olduğunu varsayıyor. Ölçülen üç vakada öyle değil:
+
+| Fikstür | Okunan | Gerçeği |
+|---|---|---|
+| `20260817_183746` | 6,00 | 106,00 |
+| `20260817_183847` | 7,50/hg | 57,50/kg |
+| `20260817_211219` | 799,50 | 79,95 |
+
+İlk satır tehlikeli olanı: **6,00 TL makul görünüyor** ve kesik çerçeve fark
+edilmeden kaydedilebilir. Karar 49'un kendi gerekçesi *"yanlış fiyat, fiyat
+olmamasından kötü"* diyor; 50 ile 49 burada çelişiyor ve ölçüm 49'un yanında.
+**Cümlesi alındı, sayıyı göstermesi alınmadı.** Gerekçe
+`TagSkip.PRICE_CONTRADICTS_UNIT_PRICE` KDoc'unda; tasarıma bildirilecek.
+
+### Karar 48 — Metro
+
+Karar Metro'yu sekizinci zincir yapıp tohuma koyuyor. **Kullanıcı "Metro'yu
+boş ver" dedi** ve öncelik listesine almadı (FullGross, Gimat, BİM, A101, ŞOK,
+Tarım Kredi, Migros). Kullanıcının kendi alışveriş sırası, tasarımın
+"kullanıcının gerçekten etiket çektiği zincirler" ölçütünden daha yeni bir
+bilgi. `StoreSeed.SEED_CHAINS` gerekçesiyle birlikte Metro'yu dışarıda
+bırakıyor.
+
+### Kalanlar
+
+- **Karar 61 (yatay düzen)** — kart bugün her yönde alta yapışık.
+- **Karar 54 (birim fiyat kolonu)** — Faz 4, Room otomatik migrasyon.
+- **Süreç ölümünde kart** — `SavedStateHandle` yok; sözleşme kartın aynı
+  değerlerle dönmesini istiyor.
+- **Karar 55'in ikinci yarısı** — yakalanan karenin küçülerek kırpıma uçması
+  (260 ms). Flaş ve haptik var, uçuş yok.
