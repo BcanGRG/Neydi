@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.CatalogSeedDao
 import com.neydi.app.data.db.PriceObservationDao
+import com.neydi.app.data.db.Store
 import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.db.writeTagObservation
 import com.neydi.app.data.image.deleteFileAt
@@ -12,6 +13,7 @@ import com.neydi.app.data.image.downscaleForOcr
 import com.neydi.app.data.ocr.TagFields
 import com.neydi.app.data.ocr.readTag
 import com.neydi.app.data.ocr.readTagFields
+import com.neydi.app.data.formatMinor
 import com.neydi.app.data.parseMinorInput
 import com.neydi.app.data.repo.ListRepository
 import io.github.vinceglb.filekit.PlatformFile
@@ -65,6 +67,30 @@ internal class TagCaptureViewModel(
                 storeId = priceObservationDao.lastUsedStoreId(household),
             )
         }
+    }
+
+    /**
+     * Cekim BASARISIZ oldu - ve bunu soylemek zorundayiz.
+     *
+     * `CaptureController.capture` sozlesmesi *"false = kamera hazir degil ya da
+     * yazma basarisiz; cagiran taraf bunu kullaniciya soylemek zorunda"* diyor.
+     * Cagiran soylemiyordu: `if (capture(path)) onCaptured(path)` yaziliyordu ve
+     * `else` dali bostu. Deklansore basip hicbir sey olmamasinin ikinci sebebi
+     * buydu - birincisi geri bildirim yoklugu, bu ise gercekten kare
+     * alinamamasi.
+     *
+     * TEK CUMLE, cunku sebebi BILMIYORUZ. Tasarim depolama dolusu icin
+     * *"Yer kalmadi, fotograf alinamadi"*, kamera mesgulu icin *"Kamera su an
+     * kullanilamiyor"* diyor; `capture` ciplak bir `Boolean` donduruyor ve
+     * ikisini ayirt edemiyoruz. Yanlis sebebi soylemektense sebebsiz
+     * soylemek dogru - ayrim icin denetleyicinin gerekce dondurmesi gerekiyor.
+     */
+    fun captureFailed() {
+        _state.value = _state.value.copy(failure = "Fotoğraf alınamadı")
+    }
+
+    fun failureShown() {
+        _state.value = _state.value.copy(failure = null)
     }
 
     fun selectStore(storeId: String) {
@@ -152,7 +178,7 @@ internal class TagCaptureViewModel(
                 saving = false,
                 // MUKERRER ILE YENI AYRI CUMLELER: kullanici deklansore basti,
                 // bir sey soylenmeli - ama "kaydedildi" demek yanlis olurdu.
-                toast = if (written) "Fiyat kaydedildi" else "Aynı fiyat az önce kaydedilmişti",
+                toast = if (written) savedToast(currentChain(), minor) else "Aynı fiyat az önce kaydedilmişti",
             )
         }
     }
@@ -191,4 +217,25 @@ internal fun minorToInput(minor: Long): String {
     val lira = minor / 100
     val kurus = (minor % 100).toInt()
     return "$lira,${kurus.toString().padStart(2, '0')}"
+}
+
+/**
+ * `Gözlem kaydedildi · BİM · 24,90 TL` - tasarimin birebir bildirimi.
+ *
+ * ONCE YALNIZCA `Fiyat kaydedildi` yaziyordu ve seri cekimde bu yetersiz:
+ * kart kapandiktan sonra ekranda NE kaydedildigini gosteren hicbir sey
+ * kalmiyor, kamera yeniden aciliyor. Ard arda on iki etiket cekerken tek
+ * dogrulama noktasi bu cumle - market ve tutar orada olmazsa kullanici yanlis
+ * markete yazdigini ancak Liste'ye dondugunde gorur.
+ *
+ * MARKET YOKSA O PARCA DUSUYOR, "-" yazilmiyor: bos bir alan uydurmaktansa
+ * kisa cumle dogru.
+ *
+ * VIEWMODEL'IN DISINDA, cunku cumlenin kendisi test edilebilir olmali; ViewModel
+ * gercek bir Room veritabani ve Main dispatcher'i istiyor (bkz.
+ * `writeTagObservation`in ayni gerekceyle ayrilmasi).
+ */
+internal fun savedToast(chain: String?, minor: Long): String {
+    val money = formatMinor(minor)
+    return if (chain == null) "Gözlem kaydedildi · $money" else "Gözlem kaydedildi · $chain · $money"
 }

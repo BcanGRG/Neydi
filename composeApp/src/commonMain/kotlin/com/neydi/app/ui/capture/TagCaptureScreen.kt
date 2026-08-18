@@ -2,6 +2,7 @@ package com.neydi.app.ui.capture
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -21,12 +22,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +58,7 @@ import com.neydi.app.data.db.Store
 import com.neydi.app.data.ocr.TagSkip
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
+import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiToast
 import com.neydi.app.ui.theme.Spacing
@@ -88,12 +96,33 @@ internal fun TagCaptureScreen(
     onSave: () -> Unit,
     onDismissCard: () -> Unit,
     onToastShown: () -> Unit,
+    onFailureShown: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     /** Kartta gosterilecek tarih - "bugun" (sartname). */
     today: String = "Bugün",
     cameraContent: @Composable () -> Unit = {},
 ) {
+    val haptics = LocalHapticFeedback.current
+
+    // DEKLANSOR FLASI: 120 ms ortucu (karar 55).
+    //
+    // Kullanicinin bildirdigi eksik buydu - deklansore basinca hicbir sey
+    // degismiyordu ve ekran donmus gibi hissettiriyordu. Olculen bosluk
+    // gercek: cekimden karta ~1,15 sn geciyor (docs/17) ve o surede tek
+    // hareket `pressable`in %97 olcek darbesiydi, yani BASMA anini
+    // gosteriyordu, CEKIMIN oldugunu degil.
+    //
+    // Sayac ekranin kendi hali: flas bir sunum olayi, state'e girmesi
+    // gerekmiyor - ViewModel'in bundan haberi olmamali.
+    var shutterCount by remember { mutableIntStateOf(0) }
+    val flash = remember { Animatable(0f) }
+    LaunchedEffect(shutterCount) {
+        if (shutterCount == 0) return@LaunchedEffect
+        flash.snapTo(1f)
+        flash.animateTo(0f, tween(FLASH_MS))
+    }
+
     Box(modifier.fillMaxSize().background(Flow.viewfinderInk)) {
         cameraContent()
 
@@ -115,7 +144,15 @@ internal fun TagCaptureScreen(
                 stores = state.stores,
                 storeId = state.storeId,
                 ready = cameraReady && !cameraDenied,
-                onShutter = onShutter,
+                onShutter = {
+                    // HAPTIK UC OLAYDA SAYILIYOR (sozlesme): isaretleme, CEKIM,
+                    // kaydet. Cekim ve kaydet ayni darbeyi kullaniyor cunku
+                    // ikisi de "bir sey yazildi" diyor; isaretleme listede
+                    // daha hafif olani kullaniyor.
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    shutterCount++
+                    onShutter()
+                },
                 onSelectStore = onSelectStore,
                 onBack = onBack,
             )
@@ -137,6 +174,16 @@ internal fun TagCaptureScreen(
             )
         }
 
+        // FLAS EN USTTE: karti ve toast'i da bir an icin ortuyor, cunku
+        // ortucu flasi fiziksel bir olayin taklidi - kamera bir kare aldi.
+        if (flash.value > 0f) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Flow.viewfinderChrome.copy(alpha = flash.value)),
+            )
+        }
+
         NeydiToast(
             message = state.toast,
             onShown = onToastShown,
@@ -146,16 +193,38 @@ internal fun TagCaptureScreen(
                 .padding(bottom = Spacing.xl),
         )
 
-        state.failure?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Flow.amber,
+        // HATA SERIDI: `failure` bugune kadar HIC yazilmadigi icin bu dal
+        // calismamisti ve ciplak metin olarak kalmisti. Canli kamera
+        // goruntusunun uzerinde ciplak metin okunmaz - kadraj neyse metnin
+        // rengi o olur. Zeminli serit, vizorun kendi kromunu kullaniyor.
+        state.failure?.let { failure ->
+            LaunchedEffect(failure) {
+                delay(FAILURE_MS)
+                onFailureShown()
+            }
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(Spacing.md),
-            )
+                    .padding(top = TAP_TARGET + Spacing.sm, start = Spacing.md, end = Spacing.md)
+                    .clip(NeydiExtraShapes.pill)
+                    .background(Flow.viewfinderChrome)
+                    .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                NeydiIcon(
+                    icon = NeydiIcons.Info,
+                    contentDescription = null,
+                    size = 18.dp,
+                    tint = Flow.amberText,
+                )
+                Text(
+                    text = failure,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Flow.amberText,
+                )
+            }
         }
     }
 }
@@ -414,7 +483,15 @@ private fun BoxScope.ConfirmCardLayer(
         // "simdi" tek dogru cevap (`PriceObservation.observedAt`).
         CardRow(label = "Tarih", value = today, reading = false, plain = true)
 
-        SaveButton(enabled = card.canSave && !saving, saving = saving, onSave = onSave)
+        val haptics = LocalHapticFeedback.current
+        SaveButton(
+            enabled = card.canSave && !saving,
+            saving = saving,
+            onSave = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onSave()
+            },
+        )
 
         // VAZGEC GERI GELDI. Kaldirmistim cunku maket yalnizca Kaydet
         // ciziyordu; yanlis olan yari maketmis - sozlesme onu baştan beri iki
@@ -637,6 +714,12 @@ private fun Skeleton(width: Dp, height: Dp = 22.dp) {
     )
 }
 
+/** Ortucu flasinin suresi (karar 55). */
+private const val FLASH_MS = 120
+
+/** Hata seridi ne kadar durur - toast ile ayni omur. */
+private const val FAILURE_MS = 4000L
+
 /** En kucuk dokunma hedefi TEK SAYI 48dp (karar 56). */
 private val TAP_TARGET = 48.dp
 
@@ -651,7 +734,7 @@ private fun TagCaptureCameraPreview() = NeydiPreview {
         cameraReady = true,
         cameraDenied = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
     )
 }
 
@@ -673,7 +756,7 @@ private fun TagCaptureCardPreview() = NeydiPreview {
         ),
         cameraReady = true, cameraDenied = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
     )
 }
 
@@ -692,7 +775,7 @@ private fun TagCaptureUnreadChainPreview() = NeydiPreview {
         ),
         cameraReady = true, cameraDenied = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
-        onSave = {}, onDismissCard = {}, onToastShown = {}, onBack = {},
+        onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
     )
 }
 

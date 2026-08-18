@@ -63,7 +63,7 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
                 // Ad CEKIM ANINDAN: iki kare ayni saniyede cekilse bile
                 // ViewModel'in `photoPath` karsilastirmasi onlari ayirabilmeli.
                 val path = (dir / "tag-${nowStamp()}.jpg").absolutePath()
-                if (controller.capture(path)) vm.onCaptured(path)
+                if (controller.capture(path)) vm.onCaptured(path) else vm.captureFailed()
             }
         },
         onSelectStore = vm::selectStore,
@@ -71,6 +71,7 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
         onProductChange = vm::editProductName,
         onSave = vm::save,
         onToastShown = vm::toastShown,
+        onFailureShown = vm::failureShown,
         onDismissCard = vm::dismissCard,
         onBack = onBack,
         modifier = Modifier.fillMaxSize(),
