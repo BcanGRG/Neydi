@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -292,6 +293,14 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
                     .heightIn(min = Sizes.minTapTarget),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // TARIH ONCE: tasarimin satir sirasi `6 Ağu · Migros · 41,00 TL`
+                // ve sira bir tercih degil - satiri AYIRT EDEN sey tarih.
+                Text(
+                    text = row.date,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(HISTORY_DATE_WIDTH),
+                )
                 Text(
                     text = row.store,
                     style = MaterialTheme.typography.bodyMedium,
@@ -313,6 +322,8 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
         }
     }
 }
+
+private val HISTORY_DATE_WIDTH = 56.dp
 
 // --- Onizlemeler ------------------------------------------------------------
 
@@ -348,9 +359,9 @@ private fun ProductSheetPricePreview() = NeydiPreview {
                     CheapRow(store = "Migros", brand = "Pınar", price = "130,00", pack = null),
                 ),
                 history = listOf(
-                    HistoryRow(id = "h-BİM-10000", observedAt = 0, store = "BİM", price = "100,00"),
-                    HistoryRow(id = "h-Migros-13000", observedAt = 0, store = "Migros", price = "130,00"),
-                    HistoryRow(id = "h-BİM-9500", observedAt = 0, store = "BİM", price = "95,00"),
+                    HistoryRow(id = "h-BİM-10000", observedAt = 0, date = "6 Ağu", store = "BİM", price = "100,00"),
+                    HistoryRow(id = "h-Migros-13000", observedAt = 0, date = "6 Ağu", store = "Migros", price = "130,00"),
+                    HistoryRow(id = "h-BİM-9500", observedAt = 0, date = "6 Ağu", store = "BİM", price = "95,00"),
                 ),
                 sparkline = listOf(95f, 130f, 100f),
             ),

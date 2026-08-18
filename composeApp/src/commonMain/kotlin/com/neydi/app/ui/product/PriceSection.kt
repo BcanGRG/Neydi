@@ -2,6 +2,7 @@ package com.neydi.app.ui.product
 
 import androidx.compose.runtime.Immutable
 import com.neydi.app.data.db.ObservationRow
+import com.neydi.app.data.formatDayMonth
 import com.neydi.app.data.formatChipMinor
 
 /**
@@ -26,6 +27,16 @@ data class HistoryRow(
     /** Uzun dokunusla silinebilmesi icin (karar 46). */
     val id: String,
     val observedAt: Long,
+    /**
+     * "6 Ağu" - satirin TARIHI, ve bu bir susleme degil.
+     *
+     * `observedAt` bastan beri tasiniyordu ama HIC CIZILMIYORDU. Karar 46
+     * uzun dokunusla gozlem silmeyi getirdiginde bu sessiz eksik bir kusura
+     * dondu: ayni markette ayni fiyati iki kez gormus biri, silecegi satiri
+     * digerinden ayirt edemiyor. Silme kapisini acmak, satirin KIMLIGINI de
+     * gostermeyi zorunlu kiliyor.
+     */
+    val date: String,
     val store: String,
     val price: String,
 )
@@ -98,6 +109,7 @@ internal fun List<ObservationRow>.toPriceSection(): PriceSection {
             HistoryRow(
                 id = it.id,
                 observedAt = it.observedAt,
+                date = formatDayMonth(it.observedAt),
                 store = it.storeName ?: MARKET_YOK,
                 price = formatChipMinor(it.unitPriceMinor),
             )

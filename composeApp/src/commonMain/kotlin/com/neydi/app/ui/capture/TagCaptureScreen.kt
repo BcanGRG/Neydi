@@ -242,6 +242,7 @@ internal fun TagCaptureScreen(
                 onDelete = onDeleteStore,
                 onPropose = onProposeStore,
                 onConfirmNew = onConfirmNewStore,
+                onDismiss = onClosePicker,
             )
 
             TagPicker.BRAND -> BrandPicker(
@@ -249,6 +250,7 @@ internal fun TagCaptureScreen(
                 selected = state.card?.brand,
                 pool = state.brandPool,
                 onPick = onPickBrand,
+                onDismiss = onClosePicker,
             )
 
             null -> Unit
