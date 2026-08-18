@@ -7,6 +7,8 @@ import com.neydi.app.data.db.CatalogSeedDao
 import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.Store
 import com.neydi.app.data.db.StoreDao
+import com.neydi.app.data.matchKey as matchKeyOf
+import com.neydi.app.data.store.chainKey as chainKeyOf
 import com.neydi.app.data.db.writeTagObservation
 import com.neydi.app.data.image.deleteFileAt
 import com.neydi.app.data.image.downscaleForOcr
@@ -54,6 +56,15 @@ internal class TagCaptureViewModel(
 
     private val household = DEFAULT_HOUSEHOLD_ID
 
+    /**
+     * Son secilen urunun adi - kart acilirken hazir gelir (karar 51).
+     *
+     * State'te DEGIL, cunku cizilen bir sey degil: kartin baslangic degeri.
+     * State'e koymak "su an gosterilen" ile "bir dahakine gelecek" arasindaki
+     * farki silerdi.
+     */
+    private var lastProductName: String? = null
+
     private val _state = MutableStateFlow(TagCaptureState())
     val state: StateFlow<TagCaptureState> = _state.asStateFlow()
 
@@ -66,6 +77,7 @@ internal class TagCaptureViewModel(
                 stores = storeDao.observeAll(household).first(),
                 storeId = priceObservationDao.lastUsedStoreId(household),
             )
+            lastProductName = priceObservationDao.lastUsedProductName(household)
         }
     }
 
@@ -94,7 +106,7 @@ internal class TagCaptureViewModel(
     }
 
     fun selectStore(storeId: String) {
-        _state.value = _state.value.copy(storeId = storeId)
+        _state.value = _state.value.copy(storeId = storeId, picker = null, pendingStoreName = null)
     }
 
     /**
@@ -116,11 +128,130 @@ internal class TagCaptureViewModel(
                 card = card.copy(
                     reading = false,
                     priceText = fields?.price?.let { minorToInput(it.minor) } ?: "",
-                    productName = fields?.name?.name.orEmpty(),
+                    // OCR METNI ASLA URUN ADI OLMAZ (karar 51). Okunan ad
+                    // KANIT olarak tasiniyor - urun seciciye "Etiket metni:
+                    // DST YGRT 1000G" diye yaziliyor - ve urun kimligi
+                    // katalogdan geliyor. Onceki hal OCR'i dogrudan ada
+                    // yaziyordu ve Migros'ta ayni sut cihazda IKI urun oldu.
+                    tagText = fields?.name?.name,
+                    productName = lastProductName.orEmpty(),
                     brand = fields?.name?.brand,
                     kurusFromOcr = fields?.price?.kurusFromOcr == true,
                     skipped = fields?.skipped,
                 ),
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------- seciciler
+
+    fun openPicker(picker: TagPicker) {
+        _state.value = _state.value.copy(picker = picker, storeQuery = "", pendingStoreName = null)
+        when (picker) {
+            TagPicker.PRODUCT -> searchProducts(_state.value.card?.productName.orEmpty())
+            TagPicker.BRAND -> loadBrandPool()
+            TagPicker.STORE -> Unit
+        }
+    }
+
+    fun closePicker() {
+        _state.value = _state.value.copy(picker = null, pendingStoreName = null)
+    }
+
+    // --- Urun secici (karar 51)
+
+    fun searchProducts(query: String) {
+        _state.value = _state.value.copy(productQuery = query)
+        viewModelScope.launch {
+            // BOS ARAMADA EN YAYGINLAR: bos bir liste kullaniciya "katalog yok"
+            // der; oysa katalog dolu, yalnizca sorgu bos.
+            val picks =
+                if (query.isBlank()) catalogSeedDao.mostCommon()
+                else catalogSeedDao.search(matchKeyOf(query))
+            if (_state.value.productQuery == query) {
+                _state.value = _state.value.copy(productPicks = picks)
+            }
+        }
+    }
+
+    fun pickProduct(name: String) {
+        lastProductName = name
+        updateCard { it.copy(productName = name) }
+        closePicker()
+    }
+
+    // --- Marka sheet'i (karar 52)
+
+    private fun loadBrandPool() {
+        val storeId = _state.value.storeId
+        viewModelScope.launch {
+            val pool = if (storeId == null) emptyList() else priceObservationDao.brandsSeenAt(household, storeId)
+            // OCR'IN OKUDUGU MARKA DA HAVUZDA: sheet klavyesiz oldugu icin
+            // (karar 52) yeni bir marka sisteme yalnizca OCR kapisindan
+            // girebiliyor; onerilen markayi listeden dusurmek o tek kapiyi
+            // kapatirdi.
+            val suggested = _state.value.card?.brand
+            val merged = if (suggested != null && suggested !in pool) listOf(suggested) + pool else pool
+            _state.value = _state.value.copy(brandPool = merged)
+        }
+    }
+
+    fun pickBrand(brand: String?) {
+        updateCard { it.copy(brand = brand) }
+        closePicker()
+    }
+
+    // --- Market secici (karar 40 + 59)
+
+    fun searchStores(query: String) {
+        // Yazi degisince bekleyen onay DUSUYOR: "AKYRUT" icin acilan onay,
+        // kullanici adi duzeltince "AKYURT"u onaylamis gibi gorunmemeli.
+        _state.value = _state.value.copy(storeQuery = query, pendingStoreName = null)
+    }
+
+    /**
+     * "+ Yeni market" ILK dokunusu - henuz hicbir sey yaratmiyor (karar 59).
+     *
+     * Tek dokunusla kalici varlik yaratmak, geri alinamayan bir yazim hatasi
+     * demekti. Ikinci dokunus onay cipinde.
+     */
+    fun proposeStore(name: String) {
+        _state.value = _state.value.copy(pendingStoreName = name.trim())
+    }
+
+    fun confirmNewStore() {
+        val name = _state.value.pendingStoreName?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            // VAR OLAN ADIN BASKA YAZIMI SESSIZCE VAR OLANA BAGLANIR (karar 40):
+            // "BIM" yazan biri "BIM"i bulmali, sekizinci bir satir degil.
+            val existing = _state.value.stores.firstOrNull { chainKeyOf(it.chain) == chainKeyOf(name) }
+            val id = existing?.id ?: newId().also {
+                storeDao.insert(
+                    Store(id = it, householdId = household, name = name, chain = name, createdAt = clock()),
+                )
+            }
+            _state.value = _state.value.copy(
+                stores = storeDao.observeAll(household).first(),
+                storeId = id,
+                picker = null,
+                pendingStoreName = null,
+                storeQuery = "",
+            )
+        }
+    }
+
+    /** Gozlemsiz markete uzun dokunus (karar 59); gozlemli market SILINMEZ. */
+    fun deleteStore(storeId: String) {
+        viewModelScope.launch {
+            if (priceObservationDao.hasObservationsAt(household, storeId)) {
+                _state.value = _state.value.copy(failure = "Bu markette gözlem var, silinemez")
+                return@launch
+            }
+            storeDao.softDelete(storeId, clock())
+            val stores = storeDao.observeAll(household).first()
+            _state.value = _state.value.copy(
+                stores = stores,
+                storeId = _state.value.storeId?.takeIf { id -> stores.any { it.id == id } },
             )
         }
     }
@@ -158,6 +289,15 @@ internal class TagCaptureViewModel(
         val card = _state.value.card ?: return
         val minor = parseMinorInput(card.priceText) ?: return
         if (!card.canSave || _state.value.saving) return
+        // ADSIZ GOZLEM YAZILMAZ. `canSave` sozlesme geregi yalnizca fiyata
+        // bakiyor; ad yine de bos olabilecegi tek yerde - ilk kurulumun ilk
+        // cekimi, "son secilen urun" diye bir sey henuz yokken - Kaydet
+        // yazmiyor, SORUYOR. Butonu pasif birakmak kullaniciya neyin eksik
+        // oldugunu soylemezdi.
+        if (card.productName.isBlank()) {
+            openPicker(TagPicker.PRODUCT)
+            return
+        }
         _state.value = _state.value.copy(saving = true)
         viewModelScope.launch {
             val written = writeTagObservation(

@@ -92,7 +92,15 @@ internal fun TagCaptureScreen(
     onShutter: () -> Unit,
     onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onProductChange: (String) -> Unit,
+    onOpenPicker: (TagPicker) -> Unit,
+    onClosePicker: () -> Unit,
+    onPickProduct: (String) -> Unit,
+    onSearchProducts: (String) -> Unit,
+    onPickBrand: (String?) -> Unit,
+    onSearchStores: (String) -> Unit,
+    onProposeStore: (String) -> Unit,
+    onConfirmNewStore: () -> Unit,
+    onDeleteStore: (String) -> Unit,
     onSave: () -> Unit,
     onDismissCard: () -> Unit,
     onToastShown: () -> Unit,
@@ -166,12 +174,45 @@ internal fun TagCaptureScreen(
                 storeId = state.storeId,
                 saving = state.saving,
                 today = today,
-                onSelectStore = onSelectStore,
                 onPriceChange = onPriceChange,
-                onProductChange = onProductChange,
+                onOpenPicker = onOpenPicker,
                 onSave = onSave,
                 onDismiss = onDismissCard,
             )
+        }
+
+        // SECICI KATMANI: kartin uzerinde, cunku secici karta cevap veriyor -
+        // altinda kalsaydi kullanici hangi karta secim yaptigini goremezdi.
+        when (state.picker) {
+            TagPicker.PRODUCT -> ProductPicker(
+                tagText = state.card?.tagText,
+                query = state.productQuery,
+                picks = state.productPicks,
+                onQueryChange = onSearchProducts,
+                onPick = onPickProduct,
+                onBack = onClosePicker,
+            )
+
+            TagPicker.STORE -> StorePicker(
+                stores = state.stores,
+                storeId = state.storeId,
+                query = state.storeQuery,
+                pendingName = state.pendingStoreName,
+                onQueryChange = onSearchStores,
+                onSelect = onSelectStore,
+                onDelete = onDeleteStore,
+                onPropose = onProposeStore,
+                onConfirmNew = onConfirmNewStore,
+            )
+
+            TagPicker.BRAND -> BrandPicker(
+                productName = state.card?.productName.orEmpty(),
+                selected = state.card?.brand,
+                pool = state.brandPool,
+                onPick = onPickBrand,
+            )
+
+            null -> Unit
         }
 
         // FLAS EN USTTE: karti ve toast'i da bir an icin ortuyor, cunku
@@ -392,16 +433,11 @@ private fun BoxScope.ConfirmCardLayer(
     storeId: String?,
     saving: Boolean,
     today: String,
-    onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
-    onProductChange: (String) -> Unit,
+    onOpenPicker: (TagPicker) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Hangi satir acik - bir seferde YALNIZCA biri, varsayilan hicbiri: kart
-    // acilinca kullanici once OKUYOR, duzeltme istisna.
-    var open by remember(card.photoPath) { mutableStateOf<String?>(null) }
-
     Column(
         Modifier
             .align(Alignment.BottomCenter)
@@ -414,6 +450,18 @@ private fun BoxScope.ConfirmCardLayer(
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 30.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // DESTEKLENMEYEN ZINCIR CUMLESI kartin BASINDA, seridin YERINE
+        // (karar 49). Amber serit bu halde hic cizilmiyor - cumle onun isini
+        // zaten yapiyor ve iki uyari ust uste iki is varmis gibi gorunurdu.
+        card.unsupportedChainMessage()?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Flow.cancel,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+            )
+        }
+
         // AMBER SERIT: fiyat blogunun SOLUNDA 4dp'lik dikey cubuk, ustunde
         // kutu degil. Kod tam genislikte dolgulu bir kutu ciziyordu ve
         // `warning` token'ini kullaniyordu - o amber METNIN rengi.
@@ -450,34 +498,36 @@ private fun BoxScope.ConfirmCardLayer(
             }
         }
 
+        // UC SATIR UC SECICI ACIYOR - satir ici duzenleyici ve cip seridi
+        // KALKTI. Sebep tasarimin kendi akisi: urun kimligi katalogdan gelmek
+        // zorunda (karar 51), marka klavyesiz bir cip sheet'i (karar 52),
+        // market ise arama alanli bir liste (karar 40). Uc is de kartin
+        // icindeki 56dp'lik satira sigmiyordu.
         CardRow(
             label = "Ürün",
             value = card.productName.ifBlank { "—" },
             reading = card.reading,
-            onTap = { open = if (open == "urun") null else "urun" },
+            onTap = { onOpenPicker(TagPicker.PRODUCT) },
         )
-        if (open == "urun") {
-            InlineEditor(
-                value = card.productName,
-                placeholder = "Ürün adı",
-                onChange = onProductChange,
-            )
-        }
 
-        card.brand?.let { brand ->
-            CardRow(label = "Marka", value = brand, reading = card.reading, dashed = true)
-        }
+        // MARKA SATIRI HER ZAMAN VAR. Once yalnizca OCR bir marka onerdiyse
+        // ciziliyordu ve bu kisir dongunun ta kendisiydi: markayi degistirmek
+        // icin once dogru okunmus olmasi gerekiyordu.
+        CardRow(
+            label = "Marka",
+            value = card.brand ?: "—",
+            reading = card.reading,
+            dashed = card.brand != null,
+            onTap = { onOpenPicker(TagPicker.BRAND) },
+        )
 
         CardRow(
             label = "Market",
             value = stores.firstOrNull { it.id == storeId }?.name ?: "—",
             reading = false,
             store = true,
-            onTap = { open = if (open == "market") null else "market" },
+            onTap = { onOpenPicker(TagPicker.STORE) },
         )
-        if (open == "market") {
-            StoreChips(stores, storeId) { onSelectStore(it); open = null }
-        }
 
         // TARIH DOKUNULAMAZ ve chevron TASIMIYOR - etikette basili tarih yok,
         // "simdi" tek dogru cevap (`PriceObservation.observedAt`).
@@ -733,8 +783,11 @@ private fun TagCaptureCameraPreview() = NeydiPreview {
         state = TagCaptureState(stores = previewStores(), storeId = "s1"),
         cameraReady = true,
         cameraDenied = false,
-        onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
+        onShutter = {}, onSelectStore = {}, onPriceChange = {},
         onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
+        onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
+        onDeleteStore = {},
     )
 }
 
@@ -755,8 +808,11 @@ private fun TagCaptureCardPreview() = NeydiPreview {
             storeId = "s1",
         ),
         cameraReady = true, cameraDenied = false,
-        onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
+        onShutter = {}, onSelectStore = {}, onPriceChange = {},
         onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
+        onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
+        onDeleteStore = {},
     )
 }
 
@@ -774,8 +830,11 @@ private fun TagCaptureUnreadChainPreview() = NeydiPreview {
             storeId = "s2",
         ),
         cameraReady = true, cameraDenied = false,
-        onShutter = {}, onSelectStore = {}, onPriceChange = {}, onProductChange = {},
+        onShutter = {}, onSelectStore = {}, onPriceChange = {},
         onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
+        onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
+        onDeleteStore = {},
     )
 }
 

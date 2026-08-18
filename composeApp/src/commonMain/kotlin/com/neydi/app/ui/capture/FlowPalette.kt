@@ -76,6 +76,15 @@ internal object Flow {
     val amber = Color(0xFFE0A32E)
     val amberText = Color(0xFF96560A)
 
+    /**
+     * `+ Yeni urun` / `+ Yeni market` satirlarinin KIREMIDI.
+     *
+     * Kiremit "ileri goturen is" demek (karar 42/57) ve yeni bir kayit
+     * yaratmak tam olarak o. Kaydet'in yesiliyle karismiyor: yesil BITIRIYOR,
+     * kiremit BASLATIYOR.
+     */
+    val addAction = Color(0xFFB34418)
+
     /** Vizorun uzerindeki krom: cerceve rehberi disindaki her sey. */
     val viewfinderChrome = Color(0xFFF5EDE6)
     val viewfinderInk = Color(0xFF221A14)

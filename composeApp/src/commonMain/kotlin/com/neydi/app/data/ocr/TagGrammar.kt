@@ -50,6 +50,17 @@ internal fun grammarFor(chain: String?): TagGrammar? = when (chain) {
 }
 
 /**
+ * Grameri COZULMUS zincirlerin GORUNEN adlari.
+ *
+ * Karar 49'un cumlesi bu listeden kuruluyor - *"BİM ve Migros etiketlerini
+ * okuyabiliyoruz"* - ve elle yazilmiyor. Sebep dogrudan: ucuncu gramer
+ * eklendiginde elle yazilmis bir cumle SESSIZCE YALAN olur, kullaniciya
+ * okuyabildigimiz bir marketi okuyamiyoruz diye soyler. Liste ile
+ * [grammarFor] birlikte degismek zorunda ve testte kilitli.
+ */
+internal val SUPPORTED_CHAINS = listOf("BİM", "Migros")
+
+/**
  * BIM grameri - E12'de 27 gercek etiketten olculdu.
  *
  * Kurallarin kendisi [readTagPrice], [readTagName] ve [readTagPack] icinde
