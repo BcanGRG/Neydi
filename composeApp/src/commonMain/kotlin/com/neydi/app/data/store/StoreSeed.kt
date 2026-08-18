@@ -36,6 +36,14 @@ internal val SEED_CHAINS = listOf(
     "CarrefourSA",
     "File",
     "Tarım Kredi",
+    // TOPTANCILAR KULLANICIDAN GELDI ve tohuma girmelerinin sebebi pratik:
+    // uygulamada market EKLEME yolu yok (`storeDao.insert` yalnizca burasi),
+    // yani tohumda olmayan bir markette cekim yapmak demek gozlemi marketsiz
+    // ya da YANLIS marketle yazmak demek. Ikisi de karar 26'nin market+marka
+    // kimligini bozar - ve toplu alisveris tam da fiyat gecmisinin en cok ise
+    // yaradigi yer.
+    "Fullgross",
+    "Gimat",
 )
 
 /**

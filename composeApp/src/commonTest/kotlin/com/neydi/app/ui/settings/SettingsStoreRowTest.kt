@@ -12,6 +12,7 @@ import com.neydi.app.data.db.Store
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import com.neydi.app.data.store.SEED_CHAINS
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -155,7 +156,7 @@ class SettingsStoreRowTest {
      * dogru olup birlestiginde yanlis olabilirdi.
      */
     @Test
-    fun oneObservationLiftsExactlyOneOfTheSevenSeededChains() = runTest {
+    fun oneObservationLiftsExactlyOneSeededChain() = runTest {
         val db = db()
         db.bootstrap(newId = { "m1" }, clock = { 0 })
         db.productDao().insert(urun())
@@ -167,7 +168,10 @@ class SettingsStoreRowTest {
                 .observeStoreIdsWithObservations(home).first().toSet(),
         )
 
-        assertEquals(7, rows.size)
+        // SAYI TOHUMDAN: elle yazilan bir sayi, zincir listesi degistiginde
+        // testi "gercek degisti" degil "beklenti eskidi" diye kirmiziya
+        // dusururdu.
+        assertEquals(SEED_CHAINS.size, rows.size)
         assertEquals("Migros", rows.first().name)
         assertTrue(rows.first().hasObservation)
         assertEquals(1, rows.count { it.hasObservation })
