@@ -2,8 +2,9 @@ package com.neydi.app.ui.capture
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,9 @@ import io.github.vinceglb.filekit.readBytes
 /** Kirpimin uzun kenari, piksel. */
 private const val THUMB_EDGE = 720
 
+/** Seridin yuksekligi - tasarim maketi `height:92px`. */
+private val STRIP_HEIGHT = 92.dp
+
 /**
  * Cekilen karenin kartin BASINDAKI kirpimi (karar 62).
  *
@@ -35,11 +39,20 @@ private const val THUMB_EDGE = 720
  * kararabilir. Gerekcesi olcu: iki mekanizma kart yuksekligine mal oluyordu ve
  * kirpim alanlarin YANINDA oldugu icin goz ikisini birlikte okuyor.
  *
- * ## 3:2 ORAN kadraj rehberiyle AYNI
+ * ## 92dp SERIT, 3:2 BLOK DEGIL
  *
- * Rehber 3:2 ciziyor ve kullanici etiketi ona hizaliyor; kirpim baska bir oran
- * gosterseydi "kadraja oturttugum sey bu mu" sorusu cevapsiz kalirdi.
- * [ContentScale.Crop] ile merkez kirpim, rehberin gosterdigi bolgeyi veriyor.
+ * Once tam genislikte 3:2 ciziyordum - kadraj rehberiyle ayni oran olsun diye.
+ * Yanlisti ve kullanici cihazda bildirdi: 3:2 serit 239dp yuksekligindeydi ve
+ * karti ekrandan tasirip Kaydet ile Vazgec'i asagida birakiyordu.
+ *
+ * Tasarim bunu zaten cevaplamis - maket `height:92px` diyor. Ustelik karar
+ * 62'nin gerekcesi de ayni seyi soyluyor: iki mekanizmayi (arkada donmus kare
+ * + kirpim) teke indirmesinin sebebi *"kart yuksekligine mal olmasi"*ydi ve
+ * kirpimin isi *"alanlarin YANINDA"* durup gozle birlikte okunmakti. Kartin
+ * yarisini yiyen bir blok o isi yapmiyor.
+ *
+ * [ContentScale.Crop] serit icinde merkez kirpim veriyor: gorulen sey karenin
+ * ortasi, yani kadraj rehberinin ortasi.
  *
  * ## KUCULTULMUS bir kopya cozuluyor, ham kare DEGIL
  *
@@ -64,9 +77,10 @@ internal fun TagThumbnail(photoPath: String, modifier: Modifier = Modifier) {
     Box(
         modifier
             .fillMaxWidth()
-            .aspectRatio(3f / 2f)
+            .height(STRIP_HEIGHT)
             .clip(RoundedCornerShape(14.dp))
-            .background(Flow.chipBackground),
+            .background(Flow.chipBackground)
+            .border(1.dp, Flow.chipBorder, RoundedCornerShape(14.dp)),
     ) {
         image?.let {
             Image(

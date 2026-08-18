@@ -8,6 +8,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neydi.app.data.image.deleteFileAt
+import com.neydi.app.data.image.deleteFilesIn
+import com.neydi.app.data.image.jpegIsComplete
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.createDirectories
@@ -43,16 +46,33 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
 
     // GERI SIRASI: once KART, sonra destinasyon (gezinme sozlesmesi).
     //
-    // Kart aciksa geri tusu ekrandan cikmamali - cekilen kare cope giderdi.
-    // Kaydetme SURERKEN geri de yutuluyor: sartname *"kaydet sirasinda geri =
+    // GERI SIRASI: once SECICI, sonra KART, sonra ekran.
+    //
+    // Secici sirada YOKTU ve sonucu sessiz bir hataydi: secici acikken geriye
+    // basmak ARKADAKI KARTI kapatiyordu. Secici ekranda kaliyor, ama artik
+    // yazacagi bir kart yok - urun secmek `updateCard` uzerinden hicbir sey
+    // yapmiyor ve kullanici sectigini saniyor. Cihazda goruldu.
+    //
+    // Kaydetme SURERKEN geri yutuluyor: sartname *"kaydet sirasinda geri =
     // kayit tamamlanir"* diyor ve yazma zaten `viewModelScope`ta, yani ekrani
     // kapatmamak tek yapilmasi gereken.
-    CaptureBackHandler(enabled = state.card != null || state.saving) {
-        if (!state.saving) vm.dismissCard()
+    CaptureBackHandler(enabled = state.picker != null || state.card != null || state.saving) {
+        when {
+            state.saving -> Unit
+            state.picker != null -> vm.closePicker()
+            else -> vm.dismissCard()
+        }
     }
 
     val dir = remember { FileKit.filesDir / "tags" }
-    LaunchedEffect(Unit) { dir.createDirectories() }
+    LaunchedEffect(Unit) {
+        dir.createDirectories()
+        // YETIM KARELERI SUPUR. Ekran aciliyor ve elimizde kart YOK, yani
+        // klasorde ne varsa onceki bir oturumdan kalmis demektir - kaydedilmis
+        // ya da vazgecilmis olsaydi silinmis olurdu. Tek kalan yol uygulamanin
+        // kart acikken oldurulmesi ve orada silecek kimse yok.
+        if (state.card == null) deleteFilesIn(dir.absolutePath())
+    }
 
     TagCaptureScreen(
         state = state,
@@ -67,7 +87,17 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
                 // Ad CEKIM ANINDAN: iki kare ayni saniyede cekilse bile
                 // ViewModel'in `photoPath` karsilastirmasi onlari ayirabilmeli.
                 val path = (dir / "tag-${nowStamp()}.jpg").absolutePath()
-                if (controller.capture(path)) vm.onCaptured(path) else vm.captureFailed()
+                // IKI KAPI: denetleyici "yazdim" demeli VE dosya gercekten
+                // eksiksiz olmali. Ikincisi olmadan yarim yazilmis bir kare
+                // karta girip OCR'a gidiyor - ve eksik olan yer etiketin
+                // fiyati olabilir.
+                val yazildi = controller.capture(path) && jpegIsComplete(path)
+                if (yazildi) {
+                    vm.onCaptured(path)
+                } else {
+                    deleteFileAt(path)
+                    vm.captureFailed()
+                }
             }
         },
         onSelectStore = vm::selectStore,
