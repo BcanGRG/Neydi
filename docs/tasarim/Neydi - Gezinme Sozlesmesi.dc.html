@@ -435,7 +435,7 @@ class Component extends DCLogic {
         { n: "6", t: "Kökteyse uygulamadan çıkılır." }
       ],
       labelFlow: [
-        { state: "Kamera hazır", input: "Deklanşöre dokunuş", result: "Kare alınır, kırpılır, OCR başlar; kart hemen açılır (boş alanlarla).", edge: "OCR 1,5 sn'yi geçerse alanlar iskelet olarak görünür, kart beklemez." },
+        { state: "Kamera hazır", input: "Deklanşöre dokunuş", result: "Kare alınır, kırpılır, OCR başlar; kart hemen açılır (iskelet alanlarla).", edge: "Eşik yok: alanlar OCR dönene kadar iskelet — OCR her zaman görünür bir süre (~1,15 sn) çalışır." },
         { state: "Kart · OCR döndü", input: "—", result: "Fiyat, ürün, marka dolar; market yapışkan değerden gelir, tarih bugündür.", edge: "Aynı etiket metni daha önce eşlendiyse ürün sorulmaz." },
         { state: "Kart · fiyat boş", input: "Klavye kendiliğinden açılır", result: "Kaydet pasif; ilk rakamda etkinleşir.", edge: "Kullanıcı yazmadan geri basarsa klavye kapanır, kart durur." },
         { state: "Kart · ürün tanınmadı", input: "\"Ürün seç\" dokunuşu", result: "Katalog sheet'i arama odaklı açılır; seçim etiket metnine bağlanır.", edge: "Katalogda yoksa \"Yeni ürün olarak ekle\" tek dokunuş." },
@@ -473,7 +473,7 @@ class Component extends DCLogic {
         { case: "İkisi de aynı satırı işaretledi", rule: "İşaret idempotent: iki kez işaretlemek bir kez işaretlemektir. Satır bir kez \"Alındı\"ya kayar, ikinci olay hiçbir animasyon tetiklemez." },
         { case: "Biri satırı silerken diğeri işaretledi", rule: "Silme kazanır. İşaretleme sessizce düşer; işaretleyen kişi satırın kaybolduğunu görür, hata mesajı almaz." },
         { case: "Eş listeye satır ekledi", rule: "Satır kendi yerine kayarak girer, baş harfi rozetiyle. Alışveriş modunda reyon sırası donuk olduğu için satır listenin sonuna eklenir." },
-        { case: "İki cihazda aynı gözlem", rule: "Market + ürün + fiyat + aynı dakika = tek gözlem. Eşitleme sırasında ikincisi düşürülür." },
+        { case: "İki cihazda aynı gözlem", rule: "Tek kural 60 sn'lik kayan pencere ve yalnızca cihaz içi. Eşitlemede ikinci cihazın gözlemi ayrı satır kalır — iki kişi gerçekten iki kez görmüştür." },
         { case: "Biri alışverişi bitirdi", rule: "Diğerinin ekranı plan moduna döner ve toast görür: \"Alışveriş kapandı\". İşaretlemeleri korunur, gezi kaydına yazılmıştır." },
         { case: "Aynı anda kurulum", rule: "Kurulum hane başına bir kez; ikinci cihaz kurulum görmez, doğrudan listeye düşer." }
       ],
@@ -481,12 +481,12 @@ class Component extends DCLogic {
         { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Değer önceden dolu ve seçili gelir; başka hiçbir yerde metin girişi yoktur — istisna arama alanları: Ekle, ürün seçici ve market seçici. Marka seçicide arama yok, liste kısa." },
         { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Tek istisna: fiyatı okunamamış onay kartı." },
         { name: "Dokunma hedefi", rule: "En küçük hedef 48dp. Alışveriş modunda satır 72dp, çünkü yürürken dokunuluyor." },
-        { name: "Haptik", rule: "İşaretlemede hafif tık; kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
-        { name: "Uzun dokunuş", rule: "Yalnızca Liste satırında: Ürün Detayı açar. Başka hiçbir yerde uzun dokunuş bir işe bağlanmaz." },
+        { name: "Haptik", rule: "Üç olay: işaretlemede hafif tık, çekimde hafif darbe, kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
+        { name: "Uzun dokunuş", rule: "Üç yerde: Liste satırı Ürün Detayı açar; Ürün Detayı'nda gözlem satırı error renginde \"Bu gözlemi sil\" sunar; market seçicide gözlemsiz market silinebilir. Başka hiçbir yerde uzun dokunuş bir işe bağlanmaz." },
         { name: "Jest", rule: "Sağdan sola swipe yalnızca plan modunda ve yalnızca alınmamış satırda satırı siler; geri alma 5 sn'lik snackbar'da, aksiyon \"Geri al\". Alışveriş modunda, \"Alındı\" bölümünde ve etiket akışında jest yok." },
         { name: "Jestsiz eş", rule: "Silmenin jest olmayan eşi Ürün Detayı'nda: satıra uzun dokunuş → error renginde \"Listeden çıkar\". Taşma menüsünde silme yok — menü ekran düzeyinde yaşar, silme satır düzeyinde bir iştir." },
         { name: "Dinamik yazı", rule: "%130'a kadar tüm ekranlar taşmadan büyür; manşetler 2 satıra iner, ölçüler değişmez." },
-        { name: "Ekran okuyucu", rule: "Fiyat çipleri \"38 lira 50 kuruş\" olarak okunur; sparkline tek cümleye indirgenir: \"son 9 gözlem, yükseliyor\"." }
+        { name: "Ekran okuyucu", rule: "Fiyat çipleri \"38 lira 50 kuruş\" olarak okunur; kuruş sıfırsa okunmaz: \"149 lira\". Sparkline tek cümleye indirgenir: \"son 8 gözlem, yükseliyor\"." }
       ],
       edges: [
         { from: "Liste", to: "Ekle", trigger: "Alt girişteki \"+ Ürün ekle\" ya da alışveriş modunda add hedefi", back: "Sheet kapanır; eklenen satırlar listede durur" },
@@ -504,6 +504,7 @@ class Component extends DCLogic {
         { from: "Onay kartı", to: "Marka seçici", trigger: "Marka alanı", back: "Kart, alanları dolu" },
         { from: "Onay kartı", to: "Etiket çek", trigger: "Kaydet ya da Vazgeç", back: "—" },
         { from: "Etiket çek", to: "Ürün Detayı", trigger: "Toast'a değil, yok — kayıttan sonra detay açılmaz", back: "—" },
+        { from: "Liste", to: "Ürün Detayı", trigger: "Fiyat çipi ya da alışveriş satırının chevron'u", back: "Liste" },
         { from: "Geçmiş", to: "Gezi detayı", trigger: "Gezi satırı", back: "Geçmiş" },
         { from: "Gezi detayı", to: "Ürün Detayı", trigger: "Ürün satırı", back: "Gezi detayı" },
         { from: "Ayarlar", to: "Verilerimi sil", trigger: "Gizlilik → \"Verilerimi sil\"", back: "Ayarlar, hiçbir şey silinmeden" },
@@ -517,7 +518,7 @@ class Component extends DCLogic {
         { t: "Etiket çekiminden Ürün Detayı'na atlanmaz — kayıt akışı kesintiye uğramaz." },
         { t: "Ürün Detayı'ndan etiket çekimine kısayol yok; giriş tek yerde, Liste başlığında." },
         { t: "Ayarlar'daki \"Zincirler\" satırı bir ekrana gitmez; adlar değerin kendisi." },
-        { t: "Hiçbir yerden Kurulum'a dönülemez; tamamlanan kurulum bir daha görünmez." },
+        { t: "Tamamlanan kurulum bir daha açılmaz; tek kenar \"Verilerimi sil\" onayı sonrası sıfırdan kurulumdur." },
         { t: "Bildirim yok, deep link yok. Uygulamaya tek giriş simgesi." }
       ],
       motion: [
@@ -525,14 +526,15 @@ class Component extends DCLogic {
         { name: "Destinasyon kapanışı", dur: "250 ms", curve: "Ters yön · yavaşlama", rule: "Geri her zaman açılıştan hızlıdır" },
         { name: "Sheet açılışı", dur: "320 ms", curve: "Yay · sönüm .82, sıçrama yok", rule: "Arkadaki ekran %4 karartılır, ölçeklenmez" },
         { name: "Sheet kapanışı", dur: "220 ms", curve: "Aşağı kayma", rule: "Sürükleyerek kapatmada parmağı takip eder" },
-        { name: "Onay kartı", dur: "260 ms", curve: "Aşağıdan yükselir", rule: "Kamera görüntüsü donar, karartılmaz — kullanıcı ne çektiğini görür" },
+        { name: "Deklanşör", dur: "120 ms", curve: "Örtücü flaşı + hafif haptik darbe", rule: "Yakalanan kare küçülerek kartın başındaki kırpıma uçar; 260 ms kart açılışının parçası" },
+        { name: "Onay kartı", dur: "260 ms", curve: "Aşağıdan yükselir", rule: "\"Ne çektim\" doğrulaması kartın başındaki kırpım; arkadaki donmuş kare kararabilir" },
         { name: "Kart kapanıp kamera", dur: "300 ms", curve: "Kart iner + kamera anında hazır", rule: "Deklanşörün yeniden basılabilir olması 300 ms'yi geçmez" },
         { name: "Satır işaretleme", dur: "180 ms", curve: "Satır aşağı kayar, opaklık .5", rule: "Haptik animasyonun başında verilir, sonunda değil" },
         { name: "Satır silme", dur: "200 ms", curve: "Yükseklik daralması", rule: "Silinen satırın altındakiler tek hareketle toplanır" },
         { name: "Toast", dur: "150 / 2000 / 150", curve: "Solma", rule: "Girişte kayma yok; yalnızca opaklık" },
-        { name: "Snackbar", dur: "220 / 5000 / 220", curve: "Aşağıdan kayma", rule: "İki yer: alışveriş kendiliğinden kapandığında ve satır silme geri almasında" },
+        { name: "Snackbar", dur: "220 / 5000 / 220", curve: "Aşağıdan kayma", rule: "Üç yer: alışveriş kendiliğinden kapanışı, satır silme ve gözlem silme geri almaları" },
         { name: "Mod geçişi", dur: "260 ms", curve: "Çapraz solma", rule: "Satırlar yerinde kalır, yalnızca yoğunluk değişir" },
-        { name: "Bekleme", dur: "—", curve: "İskelet, dönen çark yok", rule: "1,5 sn'yi geçen tek iş OCR; onun da yeri kartın kendisi" }
+        { name: "Bekleme", dur: "—", curve: "İskelet, dönen çark yok", rule: "Alanlar OCR dönene kadar iskelet; Kaydet beklerken pasifleşir, metni değişmez — \"Kaydediliyor...\" yok" }
       ],
       voice: [
         { k: "kişi", v: "İkinci tekil: \"aldın\", \"unuttun\". Uygulama kendinden \"biz\" diye söz etmez." },
@@ -564,15 +566,16 @@ class Component extends DCLogic {
         { range: "istisna", text: "Bir gözlemin ya da alımın yaşı gün sayısıyla yazılır (\"8 gün önce\", \"son alım 11 gün önce\"), 14 günü geçince hafta olarak (\"2 hafta önce\"): kıyaslanan şey yaşın kendisi, ve \"geçen hafta\" yedi ile on üç arasını siler. Merdiven tek başına duran tarihler için geçerli — gezi tarihi, kayıt saati." }
       ],
       colorMeaning: [
-        { name: "Amber", hex: "#E0A32E", means: "Bir şey eksik ya da emin değiliz. Dokunulacak bir iş olduğunu söyler.", never: "Uyarı, tehlike ya da dekoratif vurgu." },
-        { name: "Yeşil", hex: "#3F6B54", means: "Onay ve bitirme aksiyonu (Bitir, Kaydet), tamamlanmış hâl ve fiyat düşüşü yönü.", never: "Ucuzluğu rozetleyen bir etiket — ucuzluk sırayla anlatılır; yön oku bunun dışındadır." },
+        { name: "Amber", hex: "#E0A32E", means: "Bir şey eksik ya da emin değiliz. Dokunulacak bir iş olduğunu söyler.", never: "Uyarı, tehlike, dekoratif vurgu ya da ucuzluk rozeti — \"başka markette ucuz\" çipi kiremit kenarlıklı nötr çiptir (karar 57)." },
+        { name: "Yeşil", hex: "#3F6B54", means: "Onay ve bitirme aksiyonu (Bitir, Kaydet) ve tamamlanmış hâl. Fiyat düşüşü yönü ayrı ton: success #2E6B45 — asla buton zemini.", never: "Ucuzluğu rozetleyen bir etiket — ucuzluk sırayla anlatılır; yön oku bunun dışındadır." },
         { name: "Kiremit", hex: "#B34418", means: "İleri götüren birincil aksiyon: dolgulu buton zemini (üstünde onPrimary), FAB, ekleme eylemi. Bağlantı rengi.", never: "Uyarı ya da hata anlamı." },
         { name: "Kırmızı", hex: "#B3261E", means: "Geri alınamaz iş (veri silme, haneden çıkma, \"Listeden çıkar\") ve fiyat artışı yönü.", never: "Hata mesajı, doğrulama." },
         { name: "Nötr", hex: "#8A7666", means: "Metadata, gerekçe, ikincil bilgi. Ekranın çoğunluğu bu.", never: "Dokunulabilir bir öğenin tek işareti." }
       ],
       thresholds: [
+        { name: "Fiyat çipi", min: "1 gözlem", below: "Çip yok. İlk gözlemle belirir — ilk çekimin listedeki görünür izi" },
         { name: "Ürün Detayı sparkline", min: "3 gözlem", below: "Grafik hiç çizilmez; manşet cümlesi tek başına kalır" },
-        { name: "\"Nerede ucuz\" bölümü", min: "2 market", below: "Bölüm çizilmez — tek marketle karşılaştırma olmaz" },
+        { name: "\"Nerede ucuz\" bölümü", min: "2 satır (market+marka)", below: "Bölüm çizilmez; tek markette iki marka da geçerli bir karşılaştırmadır. Ambalaj filtresi eşikten önce uygulanır" },
         { name: "Delta çipi", min: "2 gözlem", below: "Çip yok; \"ilk gözlem\" ibaresi de yok" },
         { name: "\"Başka markette ucuz\" çipi", min: "%10 ve 5 TL", below: "Çip çizilmez; karşı gözlem 14 günden eskiyse de çizilmez. Trendle çakışırsa çip kazanır" },
         { name: "Ambalaj küçülmesi uyarısı", min: "2 farklı boy", below: "Sessiz" },
@@ -584,12 +587,12 @@ class Component extends DCLogic {
       ],
       device: [
         { name: "Rotasyon · liste", rule: "Yatay tutuşta düzen değişmez, yalnızca genişler; iki sütuna geçmez. Kaydırma konumu korunur." },
-        { name: "Rotasyon · kamera", rule: "Tek yüzeyde gerçek yatay düzen var: kontroller kısa kenara taşınır, metin dönmez." },
+        { name: "Rotasyon · kamera", rule: "Tek yüzeyde gerçek yatay düzen var: kontroller kısa kenara taşınır, metin dönmez. Onay kartı sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü) örter, kartı asla örtmez; amber şerit kartın içinde." },
         { name: "Tablet ve katlanabilir", rule: "v1'de tek sütun, 600dp'de ortalanmış ve 480dp genişlikte sabitlenmiş. İki panelli düzen yok." },
         { name: "Karanlık tema", rule: "Sistemi takip eder, uygulama içi anahtar yok. Geçiş anında olur, animasyonsuz." },
-        { name: "Karanlık tema · kamera", rule: "Kamera ve onay kartı her iki temada da koyu; tema değişimi bu akışı etkilemez." },
+        { name: "Karanlık tema · kamera", rule: "Etiket akışı temadan bağımsız tek paletle çizilir: vizör koyu (göz karanlık rafa uyumlu kalır), onay kartı açık (alanlar okunur). Tema değişimi bu akışı etkilemez." },
         { name: "Dinamik yazı", rule: "%130'a kadar taşma yok. Satır yükseklikleri esner, dokunma hedefleri küçülmez." },
-        { name: "Performans", rule: "Liste kaydırma 60 fps; kamera açılışı 400 ms; OCR 1,5 sn'de dönmezse iskelet. Kurulum dışında hiçbir ekran tam ekran yükleme göstermez." },
+        { name: "Performans", rule: "Liste kaydırma 60 fps; kamera açılışı 400 ms; alanlar OCR dönene kadar iskelet. Kurulum dışında hiçbir ekran tam ekran yükleme göstermez." },
         { name: "Yazı tipi ölçeği", rule: "En küçük metin 12sp ve yalnızca metadata; gövde 14–17sp, manşetler Fraunces." }
       ],
       invariants: [
@@ -600,7 +603,7 @@ class Component extends DCLogic {
         { t: "Etiket fotoğrafı kaydın ardından silinir; hiçbir yüzeyde yeniden gösterilmez." },
         { t: "Tek bir gözlem fiyatı kesindir; ondan türetilen her tutar (sepet, gezi, ortalama) tilde alır. Gerçek ödenen tutar diye bir veri yok." },
         { t: "Marka gözlemin alanıdır; ürün jenerik kalır." },
-        { t: "Aynı etiket metni aynı markette bir kez sorulur." },
+        { t: "Ürün eşleşmesi markette bir kez kurulur: etiket metni güvenilirse ona bağlanır; gürültülüyse (Migros) ad önerilmez, son seçilen ürün hazır gelir." },
         { t: "İşaretleme snackbar açmaz; bir gezide yirmi kez olur." },
         { t: "Toast kuyruğu yoktur: ikinci mesaj çakışırsa hiç çizilmez." },
         { t: "Snackbar iki yerde yaşar: alışverişin kendiliğinden kapanması ve satır silme geri alması. Üçüncü bir aksiyonlu geçici yüzey yok." },

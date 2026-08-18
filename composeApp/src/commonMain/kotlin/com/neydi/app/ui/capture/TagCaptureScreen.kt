@@ -5,19 +5,20 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,15 +27,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
@@ -43,19 +44,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.neydi.app.data.db.Store
 import com.neydi.app.data.ocr.TagSkip
-import com.neydi.app.ui.components.NeydiButton
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiToast
-import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.pressable
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 /**
  * Etiket cekim ekrani (Ekran 4).
@@ -63,14 +62,19 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
  * ## KAMERA VE KART TEK EKRAN
  *
  * Onay karti kameranin USTUNDE aciliyor (karar 25) ve disina dokunmak
- * kapatmiyor - kapatmak icin acik bir "Vazgec" gerekiyor. Sebep: kart bir
- * bilgi katmani degil, bir IS; yanlislikla kapanmasi cekilen kareyi cope atar.
+ * kapatmiyor - kapatmak icin acik bir "Vazgec" var. Kart bir bilgi katmani
+ * degil bir IS; yanlislikla kapanmasi cekilen kareyi cope atar.
+ *
+ * ## PALET TEMADAN BAGIMSIZ
+ *
+ * Vizor koyu, kart acik (karar 62). Degerler [Flow]'da ve `MaterialTheme`den
+ * turemiyorlar - ekranin yarisi canli kamera goruntusu ve onun temasi yok.
  *
  * ## EKRAN SAF
  *
  * ViewModel gormuyor, yalnizca state ve geri cagrilar aliyor. Onizlemeler her
- * hali kamera olmadan kurabiliyor - bu ekranin tek regresyon agi onlar, cunku
- * projede cihaz test kaynak kumesi yok.
+ * hali kamera olmadan kurabiliyor - projede cihaz test kaynak kumesi olmadigi
+ * icin bu ekranin tek regresyon agi onlar.
  */
 @Composable
 internal fun TagCaptureScreen(
@@ -85,12 +89,12 @@ internal fun TagCaptureScreen(
     onDismissCard: () -> Unit,
     onToastShown: () -> Unit,
     onBack: () -> Unit,
+    modifier: Modifier = Modifier,
     /** Kartta gosterilecek tarih - "bugun" (sartname). */
     today: String = "Bugün",
-    modifier: Modifier = Modifier,
     cameraContent: @Composable () -> Unit = {},
 ) {
-    Box(modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier.fillMaxSize().background(Flow.viewfinderInk)) {
         cameraContent()
 
         // IZIN REDDEDILDIYSE SESSIZ SIYAH KALMIYOR. `CaptureController.denied`
@@ -98,9 +102,9 @@ internal fun TagCaptureScreen(
         // cizmiyor - yani bu metni yazmak tamamen bu ekranin sorumlulugu.
         if (cameraDenied) {
             Text(
-                text = "Kamera izni yok.\nEtiket çekmek için izin vermen gerekiyor.",
+                text = "Kamera izni olmadan etiket çekilemez",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White,
+                color = Flow.viewfinderChrome,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.align(Alignment.Center).padding(Spacing.lg),
             )
@@ -116,24 +120,23 @@ internal fun TagCaptureScreen(
                 onBack = onBack,
             )
         } else {
-            // Kart aciksa kamerayi KARARTIYORUZ. Tasarim karti fotografin
-            // uzerinde gosteriyor; canli onizlemeyi arkada birakmak "bu kare
-            // cekildi" yalanini soylerdi - goruntu oynamaya devam ederdi.
-            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.86f)))
+            // DONMUS KARE KARARABILIR (karar 62). "Ne cektim" dogrulamasi artik
+            // kartin basindaki kirpim; arkadaki goruntunun isi bitmis oluyor.
+            Box(Modifier.fillMaxSize().background(Flow.viewfinderInk.copy(alpha = 0.86f)))
             ConfirmCardLayer(
                 card = state.card,
                 stores = state.stores,
                 storeId = state.storeId,
                 saving = state.saving,
+                today = today,
                 onSelectStore = onSelectStore,
                 onPriceChange = onPriceChange,
                 onProductChange = onProductChange,
                 onSave = onSave,
-                today = today,
+                onDismiss = onDismissCard,
             )
         }
 
-        // BILDIRIM EKRANIN KENDISINDE: seri cekimde Liste'ye donulmuyor.
         NeydiToast(
             message = state.toast,
             onShown = onToastShown,
@@ -147,7 +150,7 @@ internal fun TagCaptureScreen(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodyMedium,
-                color = LocalNeydiExtraColors.current.warning,
+                color = Flow.amber,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
@@ -155,17 +158,6 @@ internal fun TagCaptureScreen(
             )
         }
     }
-}
-
-@Composable
-private fun BoxScopeShutter(onShutter: () -> Unit, enabled: Boolean) {
-    Box(
-        Modifier
-            .size(76.dp)
-            .clip(CircleShape)
-            .pressable(enabled = enabled, onTap = onShutter)
-            .background(if (enabled) Color.White else Color.White.copy(alpha = 0.35f)),
-    )
 }
 
 @Composable
@@ -177,43 +169,126 @@ private fun BoxScope.CameraLayer(
     onSelectStore: (String) -> Unit,
     onBack: () -> Unit,
 ) {
-    // CERCEVE REHBERI etiketin oraninda. Onizleme FILL_CENTER ciziyor, yani
-    // rehberin icinde gorunen sey gercekten cekilen sey.
-    Box(
-        Modifier
-            .align(Alignment.Center)
-            .fillMaxWidth(0.82f)
-            .height(220.dp)
-            .border(2.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(12.dp)),
-    )
-
-    Box(
-        Modifier
-            .align(Alignment.TopStart)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(Spacing.sm)
-            .clip(CircleShape)
-            .pressable(onTap = onBack)
-            .background(Color.Black.copy(alpha = 0.4f))
-            .padding(Spacing.sm),
-    ) {
-        NeydiIcon(NeydiIcons.ArrowBack, contentDescription = "Geri", tint = Color.White)
-    }
-
     Column(
-        Modifier
-            .align(Alignment.BottomCenter)
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(bottom = Spacing.lg),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        // MARKET CIPI CEKIMDEN ONCE. Yapiskan market yanlissa kullanici burada
-        // duzeltiyor; karti bekletmek, yanlis markete yazilmis bir gozlemi
-        // sonradan duzeltmek demekti.
-        StoreChips(stores, storeId, onSelectStore)
-        Spacer(Modifier.height(Spacing.md))
-        BoxScopeShutter(onShutter = onShutter, enabled = ready)
+        // UST SERIT: kapat · market cipi · flas.
+        //
+        // KAPAT IKONU `close`, `arrow_back` DEGIL: sozlesme *"basligta ← yerine
+        // ✕; ikisi de ayni isi yapar"* diyor ve tam ekran yuzeylerde ✕ dogru
+        // olan. Kod geri okunu ciziyordu.
+        Row(
+            Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Box(
+                Modifier.size(TAP_TARGET).pressable(onTap = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                NeydiIcon(NeydiIcons.Close, contentDescription = "kapat", size = 24.dp, tint = Flow.viewfinderChrome)
+            }
+
+            // MARKET CIPI CEKIMDEN ONCE ve tek parca - yapiskan market yanlissa
+            // kullanici burada duzeltiyor. Karti bekletmek, yanlis markete
+            // yazilmis bir gozlemi sonradan duzeltmek demekti.
+            StorePill(stores.firstOrNull { it.id == storeId }?.name)
+
+            // FLAS: iki hal, oturumluk (karar 60). Bugun yalnizca cizilmis
+            // durumda - davranisi CameraSurface'a bagli ve o F9.2 kuyrugunda.
+            Box(
+                Modifier.size(TAP_TARGET),
+                contentAlignment = Alignment.Center,
+            ) {
+                NeydiIcon(NeydiIcons.Bolt, contentDescription = "flaş", size = 24.dp, tint = Flow.viewfinderChrome)
+            }
+        }
+
+        // CERCEVE REHBERI AMBER ve 3:2. Amber sozlesmede "bir sey eksik ya da
+        // emin degiliz" demek - rehber tam olarak o: etiket henuz kadraja
+        // oturmadi. Kod beyaz ciziyordu ve orani sabit 220dp'ye baglamisti.
+        Box(
+            Modifier.weight(1f).fillMaxWidth().padding(horizontal = 22.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(3f / 2f)
+                    .border(3.dp, Flow.amber, RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                Text(
+                    text = "Etiket kadraja otursun.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = Flow.viewfinderChrome,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 34.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Shutter(onShutter = onShutter, enabled = ready)
+        }
     }
+
+    // Market secici acilinca cipler kartin ustunde degil, seridin altinda.
+    if (stores.isNotEmpty()) {
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 120.dp)) {
+            StoreChips(stores, storeId, onSelectStore)
+        }
+    }
+}
+
+/** Ust seritteki market cipi: ad + `expand_more`. */
+@Composable
+private fun StorePill(name: String?) {
+    Row(
+        Modifier
+            .height(34.dp)
+            .clip(CircleShape)
+            .background(Flow.viewfinderChrome.copy(alpha = 0.14f))
+            .border(1.dp, Flow.viewfinderChrome.copy(alpha = 0.34f), CircleShape)
+            .padding(start = 14.dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = name ?: "Market seç",
+            style = MaterialTheme.typography.labelLarge,
+            color = Flow.viewfinderChrome,
+        )
+        NeydiIcon(NeydiIcons.ExpandMore, contentDescription = null, size = 18.dp, tint = Flow.viewfinderChrome)
+    }
+}
+
+/**
+ * Deklansor: 72dp, koyu halka + acik dis kontur.
+ *
+ * Halkalar tasarimin kendi cizimi ve isleri var - dugme canli goruntunun
+ * uzerinde duruyor, tek renk bir daire acik bir rafta kaybolurdu.
+ */
+@Composable
+private fun Shutter(onShutter: () -> Unit, enabled: Boolean) {
+    Box(
+        Modifier
+            .size(78.dp)
+            .clip(CircleShape)
+            .background(Flow.viewfinderChrome)
+            .padding(3.dp)
+            .clip(CircleShape)
+            .background(Flow.viewfinderInk)
+            .padding(4.dp)
+            .clip(CircleShape)
+            .pressable(enabled = enabled, onTap = onShutter)
+            .background(if (enabled) Flow.viewfinderChrome else Flow.viewfinderChrome.copy(alpha = 0.35f)),
+    )
 }
 
 @Composable
@@ -228,11 +303,13 @@ private fun StoreChips(stores: List<Store>, storeId: String?, onSelect: (String)
             Text(
                 text = store.name,
                 style = MaterialTheme.typography.labelLarge,
-                color = if (selected) Color.Black else Color.White,
+                color = if (selected) Flow.viewfinderInk else Flow.viewfinderChrome,
                 modifier = Modifier
                     .clip(CircleShape)
                     .pressable(onTap = { onSelect(store.id) })
-                    .background(if (selected) Color.White else Color.White.copy(alpha = 0.18f))
+                    .background(
+                        if (selected) Flow.viewfinderChrome else Flow.viewfinderChrome.copy(alpha = 0.18f),
+                    )
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs),
             )
         }
@@ -245,13 +322,13 @@ private fun BoxScope.ConfirmCardLayer(
     stores: List<Store>,
     storeId: String?,
     saving: Boolean,
+    today: String,
     onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
     onProductChange: (String) -> Unit,
     onSave: () -> Unit,
-    today: String,
+    onDismiss: () -> Unit,
 ) {
-    val extras = LocalNeydiExtraColors.current
     // Hangi satir acik - bir seferde YALNIZCA biri, varsayilan hicbiri: kart
     // acilinca kullanici once OKUYOR, duzeltme istisna.
     var open by remember(card.photoPath) { mutableStateOf<String?>(null) }
@@ -260,217 +337,295 @@ private fun BoxScope.ConfirmCardLayer(
         Modifier
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
+            // KART EKRANA YAPISIK ve yalnizca UST koseleri yuvarlak. Kod onu
+            // her yandan 16dp bosluklu yuzen bir kutu olarak ciziyordu.
+            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+            .background(Flow.cardBackground)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(Spacing.md)
-            .clip(RoundedCornerShape(20.dp))
-            .background(CARD_BACKGROUND)
-            .padding(horizontal = Spacing.md, vertical = Spacing.lg),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 30.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        card.missingFieldMessage()?.let { message ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(extras.warning.copy(alpha = 0.18f))
-                    .padding(Spacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NeydiIcon(NeydiIcons.Info, contentDescription = null, size = 18.dp, tint = extras.warning)
-                Spacer(Modifier.width(Spacing.xs))
-                Text(message, style = MaterialTheme.typography.bodySmall, color = extras.warning)
+        // AMBER SERIT: fiyat blogunun SOLUNDA 4dp'lik dikey cubuk, ustunde
+        // kutu degil. Kod tam genislikte dolgulu bir kutu ciziyordu ve
+        // `warning` token'ini kullaniyordu - o amber METNIN rengi.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            card.missingFieldMessage()?.let {
+                Box(
+                    Modifier
+                        .width(4.dp)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Flow.amber),
+                )
             }
-            Spacer(Modifier.height(Spacing.md))
+            Column(Modifier.weight(1f)) {
+                if (card.reading) {
+                    Skeleton(width = 160.dp, height = 38.dp)
+                } else {
+                    PriceField(card = card, onPriceChange = onPriceChange)
+                }
+                card.missingFieldMessage()?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Flow.amberText,
+                    )
+                }
+            }
+            if (!card.reading && card.missingFieldMessage() == null) {
+                Text(
+                    text = "dokun, düzelt",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Flow.label,
+                )
+            }
         }
 
-        // FIYAT MANSET, etiketli bir alan DEGIL - tasarimin duzeni bu ve sebebi
-        // kartin isini tek bakista soylemesi: kaydedilecek sey FIYAT, gerisi
-        // onun kimligi.
-        if (card.reading) {
-            Skeleton(width = 160.dp, height = 34.dp)
-        } else {
-            BasicTextField(
-                value = card.priceText,
-                onValueChange = onPriceChange,
-                textStyle = MaterialTheme.typography.headlineMedium.copy(
-                    color = CARD_FOREGROUND,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                singleLine = true,
-                cursorBrush = SolidColor(extras.accent),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done,
-                ),
-                decorationBox = { inner ->
-                    if (card.priceText.isEmpty()) {
-                        Text(
-                            "0,00 TL",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = CARD_FOREGROUND.copy(alpha = 0.35f),
-                        )
-                    }
-                    inner()
-                },
-            )
-            Text(
-                "dokun, duzelt".replace("duzelt", "düzelt"),
-                style = MaterialTheme.typography.bodySmall,
-                color = CARD_FOREGROUND.copy(alpha = 0.45f),
-            )
-        }
-
-        Hairline()
-
-        // ETIKET SOLDA, DEGER SAGDA - tek satir. Ilk surumde etiketler
-        // degerlerin USTUNDEYDI, market bir cip blogu, marka kesik cerceveli bir
-        // kutuydu: uc kat ic ice ve iki kati yuksek bir kart. Tasarimin duzeni
-        // tam da bunu soyluyordu - satirlar duz, dokunulabilir olanlarda chevron.
         CardRow(
-            label = "Urun",
-            value = card.productName.ifBlank { "-" },
+            label = "Ürün",
+            value = card.productName.ifBlank { "—" },
             reading = card.reading,
             onTap = { open = if (open == "urun") null else "urun" },
         )
         if (open == "urun") {
-            BasicTextField(
+            InlineEditor(
                 value = card.productName,
-                onValueChange = onProductChange,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = CARD_FOREGROUND),
-                singleLine = true,
-                cursorBrush = SolidColor(extras.accent),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.sm),
-                decorationBox = { inner ->
-                    if (card.productName.isEmpty()) {
-                        Text(
-                            "Urun adi",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = CARD_FOREGROUND.copy(alpha = 0.35f),
-                        )
-                    }
-                    inner()
-                },
+                placeholder = "Ürün adı",
+                onChange = onProductChange,
             )
         }
 
-        // MARKA KESIK CERCEVEDE: "bu bir tahmin" demenin tasarimdaki yolu
-        // (karar 39). Cerceve yalnizca DEGERI sariyor, satirin tamamini degil -
-        // satiri sarmak kartin icine ikinci bir kutu koymak olurdu.
         card.brand?.let { brand ->
             CardRow(label = "Marka", value = brand, reading = card.reading, dashed = true)
         }
 
         CardRow(
             label = "Market",
-            value = stores.firstOrNull { it.id == storeId }?.name ?: "-",
+            value = stores.firstOrNull { it.id == storeId }?.name ?: "—",
             reading = false,
+            store = true,
             onTap = { open = if (open == "market") null else "market" },
         )
         if (open == "market") {
-            Spacer(Modifier.height(Spacing.xs))
             StoreChips(stores, storeId) { onSelectStore(it); open = null }
-            Spacer(Modifier.height(Spacing.sm))
         }
 
         // TARIH DOKUNULAMAZ ve chevron TASIMIYOR - etikette basili tarih yok,
-        // "simdi" tek dogru cevap (`PriceObservation.observedAt`). Cizilmesinin
-        // sebebi kullanicinin NE kaydedildigini gormesi.
-        CardRow(label = "Tarih", value = today, reading = false)
+        // "simdi" tek dogru cevap (`PriceObservation.observedAt`).
+        CardRow(label = "Tarih", value = today, reading = false, plain = true)
 
-        Hairline()
+        SaveButton(enabled = card.canSave && !saving, saving = saving, onSave = onSave)
 
-        // VAZGEC DUGMESI YOK - tasarimin kartinda da yok. Cikis yolu geri tusu
-        // ve o artik karti kapatiyor (`CaptureBackHandler`). Iki esit agirlikli
-        // dugme kartin isini ikiye bolup "kaydet" vurgusunu zayiflatiyordu.
-        NeydiButton(
-            text = if (saving) "Kaydediliyor..." else "Kaydet",
-            onClick = onSave,
-            enabled = card.canSave && !saving,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        // VAZGEC GERI GELDI. Kaldirmistim cunku maket yalnizca Kaydet
+        // ciziyordu; yanlis olan yari maketmis - sozlesme onu baştan beri iki
+        // yerde saydigi icin tasarim maketi duzeltti (karar C1).
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(TAP_TARGET)
+                .pressable(onTap = onDismiss),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "Vazgeç",
+                style = MaterialTheme.typography.labelLarge,
+                color = Flow.cancel,
+            )
+        }
     }
 }
 
 /**
- * Kartin bir satiri: etiket solda, deger sagda.
+ * FIYAT MANSET: Fraunces 36sp.
  *
- * @param dashed deger kesik cerceveye alinir - marka icin, "tahmin" isareti.
- * @param onTap null ise chevron cizilmiyor ve satir dokunulamiyor (Tarih).
+ * Etiketli bir alan degil - kartin isini tek bakista soyluyor: kaydedilecek
+ * sey FIYAT, gerisi onun kimligi. Kod `headlineMedium` (24sp) kullaniyordu.
+ */
+@Composable
+private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
+    BasicTextField(
+        value = card.priceText,
+        onValueChange = onPriceChange,
+        textStyle = MaterialTheme.typography.displayLarge.copy(color = Flow.text),
+        singleLine = true,
+        cursorBrush = SolidColor(Flow.amber),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Done,
+        ),
+        decorationBox = { inner ->
+            if (card.priceText.isEmpty()) {
+                Text(
+                    text = "— TL",
+                    style = MaterialTheme.typography.displayLarge,
+                    color = Flow.label,
+                )
+            }
+            inner()
+        },
+    )
+}
+
+@Composable
+private fun InlineEditor(value: String, placeholder: String, onChange: (String) -> Unit) {
+    BasicTextField(
+        value = value,
+        onValueChange = onChange,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = Flow.text),
+        singleLine = true,
+        cursorBrush = SolidColor(Flow.amber),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        modifier = Modifier.fillMaxWidth(),
+        decorationBox = { inner ->
+            if (value.isEmpty()) {
+                Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = Flow.label)
+            }
+            inner()
+        },
+    )
+}
+
+/**
+ * Kartin bir satiri: etiket SOLDA sabit 74dp, deger SAGDA cip olarak.
+ *
+ * @param store market cipi yesil cizilir - secili marketi ayiran tek isaret.
+ * @param dashed deger kesik cerceveye alinir (marka, karar 39).
+ * @param plain cip yok, duz metin (tarih).
  */
 @Composable
 private fun CardRow(
     label: String,
     value: String,
     reading: Boolean,
+    store: Boolean = false,
     dashed: Boolean = false,
+    plain: Boolean = false,
     onTap: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (onTap != null) Modifier.pressable(onTap = onTap) else Modifier)
-            .padding(vertical = Spacing.sm),
+            .height(ROW_HEIGHT),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = CARD_FOREGROUND.copy(alpha = 0.55f),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = Flow.label,
+            modifier = Modifier.width(74.dp),
         )
-        Spacer(Modifier.weight(1f))
-        if (reading) {
-            Skeleton(width = 120.dp, height = 18.dp)
-        } else {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = CARD_FOREGROUND,
-                textAlign = TextAlign.End,
-                modifier = if (!dashed) {
-                    Modifier
-                } else {
-                    Modifier
-                        .drawBehind {
-                            drawRoundRect(
-                                color = CARD_FOREGROUND.copy(alpha = 0.45f),
-                                cornerRadius = CornerRadius(8.dp.toPx()),
-                                style = Stroke(
-                                    width = 1.dp.toPx(),
-                                    pathEffect = PathEffect.dashPathEffect(
-                                        floatArrayOf(6.dp.toPx(), 4.dp.toPx()),
-                                    ),
-                                ),
-                            )
-                        }
-                        .padding(horizontal = Spacing.xs, vertical = 2.dp)
-                },
-            )
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            when {
+                reading -> Skeleton(width = 120.dp, height = 20.dp)
+                plain -> Text(value, style = MaterialTheme.typography.bodyLarge, color = Flow.label)
+                dashed -> ValueChip(
+                    value = value,
+                    background = Flow.brandBackground,
+                    textColor = Flow.brandText,
+                    dashedBorder = Flow.brandBorder,
+                )
+                store -> ValueChip(
+                    value = value,
+                    background = Flow.storeChipBackground,
+                    textColor = Flow.storeChipText,
+                    border = Flow.storeChipBorder,
+                )
+                else -> ValueChip(
+                    value = value,
+                    background = Flow.chipBackground,
+                    textColor = Flow.text,
+                    border = Flow.chipBorder,
+                )
+            }
         }
         if (onTap != null) {
-            Spacer(Modifier.width(Spacing.xs))
             NeydiIcon(
                 icon = NeydiIcons.ChevronRight,
                 contentDescription = null,
-                size = 18.dp,
-                tint = CARD_FOREGROUND.copy(alpha = 0.45f),
+                size = 22.dp,
+                tint = Flow.label,
             )
         }
     }
 }
 
-/** Satirlari ayiran sac teli - kartin icinde ikinci bir kutu acmadan bolme yolu. */
 @Composable
-private fun Hairline() {
+private fun ValueChip(
+    value: String,
+    background: Color,
+    textColor: Color,
+    border: Color? = null,
+    dashedBorder: Color? = null,
+) {
+    Box(
+        Modifier
+            .height(34.dp)
+            .clip(CircleShape)
+            .background(background)
+            .then(
+                when {
+                    border != null -> Modifier.border(1.dp, border, CircleShape)
+                    dashedBorder != null -> Modifier.drawBehind {
+                        drawRoundRect(
+                            color = dashedBorder,
+                            cornerRadius = CornerRadius(size.height / 2f),
+                            style = Stroke(
+                                width = 1.5.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(
+                                    floatArrayOf(6.dp.toPx(), 4.dp.toPx()),
+                                ),
+                            ),
+                        )
+                    }
+                    else -> Modifier
+                },
+            )
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge,
+            color = textColor,
+            maxLines = 1,
+        )
+    }
+}
+
+/**
+ * Kaydet: 52dp, YESIL, pasifken dolgusu da metni de degisir.
+ *
+ * `NeydiButton` kullanilmiyor cunku o `enabled`i yalnizca `pressable`a
+ * veriyor - pasif hal gorunmuyordu. Tasarim pasif icin ayri iki renk
+ * veriyor ve "Kaydet pasif; ilk rakamda etkinlesir" sozlesmenin sarti.
+ */
+@Composable
+private fun SaveButton(enabled: Boolean, saving: Boolean, onSave: () -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = Spacing.sm)
-            .height(1.dp)
-            .background(CARD_FOREGROUND.copy(alpha = 0.12f)),
-    )
+            .height(52.dp)
+            .clip(CircleShape)
+            .pressable(enabled = enabled, onTap = onSave)
+            .background(if (enabled) Flow.save else Flow.saveDisabled),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            // TEK KELIME: sozlesmenin ses kurali *"buton · fiil ve tek kelime"*.
+            // Kod "Kaydediliyor..." yaziyordu; kaydetme hali artik butonun
+            // pasifligiyle anlatiliyor.
+            text = "Kaydet",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = if (enabled && !saving) Flow.onSave else Flow.onSaveDisabled,
+        )
+    }
 }
 
-/** OCR 1,5 sn'yi gecerse alan iskelet cizilir - kart BEKLEMEZ. */
+/** OCR donene kadar alan iskelet cizilir - ESIK YOK (karar 62). */
 @Composable
 private fun Skeleton(width: Dp, height: Dp = 22.dp) {
     Box(
@@ -478,19 +633,15 @@ private fun Skeleton(width: Dp, height: Dp = 22.dp) {
             .width(width)
             .height(height)
             .clip(RoundedCornerShape(6.dp))
-            .background(CARD_FOREGROUND.copy(alpha = 0.15f)),
+            .background(Flow.chipBackground),
     )
 }
 
-/**
- * Kart HER IKI TEMADA da koyu.
- *
- * Kameranin uzerinde duruyor ve kamera her zaman koyu; acik temada acik bir
- * kart cizmek onu yuzen beyaz bir dikdortgene cevirirdi. Renkler tema
- * tokenlarindan gelmiyor cunku bu yuzey temaya AIT DEGIL.
- */
-private val CARD_BACKGROUND = Color(0xFF221A14)
-private val CARD_FOREGROUND = Color(0xFFF5EDE6)
+/** En kucuk dokunma hedefi TEK SAYI 48dp (karar 56). */
+private val TAP_TARGET = 48.dp
+
+/** Kart satiri - tasarimin `min-height:56px`i. */
+private val ROW_HEIGHT = 56.dp
 
 @PreviewLightDark
 @Composable
@@ -511,9 +662,9 @@ private fun TagCaptureCardPreview() = NeydiPreview {
         state = TagCaptureState(
             card = ConfirmCard(
                 photoPath = "/x.jpg",
-                priceText = "26,50",
-                productName = "PUDRA ŞEKERİ",
-                brand = "ŞAFAK",
+                priceText = "24,90",
+                productName = "Yoğurt 1 kg",
+                brand = "Dost",
                 reading = false,
                 kurusFromOcr = true,
             ),
