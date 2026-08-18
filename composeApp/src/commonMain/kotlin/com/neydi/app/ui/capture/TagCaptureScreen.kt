@@ -89,6 +89,8 @@ internal fun TagCaptureScreen(
     state: TagCaptureState,
     cameraReady: Boolean,
     cameraDenied: Boolean,
+    cameraPermanentlyDenied: Boolean,
+    flashOn: Boolean,
     onShutter: () -> Unit,
     onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
@@ -105,6 +107,8 @@ internal fun TagCaptureScreen(
     onDismissCard: () -> Unit,
     onToastShown: () -> Unit,
     onFailureShown: () -> Unit,
+    onToggleFlash: () -> Unit,
+    onOpenSettings: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     /** Kartta gosterilecek tarih - "bugun" (sartname). */
@@ -138,13 +142,42 @@ internal fun TagCaptureScreen(
         // KDoc'u bunu sart kosuyor ve Android tarafi izin yoksa HICBIR SEY
         // cizmiyor - yani bu metni yazmak tamamen bu ekranin sorumlulugu.
         if (cameraDenied) {
-            Text(
-                text = "Kamera izni olmadan etiket çekilemez",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Flow.viewfinderChrome,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center).padding(Spacing.lg),
-            )
+            Column(
+                Modifier.align(Alignment.Center).padding(Spacing.lg),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            ) {
+                // TEK CUMLE (sozlesme). Onceki hali iki cumleydi ve ikincisi
+                // kullaniciya yapabilecegi bir sey soylemiyordu.
+                Text(
+                    text = "Etiket çekmek için kamera izni gerekiyor",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Flow.viewfinderChrome,
+                    textAlign = TextAlign.Center,
+                )
+                // KALICI RETTE AYARLAR, geciciDE degil. Gecici retten sonra
+                // sistem tekrar soruyor - ekrana donmek yetiyor; kalici retten
+                // sonra sistem BIR DAHA SORMUYOR ve Ayarlar tek yol. Ikisine
+                // ayni dugmeyi koymak, birinde hicbir sey yapmayan bir dugme
+                // demekti.
+                if (cameraPermanentlyDenied) {
+                    Box(
+                        Modifier
+                            .height(TAP_TARGET)
+                            .clip(NeydiExtraShapes.pill)
+                            .pressable(onTap = onOpenSettings)
+                            .background(Flow.viewfinderChrome)
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Ayarları aç",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Flow.viewfinderInk,
+                        )
+                    }
+                }
+            }
         }
 
         if (state.card == null) {
@@ -152,6 +185,8 @@ internal fun TagCaptureScreen(
                 stores = state.stores,
                 storeId = state.storeId,
                 ready = cameraReady && !cameraDenied,
+                flashOn = flashOn,
+                onToggleFlash = onToggleFlash,
                 onShutter = {
                     // HAPTIK UC OLAYDA SAYILIYOR (sozlesme): isaretleme, CEKIM,
                     // kaydet. Cekim ve kaydet ayni darbeyi kullaniyor cunku
@@ -275,7 +310,9 @@ private fun BoxScope.CameraLayer(
     stores: List<Store>,
     storeId: String?,
     ready: Boolean,
+    flashOn: Boolean,
     onShutter: () -> Unit,
+    onToggleFlash: () -> Unit,
     onSelectStore: (String) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -304,13 +341,23 @@ private fun BoxScope.CameraLayer(
             // yazilmis bir gozlemi sonradan duzeltmek demekti.
             StorePill(stores.firstOrNull { it.id == storeId }?.name)
 
-            // FLAS: iki hal, oturumluk (karar 60). Bugun yalnizca cizilmis
-            // durumda - davranisi CameraSurface'a bagli ve o F9.2 kuyrugunda.
+            // FLAS: iki hal, oturumluk (karar 60). ACIK hal DOLU bir daireyle
+            // gosteriliyor - ikon rengini degistirmek yetmezdi: canli kamera
+            // goruntusunun uzerinde "biraz daha parlak sari" bir hal degildir.
             Box(
-                Modifier.size(TAP_TARGET),
+                Modifier
+                    .size(TAP_TARGET)
+                    .clip(NeydiExtraShapes.pill)
+                    .pressable(onTap = onToggleFlash)
+                    .background(if (flashOn) Flow.viewfinderChrome else Color.Transparent),
                 contentAlignment = Alignment.Center,
             ) {
-                NeydiIcon(NeydiIcons.Bolt, contentDescription = "flaş", size = 24.dp, tint = Flow.viewfinderChrome)
+                NeydiIcon(
+                    icon = NeydiIcons.Bolt,
+                    contentDescription = if (flashOn) "flaşı kapat" else "flaşı aç",
+                    size = 24.dp,
+                    tint = if (flashOn) Flow.viewfinderInk else Flow.viewfinderChrome,
+                )
             }
         }
 
@@ -450,6 +497,9 @@ private fun BoxScope.ConfirmCardLayer(
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 30.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // KIRPIM KARTIN BASINDA (karar 62) - "ne cektim"in tek cevabi.
+        TagThumbnail(photoPath = card.photoPath)
+
         // DESTEKLENMEYEN ZINCIR CUMLESI kartin BASINDA, seridin YERINE
         // (karar 49). Amber serit bu halde hic cizilmiyor - cumle onun isini
         // zaten yapiyor ve iki uyari ust uste iki is varmis gibi gorunurdu.
@@ -782,9 +832,10 @@ private fun TagCaptureCameraPreview() = NeydiPreview {
     TagCaptureScreen(
         state = TagCaptureState(stores = previewStores(), storeId = "s1"),
         cameraReady = true,
-        cameraDenied = false,
+        cameraDenied = false, cameraPermanentlyDenied = false, flashOn = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {},
         onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onToggleFlash = {}, onOpenSettings = {},
         onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
         onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
         onDeleteStore = {},
@@ -807,9 +858,10 @@ private fun TagCaptureCardPreview() = NeydiPreview {
             stores = previewStores(),
             storeId = "s1",
         ),
-        cameraReady = true, cameraDenied = false,
+        cameraReady = true, cameraDenied = false, cameraPermanentlyDenied = false, flashOn = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {},
         onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onToggleFlash = {}, onOpenSettings = {},
         onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
         onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
         onDeleteStore = {},
@@ -829,9 +881,10 @@ private fun TagCaptureUnreadChainPreview() = NeydiPreview {
             stores = previewStores(),
             storeId = "s2",
         ),
-        cameraReady = true, cameraDenied = false,
+        cameraReady = true, cameraDenied = false, cameraPermanentlyDenied = false, flashOn = false,
         onShutter = {}, onSelectStore = {}, onPriceChange = {},
         onSave = {}, onDismissCard = {}, onToastShown = {}, onFailureShown = {}, onBack = {},
+        onToggleFlash = {}, onOpenSettings = {},
         onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
         onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
         onDeleteStore = {},

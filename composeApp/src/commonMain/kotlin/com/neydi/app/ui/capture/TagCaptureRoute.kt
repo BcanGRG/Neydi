@@ -58,6 +58,10 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
         state = state,
         cameraReady = controller.ready,
         cameraDenied = controller.denied,
+        cameraPermanentlyDenied = controller.permanentlyDenied,
+        flashOn = controller.torch,
+        onToggleFlash = { controller.torch = !controller.torch },
+        onOpenSettings = controller::openSettings,
         onShutter = {
             scope.launch {
                 // Ad CEKIM ANINDAN: iki kare ayni saniyede cekilse bile

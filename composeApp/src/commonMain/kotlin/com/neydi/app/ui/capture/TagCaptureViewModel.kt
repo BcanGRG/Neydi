@@ -268,7 +268,7 @@ internal class TagCaptureViewModel(
     fun dismissCard() {
         val path = _state.value.card?.photoPath
         _state.value = _state.value.copy(card = null)
-        if (path != null) viewModelScope.launch { deleteFileAt(path) }
+        if (path != null) viewModelScope.launch { deleteCapture(path) }
     }
 
     /**
@@ -312,7 +312,7 @@ internal class TagCaptureViewModel(
                 at = clock(),
                 newId = newId,
             )
-            deleteFileAt(card.photoPath)
+            deleteCapture(card.photoPath)
             _state.value = _state.value.copy(
                 card = null,
                 saving = false,

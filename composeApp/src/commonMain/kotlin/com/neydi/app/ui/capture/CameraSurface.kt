@@ -27,6 +27,35 @@ class CaptureController {
     var denied: Boolean by mutableStateOf(false)
         internal set
 
+    /**
+     * Izin KALICI olarak reddedildi - sistem bir daha sormayacak.
+     *
+     * [denied]'dan ayri tutuluyor cunku kullanicinin yapabilecegi sey farkli:
+     * ilkinde tekrar sorabiliriz, ikincisinde tek yol Ayarlar. Ikisini tek
+     * bayrakla anlatmak, kullaniciyi hicbir sey degistirmeyen bir dugmeye
+     * tekrar tekrar bastirmak olurdu.
+     */
+    var permanentlyDenied: Boolean by mutableStateOf(false)
+        internal set
+
+    /**
+     * Fener acik mi (karar 60).
+     *
+     * IKI HAL, ucuncu (otomatik) YOK: otomatik hal OCR'a degisken isik verir ve
+     * ayni etiketin iki cekimi iki farkli kontrastla gelir.
+     *
+     * OTURUMLUK, market gibi YAPISKAN DEGIL: isik kosulu reyondan reyona
+     * degisiyor, marketin kimligi degismiyor.
+     */
+    var torch: Boolean by mutableStateOf(false)
+
+    /** Ayarlar'i acar - kalici ret disinda cagrilmiyor. */
+    internal var settingsOpener: (() -> Unit)? = null
+
+    fun openSettings() {
+        settingsOpener?.invoke()
+    }
+
     internal var capturer: (suspend (String) -> Boolean)? = null
 
     /**
