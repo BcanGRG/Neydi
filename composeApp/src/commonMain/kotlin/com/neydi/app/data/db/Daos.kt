@@ -288,7 +288,53 @@ interface TripLineDao {
             c.sortOrder      AS categoryOrder,
             tl.addedByMemberId AS addedByMemberId,
             tl.note          AS note,
-            tl.takeOutcome   AS takeOutcome
+            tl.takeOutcome   AS takeOutcome,
+
+            -- FIYAT IPUCU (E16): iki correlated alt sorgu + magaza adi + gecmis.
+            --
+            -- LIMIT 1 / LIMIT 1 OFFSET 1 ikilisi "son" ve "onceki" gozlemi
+            -- veriyor. Pencere fonksiyonu (LAG) daha zarif olurdu ama Room'un
+            -- bundled SQLite'inda surum garantisi vermek istemedim; OFFSET her
+            -- surumde calisiyor.
+            --
+            -- Olcek riski YOK ve bu bir varsayim degil, ROADMAP'in yazili
+            -- karari: iki kisilik hane, elli gezi. Alt sorgular urun basina
+            -- kosuyor ve gozlem tablosu kucuk kaliyor.
+            (SELECT po.unitPriceMinor FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1)            AS lastPriceMinor,
+            (SELECT po.observedAt FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1)            AS lastObservedAt,
+            (SELECT s.name FROM price_observation po
+                LEFT JOIN store s ON s.id = po.storeId
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1)            AS lastStoreName,
+            (SELECT po.packSize FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1)            AS lastPackSize,
+            (SELECT po.packUnit FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1)            AS lastPackUnit,
+
+            (SELECT po.unitPriceMinor FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPriceMinor,
+            (SELECT po.packSize FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPackSize,
+            (SELECT po.packUnit FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPackUnit,
+
+            -- Sparkline satirin ICINDE ciziliyor, yani gecmis de bu sorgudan
+            -- gelmek zorunda. `group_concat` alt sorgunun SIRASINI korumuyor
+            -- diye bir garanti yok ama pratikte koruyor; sira bozulursa
+            -- sparkline'in sekli bozulur, fiyat bilgisi degil.
+            (SELECT group_concat(h.unitPriceMinor) FROM
+                (SELECT po.unitPriceMinor FROM price_observation po
+                    WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    ORDER BY po.observedAt DESC LIMIT 8) h)     AS priceHistory
         FROM trip_line tl
         JOIN product p  ON p.id = tl.productId
         JOIN category c ON c.id = p.categoryId

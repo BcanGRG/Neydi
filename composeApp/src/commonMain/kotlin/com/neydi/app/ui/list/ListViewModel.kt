@@ -56,6 +56,8 @@ class ListViewModel(
     private val priceObservationDao: PriceObservationDao,
     private val statsRebuilder: ProductStatsRebuilder,
     private val suggestionEngine: SuggestionEngine,
+    /** Fiyat ipucunun yas hesabi icin - test saat kurmadan kossun diye disaridan. */
+    private val clock: () -> Long,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -140,7 +142,7 @@ class ListViewModel(
             emptyKind,
             header,
         ) { rows, memberId, mod, kind, head ->
-            rows.toSections(memberId, mod, kind).copy(
+            rows.toSections(memberId, mod, kind, now = clock()).copy(
                 lastTrip = head.lastTrip,
                 selfInitials = head.selfInitials,
                 hasPartner = head.hasPartner,

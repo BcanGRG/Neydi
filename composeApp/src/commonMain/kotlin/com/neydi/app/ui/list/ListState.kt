@@ -129,7 +129,7 @@ data class UiRow(
  *   ekledigunde cizilir. Kendi ekledigimizde cizmek her satira gurultu ekler
  *   ve hicbir sey soylemez.
  */
-internal fun ListRowProjection.toUiRow(myMemberId: String?): UiRow = UiRow(
+internal fun ListRowProjection.toUiRow(myMemberId: String?, now: Long): UiRow = UiRow(
     id = rowId,
     productId = productId,
     row = ListRow(
@@ -139,6 +139,7 @@ internal fun ListRowProjection.toUiRow(myMemberId: String?): UiRow = UiRow(
         isStaple = isStaple,
         addedByInitial = if (addedByMemberId != myMemberId) turkishInitials(name).take(1) else null,
         note = note,
+        priceHint = toPriceHint(now),
     ),
 )
 
@@ -172,6 +173,14 @@ internal fun List<ListRowProjection>.toSections(
     myMemberId: String?,
     shoppingMode: Boolean = false,
     emptyKind: EmptyKind = EmptyKind.ILK_GUN,
+    /**
+     * Fiyat ipucunun "kac gun once"si icin gecerli an.
+     *
+     * VARSAYILANI YOK ve bu bilincli: sifir verilseydi butun gozlemler "bugun"
+     * gorunurdu ve hicbir sey patlamazdi. Zorunlu parametre, cagirani saati
+     * vermeye mecbur ediyor.
+     */
+    now: Long,
 ): ListState {
     // ALISVERIS MODUNDA REYON SIRASI DONAR. Isaretlenen satir YERINDE kalir,
     // "Alindi"ya inmez. Hareket eden basparmagin altinda yeniden siralama bu
@@ -196,21 +205,21 @@ internal fun List<ListRowProjection>.toSections(
 
     val categorySections = others
         .groupBy { it.categoryName }
-        .map { (title, rows) -> ListSection(title, rows.map { it.toUiRow(myMemberId) }) }
+        .map { (title, rows) -> ListSection(title, rows.map { it.toUiRow(myMemberId, now) }) }
         .filter { it.rows.isNotEmpty() }
 
     // Sinir tasarimdan: en fazla 12 satir. Ustu, listeyi acan kullaniciya kendi
     // yazmadigi 20 satir gostermek olurdu.
     val stapleSection = staples
         .take(STAPLE_LIMIT)
-        .map { it.toUiRow(myMemberId) }
+        .map { it.toUiRow(myMemberId, now) }
         .takeIf { it.isNotEmpty() }
         ?.let { ListSection(STAPLE_SECTION_TITLE, it) }
 
     val sections = listOfNotNull(stapleSection) + categorySections
     return ListState(
         sections = sections,
-        taken = alinan.map { it.toUiRow(myMemberId) },
+        taken = alinan.map { it.toUiRow(myMemberId, now) },
         loading = false,
         shoppingMode = shoppingMode,
         emptyKind = emptyKind,

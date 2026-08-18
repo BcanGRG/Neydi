@@ -8,6 +8,10 @@ import kotlin.test.assertTrue
 
 class ListStateTest {
 
+    /** Sabit bir "simdi" - fiyat ipucunun yas hesabi testte saate bagli olmasin. */
+    private val NOW = 1_000_000_000L
+
+
     private var counter = 0
 
     private fun row(
@@ -88,7 +92,7 @@ class ListStateTest {
             row("Domates"),
             row("Elma", checked = true),
             row("Ekmek", categoryName = "Fırın-Ekmek", categoryOrder = 1),
-        ).toSections(myMemberId = "ben")
+        ).toSections(myMemberId = "ben", now = NOW)
 
         assertEquals(1, state.taken.size)
         assertEquals("Elma", state.taken.single().row.name)
@@ -105,7 +109,7 @@ class ListStateTest {
         val state = listOf(
             row("Elma", checked = true),
             row("Domates", checked = true),
-        ).toSections(myMemberId = "ben")
+        ).toSections(myMemberId = "ben", now = NOW)
 
         assertTrue(state.sections.isEmpty(), "bos bolum olusturuldu: ${state.sections}")
         assertEquals(2, state.taken.size)
@@ -119,7 +123,7 @@ class ListStateTest {
             row("Ekmek", "Fırın-Ekmek", 1),
             row("Süt", "Süt-Kahvaltılık", 2),
             row("Salatalık", "Meyve-Sebze", 0),
-        ).toSections(myMemberId = "ben")
+        ).toSections(myMemberId = "ben", now = NOW)
 
         assertEquals(
             listOf("Meyve-Sebze", "Fırın-Ekmek", "Süt-Kahvaltılık"),
@@ -134,7 +138,7 @@ class ListStateTest {
         val state = listOf(
             row("Domates", addedBy = "ben"),
             row("Ekmek", categoryName = "Fırın-Ekmek", categoryOrder = 1, addedBy = "es"),
-        ).toSections(myMemberId = "ben")
+        ).toSections(myMemberId = "ben", now = NOW)
 
         assertNull(state.sections[0].rows.single().row.addedByInitial)
         assertEquals("E", state.sections[1].rows.single().row.addedByInitial)
@@ -144,7 +148,7 @@ class ListStateTest {
     @Test
     fun rowIdentityIsPreserved() {
         val source = row("Domates")
-        val state = listOf(source).toSections(myMemberId = "ben")
+        val state = listOf(source).toSections(myMemberId = "ben", now = NOW)
         assertEquals(source.rowId, state.sections.single().rows.single().id)
     }
 
@@ -164,8 +168,8 @@ class ListStateTest {
             row("Salatalik"),
         )
 
-        val planning = input.toSections("ben", shoppingMode = false)
-        val trip = input.toSections("ben", shoppingMode = true)
+        val planning = input.toSections("ben", shoppingMode = false, now = NOW)
+        val trip = input.toSections("ben", shoppingMode = true, now = NOW)
 
         // Planlamada tasiniyor...
         assertEquals(1, planning.taken.size)
@@ -186,7 +190,7 @@ class ListStateTest {
             row("Domates"),
             row("Elma", checked = true),
             row("Salatalik"),
-        ).toSections("ben", shoppingMode = true)
+        ).toSections("ben", shoppingMode = true, now = NOW)
 
         assertEquals(3, state.totalRows)
         assertEquals(2, state.remainingRow)
@@ -194,14 +198,14 @@ class ListStateTest {
 
     @Test
     fun emptyKindIsCarried() {
-        val state = emptyList<ListRowProjection>().toSections("ben", emptyKind = EmptyKind.DONGU_ORTASI)
+        val state = emptyList<ListRowProjection>().toSections("ben", emptyKind = EmptyKind.DONGU_ORTASI, now = NOW)
         assertEquals(EmptyKind.DONGU_ORTASI, state.emptyKind)
         assertTrue(state.isEmpty)
     }
 
     @Test
     fun emptyList() {
-        val state = emptyList<ListRowProjection>().toSections(myMemberId = "ben")
+        val state = emptyList<ListRowProjection>().toSections(myMemberId = "ben", now = NOW)
         assertTrue(state.isEmpty)
         assertEquals(0, state.totalRows)
     }
@@ -220,7 +224,7 @@ class ListStateTest {
             row("Domates", "Meyve-Sebze"),
             row("Ekmek", "Fırın-Ekmek", isStaple = true),
             row("Süt", "Süt-Kahvaltılık", isStaple = true),
-        ).toSections(myMemberId = "ben")
+        ).toSections(myMemberId = "ben", now = NOW)
 
         assertEquals(STAPLE_SECTION_TITLE, state.sections.first().title)
         assertEquals(listOf("Ekmek", "Süt"), state.sections.first().rows.map { it.row.name })
@@ -240,7 +244,7 @@ class ListStateTest {
         val state = listOf(
             row("Domates", "Meyve-Sebze"),
             row("Ekmek", "Fırın-Ekmek", isStaple = true),
-        ).toSections(myMemberId = "ben", shoppingMode = true)
+        ).toSections(myMemberId = "ben", shoppingMode = true, now = NOW)
 
         assertTrue(state.sections.none { it.title == STAPLE_SECTION_TITLE })
         assertEquals(2, state.sections.sumOf { it.rows.size })
@@ -254,7 +258,7 @@ class ListStateTest {
     /** Hic sabit yoksa bolum HIC cizilmiyor - bos bolum yasak. */
     @Test
     fun noStapleSectionWhenThereAreNone() {
-        val state = listOf(row("Domates")).toSections(myMemberId = "ben")
+        val state = listOf(row("Domates")).toSections(myMemberId = "ben", now = NOW)
 
         assertTrue(state.sections.none { it.title == STAPLE_SECTION_TITLE })
         assertEquals(1, state.sections.size)
@@ -264,7 +268,7 @@ class ListStateTest {
     @Test
     fun stapleSectionIsCappedAtTwelve() {
         val state = (1..15).map { row("Sabit $it", isStaple = true) }
-            .toSections(myMemberId = "ben")
+            .toSections(myMemberId = "ben", now = NOW)
 
         assertEquals(12, state.sections.first { it.title == STAPLE_SECTION_TITLE }.rows.size)
     }
@@ -275,7 +279,7 @@ class ListStateTest {
         val state = listOf(
             row("Ekmek", isStaple = true, checked = true),
             row("Süt", isStaple = true),
-        ).toSections(myMemberId = "ben")
+        ).toSections(myMemberId = "ben", now = NOW)
 
         assertEquals(listOf("Süt"), state.sections.first().rows.map { it.row.name })
         assertEquals(listOf("Ekmek"), state.taken.map { it.row.name })

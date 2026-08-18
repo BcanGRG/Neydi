@@ -26,6 +26,37 @@ data class ListRowProjection(
     val note: String?,
     /** Kullanicinin beyan ettigi akibet; null = bir sey soylemedi (F4.12). */
     val takeOutcome: TakeOutcome?,
+
+    // --- Fiyat ipucu (E16) --------------------------------------------------
+    //
+    // Hepsi AYNI sorgudan geliyor. Satir basina ikinci bir sorgu acmak
+    // yasak (tek-SQL kurali): yirmi satirlik bir listede yirmi Flow acmak
+    // hem her gozlem yaziminda yirmi yeniden yayin uretir hem de satirlar
+    // birbirinden bagimsiz zamanlarda guncellenip liste titrer.
+
+    /** En son gozlemin fiyati; null = bu urunun hic gozlemi yok. */
+    val lastPriceMinor: Long? = null,
+    /** En son gozlemin ani - "kac gun once" bundan cikiyor. */
+    val lastObservedAt: Long? = null,
+    /** En son gozlemin marketi. Gozlem marketsiz kaydedilmis olabilir. */
+    val lastStoreName: String? = null,
+    val lastPackSize: Double? = null,
+    val lastPackUnit: String? = null,
+
+    /** BIR ONCEKI gozlemin fiyati; null = tek gozlem var, trend hesaplanamaz. */
+    val prevPriceMinor: Long? = null,
+    val prevPackSize: Double? = null,
+    val prevPackUnit: String? = null,
+
+    /**
+     * Son sekiz gozlemin fiyatlari, YENIDEN ESKIYE, virgulle ayrilmis.
+     *
+     * `group_concat` ile geliyor cunku sparkline satirin icinde ciziliyor ve
+     * tek-SQL kurali satir basina ikinci bir sorguyu yasakliyor. Dizi yerine
+     * dizgi olmasinin sebebi Room'un skaler alt sorgudan koleksiyon
+     * dondurememesi; ayristirmasi tek satir.
+     */
+    val priceHistory: String? = null,
 )
 
 /** Gezi basina satir sayisi (Gecmis ekrani). */

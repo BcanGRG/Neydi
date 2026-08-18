@@ -9,7 +9,7 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** Faz E 15/19 · **E15 kod olarak bitti, cihazda 12 gözlem üretti**; sıradaki **E16**.
 Etiket okuyucusu **iki zincirde** çalışıyor (BİM, Migros), Metro bilinçli olarak ertelendi.
-Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **296 test yeşil**,
+Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **307 test yeşil**,
 **sıfır derleyici uyarısı**.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -23,11 +23,11 @@ Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda k
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **E16** — satır fiyat ipucu | gözlem artık gerçekten üretiliyor; delta çipi ilk kez veri buluyor | — |
+| 1 | **E17** — Ekran 5 fiyat bölümü | "nerede ucuz" satırı market+marka çiftiyle; E16 verisi hazır | — |
 | 2 | **F11.19 + F11.29** — cihazda göz kontrolü | aynı üründen iki gözlem çekilince ikisi birden bakılabilir | E16 |
-| 3 | **E17** — Ekran 5 fiyat bölümü | "nerede ucuz" satırı market+marka çiftiyle | E16 |
+| 3 | **E18** — `~` tahminleri | gözlemlerden tutar; E8/E11'de boşa düşürülen üç yer | E17 |
 
-*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ — dördü de kapandı.*
+*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ — beşi de kapandı.*
 
 **Bilinçli olarak ertelenen:** Metro grameri. Ölçüldü ve yazılmadı — önerilen
 kural 34 etiketin 23'ünde fiyat veriyor ama yalnızca 14'ünde kuruş gerçekten
@@ -254,13 +254,27 @@ kutuyu yeşile boyamak yerine ölçüt ikiye ayrıldı:
 - **Kapı B — Tahmini sepet:** listede **üç** fiyatlı ürün gerekir. Bu E16'nın
   satır ipucuyla birlikte doğal olarak gelir.
 
-### ▸ E16 — Satır fiyat ipucu
+### ▸ E16 — Satır fiyat ipucu ✅ *(kod; cihaz doğrulaması 2 gözlemli ürün bekliyor)*
 
-`observeList`'e iki correlated-subselect (son + önceki gözlem) + store join.
-**Tek-SQL kuralı geçerli** — satır başına Flow yasak. `toUiRow` dört dalı da
-eşler: `None` / `Single` / `Trend` / `PackChanged`.
+`observeList` artık fiyat ipucunu da taşıyor: **iki correlated alt sorgu**
+(son + önceki gözlem), son gözlemin **market join**'i, ve sparkline için
+`group_concat` ile **son 8 fiyat**. Tek-SQL kuralı korundu — satır başına Flow
+yok; yirmi satırlık listede yirmi Flow her gözlem yazımında yirmi yeniden
+yayın üretirdi.
+
+`toPriceHint` dört dalı da eşliyor ve **sıra bilinçli**: ambalaj kontrolü
+trendin ÖNÜNDE. 900 gr → 800 gr aynı fiyata satılıyorsa bu düşüş değil gizli
+zam; trend dalı önce seçilseydi yeşil aşağı ok çizip gerçeğin tersini
+söylerdi. Ambalajlardan biri **bilinmiyorsa** değişim iddia edilmiyor —
+`null` "aynı değil" değil "bilmiyorum" demek, ve etiketlerin çoğunda gramaj
+okunamıyor (`docs/18`).
+
+`now` **zorunlu parametre**: varsayılanı olsaydı bütün gözlemler "bugün"
+görünür ve hiçbir şey patlamazdı.
 
 **Bitti sayılır:** 2 gözlemli ürünün satırında delta çipi çiziliyor.
+⚠ Cihazda **henüz görülmedi** — mevcut 12 gözlemin hepsi ayrı ürün, yani
+hiçbir üründe iki gözlem yok. Aynı üründen ikinci çekim gerekiyor.
 
 ### ▸ E17 — Ekran 5 fiyat bölümü
 
