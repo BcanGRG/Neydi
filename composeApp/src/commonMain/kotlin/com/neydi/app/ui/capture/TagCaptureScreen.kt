@@ -26,6 +26,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -125,7 +129,6 @@ internal fun TagCaptureScreen(
                 onPriceChange = onPriceChange,
                 onProductChange = onProductChange,
                 onSave = onSave,
-                onDismiss = onDismissCard,
                 today = today,
             )
         }
@@ -246,10 +249,13 @@ private fun BoxScope.ConfirmCardLayer(
     onPriceChange: (String) -> Unit,
     onProductChange: (String) -> Unit,
     onSave: () -> Unit,
-    onDismiss: () -> Unit,
     today: String,
 ) {
     val extras = LocalNeydiExtraColors.current
+    // Hangi satir acik - bir seferde YALNIZCA biri, varsayilan hicbiri: kart
+    // acilinca kullanici once OKUYOR, duzeltme istisna.
+    var open by remember(card.photoPath) { mutableStateOf<String?>(null) }
+
     Column(
         Modifier
             .align(Alignment.BottomCenter)
@@ -258,7 +264,7 @@ private fun BoxScope.ConfirmCardLayer(
             .padding(Spacing.md)
             .clip(RoundedCornerShape(20.dp))
             .background(CARD_BACKGROUND)
-            .padding(Spacing.md),
+            .padding(horizontal = Spacing.md, vertical = Spacing.lg),
     ) {
         card.missingFieldMessage()?.let { message ->
             Row(
@@ -273,76 +279,157 @@ private fun BoxScope.ConfirmCardLayer(
                 Spacer(Modifier.width(Spacing.xs))
                 Text(message, style = MaterialTheme.typography.bodySmall, color = extras.warning)
             }
+            Spacer(Modifier.height(Spacing.md))
+        }
+
+        // FIYAT MANSET, etiketli bir alan DEGIL - tasarimin duzeni bu ve sebebi
+        // kartin isini tek bakista soylemesi: kaydedilecek sey FIYAT, gerisi
+        // onun kimligi.
+        if (card.reading) {
+            Skeleton(width = 160.dp, height = 34.dp)
+        } else {
+            BasicTextField(
+                value = card.priceText,
+                onValueChange = onPriceChange,
+                textStyle = MaterialTheme.typography.headlineMedium.copy(
+                    color = CARD_FOREGROUND,
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                singleLine = true,
+                cursorBrush = SolidColor(extras.accent),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Done,
+                ),
+                decorationBox = { inner ->
+                    if (card.priceText.isEmpty()) {
+                        Text(
+                            "0,00 TL",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = CARD_FOREGROUND.copy(alpha = 0.35f),
+                        )
+                    }
+                    inner()
+                },
+            )
+            Text(
+                "dokun, duzelt".replace("duzelt", "düzelt"),
+                style = MaterialTheme.typography.bodySmall,
+                color = CARD_FOREGROUND.copy(alpha = 0.45f),
+            )
+        }
+
+        Hairline()
+
+        // ETIKET SOLDA, DEGER SAGDA - tek satir. Ilk surumde etiketler
+        // degerlerin USTUNDEYDI, market bir cip blogu, marka kesik cerceveli bir
+        // kutuydu: uc kat ic ice ve iki kati yuksek bir kart. Tasarimin duzeni
+        // tam da bunu soyluyordu - satirlar duz, dokunulabilir olanlarda chevron.
+        CardRow(
+            label = "Urun",
+            value = card.productName.ifBlank { "-" },
+            reading = card.reading,
+            onTap = { open = if (open == "urun") null else "urun" },
+        )
+        if (open == "urun") {
+            BasicTextField(
+                value = card.productName,
+                onValueChange = onProductChange,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = CARD_FOREGROUND),
+                singleLine = true,
+                cursorBrush = SolidColor(extras.accent),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.sm),
+                decorationBox = { inner ->
+                    if (card.productName.isEmpty()) {
+                        Text(
+                            "Urun adi",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = CARD_FOREGROUND.copy(alpha = 0.35f),
+                        )
+                    }
+                    inner()
+                },
+            )
+        }
+
+        // MARKA KESIK CERCEVEDE: "bu bir tahmin" demenin tasarimdaki yolu
+        // (karar 39). Cerceve yalnizca DEGERI sariyor, satirin tamamini degil -
+        // satiri sarmak kartin icine ikinci bir kutu koymak olurdu.
+        card.brand?.let { brand ->
+            CardRow(label = "Marka", value = brand, reading = card.reading, dashed = true)
+        }
+
+        CardRow(
+            label = "Market",
+            value = stores.firstOrNull { it.id == storeId }?.name ?: "-",
+            reading = false,
+            onTap = { open = if (open == "market") null else "market" },
+        )
+        if (open == "market") {
+            Spacer(Modifier.height(Spacing.xs))
+            StoreChips(stores, storeId) { onSelectStore(it); open = null }
             Spacer(Modifier.height(Spacing.sm))
         }
 
-        CardField(label = "Fiyat") {
-            if (card.reading) {
-                Skeleton(width = 120.dp)
-            } else {
-                BasicTextField(
-                    value = card.priceText,
-                    onValueChange = onPriceChange,
-                    textStyle = MaterialTheme.typography.headlineSmall.copy(
-                        color = CARD_FOREGROUND,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                    singleLine = true,
-                    cursorBrush = SolidColor(extras.accent),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Done,
-                    ),
-                    decorationBox = { inner ->
-                        if (card.priceText.isEmpty()) {
-                            Text(
-                                "0,00",
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = CARD_FOREGROUND.copy(alpha = 0.35f),
-                            )
-                        }
-                        inner()
-                    },
-                )
-            }
-        }
+        // TARIH DOKUNULAMAZ ve chevron TASIMIYOR - etikette basili tarih yok,
+        // "simdi" tek dogru cevap (`PriceObservation.observedAt`). Cizilmesinin
+        // sebebi kullanicinin NE kaydedildigini gormesi.
+        CardRow(label = "Tarih", value = today, reading = false)
 
-        CardField(label = "Ürün") {
-            if (card.reading) {
-                Skeleton(width = 200.dp)
-            } else {
-                BasicTextField(
-                    value = card.productName,
-                    onValueChange = onProductChange,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = CARD_FOREGROUND),
-                    singleLine = true,
-                    cursorBrush = SolidColor(extras.accent),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    decorationBox = { inner ->
-                        if (card.productName.isEmpty()) {
-                            Text(
-                                "Ürün adı",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = CARD_FOREGROUND.copy(alpha = 0.35f),
-                            )
-                        }
-                        inner()
-                    },
-                )
-            }
-        }
+        Hairline()
 
-        // MARKA KESIK CERCEVEDE - "bu bir tahmin" demenin tasarimdaki yolu
-        // (karar 39: marka yalnizca oneri). `Modifier.border` kesikli desen
-        // alabiliyor: `Stroke.pathEffect` degil, `BorderStroke` + dashed
-        // `PathEffect` gerekmiyor - kenarlik cizimi `drawBehind` ile yapiliyor.
-        card.brand?.let { brand ->
-            CardField(label = "Marka") {
-                Text(
-                    text = brand,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = CARD_FOREGROUND,
-                    modifier = Modifier
+        // VAZGEC DUGMESI YOK - tasarimin kartinda da yok. Cikis yolu geri tusu
+        // ve o artik karti kapatiyor (`CaptureBackHandler`). Iki esit agirlikli
+        // dugme kartin isini ikiye bolup "kaydet" vurgusunu zayiflatiyordu.
+        NeydiButton(
+            text = if (saving) "Kaydediliyor..." else "Kaydet",
+            onClick = onSave,
+            enabled = card.canSave && !saving,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/**
+ * Kartin bir satiri: etiket solda, deger sagda.
+ *
+ * @param dashed deger kesik cerceveye alinir - marka icin, "tahmin" isareti.
+ * @param onTap null ise chevron cizilmiyor ve satir dokunulamiyor (Tarih).
+ */
+@Composable
+private fun CardRow(
+    label: String,
+    value: String,
+    reading: Boolean,
+    dashed: Boolean = false,
+    onTap: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onTap != null) Modifier.pressable(onTap = onTap) else Modifier)
+            .padding(vertical = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = CARD_FOREGROUND.copy(alpha = 0.55f),
+        )
+        Spacer(Modifier.weight(1f))
+        if (reading) {
+            Skeleton(width = 120.dp, height = 18.dp)
+        } else {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                color = CARD_FOREGROUND,
+                textAlign = TextAlign.End,
+                modifier = if (!dashed) {
+                    Modifier
+                } else {
+                    Modifier
                         .drawBehind {
                             drawRoundRect(
                                 color = CARD_FOREGROUND.copy(alpha = 0.45f),
@@ -355,60 +442,41 @@ private fun BoxScope.ConfirmCardLayer(
                                 ),
                             )
                         }
-                        .padding(horizontal = Spacing.xs, vertical = 2.dp),
-                )
-            }
-        }
-
-        CardField(label = "Market") {
-            StoreChips(stores, storeId, onSelectStore)
-        }
-
-        // TARIH DOKUNULAMAZ ve cipsiz - etikette basili tarih yok, "simdi" tek
-        // dogru cevap (`PriceObservation.observedAt` KDoc'u). Cizilmesinin
-        // sebebi kullanicinin NE kaydedildigini gormesi.
-        CardField(label = "Tarih") {
-            Text(today, style = MaterialTheme.typography.bodyLarge, color = CARD_FOREGROUND)
-        }
-
-        Spacer(Modifier.height(Spacing.md))
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            NeydiButton(
-                text = "Vazgeç",
-                onClick = onDismiss,
-                container = Color.White.copy(alpha = 0.12f),
-                content = CARD_FOREGROUND,
+                        .padding(horizontal = Spacing.xs, vertical = 2.dp)
+                },
             )
-            NeydiButton(
-                text = if (saving) "Kaydediliyor…" else "Kaydet",
-                onClick = onSave,
-                enabled = card.canSave && !saving,
-                modifier = Modifier.weight(1f),
+        }
+        if (onTap != null) {
+            Spacer(Modifier.width(Spacing.xs))
+            NeydiIcon(
+                icon = NeydiIcons.ChevronRight,
+                contentDescription = null,
+                size = 18.dp,
+                tint = CARD_FOREGROUND.copy(alpha = 0.45f),
             )
         }
     }
 }
 
+/** Satirlari ayiran sac teli - kartin icinde ikinci bir kutu acmadan bolme yolu. */
 @Composable
-private fun CardField(label: String, content: @Composable () -> Unit) {
-    Column(Modifier.padding(vertical = Spacing.xs)) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = CARD_FOREGROUND.copy(alpha = 0.55f),
-        )
-        Spacer(Modifier.height(2.dp))
-        content()
-    }
+private fun Hairline() {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.sm)
+            .height(1.dp)
+            .background(CARD_FOREGROUND.copy(alpha = 0.12f)),
+    )
 }
 
 /** OCR 1,5 sn'yi gecerse alan iskelet cizilir - kart BEKLEMEZ. */
 @Composable
-private fun Skeleton(width: Dp) {
+private fun Skeleton(width: Dp, height: Dp = 22.dp) {
     Box(
         Modifier
             .width(width)
-            .height(22.dp)
+            .height(height)
             .clip(RoundedCornerShape(6.dp))
             .background(CARD_FOREGROUND.copy(alpha = 0.15f)),
     )
