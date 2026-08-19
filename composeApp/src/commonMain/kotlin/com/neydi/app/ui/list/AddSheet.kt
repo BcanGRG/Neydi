@@ -15,8 +15,9 @@ import com.neydi.app.ui.theme.NeydiExtraShapes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -29,8 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -79,22 +78,37 @@ internal fun AddSheetContent(
     /** Zaten listede olan urunlerin `matchKey`leri (tasarim karari 12). */
     inList: Set<String> = emptySet(),
 ) {
-    // GRID YUKSEKLIGI EKRANA ORANLI, sabit dp DEGIL.
+    // SHEET'IN YUKSEKLIGI SABIT, ICERIK ONU PAYLASIYOR.
     //
-    // Uc deneme gerekti, ucu de cihazda goruldu:
-    //  1) sabit 340dp     -> icerik sheet'ten uzun, kacis butonu cubuk altinda
-    //  2) weight(1f)      -> kismi acik sheet icerigi SINIRSIZ yukseklikle
-    //                        olcuyor, grid butun alani aliyor, buton kayboluyor
-    //  3) tam acik sheet  -> buton goruniyor ama sheet EKRANI KAPLIYOR ve
-    //                        "liste arkada gorunur kalsin" kurali bozuluyor
-    // Dogrusu: grid ekran yuksekliginin bir orani kadar, sheet kismi kaliyor,
-    // buton hep altta.
-    val screenHeight = with(LocalDensity.current) {
-        LocalWindowInfo.current.containerSize.height.toDp()
-    }
+    // ## Sihirli sayi tutmadi ve bunu KENDI KDoc'u ongormustu
+    //
+    // Onceki cozum grid'e ekranin bir orani kadar tavan veriyordu
+    // (`GRID_RATIO`) ve o sabitin KDoc'u aynen sunu yaziyordu: *"Bu bir SIHIRLI
+    // SAYI, cozum degil. Baska ekran oraninda... yeniden tasar - ve SESSIZCE
+    // tasar."* Tasti: SM-G975F'te ucuncu sira kutucuklari 70px yerine 22px'e
+    // kirpildi, etiketleri hic cizilmedi ve kacis butonu `bounds=[0,0][0,0]`
+    // dondu - yani DOKUNULAMAZ hale geldi. Katalogda olmayan bir urunu
+    // eklemenin tek yolu o buton.
+    //
+    // ## Neden oran degil de weight
+    //
+    // Kok hatanin kendisi KDoc'ta yaziliydi: *"Sheet tasan icerigi
+    // kaydirmiyor, KIRPIYOR"*. Kirpan bir kapta hicbir sabit oran sonsuza
+    // kadar dogru kalamaz. Cozum kabin yuksekligini BELIRLI yapmak:
+    //
+    //  - kok Column ekranin %72'sini aliyor -> sheet artik "sinirsiz
+    //    yukseklikle olculen" bir sey degil; `weight` calisabilir hale geliyor
+    //    (eski 2. denemenin basarisiz olma sebebi tam olarak buydu)
+    //  - grid `weight(1f)` ile KALAN yeri aliyor ve kendi icinde KAYIYOR
+    //  - kacis butonu weight'in DISINDA, yani her zaman ve her ekranda altta
+    //
+    // %72: liste arkada gorunur kalmali (sheet'in kendi kurali) ama uc siralik
+    // grid + arama + buton sigmali. Tavan degil PAY: buyutulmus yazi tipinde
+    // grid kayiyor, buton yerinde kaliyor.
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .padding(horizontal = Spacing.md)
             .padding(bottom = Spacing.lg + bottomPadding),
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
@@ -189,7 +203,7 @@ internal fun AddSheetContent(
             // ARAMA REYON SECIMINI EZIYOR: kullanici yaziyorsa aradigi sey
             // hangi reyonda oldugundan bagimsiz. Sonuc yoksa liste bos
             // kaliyor ve alttaki kacis satiri aranan kelimeyi tasiyor.
-            LazyColumn(modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO)) {
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(results, key = { it.id }) { seed ->
                     SuggestionChip(
                         label = seed.name,
@@ -205,7 +219,7 @@ internal fun AddSheetContent(
                 // istiyor ve kutucuk boyutu (56dp) zaten sabit. Adaptive
                 // genis ekranda dorde cikip tasarimin ritmini bozuyordu.
                 columns = GridCells.Fixed(3),
-                modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO),
+                modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
@@ -239,7 +253,7 @@ internal fun AddSheetContent(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.heightIn(max = screenHeight * GRID_RATIO),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 items(products, key = { it.id }) { product ->
@@ -270,19 +284,18 @@ internal fun AddSheetContent(
 }
 
 /**
- * Grid'in ekran yuksekligine orani.
+ * Sheet'in ekran yuksekligine orani.
  *
- * Deger uiautomator ile OLCULEREK bulundu, goz karariyla degil: 0.34'te
- * ucuncu sirasinin etiketleri ve kacis butonu `bounds="[0,0][0,0]"` doniyordu -
- * yani sifir yukseklige kirpilmislardi. Sheet tasan icerigi kaydirmiyor,
- * kirpiyor; o yuzden grid butcesi butona yer BIRAKMAK zorunda.
+ * GRID'IN degil SHEET'IN orani - ve fark her sey. Eskisi grid'e tavan
+ * veriyordu ve kalan her seyin (kacis butonu) o tavandan ARTAN yere sigmasini
+ * umuyordu; umut tutmadi. Bu oran kabin kendisini belirliyor, icindekiler
+ * `weight` ile paylasiyor, yani hicbir eleman sifira kirpilamiyor.
  *
- * TODO(sheet-yuksekligi): Bu bir SIHIRLI SAYI, cozum degil. Baska ekran
- * oraninda, katlanabilir cihazda, buyutulmus yazi tipi olceginde ya da 12'den
- * fazla reyon oldugunda yeniden tasar - ve SESSIZCE tasar. Kalici cozum
- * F10.5'te; F10.2 (Nav3 custom Scene) ile ayni iste bulusuyor.
+ * Buyutulmus yazi tipi olceginde ya da 12'den fazla reyonda artik TASMIYOR,
+ * grid kendi icinde KAYIYOR - cunku `LazyVerticalGrid`in belirli bir yuksekligi
+ * var. Onceki sabitin TODO'su tam olarak bu senaryolar icin yazilmisti.
  */
-private const val GRID_RATIO = 0.24f
+private const val SHEET_RATIO = 0.72f
 
 // --- Preview ---------------------------------------------------------------
 

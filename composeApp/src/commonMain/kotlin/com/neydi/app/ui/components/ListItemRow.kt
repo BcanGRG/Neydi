@@ -291,26 +291,52 @@ private fun CheckTarget(checked: Boolean, shoppingMode: Boolean) {
         animationSpec = Motion.settle(),
         label = "checkCorner",
     )
+    // ISARETLI DOLGU YESIL, KIREMIT DEGIL.
+    //
+    // Maketlerin hepsi `background:#3F6B54` (karanlikta `#8FC7A2`) yani
+    // `secondary` ciziyor; kod `primary` aliyordu ve her isaretli satir kiremit
+    // bir kare gosteriyordu. Renk sozlugunun kendi ayrimi da bunu soyluyor:
+    // kiremit ILERI GOTUREN is, yesil ONAY/BITIRME (karar 42). Isaretlemek
+    // bitirmektir.
     val fill by animateColorAsState(
-        targetValue = if (checked) MaterialTheme.colorScheme.primary else Color.Transparent,
+        targetValue = if (checked) MaterialTheme.colorScheme.secondary else Color.Transparent,
         animationSpec = Motion.settle(),
         label = "checkFill",
     )
-    val outline = LocalNeydiExtraColors.current.hairline
+    // BOS HALKA `outline`, `hairline` DEGIL - ve fark gorunur olmakla
+    // olmamak arasinda.
+    //
+    // `hairline` (#E7DACB) surface (#FBF7F2) uzerinde yaklasik 1.2:1; yani
+    // dokunulacak hedefin kendisi pratikte GORUNMUYORDU. Maketlerin hepsi
+    // `border:2px solid #8A7666` yaziyor - o `outline` token'i, tasarim
+    // sisteminde 15, dosya setinde 34 kez.
+    val ring = MaterialTheme.colorScheme.outline
 
     Box(
         modifier = Modifier
             .size(size)
             .clip(RoundedCornerShape(corner))
             .background(fill)
-            .border(1.5.dp, if (checked) fill else outline, RoundedCornerShape(corner)),
+            .border(
+                width = if (checked) 1.5.dp else 2.dp,
+                color = if (checked) fill else ring,
+                shape = RoundedCornerShape(corner),
+            ),
         contentAlignment = Alignment.Center,
     ) {
         if (checked) {
-            Text(
-                text = "✓",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
+            // IKON, UNICODE GLIFI DEGIL.
+            //
+            // `Text("✓")` glifi sistem fontunun yedek zincirinden aliyordu:
+            // sekli ve kalinligi cihazdan cihaza degisiyor, olcegi yazi tipi
+            // ayarina bagli buyuyor. Karar 32 bunu iki kez yasakliyor -
+            // *"ikonlar Text olarak cizilmiyor"* ve *"emoji ikonografi olarak
+            // kullanilmaz"*.
+            NeydiIcon(
+                icon = NeydiIcons.Check,
+                contentDescription = null,
+                size = 16.dp,
+                tint = MaterialTheme.colorScheme.onSecondary,
             )
         }
     }
@@ -365,9 +391,14 @@ private fun SecondLineContent(
                 is PriceHint.Trend -> {
                     MetaText("önce ${h.from}", muted, Modifier.weight(1f, false))
                     DeltaChip(h.deltaPercent, h.rising)
+                    // SPARKLINE NOTR: butun maketler `stroke="#8A7666"`
+                    // yani outline ciziyor - yaninda kirmizi bir delta cipi
+                    // olan orneklerde bile. Cizgi TARIHI gosteriyor, YARGIYI
+                    // degil; yargiyi cip zaten tasiyor ve ikisini birden
+                    // renklendirmek ayni sinyali iki kez veriyordu.
                     Sparkline(
                         values = h.history,
-                        color = if (h.rising) priceUp else priceDown,
+                        color = MaterialTheme.colorScheme.outline,
                     )
                 }
                 // Ambalaj degismisse TREND YOK. 900g -> 800g ayni fiyata satiliyorsa

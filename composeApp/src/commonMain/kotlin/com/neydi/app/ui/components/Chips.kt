@@ -1,5 +1,8 @@
 package com.neydi.app.ui.components
 
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,19 +52,32 @@ fun PriceChip(
     onClick: (() -> Unit)? = null,
 ) {
     val styles = LocalNeydiTextStyles.current
-    val base = modifier
-        .width(SizesExtra.priceColumn)
-        .heightIn(min = Sizes.minTapTarget)
+    // CIP GERCEKTEN BIR CIP: dolgulu hap, ciplak metin degil.
+    //
+    // Adi "fiyat CIPI" ama kod yalnizca bir `Text` ciziyordu - ne hap sekli,
+    // ne dolgu. Tasarim sistemi onu `height:32px; padding:0 12px;
+    // border-radius:999px; background:#F1E7DB` diye veriyor ve DORT halini
+    // ayri ayri cizmis; hicbiri ciplak metin degil. Metin rengi de
+    // `onSurfaceVariant` yerine `onSurface`: cip artik kendi zeminini
+    // tasidigi icin metnin soluk olmasi gerekmiyor.
+    val base = modifier.heightIn(min = Sizes.minTapTarget)
     Box(
         modifier = if (onClick != null) base.pressable(onTap = onClick) else base,
         contentAlignment = Alignment.CenterEnd,
     ) {
-        Text(
-            text = text,
-            style = styles.priceChip,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.End,
-        )
+        Box(
+            Modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 12.dp, vertical = 5.dp),
+        ) {
+            Text(
+                text = text,
+                style = styles.priceChip,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.End,
+            )
+        }
     }
 }
 
@@ -135,6 +151,10 @@ fun SuggestionChip(
             .heightIn(min = SizesExtra.suggestionChip)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
+            // SAC TELI KENARLIK: tasarim dolguyu VE 1px kenarligi birlikte
+            // veriyor, dort halinde de. Kenarliksiz cipin siniri yalnizca
+            // surface/surfaceVariant ton farki - o da bir ton adimi kadar.
+            .border(Sizes.hairline, LocalNeydiExtraColors.current.hairline, CircleShape)
             // ISARETLI CIP PASIF: ayni satiri iki kez eklemek bir is degil,
             // ve pasiflik bunu dokunmadan once soyluyor.
             .pressable(enabled = !checked, onTap = onClick)
@@ -183,10 +203,18 @@ fun QuantityBadge(text: String, modifier: Modifier = Modifier) {
             .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
+        // ROZET SATIRIN EN BUYUK IKINCI SEYI: 20sp/800.
+        //
+        // `labelMedium` (14sp/Medium) ile ciziliyordu, yani "2x" alt satirdaki
+        // ustveri metniyle ayni agirlikta okunuyordu. Satir anatomisi onu
+        // "[adet rozeti - yalnizca adet 1 degilse, 20sp/800]" diye veriyor:
+        // miktar, urun adindan sonra en cok bakilan sey.
         Text(
             text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.titleMedium,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
