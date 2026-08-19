@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.neydi.app.ui.capture.CaptureBackHandler
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,18 @@ import org.koin.compose.viewmodel.koinViewModel
 fun SetupRoute(onFinish: () -> Unit) {
     val vm: SetupViewModel = koinViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
+
+    // GERI ADIM 2'DE YAKALANIYOR, adim 1'de DEGIL.
+    //
+    // Sozlesme ikisini ayri yaziyor: 1/2'de geri uygulamadan cikar, 2/2'de
+    // adim 1'e doner. `enabled = false` iken sistem varsayilani calisiyor ve
+    // Kurulum yiginin kokunde oturdugu icin (App.kt) o varsayilan tam olarak
+    // "uygulamadan cik" oluyor - iki hal de tek kosulla kuruluyor.
+    //
+    // Bilesenin adi `Capture` ile basliyor cunku ilk ihtiyaci etiket ekrani
+    // dogurdu; yaptigi is genel ve projedeki tek geri yakalayici o.
+    CaptureBackHandler(enabled = state.step > 0) { vm.previous() }
+
     SetupScreen(
         state = state,
         onToggle = vm::toggle,
