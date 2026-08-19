@@ -19,6 +19,14 @@ import kotlin.test.assertTrue
  */
 class ProductPriceSectionTest {
 
+    // FIYATLAR ARTIK "TL" TASIYOR ve bu testin degismesi DOGRU cozumdu.
+    //
+    // Test, kusurun kendisini kodluyordu: `formatChipMinor` para birimini
+    // dusuruyor ve Money.kt'nin kendi kurali bu istisnayi YALNIZCA 24dp'lik
+    // fiyat cipine veriyor. Bolum satirlari 15sp/14sp tablo satiri, cip degil;
+    // yani kod cip muafiyetini cipin disinda uyguluyordu. Beklentiyi
+    // guncellemek, dogrulanmis bir bulguyu geri almaktan iyi.
+
     private val home = DEFAULT_HOUSEHOLD_ID
     private val day = 24L * 60 * 60 * 1000
 
@@ -130,10 +138,10 @@ class ProductPriceSectionTest {
         assertEquals(2, rows.size)
         assertEquals("BİM", rows[0].store)
         assertEquals("Dost", rows[0].brand)
-        assertEquals("100,00", rows[0].price)
+        assertEquals("100,00 TL", rows[0].price)
         assertEquals("Migros", rows[1].store)
         assertEquals("Pınar", rows[1].brand)
-        assertEquals("130,00", rows[1].price)
+        assertEquals("130,00 TL", rows[1].price)
     }
 
     /**
@@ -169,7 +177,7 @@ class ProductPriceSectionTest {
 
         val rows = section(db).cheapest
         assertEquals("Migros", rows[0].store, "BIM zamlandi, artik ucuz degil")
-        assertEquals("200,00", rows.single { it.store == "BİM" }.price)
+        assertEquals("200,00 TL", rows.single { it.store == "BİM" }.price)
     }
 
     /**
@@ -214,7 +222,7 @@ class ProductPriceSectionTest {
 
         val history = section(db).history
         assertEquals(9, history.size)
-        assertEquals("120,00", history.first().price, "en yeni basta olmali")
+        assertEquals("120,00 TL", history.first().price, "en yeni basta olmali")
     }
 
     /**

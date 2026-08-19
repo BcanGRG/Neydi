@@ -2,8 +2,11 @@ package com.neydi.app.ui.product
 
 import androidx.compose.runtime.Immutable
 import com.neydi.app.data.db.ObservationRow
+import com.neydi.app.data.daysBetween
+import com.neydi.app.data.formatAge
 import com.neydi.app.data.formatDayMonth
-import com.neydi.app.data.formatChipMinor
+import com.neydi.app.data.formatMinor
+import com.neydi.app.di.now
 
 /**
  * "Nerede ucuz" bolumundeki bir satir (E17).
@@ -16,9 +19,26 @@ import com.neydi.app.data.formatChipMinor
 data class CheapRow(
     val store: String,
     val brand: String?,
+    /**
+     * "100,00 TL" - BIRIMLI.
+     *
+     * Onceden `formatChipMinor` ile "100,00" yaziliyordu ve bu, kuralin
+     * kendisini ters okumakti: birim YALNIZCA 24dp'lik fiyat cipinde duser
+     * (Money.kt), cunku orada yer yok. Burasi cip degil, 15sp'lik bir tablo
+     * satiri; maket de "100,00 TL" yaziyor.
+     */
     val price: String,
     /** "4 L" gibi; bilinmiyorsa null ve cizilmiyor. */
     val pack: String?,
+    /**
+     * Gozlemin YASI: "dün", "3 gün önce".
+     *
+     * FIYATIN TEK BASINA ANLAMI YOK. "BİM 100,00 TL" iki hafta onceki bir
+     * gozlemse bugunku karsilastirmaya girmemeli; maket bu yuzden alt satira
+     * marka ile yasi birlikte koyuyor ("Dost · dün"). Yas olmadan bolum,
+     * eskimis bir sayiyi guncelmis gibi gosteriyordu.
+     */
+    val recency: String,
 )
 
 /** Alim gecmisi satiri: tarih · market · fiyat. */
@@ -38,12 +58,20 @@ data class HistoryRow(
      */
     val date: String,
     val store: String,
+    /** "41,00 TL" - birimli; gerekcesi [CheapRow.price]'ta. */
     val price: String,
 )
 
 /**
  * Ekran 5'in fiyat bolumu - gozlemlerden.
  *
+ * @param headline sheet'in MANSET CUMLESI - "Son ödediğin: 138,50 TL".
+ *   Gozlem yoksa `null` ve sheet urun adini yaziyor. Bolum basligi acikca
+ *   *"okunacak sey grafik degil manset cumlesi"* diyor; sheet bugune kadar
+ *   yalnizca urun adini yaziyordu, yani ekranin merkezindeki cumle hic yoktu.
+ * @param headlineSub mansetin altindaki kaynak satiri - "A101 · 12 gün önce ·
+ *   600 g". Mansetin tek basina soylemedigi seyi soyluyor: o fiyat NEREDE ve
+ *   NE ZAMAN gorulmus.
  * @param cheapest "Nerede ucuz" satirlari, ucuzdan pahaliya. **Iki
  *   MARKETten azsa BOS**: tek market varken "nerede ucuz" diye bir soru yok,
  *   ve bolum basligini bos cizmek olmayan bir isi varmis gibi gosterir.
@@ -53,6 +81,8 @@ data class HistoryRow(
  */
 @Immutable
 data class PriceSection(
+    val headline: String? = null,
+    val headlineSub: String? = null,
     val cheapest: List<CheapRow> = emptyList(),
     val history: List<HistoryRow> = emptyList(),
     val sparkline: List<Float> = emptyList(),
@@ -80,8 +110,13 @@ data class PriceSection(
  * Ortalama DEGIL: kullanicinin sorusu "simdi nerede ucuz", "gecen yil
  * ortalamada neresi ucuzdu" degil. Ortalama almak zamli bir marketi ucuz
  * gostermeye devam ederdi.
+ *
+ * @param nowMillis gozlem YASLARININ olculdugu an. Varsayilani gercek saat
+ *   olmak ZORUNDA: tek cagiran ([com.neydi.app.ui.list.ListViewModel]) bir saat
+ *   tasimiyor ve yas, kaydedilen bir veri degil ekranin o andaki okumasi.
+ *   Testler degeri gecerek deterministik kalabilir.
  */
-internal fun List<ObservationRow>.toPriceSection(): PriceSection {
+internal fun List<ObservationRow>.toPriceSection(nowMillis: Long = now()): PriceSection {
     if (isEmpty()) return PriceSection()
 
     // Gozlemler YENIDEN ESKIYE geliyor, yani her ciftin ILK gorulen kaydi en
@@ -97,13 +132,29 @@ internal fun List<ObservationRow>.toPriceSection(): PriceSection {
                 CheapRow(
                     store = it.storeName ?: MARKET_YOK,
                     brand = it.brand,
-                    price = formatChipMinor(it.unitPriceMinor),
+                    price = formatMinor(it.unitPriceMinor),
                     pack = packLabel(it.packSize, it.packUnit),
+                    recency = formatAge(daysBetween(it.observedAt, nowMillis)),
                 )
             }
     }
 
+    // MANSET EN SON GOZLEMDEN: liste yeniden eskiye geliyor, yani `first()`
+    // kullanicinin en son odedigi fiyat. Trend cumlesi ("32 TL -> 41 TL · son
+    // 3 ayda %28 arttı") BILEREK YOK - o cumle grafigin aritmetigini (ay
+    // araligi, ambalaj normalizasyonu) gerektiriyor ve grafik henuz yok;
+    // dayanagi olmayan bir yuzde yazmak, bu ekranin kacindigi tek sey.
+    val newest = first()
     return PriceSection(
+        headline = "Son ödediğin: ${formatMinor(newest.unitPriceMinor)}",
+        // MARKET BILINMIYORSA SATIRDAN DUSUYOR, "market yok" YAZILMIYOR:
+        // gecmis tablosunda o metin bos bir SUTUNU dolduruyor, burada ise
+        // cumlenin ortasina girip hata gibi okunurdu.
+        headlineSub = listOfNotNull(
+            newest.storeName,
+            formatAge(daysBetween(newest.observedAt, nowMillis)),
+            packLabel(newest.packSize, newest.packUnit),
+        ).joinToString(" · "),
         cheapest = cheapest,
         history = map {
             HistoryRow(
@@ -111,7 +162,7 @@ internal fun List<ObservationRow>.toPriceSection(): PriceSection {
                 observedAt = it.observedAt,
                 date = formatDayMonth(it.observedAt),
                 store = it.storeName ?: MARKET_YOK,
-                price = formatChipMinor(it.unitPriceMinor),
+                price = formatMinor(it.unitPriceMinor),
             )
         },
         sparkline = if (size < MIN_SPARKLINE) {

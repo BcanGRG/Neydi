@@ -1,5 +1,13 @@
 package com.neydi.app
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -29,6 +37,19 @@ import com.neydi.app.ui.capture.TagCaptureRoute
 import com.neydi.app.ui.list.ListScreen
 import com.neydi.app.ui.theme.NeydiTheme
 import org.koin.compose.koinInject
+
+/**
+ * Bolum 09'un destinasyon sureleri: acilis 300 ms, kapanis 250 ms
+ * ("Geri her zaman acilistan hizlidir"), mesafe tam genisligin %8'i.
+ *
+ * NEDEN BURADA: NavDisplay'e sure verilmezse kutuphanenin varsayilani
+ * devreye giriyor ve o HER PLATFORMDA BASKA bir hareket yapiyor - Android'de
+ * solma, desktop'ta hicbir sey, iOS'ta 500 ms'lik tam genislikte kayma. Tek
+ * bir sure tasarimda yaziliyken uygulamada uc farkli hareket vardi.
+ */
+private const val DESTINATION_ENTER_MS = 300
+private const val DESTINATION_EXIT_MS = 250
+private const val DESTINATION_SLIDE_PERCENT = 8
 
 @Composable
 fun App() {
@@ -63,17 +84,62 @@ fun App() {
             if (backStack.size > 1) backStack.removeLastOrNull()
         }
 
-        // Kurulum LISTENIN USTUNE biniyor, onun yerine gecmiyor: "Listeme geç"
-        // ve "Atla" ayni yere - Liste'ye - cikiyor, ve surec olumunden donunce
-        // ekran kaybolmuyor. Kosul her acilista veritabanindan okundugu icin
-        // kurulum tamamlaninca bir daha eklenmiyor.
+        // KURULUM YIGININ KOKUNE OTURUYOR, Liste'nin USTUNE binmiyor.
+        //
+        // Onceki hal `backStack.add(Setup)` diyordu; altta Liste durdugu icin
+        // TEK geri basisi - hangi adimda olursa olsun - kurulumu atlanmis
+        // sayip Liste'ye dusuruyordu. Oysa gezinme sozlesmesi (Bolum 02) adim
+        // 1/2 icin "Uygulamadan cikar; kurulum bir sonraki acilista bastan
+        // gelir" diyor, ve Bolum 01 kurulumu "gezinmeyle ulasilamaz" bir tam
+        // ekran akis sayiyor - yani altinda duracak bir ekran yok.
+        //
+        // Cikisi tek elemanli yigin KENDILIGINDEN sagliyor: NavDisplay geri
+        // islemcisini `scene.previousEntries.isNotEmpty()` ile aciyor, altta
+        // ekran kalmayinca geri tusu sisteme geciyor. Yani kurulum kokteyken
+        // geri, Liste kokteyken oldugu gibi uygulamadan cikiyor.
         LaunchedEffect(showSetup) {
-            if (showSetup && backStack.none { it is Setup }) backStack.add(Setup)
+            if (showSetup) {
+                // Kok ONCE yaziliyor, fazlasi SONRA atiliyor: NavDisplay bos
+                // yigini `require` ile reddediyor, bu sirayla yigin hicbir an
+                // bosalmiyor.
+                backStack[0] = Setup
+                backStack.removeAll(backStack.drop(1))
+            }
         }
 
         NavDisplay(
             backStack = backStack,
             onBack = { back() },
+            // ACILIS (300 ms): yeni ekran sagdan %8 kayarak geliyor, eskisi
+            // ayni mesafede ters yone cekiliyor. SOLMA DA VAR cunku %8'lik
+            // mesafede ekranin %92'si ilk karede zaten yerinde: tek basina
+            // kayma, hareket degil kesme gibi okunurdu. Egri "standart
+            // hizlanma" (FastOutSlowIn).
+            transitionSpec = {
+                val enterSlide = slideInHorizontally(
+                    tween(DESTINATION_ENTER_MS, easing = FastOutSlowInEasing),
+                ) { fullWidth -> fullWidth * DESTINATION_SLIDE_PERCENT / 100 }
+                val exitSlide = slideOutHorizontally(
+                    tween(DESTINATION_ENTER_MS, easing = FastOutSlowInEasing),
+                ) { fullWidth -> -fullWidth * DESTINATION_SLIDE_PERCENT / 100 }
+                val enterFade = fadeIn(tween(DESTINATION_ENTER_MS, easing = FastOutSlowInEasing))
+                val exitFade = fadeOut(tween(DESTINATION_ENTER_MS, easing = FastOutSlowInEasing))
+                (enterSlide + enterFade) togetherWith (exitSlide + exitFade)
+            },
+            // KAPANIS (250 ms): ayni hareketin tersi ve daha kisasi. Egri
+            // "yavaslama" (LinearOutSlowIn) - geri donen ekran hizli baslayip
+            // yerine oturuyor.
+            popTransitionSpec = {
+                val enterSlide = slideInHorizontally(
+                    tween(DESTINATION_EXIT_MS, easing = LinearOutSlowInEasing),
+                ) { fullWidth -> -fullWidth * DESTINATION_SLIDE_PERCENT / 100 }
+                val exitSlide = slideOutHorizontally(
+                    tween(DESTINATION_EXIT_MS, easing = LinearOutSlowInEasing),
+                ) { fullWidth -> fullWidth * DESTINATION_SLIDE_PERCENT / 100 }
+                val enterFade = fadeIn(tween(DESTINATION_EXIT_MS, easing = LinearOutSlowInEasing))
+                val exitFade = fadeOut(tween(DESTINATION_EXIT_MS, easing = LinearOutSlowInEasing))
+                (enterSlide + enterFade) togetherWith (exitSlide + exitFade)
+            },
             entryProvider = entryProvider {
                 entry<Liste> {
                     ListScreen(
@@ -135,7 +201,14 @@ fun App() {
                     SetupRoute(
                         onFinish = {
                             showSetup = false
-                            back()
+                            // "Bitir" ve "Atla" kurulumu Liste ILE DEGISTIRIYOR.
+                            // Kurulum kokte durdugu icin donulecek bir ekran yok;
+                            // eski `back()` cagrisi (yigin tek elemanliyken)
+                            // hicbir sey yapmaz, kullanici kurulumda kalirdi.
+                            // Setup yigindan tumuyle ciktigi icin sozlesmenin
+                            // "Kurulum bir daha acilmaz" maddesi de saglaniyor.
+                            backStack[0] = Liste
+                            backStack.removeAll(backStack.drop(1))
                         },
                     )
                 }

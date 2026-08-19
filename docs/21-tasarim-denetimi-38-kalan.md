@@ -8,6 +8,27 @@ iddia, onu **çürütmekle görevli** ayrı bir ajandan geçtikten sonra sayıld
 (özet kartı), geçmiş satırlarında tarih yokluğu, seçici sheet'lerinin
 kapanmaması. Aşağıdakiler **kapanmadı**.
 
+## Durum — 24 Ağustos
+
+**41 bulgunun 35'i kapandı.** Kalan altısı kapanmadı çünkü *kod eksik değil,
+veri ya da karar eksik*:
+
+| Bulgu | Neyin eksik olduğu |
+|---|---|
+| Ekle sheet'inde reyon başına ürün sayısı | Sayı hiçbir yerde yok: `Category`'de kolon, `CatalogSeedDao`'da `GROUP BY categoryId` sorgusu yok |
+| Ekle sheet'inde ürün fiyatı | `CatalogSeed`'de fiyat alanı yok; fiyatlar hanenin kendi `Product`'ına bağlı. Ayrıca hiç alınmamış üründe ne yazılacağı bir **ürün kararı** |
+| Ürün Detayı trend manşeti | Ay aralığı biçimleyicisi yok (`DateText` haftada bitiyor) ve yüzde, ambalaj değişimi üzerinden hesaplanamaz — maketin örneği tam da o vaka |
+| Geçmiş 6 çubuklu mini grafik | Tasarım iki şeyi söylemiyor: çubuk **neyi** ölçüyor, ve tutarı hesaplanamayan gezi nasıl çiziliyor |
+| Özet kartının sheet yerine satır içi kart olması | Yapısal yeniden düzenleme |
+| Kurulum adım 2/2'de geri | `SetupViewModel`'de `previous()` yok; adım numarası `SetupState`'te |
+
+Ayrıca **bilinçli bir daraltma**: alışveriş modu satırının `surfaceVariant`
+dolgusu yalnızca **koyu temada** uygulandı. Açık maket o rengi zaten
+*işaretli* satıra veriyor; her satıra boyamak işaretli satırın tek kapsayıcı
+sinyalini silerdi.
+
+---
+
 Sıra ciddiyete göre; her madde tasarımın dediğini (T) ve kodun yaptığını (K)
 taşıyor. Denetim raporunun tamamı oturum çıktısında.
 

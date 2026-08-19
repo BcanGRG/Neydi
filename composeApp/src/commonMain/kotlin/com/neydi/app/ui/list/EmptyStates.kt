@@ -15,15 +15,18 @@ import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.pressable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.neydi.app.ui.components.NeydiButton
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.NeydiExtraShapes
 import com.neydi.app.ui.theme.Sizes
@@ -135,17 +138,7 @@ internal fun EmptyState(
         // geldigini soyluyor, cunku kullanicinin kafasindaki sey pano degil
         // esinin gonderdigi mesaj.
         if (hasClipboard) {
-            NeydiButton(
-                text = "WhatsApp'tan listeni yapıştır",
-                onClick = onClipboard,
-                container = MaterialTheme.colorScheme.surface,
-                content = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.border(
-                    Sizes.hairline,
-                    MaterialTheme.colorScheme.outline,
-                    NeydiExtraShapes.pill,
-                ),
-            )
+            ClipboardPasteButton(onClick = onClipboard)
         }
     }
 }
@@ -205,6 +198,46 @@ private fun StarterChip(name: String, onClick: () -> Unit) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
+        )
+    }
+}
+
+/**
+ * Pano yolu - tasarimin ikon tasiyan tek hayalet butonu (Cerceve 08).
+ *
+ * NEDEN [NeydiButton] DEGIL: o bilesenin ikon yuvasi yok, govdesi tek bir
+ * `Text`. Buton onceki halinde oradan geciyordu, bu yuzden hap salt metindi;
+ * oysa tasarim etiketin soluna 20dp `content_paste` ve arasina 8dp bosluk
+ * koyuyor. Ikon burada sus degil: listenin NEREDEN geldigini (panodan)
+ * soyleyen tek isaret - metin "WhatsApp" diyor ama kaynagi gosteren sey ikon.
+ *
+ * Modifier sirasi [NeydiButton] ile bilerek ayni: kenarlik en disda, sonra
+ * clip -> pressable -> zemin. Basili halde hap %3 kuculurken kenarligin
+ * yerinde kalmasi bu siranin sonucu, degistirilirse basma hissi degisir.
+ */
+@Composable
+private fun ClipboardPasteButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .border(Sizes.hairline, MaterialTheme.colorScheme.outline, NeydiExtraShapes.pill)
+            .clip(NeydiExtraShapes.pill)
+            .pressable(onTap = onClick)
+            .background(MaterialTheme.colorScheme.surface)
+            .defaultMinSize(minHeight = Sizes.minTapTarget)
+            .padding(horizontal = Spacing.lg, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NeydiIcon(
+            icon = NeydiIcons.ContentPaste,
+            contentDescription = null,
+            size = 20.dp,
+            tint = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = "WhatsApp'tan listeni yapıştır",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

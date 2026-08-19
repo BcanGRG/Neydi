@@ -1,6 +1,8 @@
 package com.neydi.app.ui.product
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,6 +40,7 @@ import com.neydi.app.ui.components.Sparkline
 import com.neydi.app.ui.components.SectionHeader
 import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.theme.NeydiExtraShapes
+import com.neydi.app.ui.theme.NeydiShapes
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.Spacing
@@ -60,7 +63,11 @@ data class ProductSheetState(
 )
 
 /**
- * Urun Detayi sheet'i - **su an yalnizca sifir-gozlem hali** (Ekran 5).
+ * Urun Detayi sheet'i (Ekran 5) - **grafiksiz hali**.
+ *
+ * Basligin eski hali *"su an yalnizca sifir-gozlem hali"* diyordu ve bu E17'den
+ * beri dogru degildi: sheet fiyat bolumunu de manseti de ciziyor. Eksik olan
+ * sifir-gozlem/gozlemli ayrimi degil, GRAFIK.
  *
  * NEDEN SIMDI VE NEDEN BU KADAR: F6.8'in ("her zamankiler"e ekleme) tasarimda
  * belirlenmis giris noktasi bu sheet'teki anahtar. Tasarim maketlerinde
@@ -71,8 +78,15 @@ data class ProductSheetState(
  * Anahtari gecici olarak Ayarlar'a koymak alternatifti; tasarimin kendi
  * affordance'ini kullanmak yerine yeni bir yer icat etmek olurdu.
  *
- * F5.3 buraya manset cumlesini, Canvas grafigi, min/ortalama referans
- * cizgilerini, aralik secicisini ve alim gecmisi tablosunu ekleyecek.
+ * MANSETIN YALNIZCA BIR YARISI BURADA. Tasarimin iki manseti var: *"Son
+ * ödediğin: 138,50 TL"* (tek gozlem hali) ve trend cumlesi *"Süt 32 TL → 41 TL
+ * · son 3 ayda %28 arttı"*. Birincisi ciziliyor; ikincisi F5.3'te, cunku
+ * grafigin aritmetigine bagli - ay araligi ve ambalaj degisiminde iki donemi
+ * ayirma. Ikisini de bekletmek, ekranin merkezindeki cumleyi hic olmayan bir
+ * grafigin arkasinda tutmak olurdu.
+ *
+ * F5.3 ayrica Canvas grafigi, min/ortalama referans cizgilerini ve aralik
+ * secicisini ekleyecek.
  * F6.5 ikinci anahtari (*"Bunu onerme"*) baglayacak - bugun engelleme tablosu
  * var ama DAO'su yok, ve gorunup calismayan bir anahtar calismayan bir anahtardan
  * kotudur.
@@ -138,13 +152,45 @@ fun ProductSheetContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            // MANSET, VARSA URUN ADININ YERINE GECER - yanina degil.
+            //
+            // Bolum basligi "okunacak sey grafik degil manset cumlesi" diyor ve
+            // maketlerin ucunde de bu satirda urun adi YOK: adi kutucuktaki iki
+            // harf ile arkadaki satir zaten soyluyor, cumle ise ancak tek
+            // basinaysa manset olabiliyor. Ad hala yazilan hal, gozlemsiz hal.
+            val headline = state.price.headline
+            if (headline == null) {
+                Text(
+                    text = state.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = Spacing.sm),
+                )
+            } else {
+                Text(
+                    text = headline,
+                    // headlineMedium = Fraunces 24sp, tasarimin manset stili.
+                    // Fraunces'in alt siniri 24sp (Type.kt) ve manset o sinirin
+                    // uzerindeki dort kullanimdan biri.
+                    style = MaterialTheme.typography.headlineMedium,
+                    // IKI SATIR SERBEST: gezinme sozlesmesi dinamik yazi icin
+                    // "mansetler 2 satira iner, olculer degismez" diyor, yani
+                    // kirpmak degil sarmak dogru davranis.
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = Spacing.sm),
+                )
+            }
+        }
+
+        state.price.headlineSub?.let { sub ->
             Text(
-                text = state.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = Spacing.sm),
+                text = sub,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = Spacing.md),
             )
         }
 
@@ -164,6 +210,19 @@ fun ProductSheetContent(
 
         Spacer(Modifier.height(Spacing.md))
 
+        // KUYRUGUN SIRASI TASARIMDA SABIT ve bir tercih degil: once anahtarlar
+        // ("Her zamankilere ekle", "Bunu onerme"), EN SONDA yikici satir - her
+        // biri ustunde bir ayirici ile. Kirmizi satir once ciziliyordu, yani
+        // icerikle anahtar arasina giriyordu: kuyrugu tarayan goz once ona
+        // carpiyor ve sheet bir ayar yuzeyi degil "sil" ekrani gibi okunuyordu.
+        // Geri alinamaz is, listenin sonunda durur.
+        Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
+        NeydiSwitch(
+            label = "Her zamankilere ekle",
+            checked = state.isStaple,
+            onCheckedChange = onStapleChange,
+        )
+
         onRemoveFromList?.let { remove ->
             // 56dp, ustunde ayirici, error renginde, IKON YOK, sagda kontrol yok.
             // Yikici satirin tek isareti RENK - tasarimin renk sozlesmesi
@@ -182,12 +241,6 @@ fun ProductSheetContent(
                     .wrapContentHeight(Alignment.CenterVertically),
             )
         }
-
-        NeydiSwitch(
-            label = "Her zamankilere ekle",
-            checked = state.isStaple,
-            onCheckedChange = onStapleChange,
-        )
     }
 }
 
@@ -208,37 +261,67 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
 
     if (price.cheapest.isNotEmpty()) {
         SectionHeader(title = "Nerede ucuz", count = price.cheapest.size)
-        price.cheapest.forEach { row ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.md, vertical = Spacing.xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = row.store,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    // MARKA VE AMBALAJ ALT SATIRDA: karar 26 kimligi
-                    // market+marka cifti yapiyor, yani marka satirin bir
-                    // suslemesi degil AYIRT EDICI bilgisi. Ikisi de eksik
-                    // olabiliyor (manavda marka yok) - o zaman satir cizilmiyor.
-                    listOfNotNull(row.brand, row.pack).takeIf { it.isNotEmpty() }?.let { parts ->
+        // SATIR DEGIL KUTUCUK: maket her satiri 52dp'lik dolgulu bir kart
+        // yapiyor - surfaceVariant zemin, 1dp hairline kenarlik, 16dp kose.
+        // Dolgusuz hali bu satirlari hemen altlarindaki gecmis tablosundan
+        // ayirt ettirmiyordu; ikisi ayni ritimde okununca "Nerede ucuz" bir
+        // karsilastirma olmaktan cikip listenin devami gibi gorunuyordu.
+        Column(
+            modifier = Modifier.padding(horizontal = Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            price.cheapest.forEach { row ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(NeydiShapes.medium)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .border(Sizes.hairline, extras.hairline, NeydiShapes.medium)
+                        .heightIn(min = CHEAP_ROW_HEIGHT)
+                        .padding(horizontal = CHEAP_ROW_PADDING),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
                         Text(
-                            text = parts.joinToString(" · "),
+                            text = row.store,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        // MARKA, AMBALAJ VE YAS ALT SATIRDA: karar 26 kimligi
+                        // market+marka cifti yapiyor, yani marka satirin bir
+                        // suslemesi degil AYIRT EDICI bilgisi.
+                        //
+                        // YAS ARTIK HER ZAMAN VAR ve satir bu yuzden hic
+                        // dusmuyor. Onceden marka da ambalaj da bilinmiyorsa
+                        // (manavda ikisi de yok) alt satir tumden cizilmiyordu
+                        // ve geriye yalnizca fiyat kaliyordu: iki hafta onceki
+                        // bir gozlem, bugunkuyle ayni gorunuyordu.
+                        //
+                        // AMBALAJ MAKETTE SATIRDA DEGIL, bolum basliginda
+                        // ("14:20 itibarıyla · 4 L") - orada butun satirlar
+                        // ayni ambalajdan oldugu icin. Bizim satirlarimiz
+                        // karisik olabiliyor ve SectionHeader'in oyle bir yuvasi
+                        // yok; ambalaji dusurmek iki fiyati kiyaslanamaz
+                        // kilardi, o yuzden satirda kaliyor.
+                        Text(
+                            text = listOfNotNull(row.brand, row.pack, row.recency)
+                                .joinToString(" · "),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
+                    Text(
+                        text = row.price,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = Spacing.sm),
+                    )
                 }
-                Text(
-                    text = row.price,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
             }
         }
         Spacer(Modifier.height(Spacing.sm))
@@ -325,6 +408,14 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
 
 private val HISTORY_DATE_WIDTH = 56.dp
 
+/** "Nerede ucuz" kutucugunun yuksekligi (maket: 52px). `min`, cunku %130 yazi
+ *  olceginde iki satir 52dp'ye sigmiyor ve tasmak yerine buyumesi gerekiyor. */
+private val CHEAP_ROW_HEIGHT = 52.dp
+
+/** Kutucugun ic boslugu (maket: `padding:0 14px`). Spacing izgarasinda 14
+ *  adimi yok; kutucuk ADIMA DEGIL makete uyuyor. */
+private val CHEAP_ROW_PADDING = 14.dp
+
 // --- Onizlemeler ------------------------------------------------------------
 
 @PreviewLightDark
@@ -354,18 +445,24 @@ private fun ProductSheetPricePreview() = NeydiPreview {
             name = "Ayçiçek Yağı",
             isStaple = true,
             price = PriceSection(
+                headline = "Son ödediğin: 100,00 TL",
+                headlineSub = "BİM · dün · 4 lt",
                 cheapest = listOf(
-                    CheapRow(store = "BİM", brand = "Dost", price = "100,00", pack = "4 lt"),
-                    CheapRow(store = "Migros", brand = "Pınar", price = "130,00", pack = null),
+                    CheapRow(store = "BİM", brand = "Dost", price = "100,00 TL", pack = "4 lt", recency = "dün"),
+                    CheapRow(store = "Migros", brand = "Pınar", price = "130,00 TL", pack = null, recency = "3 gün önce"),
                 ),
                 history = listOf(
-                    HistoryRow(id = "h-BİM-10000", observedAt = 0, date = "6 Ağu", store = "BİM", price = "100,00"),
-                    HistoryRow(id = "h-Migros-13000", observedAt = 0, date = "6 Ağu", store = "Migros", price = "130,00"),
-                    HistoryRow(id = "h-BİM-9500", observedAt = 0, date = "6 Ağu", store = "BİM", price = "95,00"),
+                    HistoryRow(id = "h-BİM-10000", observedAt = 0, date = "6 Ağu", store = "BİM", price = "100,00 TL"),
+                    HistoryRow(id = "h-Migros-13000", observedAt = 0, date = "6 Ağu", store = "Migros", price = "130,00 TL"),
+                    HistoryRow(id = "h-BİM-9500", observedAt = 0, date = "6 Ağu", store = "BİM", price = "95,00 TL"),
                 ),
                 sparkline = listOf(95f, 130f, 100f),
             ),
         ),
         onStapleChange = {},
+        // KUYRUGUN SIRASI ANCAK BURADA GORUNUYOR: diger iki onizleme
+        // `onRemoveFromList` gecmiyor, yani kirmizi satiri hic cizmiyor ve
+        // satirin yanlis yerde durdugu bir onizlemede fark edilemezdi.
+        onRemoveFromList = {},
     )
 }

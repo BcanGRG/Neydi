@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,13 +21,11 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -38,13 +34,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -151,10 +148,17 @@ internal fun TagCaptureScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                // TEK CUMLE (sozlesme). Onceki hali iki cumleydi ve ikincisi
-                // kullaniciya yapabilecegi bir sey soylemiyordu.
+                // CUMLE SOZLESMEDEN ALINIYOR VE IKI HAL AYRI KONUSUYOR.
+                //
+                // Kod ikisine de "Etiket cekmek icin kamera izni gerekiyor"
+                // yaziyordu; o cumle sozlesmenin hicbir yerinde gecmiyor ve iki
+                // farkli durumu tek cumleye bindiriyordu. Kalici rette sistem
+                // BIR DAHA SORMUYOR - soylenecek sey bir DURUM ("izin kapali")
+                // ve tek cikis alttaki Ayarlar dugmesi. Gecici rette sistem
+                // tekrar soruyor - soylenecek sey neyin yapilamadigi.
                 Text(
-                    text = "Etiket çekmek için kamera izni gerekiyor",
+                    text = if (cameraPermanentlyDenied) "Kamera izni kapalı"
+                    else "Kamera izni olmadan etiket çekilemez",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Flow.viewfinderChrome,
                     textAlign = TextAlign.Center,
@@ -266,48 +270,34 @@ internal fun TagCaptureScreen(
             )
         }
 
+        // GECICI BILDIRIM TEK YUZEY: hata da toast'tan gecer.
+        //
+        // Hata ayri bir SERIT olarak ekranin USTUNE ve 4 sn ciziliyordu; ikisi
+        // de sozlesmeye aykiri. Sozlesme gecici bildirim icin tek bir sey
+        // taniyor - *"Toast: 2 sn, aksiyonsuz, kuyruksuz"* - ve cekim hatalarini
+        // ("Kamera su an kullanilamiyor", "Yer kalmadi, fotograf alinamadi")
+        // adiyla toast sayiyor. Iki ayri yuzey, ayni isi yapan iki bildirim
+        // dili demekti: basarili kayit altta ve 2 sn, basarisiz cekim ustte ve
+        // 4 sn. Sure de artik tek yerde ([NeydiToast]); FAILURE_MS sabiti KDoc'u
+        // "toast ile ayni omur" derken 4000 tutuyordu, yani yorum yalan
+        // soyluyordu.
+        //
+        // CAKISMADA HATA ONDE: kaydetme bildirimi gorunurken cekim basarisiz
+        // olabiliyor (kart kapandiktan sonraki ilk deklansor). O anda ekranda
+        // "kaydedildi" durup hatanin susmasi, kullaniciya kare alinmis gibi
+        // gorunurdu. Ustu ortulen mesaj CIZILMEDEN dusuruluyor - kuyruk yok;
+        // state'te birakilsaydi hatadan sonra gecikmeli olarak cizilirdi.
         NeydiToast(
-            message = state.toast,
-            onShown = onToastShown,
+            message = state.failure ?: state.toast,
+            onShown = {
+                if (state.toast != null) onToastShown()
+                if (state.failure != null) onFailureShown()
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(bottom = Spacing.xl),
         )
-
-        // HATA SERIDI: `failure` bugune kadar HIC yazilmadigi icin bu dal
-        // calismamisti ve ciplak metin olarak kalmisti. Canli kamera
-        // goruntusunun uzerinde ciplak metin okunmaz - kadraj neyse metnin
-        // rengi o olur. Zeminli serit, vizorun kendi kromunu kullaniyor.
-        state.failure?.let { failure ->
-            LaunchedEffect(failure) {
-                delay(FAILURE_MS)
-                onFailureShown()
-            }
-            Row(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(top = Sizes.minTapTarget + Spacing.sm, start = Spacing.md, end = Spacing.md)
-                    .clip(NeydiExtraShapes.pill)
-                    .background(Flow.viewfinderChrome)
-                    .padding(horizontal = Spacing.md, vertical = Spacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-            ) {
-                NeydiIcon(
-                    icon = NeydiIcons.Info,
-                    contentDescription = null,
-                    size = 18.dp,
-                    tint = Flow.amberText,
-                )
-                Text(
-                    text = failure,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Flow.amberText,
-                )
-            }
-        }
     }
 }
 
@@ -616,12 +606,33 @@ private fun BoxScope.ConfirmCardLayer(
  *
  * Etiketli bir alan degil - kartin isini tek bakista soyluyor: kaydedilecek
  * sey FIYAT, gerisi onun kimligi. Kod `headlineMedium` (24sp) kullaniyordu.
+ *
+ * ## KLAVYEYI KENDILIGINDEN ACAN TEK ALAN
+ *
+ * Sozlesmenin "Ilk odak" kurali *"Hicbir ekran acilirken klavye acmaz. Tek
+ * istisna: fiyati okunamamis onay karti."* diyor; kart kurali ayni seyi ters
+ * yonden tekrarliyor: *"Alan dolu gelirse dokunusla duzeltilir, bos gelirse
+ * klavye kendiliginden acilir."* Kodda hicbir [FocusRequester] yoktu, yani
+ * fiyat okunamadiginda kullanici amber seridi okuyup ayrica alana dokunmak
+ * zorundaydi - tek elle reyonda calisirken bir dokunus fazla.
+ *
+ * Odak alanin ILK bilesiminde isteniyor ve o an okumanin bittigi an: OCR
+ * kosarken bu bilesen hic cizilmiyor, yerinde iskelet var (bkz. cagiran).
+ * Kosul `card.priceText` ile canli baglansaydi, kullanici yazdigini silip alani
+ * bosalttiginda klavye kendini yeniden zorlardi - oysa o an odak zaten onda.
  */
 @Composable
 private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+    // ACILIS HALI SAKLANIYOR: sart "su an bos" degil, "BOS ACILDI".
+    val openedEmpty = remember { card.priceText.isBlank() }
+    LaunchedEffect(Unit) {
+        if (openedEmpty) focusRequester.requestFocus()
+    }
     BasicTextField(
         value = card.priceText,
         onValueChange = onPriceChange,
+        modifier = Modifier.focusRequester(focusRequester),
         textStyle = MaterialTheme.typography.displayLarge.copy(color = Flow.text),
         singleLine = true,
         cursorBrush = SolidColor(Flow.amber),
@@ -815,9 +826,6 @@ private fun Skeleton(width: Dp, height: Dp = 22.dp) {
 
 /** Ortucu flasinin suresi (karar 55). */
 private const val FLASH_MS = 120
-
-/** Hata seridi ne kadar durur - toast ile ayni omur. */
-private const val FAILURE_MS = 4000L
 
 /** Kart satiri - tasarimin `min-height:56px`i. */
 private val ROW_HEIGHT = 56.dp

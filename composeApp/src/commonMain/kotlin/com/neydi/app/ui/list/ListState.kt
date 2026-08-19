@@ -41,6 +41,20 @@ data class ListState(
     val isEmpty: Boolean get() = !loading && sections.isEmpty() && taken.isEmpty()
     val totalRows: Int get() = sections.sumOf { it.rows.size } + taken.size
     val remainingRow: Int get() = sections.sumOf { b -> b.rows.count { !it.row.checked } }
+
+    /**
+     * Alisveris ilerlemesi: kac satir alindi.
+     *
+     * TEK YERDE HESAPLANIYOR cunku ayni ekran iki yerde gosteriyor - baslik
+     * ("12/18 alindi") ve alt cubuk ("Bitir (12/18)"). Alt cubuk bu farki
+     * kendi icinde cikariyordu; baslik ise TERS metrigi ("N kaldi") yaziyordu,
+     * yani ayni ilerleme iki farkli dille anlatiliyordu.
+     *
+     * Iki modda da dogru: planlamada isaretli satirlar [taken]'a iner,
+     * alisveris modunda bolumlerinde kalir - fark her iki halde de alinan
+     * satir sayisini veriyor.
+     */
+    val takenRows: Int get() = totalRows - remainingRow
 }
 
 /**

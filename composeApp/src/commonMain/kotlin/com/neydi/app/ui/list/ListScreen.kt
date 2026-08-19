@@ -408,7 +408,15 @@ internal fun ListContent(
 
                 // Tahmin BASLIKTAN sonra, satirlardan once: rakam listeye
                 // bakmadan once gorulmeli, alt tarafta kalirsa hic gorulmez.
-                if (!state.isEmpty) {
+                //
+                // ALISVERIS MODUNDA CIZILMIYOR. Ekran 1'in olculebilir farklar
+                // tablosu: "Oneri seridi + sepet tahmini · plan: gorunur ->
+                // alisveris: gizli"; mod maketlerinin hicbirinde tahmin satiri
+                // yok. Onceki tek kosul listenin bos olmamasiydi, yani reyonda
+                // ekranin en ustunu evde verilecek bir karar (butce) yiyordu -
+                // orada gorulmesi gereken sey siradaki satirin kendisi. Ayni
+                // tabloya uyan oneri seridi zaten `!state.shoppingMode` icinde.
+                if (!state.isEmpty && !state.shoppingMode) {
                     item(key = "tahmin") {
                         EstimatedBasket(
                             amountMinor = estimate.amountMinor,
@@ -598,7 +606,10 @@ internal fun ListContent(
                 }
             } else {
                 ShoppingBottomBar(
-                    taken = state.totalRows - state.remainingRow,
+                    // Sayac BASLIKLA AYNI KAYNAKTAN: ikisi ayni ilerlemeyi
+                    // gosteriyor, iki ayri cikarma islemi yapmalari zamanla
+                    // ayrisma riski demekti.
+                    taken = state.takenRows,
                     total = state.totalRows,
                     onAdd = onOpenSheet,
                     onFinish = onFinish,
@@ -643,7 +654,13 @@ private fun ListHeader(
     ) {
         Column(Modifier.weight(1f)) {
             Text(
-                text = if (state.shoppingMode) "Alışveriş" else "Liste",
+                // BASLIK IKI MODDA DA "Liste". Alisveris modu maketlerinin
+                // ikisi de (Ekran 1 ve Ekranlar 2-4) manseti "Liste" yaziyor;
+                // karar 28 de bunu tekrarliyor. Onceki hali modda "Alisveris"
+                // diyordu, yani mod degistirmek kullaniciya BASKA BIR EKRANA
+                // gecmis gibi okunuyordu - oysa ayni ekran, ayni liste; degisen
+                // yalnizca satirlarin bicimi.
+                text = "Liste",
                 // titleLarge = title22 (700/22sp) - tasarimdaki baslik bu.
                 // Onceki headlineMedium 24sp'ydi ve token esleme tablosunda
                 // headline24'e denk geliyor, yani iki punto buyuktu.
@@ -652,7 +669,18 @@ private fun ListHeader(
             )
             Text(
                 text = if (state.shoppingMode) {
-                    "${state.remainingRow} kaldı"
+                    // ILERLEME "ALINAN", "KALAN" DEGIL (maket: "12/18 alindi").
+                    // Onceki "N kaldi" ters metrikti: toplami hic soylemiyordu,
+                    // yani "3 kaldi" uc satirlik bir listede de otuz satirlik
+                    // bir listede de ayni goruntuyu veriyordu. Ustelik ayni
+                    // ekranin alt cubugu zaten "Bitir (12/18)" diyordu - baslik
+                    // onu tekrarlamak yerine baska bir sayi gosteriyordu.
+                    //
+                    // MAKETIN BASTAKI MARKET ADI ("MIGROS ATASEHIR · ") BURADA
+                    // YOK: kaynagi o gezide son cekilen etiket (karar 28) ve o
+                    // veri E18'de geliyor. Uydurmak, dogrulanmamis bir marketi
+                    // manset yapmak olurdu.
+                    "${state.takenRows}/${state.totalRows} alındı"
                 } else {
                     lastTripSummary(state.lastTrip, now)
                 },
