@@ -59,7 +59,11 @@ import com.neydi.app.ui.theme.Spacing
  * *"isaretlendi"*, `check_circle` ise cipte/secicide *"secili"* demek. Ikisini
  * tek ikona indirmek iki farkli fiili ayni sozcukle soylemek olurdu.
  *
- * [PushPin] tek DOLGULU ikon (tasarim `FILL 1` cizyor, 12dp sabit urun rozeti).
+ * Iki ikon Phosphor'un `fill` agirligindan geliyor, kalan on bes `regular`:
+ * [CheckCircle] tasarimin `FILL 1` ikonu (*"dolu cizilen tek ikon"*), [PushPin]
+ * ise envanterde FILL demedigi halde dolu - 12dp'lik rozette kontur cizim
+ * okunmuyor. Bu satir once *"[PushPin] tek dolgulu ikon"* diyordu; check_circle
+ * regular cizildigi surece dogruydu, artik degil.
  * Karar 33'e gore dolgulu ikon karanlik tema telafisi ALMAZ - telafi ince
  * konturun karanlikta kaybolmasina karsi, dolgunun boyle bir sorunu yok.
  */
@@ -105,12 +109,24 @@ object NeydiIcons {
             "112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z",
     )
 
-    /** "Bu listede var" - Ekle sheet'indeki isaret (tasarim karari 12). */
+    /**
+     * "Bu listede var" - Ekle sheet'indeki isaret (tasarim karari 12).
+     *
+     * PHOSPHOR'UN `fill` AGIRLIGI, `regular` DEGIL. Ikonografi'nin FILL ekseni
+     * kurali tek cumle birakiyor: *"Uygulamada dolu cizilen tek ikon
+     * check_circle"*, envanter satiri da `FILL 1` diyor. Kod REGULAR cizimi
+     * tasiyordu - 104 yaricapli dis halka + 88 yaricapli ic halka, yani ICI BOS
+     * bir cember; dolgunun bildirdigi durum (onaylandi/secili) hic cizilmiyordu
+     * ve ikon yanindaki notr `check`ten ayirt edilemiyordu.
+     *
+     * Dolu surumde CEMBER TERS YONDE sariliyor, tik ise ayni yonu koruyor;
+     * `NonZero` doldurma kuralinda zit sarim tiki diskten OYUYOR. Ara sayilar
+     * `regular` ile birebir ayni - degisen yalnizca hangi bolgenin dolu kaldigi.
+     */
     val CheckCircle: ImageVector = phosphor(
         "CheckCircle",
-        "M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8," +
-            "8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88," +
-            "88A88.1,88.1,0,0,0,216,128Z",
+        "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8," +
+            "8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z",
     )
 
     val ChevronRight: ImageVector = phosphor(
@@ -136,10 +152,12 @@ object NeydiIcons {
     /**
      * Flas - etiket kamerasinin sag ust hedefi (tasarim: Ekran 4).
      *
-     * HENUZ CAGIRAN YOK, kasitli: envanter karar 34 ile 17'ye SABITLENDI ve set
-     * tasimasi setin tanimlandigi an. E15 gelince ikonu ikinci kez elle tasimak
-     * gerekmesin diye simdi yaziliyor - F11.4'un "tanimli ama kullanilmayan
-     * primitif" denetimi bunu kaza sanmasin.
+     * CAGIRANI VAR: `TagCaptureScreen` flas dugmesini ciziyor - 48dp hedef, iki
+     * hal (kapali/acik), oturumluk (karar 60). Not eskiden *"HENUZ CAGIRAN YOK,
+     * kasitli... E15 gelince ikonu ikinci kez elle tasimak gerekmesin"* diyordu:
+     * ikon set tanimlanirken pesin tasinmisti, E15 onu gercekten bagladi ama not
+     * guncellenmedi. Yanlis olan tarafi sessiz degil - sonraki okuyucuyu ikonu
+     * olu sanip silmeye davet ediyordu.
      */
     val Bolt: ImageVector = phosphor(
         "Bolt",
@@ -148,7 +166,11 @@ object NeydiIcons {
             "132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z",
     )
 
-    /** Bilgi - etiket kamerasinin ipucu satiri (tasarim: Ekran 4). Bkz. [Bolt] notu. */
+    /**
+     * Bilgi - etiket kamerasinin ipucu/hata seridi (tasarim: Ekran 4).
+     * `TagCaptureScreen` ciziyor; eski *"bkz. [Bolt] notu"* gonderisi artik
+     * olmayan bir "cagiran yok" aciklamasini gosteriyordu.
+     */
     val Info: ImageVector = phosphor(
         "Info",
         "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128," +
@@ -163,7 +185,9 @@ object NeydiIcons {
     )
 
     /**
-     * Sabit urun rozeti. TEK DOLGULU IKON - tasarim `FILL 1` cizyor.
+     * Sabit urun rozeti - Phosphor'un `fill` agirligi (12dp'de kontur okunmuyor).
+     * TEK DOLGULU IKON DEGIL ARTIK: [CheckCircle] tasarimin `FILL 1` ikonu
+     * oldugu icin dolu cizime gecti.
      * Karanlik tema telafisi almaz (karar 33); bkz. [NeydiIcon].
      */
     val PushPin: ImageVector = phosphor(

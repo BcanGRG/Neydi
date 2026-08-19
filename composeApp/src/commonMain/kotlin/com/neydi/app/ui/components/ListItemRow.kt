@@ -221,8 +221,28 @@ fun ListItemRow(
             .heightIn(min = height)
             .clip(NeydiShapes.large)
             .then(
-                // Alisveris modunda satir container'i kenarlik kazanir: kol mesafesinden
-                // ve kotu isikta satir sinirlari gorunur olmali.
+                // ALISVERIS SATIRININ DOLGUSU - YALNIZCA KARANLIKTA.
+                //
+                // Fark tablosu "satir container'i - plan: dolgusuz, kenarliksiz
+                // -> alisveris: surfaceVariant + 1.5dp kenarlik" diyor ve kodda
+                // yalnizca kenarlik vardi; dolgu hic uygulanmiyordu. Ama ayni
+                // sayfanin gerekcesi dolguyu ACIKCA karanliga bagliyor:
+                // "karanlik modda kontrast artisi beyaza cikisla degil ters
+                // yonle yapilir - satir container'i surface #13100E'den
+                // surfaceVariant #241E1A'ya dolgulanir".
+                //
+                // Isik maketinde alisveris satirlari gercekten DOLGUSUZ (yalniz
+                // 1.5px #E7DACB kenarlik); oradaki kontrast ekranin kendi
+                // zemininin #FFFFFF'e cikmasindan geliyor. Isikta da dolgu
+                // koymak, ayni maketin ISARETLI satirina ayrilmis #F1E7DB'yi
+                // butun satirlara dagitir ve isaretin tek gorsel farkini silerdi.
+                if (shoppingMode && !extras.isLight) {
+                    Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                } else Modifier,
+            )
+            .then(
+                // Kenarlik iki temada da var: kol mesafesinden ve kotu isikta
+                // satir sinirlari gorunur olmali.
                 if (shoppingMode) {
                     Modifier.border(
                         SizesExtra.rowBorderShopping,

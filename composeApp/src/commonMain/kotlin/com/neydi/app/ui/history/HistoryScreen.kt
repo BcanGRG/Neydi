@@ -83,8 +83,26 @@ fun HistoryScreen(
     val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-        // BASLIK BLOGU: geri oku + baslik + mini grafik, altinda hairline.
-        // Tasarimda ucu tek bir blok ve blogun alt kenari ayirici.
+        // BASLIK BLOGU: geri oku + baslik, altinda hairline. Tasarimda blok tek
+        // parca ve blogun alt kenari ayirici.
+        //
+        // MINI GRAFIK CIZILMIYOR - bu yorum once "geri oku + baslik + mini
+        // grafik" diyordu, oysa dosyanin hicbir yerinde cubuk cizen bir satir
+        // yok; yorum olmayan bir seyi anlatiyordu. Tasarimin blogu gercekten uc
+        // parcali: ok, baslik ve 96dp yuksekliginde ALTI cubuklu bir grafik
+        // (Ekranlar 5-8, "6 Gecmis" cercevesi; cubuklar primary renginde, ust
+        // koseleri 8dp yuvarlak, aralarinda 10dp).
+        //
+        // NEDEN HALA YOK: grafik yeni bir bilesen ve tasarimin sustugu iki seye
+        // karar vermeyi gerektiriyor - cubugun boyu neyi olcuyor, ve tutari
+        // hesaplanamayan gezi (`estimateMinor == null`) nasil ciziliyor. Ikisini
+        // de uydurmak kullaniciya yalan bir olcek gostermek olurdu. Esigi ise
+        // uydurmak gerekmiyor, yazili: esik tablosu grafigi 3 GEZININ altinda
+        // hic cizdirmiyor, gerekcesi de tasarimda duruyor - "tek cubuklu grafik
+        // grafik degildir".
+        //
+        // Asagidaki 14dp'lik ara tasarimin baslik-grafik boslugu: tek cocukla
+        // etkisiz, grafik gelince yerini buluyor.
         Column(
             modifier = Modifier
                 .fillMaxWidth()

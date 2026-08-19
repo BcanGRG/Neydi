@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,7 @@ import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.NeydiExtraShapes
+import com.neydi.app.ui.theme.NeydiShapes
 import com.neydi.app.ui.theme.Sizes
 import com.neydi.app.ui.theme.SizesExtra
 import com.neydi.app.ui.theme.Spacing
@@ -98,7 +100,6 @@ fun MissingItemsScreen(
     onAdd: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = Spacing.md)) {
             Row(
@@ -128,7 +129,13 @@ fun MissingItemsScreen(
                 )
             }
 
-            LazyColumn(Modifier.weight(1f)) {
+            // SATIR ARASI 6dp: maketin liste kabi `gap:6px` diyor. Satirlar
+            // kart olduguna gore aralarindaki bosluk kartlari birbirinden
+            // ayiran tek sey; bitisik kartlar tek bir blok gibi okunurdu.
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 MissingSection.entries.forEach { section ->
                     val rows = state.rows.filter { it.section == section }
                     // BOS BOLUM CIZILMEZ.
@@ -193,29 +200,61 @@ fun MissingItemsScreen(
  * orada isaretli "aldim" demek, burada "listeye ekle" demek. Ayni bileseni
  * kullanmak iki farkli anlami ayni goruntuye baglardi.
  *
- * TURUNCU SOL SERIT yalnizca "gecen sefer unuttun" bolumunde: o satirlar bir
+ * KIREMIT SOL SERIT yalnizca "gecen sefer unuttun" bolumunde: o satirlar bir
  * OLAYA dayaniyor, digerleri bir cikarima. Serit farki gozle soyluyor.
  */
 @Composable
 private fun MissingItemRow(row: MissingRow, onToggle: () -> Unit) {
     val extras = LocalNeydiExtraColors.current
+    // SERIT KIREMIT, AMBER DEGIL. Onceki hali `extras.accent` (#E0A32E)
+    // kullaniyordu; maket ise serit rengini satir verisinde birebir yaziyor:
+    // `strip: "#B34418"` / `stripDark: "#FF9166"` - yani primary. Amber bu
+    // paletin UYARI rengi ve isik modunda kendi sinirini tasiyamadigi icin
+    // ayrica accentOutline kenarligi isterdi (Color.kt); halbuki unutulmus
+    // satir bir uyari degil, gecen gezinin kaydi.
+    val strip = MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = Sizes.rowWithMeta)
+            // SATIR ARTIK KART. Maket her satiri
+            // `border-radius:20px; background; border:1px` diye veriyor;
+            // oncesinde ciplak bir Row'du, yani satir siniri yalnizca metin
+            // bosluguyla belliydi. Bu ekranda her satir ayri bir KARAR
+            // (listeye girsin mi girmesin mi), o yuzden sinirinin gorunmesi
+            // sussuz bir gereklilik.
+            //
+            // ZEMIN surfaceVariant: maket isik modunda #FFFFFF diyor ama
+            // palette beyaz bir "yukseltilmis yuzey" token'i yok. Karanlikta
+            // surfaceVariant zaten maketin verdigi #241E1A ile birebir, ve
+            // uygulamadaki her yukseltilmis kap (cip, bos durum blogu, hizli
+            // ekleme alani) ayni token'i kullaniyor - buraya ham bir renk
+            // yazmak paletin disina cikan tek yer olurdu.
+            .clip(NeydiShapes.large)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(Sizes.hairline, extras.hairline, NeydiShapes.large)
+            .then(
+                if (row.section == MissingSection.FORGOTTEN) {
+                    // SERIT KARTIN SOL KENARI, satirin icinde bir eleman
+                    // degil: maketin boyama kodu `borderLeft = '4px solid '`
+                    // diyor. Onceki hali 3dp'lik bir Box + 8dp Spacer'di ve
+                    // YER KAPLIYORDU, yani unutulmus satirlarin onay kutusu
+                    // digerlerinden 11dp saga kayiyor, bolumler arasinda
+                    // sutun hizasi bozuluyordu. drawBehind hem 4dp genisligi
+                    // hem kartin tam yuksekligini veriyor, hem de hicbir
+                    // satiri kaydirmiyor.
+                    Modifier.drawBehind {
+                        drawRect(color = strip, size = size.copy(width = 4.dp.toPx()))
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .pressable(onTap = onToggle)
-            .heightIn(min = 68.dp),
+            // Maket ic boslugu: `padding:10px 14px`.
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (row.section == MissingSection.FORGOTTEN) {
-            Box(
-                Modifier
-                    .width(3.dp)
-                    .height(40.dp)
-                    .clip(NeydiExtraShapes.pill)
-                    .background(extras.accent),
-            )
-            Spacer(Modifier.width(Spacing.sm))
-        }
         SelectTarget(row.selected)
         Spacer(Modifier.width(SizesExtra.checkbox / 2))
         Column(Modifier.weight(1f)) {
@@ -236,7 +275,6 @@ private fun MissingItemRow(row: MissingRow, onToggle: () -> Unit) {
 /** Secim hedefi: bos kare -> isaretli squircle. "Alindi" onayindan ayri. */
 @Composable
 private fun SelectTarget(selected: Boolean) {
-    val extras = LocalNeydiExtraColors.current
     Box(
         modifier = Modifier
             .size(SizesExtra.checkbox)

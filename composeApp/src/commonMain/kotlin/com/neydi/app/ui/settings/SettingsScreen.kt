@@ -154,9 +154,30 @@ fun SettingsScreen(
                 )
                 if (state.staples.isEmpty()) {
                     // Tasarimin bos hali: bolum basligi duruyor ama altinda
-                    // liste yerine tek satirlik aciklama var. Bu bir CTA degil,
-                    // "kendiliginden olacak" bilgisi.
-                    Note("Her alışverişte aldığın ürünler birkaç alışverişten sonra kendiliğinden burada birikir.")
+                    // liste yerine tek satirlik aciklama var.
+                    //
+                    // TASARIMIN CUMLESI YAZILMADI ("...uc geziden sonra
+                    // KENDILIGINDEN burada birikir"), cunku olmayan bir
+                    // davranisi vaat ediyor. `ProductDao.setStaple` KDoc'u tersi
+                    // yonde bir degismez koyuyor: *"oneri motoru kendi basina
+                    // set ETMEZ - sabitlik bir cikarim degil, beyan"*. Kodda
+                    // `isStaple`i true yazan iki yer var, ikisi de kullanicinin
+                    // kendi dokunusu: Kurulum adim 1 ve Urun Detayi anahtari.
+                    // Esik tablosundaki "Her zamankiler ogrenmesi · 3 gezi"
+                    // satirinin Kod sutunu bos - o ogrenme henuz yazilmadi.
+                    //
+                    // ONCEKI HALI IKI KEZ YANLISTI: ayni vaadi tasiyordu, ustelik
+                    // tasarimin "uc gezi" sayisini "birkac alisveris"e cevirerek
+                    // cumleyi bilgisiz de birakiyordu. Vaat dusunce sayiyi
+                    // yazmanin anlami da kalmadi.
+                    //
+                    // Karar 24 uretilmis katilma kodunu tam bu gerekceyle
+                    // reddetmisti; bir bos bolum notu da henuz dogru olmayan bir
+                    // seyi vaat edemez. Yerine bugun CALISAN tek yol yaziliyor -
+                    // metindeki "Her zamankilere ekle" Urun Detayi'ndaki
+                    // anahtarin birebir etiketi, yani kullanici arayacagi seyi
+                    // ayni sozcuklerle buluyor.
+                    Note("Bir ürünü listede basılı tutup «Her zamankilere ekle» dersen burada görünür.")
                 } else {
                     state.staples.forEach { staple ->
                         StapleRowItem(staple) { onRemoveStaple(staple.productId) }
