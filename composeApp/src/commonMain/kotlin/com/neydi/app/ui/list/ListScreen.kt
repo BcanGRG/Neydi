@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -180,6 +181,28 @@ fun ListScreen(
     if (sheetOpen) {
         ModalBottomSheet(
             onDismissRequest = vm::closeSheet,
+            // TAM ACIK, kismi DEGIL - ve bu bir tercih degil, olcumun dayattigi
+            // sey.
+            //
+            // Kismi acik M3 sheet'i icerigine SINIR VERMIYOR, KIRPIYOR: icerik
+            // ekran yuksekligiyle olculuyor, sheet ~%47'sini gosteriyor,
+            // gerisi kesiliyor. Cihazda olculdu - ucuncu sira kutucuklari
+            // 70px yerine 22px, etiketleri hic yok, ve kacis butonu
+            // `bounds=[0,0][0,0]`, yani DOKUNULAMAZ. Katalogda olmayan bir
+            // urunu eklemenin tek yolu o buton.
+            //
+            // Icerik tarafindan cozulemiyor: `heightIn(ekran*oran)` bir
+            // tahmindi ve kendi TODO'sunda "sessizce tasar" diye yaziyordu -
+            // tasti. `fillMaxHeight()` de ise yaramiyor cunku gelen sinir
+            // zaten ekran boyu. Tek belirli yol sheet'in yuksekligini
+            // sabitlemek; o zaman `weight` calisiyor ve buton her ekranda
+            // altta kaliyor.
+            //
+            // BEDELI: "liste arkada gorunur kalsin" ozelligi gidiyor. Bu
+            // ozelligi tasarim dosyasi degil, bu kodun kendi yorumu iddia
+            // ediyordu; yine de sapma kullaniciyla birlikte tasarima
+            // soruluyor (docs/22).
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             // ZEMIN RENGI ACIKCA VERILIYOR. M3 varsayilani surfaceContainerLow
             // istiyor; bu palet o tonal token'lari TANIMLAMIYOR, o yuzden M3
             // kendi baseline'ina (mor tonlu) dusuyordu ve sheet uygulamanin
