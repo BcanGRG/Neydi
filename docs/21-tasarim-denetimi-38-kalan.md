@@ -10,7 +10,7 @@ kapanmaması. Aşağıdakiler **kapanmadı**.
 
 ## Durum — 24 Ağustos
 
-**41 bulgunun 35'i kapandı.** Kalan altısı kapanmadı çünkü *kod eksik değil,
+**41 bulgunun 36'sı kapandı.** Kalan beşi tasarıma soruldu: [`23-tasarima-sorular-9.md`](23-tasarima-sorular-9.md). Kalan altısı kapanmadı çünkü *kod eksik değil,
 veri ya da karar eksik*:
 
 | Bulgu | Neyin eksik olduğu |
@@ -20,7 +20,7 @@ veri ya da karar eksik*:
 | Ürün Detayı trend manşeti | Ay aralığı biçimleyicisi yok (`DateText` haftada bitiyor) ve yüzde, ambalaj değişimi üzerinden hesaplanamaz — maketin örneği tam da o vaka |
 | Geçmiş 6 çubuklu mini grafik | Tasarım iki şeyi söylemiyor: çubuk **neyi** ölçüyor, ve tutarı hesaplanamayan gezi nasıl çiziliyor |
 | Özet kartının sheet yerine satır içi kart olması | Yapısal yeniden düzenleme |
-| Kurulum adım 2/2'de geri | `SetupViewModel`'de `previous()` yok; adım numarası `SetupState`'te |
+| ~~Kurulum adım 2/2'de geri~~ | ✅ kapandı — tasarım sorusu değildi, yalnızca dosya bölümlemesi yüzünden açık kalmıştı |
 
 Ayrıca **bilinçli bir daraltma**: alışveriş modu satırının `surfaceVariant`
 dolgusu yalnızca **koyu temada** uygulandı. Açık maket o rengi zaten

@@ -110,6 +110,25 @@ class SetupViewModel(
         _state.value = _state.value.copy(step = 1)
     }
 
+    /**
+     * Adim 2'den adim 1'e - gezinme sozlesmesinin geri sirasi.
+     *
+     * Sozlesme iki adim icin AYRI seyler soyluyor: *"Kurulum · adim 1/2 ->
+     * uygulamadan cikar"*, *"Kurulum · adim 2/2 -> adim 1'e doner"*. Kod
+     * ikisini de ayni sekilde ele aliyordu; once ikisi de Liste'ye dusuruyordu
+     * (yani kullanici kurulumu bitirmeden ana ekrana geciyordu), sonra ikisi
+     * de uygulamadan cikiyordu. Ikincisi ilkinden iyiydi ama hala yarim:
+     * ikinci adimda tempo secen biri, ilk adimdaki urun secimini duzeltmek
+     * icin kurulumu bastan acmak zorunda kaliyordu.
+     *
+     * SECIMLER KORUNUYOR: `finish` disinda hicbir sey yazilmiyor, yani geri
+     * gitmek yalnizca adimi degistiriyor - isaretlenen urunler ve secilen
+     * tempo state'te duruyor.
+     */
+    fun previous() {
+        _state.value = _state.value.copy(step = 0)
+    }
+
     fun chooseTempo(days: Int?) {
         _state.value = _state.value.copy(tempoDays = days, tempoChosen = true)
     }
