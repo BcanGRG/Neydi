@@ -381,7 +381,8 @@ class Component extends DCLogic {
   renderVals() {
     return {
       level1: [
-        { name: "Ekle", kind: "sheet · listenin üstünde", from: "Liste alt girişinden ve alışveriş modunda add hedefinden" },
+        { name: "Kök hızlı yazma", kind: "yerinde alan · kök ekranın parçası", from: "Liste alt girişindeki dokunuş — alan açılır, klavye kalkar, Enter seri ekler" },
+        { name: "Keşif sheet'i", kind: "sheet · tam açık", from: "Alanın yanındaki katalog hedefinden ve alışveriş modunda add hedefinden" },
         { name: "Eksik olabilir", kind: "destinasyon", from: "Yalnızca \"Alışverişe çıkıyorum\" butonundan. Boşsa hiç açılmaz" },
         { name: "Etiket çek", kind: "destinasyon · kamera", from: "Liste başlığındaki kamera hedefi. Her iki modda da açık, gezi gerekmez" },
         { name: "Ürün Detayı", kind: "sheet · genişleyebilir", from: "Liste satırına uzun dokunuş ve Geçmiş satırından" },
@@ -406,7 +407,8 @@ class Component extends DCLogic {
       backRules: [
         { surface: "Liste · plan modu", back: "Uygulamadan çıkar.", draft: "Yok — her değişiklik anında yazılır.", up: "Yok; kökte ← çizilmez." },
         { surface: "Liste · alışveriş modu", back: "Uygulamadan çıkar. Mod kapanmaz, işaretlemeler durur.", draft: "Yok. Mod gezinin durumu, ekranın değil.", up: "Yok. Moddan çıkış yalnızca more_vert → \"Alışverişi bırak\" ya da \"Bitir\"." },
-        { surface: "Ekle sheet'i", back: "Sheet kapanır, Liste'ye döner.", draft: "Yok — dokunulan ürün zaten eklendi. Arama metni atılır.", up: "Sheet'te ← yok; kapatma çubuğu ve dışına dokunma var." },
+        { surface: "Kök hızlı yazma alanı", back: "Klavye ve alan kapanır, buton hâline döner; yazılmakta olan metin atılır, Enter'lanmışlar listede.", draft: "Yok — her Enter anında yazıldı.", up: "Yok; kök ekranın parçası." },
+        { surface: "Keşif sheet'i", back: "Sheet kapanır, Liste'ye döner.", draft: "Yok — dokunulan ürün zaten eklendi. Arama metni atılır.", up: "Sheet'te ← yok; kapatma çubuğu ve dışına dokunma var." },
         { surface: "Eksik olabilir", back: "Liste'ye döner, hiçbir şey eklemez.", draft: "Anahtar seçimleri atılır. Uyarı yok: seçim bir öneriye verilen cevap, yarım kalmış iş değil.", up: "← ile aynı." },
         { surface: "Etiket · kamera", back: "Liste'ye döner.", draft: "Yok — çekilmemiş kare diye bir şey yok.", up: "Başlıkta ← yerine ✕; ikisi de aynı." },
         { surface: "Etiket · onay kartı", back: "Klavye açıksa önce onu kapatır. Kapalıysa kartı iptal eder, fotoğrafı siler, kameraya döner.", draft: "Elle yazılan fiyat ve seçilen ürün gider. İki basış gerektiği için kaza değil.", up: "Kartta ← yok; \"Vazgeç\" aynı işi yapar." },
@@ -450,8 +452,8 @@ class Component extends DCLogic {
         { what: "Liste içeriği", after: "Aynen döner.", where: "Veritabanı · anında yazım" },
         { what: "Alışveriş modu", after: "Mod açık döner, işaretlemeler ve sayaç yerinde.", where: "Gezi kaydı" },
         { what: "Liste kaydırma konumu", after: "Korunur.", where: "Ekran durumu" },
-        { what: "Ekle sheet'i", after: "Kapalı döner; eklenenler listede.", where: "Saklanmaz (bilinçli)" },
-        { what: "Ekle arama metni", after: "Silinir.", where: "Saklanmaz" },
+        { what: "Ekleme yüzeyleri (kök alan, keşif sheet'i)", after: "Kapalı döner; eklenenler listede.", where: "Saklanmaz (bilinçli)" },
+        { what: "Keşif arama metni", after: "Silinir.", where: "Saklanmaz" },
         { what: "Onay kartı taslağı", after: "Kart aynı değerlerle geri gelir; fotoğraf yeniden okunmaz, kırpım önbellekten gelir.", where: "Ekran durumu + geçici dosya" },
         { what: "Yapışkan market", after: "Korunur; cihaz yeniden başlasa da durur.", where: "Tercihler" },
         { what: "Kurulum ilerlemesi", after: "Tamamlanmadıysa baştan açılır; seçilen sabitler durur.", where: "Veritabanı + setupCompletedAt" },
@@ -478,8 +480,8 @@ class Component extends DCLogic {
         { case: "Aynı anda kurulum", rule: "Kurulum hane başına bir kez; ikinci cihaz kurulum görmez, doğrudan listeye düşer." }
       ],
       inputRules: [
-        { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Değer önceden dolu ve seçili gelir; başka hiçbir yerde metin girişi yoktur — istisna arama alanları: Ekle, ürün seçici ve market seçici. Marka seçicide arama yok, liste kısa." },
-        { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Tek istisna: fiyatı okunamamış onay kartı." },
+        { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Metin girişi dört yerde: kök hızlı yazma alanı (karar 64) ve üç arama alanı — keşif sheet'i, ürün seçici, market seçici. Marka seçicide arama yok, liste kısa." },
+        { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Kök alanın klavyesini ekran değil kullanıcının Ekle dokunuşu açar. Tek istisna: fiyatı okunamamış onay kartı." },
         { name: "Dokunma hedefi", rule: "En küçük hedef 48dp. Alışveriş modunda satır 72dp, çünkü yürürken dokunuluyor." },
         { name: "Haptik", rule: "Üç olay: işaretlemede hafif tık, çekimde hafif darbe, kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
         { name: "Uzun dokunuş", rule: "Üç yerde: Liste satırı Ürün Detayı açar; Ürün Detayı'nda gözlem satırı error renginde \"Bu gözlemi sil\" sunar; market seçicide gözlemsiz market silinebilir. Başka hiçbir yerde uzun dokunuş bir işe bağlanmaz." },
@@ -489,7 +491,8 @@ class Component extends DCLogic {
         { name: "Ekran okuyucu", rule: "Fiyat çipleri \"38 lira 50 kuruş\" olarak okunur; kuruş sıfırsa okunmaz: \"149 lira\". Sparkline tek cümleye indirgenir: \"son 8 gözlem, yükseliyor\"." }
       ],
       edges: [
-        { from: "Liste", to: "Ekle", trigger: "Alt girişteki \"+ Ürün ekle\" ya da alışveriş modunda add hedefi", back: "Sheet kapanır; eklenen satırlar listede durur" },
+        { from: "Liste", to: "Kök hızlı yazma", trigger: "Alt girişteki \"+ Ürün ekle\" — alan yerinde açılır, klavye kalkar", back: "Alan kapanır, buton hâline döner; eklenenler durur" },
+        { from: "Liste", to: "Keşif sheet'i", trigger: "Alanın yanındaki katalog hedefi ya da alışveriş modunda add hedefi", back: "Sheet kapanır; eklenen satırlar listede durur" },
         { from: "Liste", to: "Eksik olabilir", trigger: "\"Alışverişe çıkıyorum\" butonu", back: "Liste — hiçbir öneri eklenmeden" },
         { from: "Eksik olabilir", to: "Liste · alışveriş", trigger: "\"Listeye ekle ve başla\"", back: "Alışveriş modu açılmıştır; geri Liste'yi kapatır" },
         { from: "Liste", to: "Liste · alışveriş", trigger: "Eksik olabilir boşsa doğrudan; toast bilgilendirir", back: "Mod kalıcı" },
@@ -575,11 +578,13 @@ class Component extends DCLogic {
       thresholds: [
         { name: "Fiyat çipi", min: "1 gözlem", below: "Çip yok. İlk gözlemle belirir — ilk çekimin listedeki görünür izi" },
         { name: "Ürün Detayı sparkline", min: "3 gözlem", below: "Grafik hiç çizilmez; manşet cümlesi tek başına kalır" },
+        { name: "Trend manşeti", min: "3 gözlem", below: "Tek gözlem manşeti kalır (\"Son ödediğin: …\"); ambalaj değiştiyse yüzde yerine ambalaj cümlesi" },
         { name: "\"Nerede ucuz\" bölümü", min: "2 satır (market+marka)", below: "Bölüm çizilmez; tek markette iki marka da geçerli bir karşılaştırmadır. Ambalaj filtresi eşikten önce uygulanır" },
         { name: "Delta çipi", min: "2 gözlem", below: "Çip yok; \"ilk gözlem\" ibaresi de yok" },
         { name: "\"Başka markette ucuz\" çipi", min: "%10 ve 5 TL", below: "Çip çizilmez; karşı gözlem 14 günden eskiyse de çizilmez. Trendle çakışırsa çip kazanır" },
         { name: "Ambalaj küçülmesi uyarısı", min: "2 farklı boy", below: "Sessiz" },
         { name: "Sepet tahmini", min: "3 fiyatı bilinen ürün", below: "Satır hiç görünmez" },
+        { name: "Geçmiş mini grafiği", min: "3 tutarlı gezi", below: "Grafik hiç çizilmez; tutarı hesaplanamayan gezi grafikte kesik konturlu sabit çubuk" },
         { name: "\"Her zamankiler\"", min: "3 gezi", below: "Kurulumdaki seçim neyse o; öğrenme başlamaz" },
         { name: "\"Bitmiş olabilir\"", min: "4 alım", below: "Bölüm çizilmez — tempo hesaplanamaz" },
         { name: "Eksik olabilir ekranı", min: "1 satır", below: "Ekran hiç açılmaz, toast bilgilendirir" },

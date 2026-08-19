@@ -39,7 +39,41 @@
     <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
 
       <div style="display:flex;flex-direction:column;gap:12px;flex:none">
-        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Kategori grid'i · dolu</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">check_circle = bu listede var · işaretli çip pasif</div></div>
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Hızlı yazma · kök</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">1 dokunuş + klavye · Enter ekler, alan açık kalır (karar 64)</div></div>
+        <div data-screen-label="1 Hızlı yazma" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none">
+          <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:21</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
+          <div style="flex:1;padding:0 16px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+            <div style="font:700 22px/1.28 'Plus Jakarta Sans'">Liste</div>
+            <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Domates 1 kg</div></div>
+            <div style="display:flex;align-items:center;gap:10px;height:40px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Salatalık</div></div>
+            <div style="display:flex;align-items:center;gap:10px;height:40px;background:#F6E7D2;border-radius:14px;padding:0 10px"><div style="width:24px;height:24px;border-radius:50%;border:2px solid #8A7666;box-sizing:border-box"></div><div style="font:500 17px/1.28 'Plus Jakarta Sans'">Kuru kayısı</div></div>
+          </div>
+          <div style="flex:none;display:flex;gap:8px;padding:0 16px 8px">
+            <div style="height:36px;padding:0 14px;border-radius:999px;background:#FFFFFF;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">Yumurta 10'lu</div>
+            <div style="height:36px;padding:0 14px;border-radius:999px;background:#FFFFFF;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans'">Yumuşatıcı</div>
+          </div>
+          <div style="flex:none;display:flex;gap:8px;padding:0 16px 10px;align-items:center">
+            <div style="flex:1;height:52px;border-radius:18px;background:#FFFFFF;border:2px solid #3F6B54;display:flex;align-items:center;padding:0 16px;gap:2px"><div style="font:500 17px/1 'Plus Jakarta Sans'">yum</div><div style="width:2px;height:22px;background:#3F6B54"></div></div>
+            <div style="width:52px;height:52px;border-radius:18px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;justify-content:center;flex:none"><span style="font-family:'Material Symbols Rounded';font-size:24px;color:#5C4F45">grid_view</span></div>
+          </div>
+          <div style="flex:none;background:#E2D8CC;padding:10px 6px 30px;display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ kbRows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;gap:5px;justify-content:center;padding:0 2px">
+                <sc-for list="{{ r.keys }}" as="k" hint-placeholder-count="10">
+                  <div style="flex:1;height:42px;border-radius:8px;background:#FFFFFF;box-shadow:0 1px 0 rgba(34,26,20,.18);display:flex;align-items:center;justify-content:center;font:500 15px/1 'Plus Jakarta Sans'">{{ k }}</div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:5px;padding:0 2px">
+              <div style="flex:3;height:42px;border-radius:8px;background:#FFFFFF;box-shadow:0 1px 0 rgba(34,26,20,.18);display:flex;align-items:center;justify-content:center;font:500 13px/1 'Plus Jakarta Sans';color:#8A7666">boşluk</div>
+              <div style="flex:1;height:42px;border-radius:8px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Plus Jakarta Sans';color:#FFFFFF">Ekle</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;flex:none">
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Keşif sheet'i · dolu</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">check_circle = bu listede var · reyon çipi filtre (karar 64)</div></div>
         <div data-screen-label="2 Ekle" style="width:390px;height:844px;background:#FBF7F2;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none;position:relative">
           <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>14:22</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
           <div style="flex:none;padding:0 16px;opacity:.5;display:flex;flex-direction:column;gap:10px">
@@ -54,17 +88,13 @@
               <div style="height:48px;border-radius:18px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;align-items:center;padding:0 14px;gap:10px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666">search</span><div style="font:400 17px/1 'Plus Jakarta Sans';color:#8A7666">Ürün ara</div></div>
             </div>
             <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-                <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
-                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-                    <div style="width:56px;height:56px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans'" data-bg="{{ c.bg }}">{{ c.two }}</div>
-                    <div style="font:500 12px/1.3 'Plus Jakarta Sans';text-align:center">{{ c.name }}</div>
-                    <div style="font:500 12px/1.3 'Plus Jakarta Sans';color:#8A7666;font-variant-numeric:tabular-nums">{{ c.count }}</div>
-                  </div>
-                </sc-for>
+              <div style="display:flex;gap:8px;overflow:hidden;flex:none">
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';color:#FFFFFF;flex:none">Tümü</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#FBF7F2;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans';flex:none">Meyve-Sebze</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#FBF7F2;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans';flex:none">Süt-Kahvaltılık</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#FBF7F2;border:1px solid #E7DACB;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans';flex:none">Temel Gıda</div>
               </div>
-              <div style="height:1px;background:#E7DACB"></div>
-              <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">Süt-Kahvaltılık</div>
+              <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">En sık aldıkların</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <sc-for list="{{ prods }}" as="p" hint-placeholder-count="6">
                   <div style="height:56px;border-radius:20px;background:#F1E7DB;border:1px solid #E7DACB;display:flex;flex-direction:column;justify-content:center;padding:0 14px;gap:2px" data-on="{{ p.inList }}">
@@ -74,7 +104,7 @@
                       </sc-if>
                       <div style="font:500 15px/1.2 'Plus Jakarta Sans'">{{ p.name }}</div>
                     </div>
-                    <div style="font:500 12px/1.2 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums">{{ p.price }}</div>
+                    <div style="font:500 12px/1.2 'Plus Jakarta Sans';color:#5C4F45">{{ p.unit }}</div>
                   </div>
                 </sc-for>
               </div>
@@ -86,7 +116,7 @@
               </div>
             </div>
             <div style="flex:none;padding:12px 16px 34px;border-top:1px solid #E7DACB">
-              <div style="height:48px;border-radius:999px;background:#F1E7DB;border:1px solid #8A7666;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px/1 'Plus Jakarta Sans'"><span style="font-family:'Material Symbols Rounded';font-size:20px">add</span>"kuru kayısı" ekle</div>
+              <div style="height:48px;border-radius:999px;background:#F1E7DB;border:1px solid #8A7666;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px/1 'Plus Jakarta Sans'"><span style="font-family:'Material Symbols Rounded';font-size:20px">keyboard</span>Kendim yazayım</div>
             </div>
           </div>
         </div>
@@ -130,17 +160,13 @@
               <div style="height:48px;border-radius:18px;background:#13100E;border:1px solid #3A322C;display:flex;align-items:center;padding:0 14px;gap:10px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7A6E">search</span><div style="font:400 17px/1 'Plus Jakarta Sans';color:#8A7A6E">Ürün ara</div></div>
             </div>
             <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-                <sc-for list="{{ catsDark }}" as="c" hint-placeholder-count="6">
-                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-                    <div style="width:56px;height:56px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans'" data-bg="{{ c.bg }}">{{ c.two }}</div>
-                    <div style="font:500 12px/1.3 'Plus Jakarta Sans';text-align:center">{{ c.name }}</div>
-                    <div style="font:500 12px/1.3 'Plus Jakarta Sans';color:#8A7A6E;font-variant-numeric:tabular-nums">{{ c.count }}</div>
-                  </div>
-                </sc-for>
+              <div style="display:flex;gap:8px;overflow:hidden;flex:none">
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#8FC7A2;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';color:#13100E;flex:none">Tümü</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#241E1A;border:1px solid #3A322C;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans';flex:none">Meyve-Sebze</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#241E1A;border:1px solid #3A322C;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans';flex:none">Süt-Kahvaltılık</div>
+                <div style="height:36px;padding:0 14px;border-radius:999px;background:#241E1A;border:1px solid #3A322C;display:flex;align-items:center;font:500 14px/1 'Plus Jakarta Sans';flex:none">Temel Gıda</div>
               </div>
-              <div style="height:1px;background:#3A322C"></div>
-              <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#C6B6A9">Süt-Kahvaltılık</div>
+              <div style="font:600 13px/1.3 'Plus Jakarta Sans';color:#C6B6A9">En sık aldıkların</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <sc-for list="{{ prods }}" as="p" hint-placeholder-count="6">
                   <div style="height:56px;border-radius:20px;background:#13100E;border:1px solid #3A322C;display:flex;flex-direction:column;justify-content:center;padding:0 14px;gap:2px">
@@ -150,13 +176,13 @@
                       </sc-if>
                       <div style="font:500 15px/1.2 'Plus Jakarta Sans'">{{ p.name }}</div>
                     </div>
-                    <div style="font:500 12px/1.2 'Plus Jakarta Sans';color:#C6B6A9;font-variant-numeric:tabular-nums">{{ p.price }}</div>
+                    <div style="font:500 12px/1.2 'Plus Jakarta Sans';color:#C6B6A9">{{ p.unit }}</div>
                   </div>
                 </sc-for>
               </div>
             </div>
             <div style="flex:none;padding:12px 16px 34px;border-top:1px solid #3A322C">
-              <div style="height:48px;border-radius:999px;background:#241E1A;border:1px solid #8A7A6E;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px/1 'Plus Jakarta Sans'"><span style="font-family:'Material Symbols Rounded';font-size:20px">add</span>"kuru kayısı" ekle</div>
+              <div style="height:48px;border-radius:999px;background:#241E1A;border:1px solid #8A7A6E;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px/1 'Plus Jakarta Sans'"><span style="font-family:'Material Symbols Rounded';font-size:20px">keyboard</span>Kendim yazayım</div>
             </div>
           </div>
         </div>
@@ -498,29 +524,18 @@ class Component extends DCLogic {
   }
   renderVals() {
     return {
-      cats: [
-        { name: "Meyve-Sebze", two: "MS", count: "18 ürün", bg: "#E8EFE7|#2E5A3E" },
-        { name: "Fırın-Ekmek", two: "FE", count: "6 ürün", bg: "#F6E7D2|#8A5A00" },
-        { name: "Süt-Kahvaltılık", two: "SK", count: "14 ürün", bg: "#EAEDF4|#3B4A6B" },
-        { name: "Et-Şarküteri", two: "EŞ", count: "9 ürün", bg: "#F5E2DE|#8C3A2E" },
-        { name: "Temel Gıda", two: "TG", count: "22 ürün", bg: "#F1E7DB|#5C4F45" },
-        { name: "Temizlik", two: "TE", count: "11 ürün", bg: "#E4EDEE|#2F5A5E" }
-      ],
-      catsDark: [
-        { name: "Meyve-Sebze", two: "MS", count: "18 ürün", bg: "#1E2A22|#8FC7A2" },
-        { name: "Fırın-Ekmek", two: "FE", count: "6 ürün", bg: "#2E2415|#F2C14E" },
-        { name: "Süt-Kahvaltılık", two: "SK", count: "14 ürün", bg: "#1E2330|#A9BCE0" },
-        { name: "Et-Şarküteri", two: "EŞ", count: "9 ürün", bg: "#2E1C19|#FF9166" },
-        { name: "Temel Gıda", two: "TG", count: "22 ürün", bg: "#241E1A|#C6B6A9" },
-        { name: "Temizlik", two: "TE", count: "11 ürün", bg: "#1A2626|#8FC7C7" }
+      kbRows: [
+        { keys: ["Q","W","E","R","T","Y","U","I","O","P"] },
+        { keys: ["A","S","D","F","G","H","J","K","L","Ş"] },
+        { keys: ["⇧","Z","X","C","V","B","N","M","⌫"] }
       ],
       prods: [
-        { name: "Pınar Süt 1 L", price: "42,00 TL", inList: true },
-        { name: "Yumurta 10'lu", price: "89,90 TL", inList: true },
-        { name: "Beyaz Peynir 600 g", price: "138,50 TL", inList: false },
-        { name: "Kaşar 400 g", price: "164,00 TL", inList: false },
-        { name: "Yoğurt 1 kg", price: "64,50 TL", inList: false },
-        { name: "Tereyağı 250 g", price: "119,00 TL", inList: false }
+        { name: "Pınar Süt 1 L", unit: "lt", inList: true },
+        { name: "Yumurta 10'lu", unit: "adet", inList: true },
+        { name: "Beyaz Peynir 600 g", unit: "kg", inList: false },
+        { name: "Kaşar 400 g", unit: "kg", inList: false },
+        { name: "Yoğurt 1 kg", unit: "kg", inList: false },
+        { name: "Tereyağı 250 g", unit: "adet", inList: false }
       ],
       missing: [
         { isSec: true, isRow: false, title: "Geçen sefer unuttun", note: "listede vardı, alınmadı" },

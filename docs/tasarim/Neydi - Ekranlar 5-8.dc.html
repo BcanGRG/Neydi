@@ -244,7 +244,7 @@
               <div style="width:36px;height:4px;border-radius:2px;background:#E7DACB;align-self:center"></div>
               <div style="display:flex;align-items:center;gap:12px">
                 <div style="width:56px;height:56px;border-radius:24px;background:#EAEDF4;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#3B4A6B;flex:none">SÜ</div>
-                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Süt 32 TL → 41 TL · son 3 ayda %28 arttı</div>
+                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Süt 32 TL → 41 TL · 6 Haziran'dan beri %28 arttı</div>
               </div>
             </div>
             <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
@@ -362,7 +362,7 @@
               <div style="width:36px;height:4px;border-radius:2px;background:#3A322C;align-self:center"></div>
               <div style="display:flex;align-items:center;gap:12px">
                 <div style="width:56px;height:56px;border-radius:24px;background:#1E2330;display:flex;align-items:center;justify-content:center;font:800 20px/1 'Plus Jakarta Sans';color:#A9BCE0;flex:none">SÜ</div>
-                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Süt 32 TL → 41 TL · son 3 ayda %28 arttı</div>
+                <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums">Süt 32 TL → 41 TL · 6 Haziran'dan beri %28 arttı</div>
               </div>
             </div>
             <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:14px 16px 0">
@@ -434,7 +434,7 @@
             <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
             <div style="display:flex;align-items:flex-end;gap:10px;height:96px">
               <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
-                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:96px"><div style="background:#B34418;border-radius:8px 8px 0 0" data-h="{{ b.h }}"></div></div>
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:96px"><div style="background:#B34418;border-radius:8px 8px 0 0" data-h="{{ b.h }}" data-ghost="{{ b.ghost }}"></div></div>
               </sc-for>
             </div>
           </div>
@@ -530,7 +530,7 @@
             <div style="display:flex;align-items:center;gap:12px"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span><div style="font:700 22px/1.28 'Plus Jakarta Sans'">Geçmiş</div></div>
             <div style="display:flex;align-items:flex-end;gap:10px;height:96px">
               <sc-for list="{{ barsDark }}" as="b" hint-placeholder-count="6">
-                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:96px"><div style="background:#FF9166;border-radius:8px 8px 0 0" data-h="{{ b.h }}"></div></div>
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:96px"><div style="background:#FF9166;border-radius:8px 8px 0 0" data-h="{{ b.h }}" data-ghost="{{ b.ghost }}"></div></div>
               </sc-for>
             </div>
           </div>
@@ -556,7 +556,7 @@
       
       <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#5C4F45">hourglass_top</span><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">işleniyor</div></div>
       <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#96560A;font-variation-settings:'FILL' 1">error</span><div style="font:500 14px/1.3 'Plus Jakarta Sans';color:#5C4F45">kontrol bekliyor</div></div>
-      <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;flex:1;min-width:280px">Mini grafik eksensiz, açıklamasız, etkileşimsiz — yalnızca son 6 alışverişin toplamı.</div>
+      <div style="font:400 14px/1.45 'Plus Jakarta Sans';color:#5C4F45;flex:1;min-width:280px">Mini grafik eksensiz, açıklamasız, etkileşimsiz — son 6 gezinin tutarı. Tutarı hesaplanamayan gezi kesik konturlu sabit çubuk; 3 tutarlı geziden az ise grafik hiç çizilmez (karar 68).</div>
     </div>
   </div>
 
@@ -701,6 +701,7 @@ class Component extends DCLogic {
       const v = el.getAttribute('data-h');
       if (!v || v === 'undefined') return;
       el.style.height = v + 'px';
+      if (el.getAttribute('data-ghost') === 'true') { const c = getComputedStyle(el).backgroundColor; el.style.background = 'transparent'; el.style.border = '1.5px dashed ' + c; el.style.borderBottom = 'none'; }
     });
     root.querySelectorAll('[data-icon]').forEach(el => {
       const v = el.getAttribute('data-icon');
@@ -761,8 +762,8 @@ class Component extends DCLogic {
         { date: "16 Tem", store: "Migros", qty: "1", price: "37,00 TL" },
         { date: "5 Tem", store: "BİM", qty: "2", price: "35,90 TL" }
       ],
-      bars: [{ h: 52 }, { h: 68 }, { h: 44 }, { h: 78 }, { h: 62 }, { h: 88 }],
-      barsDark: [{ h: 52 }, { h: 68 }, { h: 44 }, { h: 78 }, { h: 62 }, { h: 88 }],
+      bars: [{ h: 52 }, { h: 68 }, { h: 24, ghost: true }, { h: 78 }, { h: 62 }, { h: 88 }],
+      barsDark: [{ h: 52 }, { h: 68 }, { h: 24, ghost: true }, { h: 78 }, { h: 62 }, { h: 88 }],
       history: [
         { store: "MİGROS", date: "12 Ağustos", count: "18 ürün", total: "~642 TL" },
         { store: "A101", date: "4 Ağustos", count: "6 ürün", total: "~185 TL" },

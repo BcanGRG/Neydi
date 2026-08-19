@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -112,7 +113,7 @@ fun ListScreen(
     val estimate by vm.estimate.collectAsStateWithLifecycle()
     val sheetOpen by vm.sheetOpen.collectAsStateWithLifecycle()
     val sheetCategory by vm.sheetCategory.collectAsStateWithLifecycle()
-    val sheetProducts by vm.sheetProducts.collectAsStateWithLifecycle()
+    val sheetBody by vm.sheetBody.collectAsStateWithLifecycle()
     val summary by vm.summary.collectAsStateWithLifecycle()
     val productSheet by vm.productSheet.collectAsStateWithLifecycle()
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
@@ -123,6 +124,13 @@ fun ListScreen(
     val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
     val pendingDelete by vm.pendingDelete.collectAsStateWithLifecycle()
     val pendingObservationDelete by vm.pendingObservationDelete.collectAsStateWithLifecycle()
+    val input by vm.input.collectAsStateWithLifecycle()
+    val suggestions by vm.suggestions.collectAsStateWithLifecycle()
+
+    // KOK ALANIN ODAGI EKRANDA TUTULUYOR: kesif sheet'indeki "Kendim yazayım"
+    // sheet'i kapatip BU alani aciyor (karar 64) - iki yol birbirine bagli ve
+    // baglayan sey bu tutamak.
+    val quickAddFocus = remember { FocusRequester() }
 
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -170,6 +178,14 @@ fun ListScreen(
         lastAdded = lastAdded,
         onDeleteRow = vm::remove,
         pendingDelete = pendingDelete,
+        summary = summary,
+        onDismissSummary = vm::dismissSummary,
+        input = input,
+        suggestions = suggestions,
+        onInputChange = vm::onInputChanged,
+        onSubmitInput = vm::submitInput,
+        onSuggestionSelected = vm::addFromSuggestion,
+        quickAddFocus = quickAddFocus,
         observationDeleted = pendingObservationDelete != null,
         onUndoObservationDelete = vm::undoObservationDelete,
         onObservationUndoDismissed = vm::dismissObservationUndo,
@@ -228,11 +244,18 @@ fun ListScreen(
                 bottomPadding = bottomInset,
                 categories = categories,
                 selected = sheetCategory,
-                products = sheetProducts,
-                onCategory = vm::selectSheetCategory,
-                onBackToCategories = vm::sheetBack,
-                onProduct = vm::addFromSheet,
-                onFreeText = vm::addSheetQuery,
+                body = sheetBody,
+                onFilter = vm::toggleSheetFilter,
+                onPick = vm::addFromDiscovery,
+                onPickResult = vm::addFromSheet,
+                // "Kendim yazayım" IKI YOLU BAGLIYOR (karar 64): sheet
+                // kapaniyor ve kokteki yazma alani odagi aliyor. Once bu
+                // buton yalnizca sheet'i kapatiyordu ve kullaniciyi listenin
+                // ortasinda birakiyordu.
+                onFreeText = {
+                    vm.closeSheet()
+                    quickAddFocus.requestFocus()
+                },
             )
         }
     }
@@ -261,22 +284,8 @@ fun ListScreen(
         }
     }
 
-    // Ozet karti TEK SEFERLIK: kapatilinca bir daha acilmiyor.
-    summary?.let { o ->
-        ModalBottomSheet(
-            onDismissRequest = vm::dismissSummary,
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            SummaryCard(
-                bottomPadding = bottomInset,
-                takenCount = o.takenCount,
-                totalCount = o.totalCount,
-                amountMinor = o.amountMinor,
-                durationMinutes = o.durationMinutes,
-                onDismiss = vm::dismissSummary,
-            )
-        }
-    }
+    // OZET KARTI ARTIK SHEET DEGIL: listenin icinde, `ListScreen` govdesinde
+    // ciziliyor (karar 69). Buradaki `ModalBottomSheet` kalkti.
 }
 
 /** Durumsuz govde: preview ve test buradan geciyor, ViewModel'siz. */
@@ -315,6 +324,15 @@ internal fun ListContent(
     onDeleteRow: (String, String) -> Unit = { _, _ -> },
     /** En son silinen satir; varsa geri alma seridi ciziliyor. */
     pendingDelete: DeletedRow? = null,
+    /** Alisveris sonrasi ozet - listenin BASINDA bir kart (karar 69). */
+    summary: ShoppingSummary? = null,
+    onDismissSummary: () -> Unit = {},
+    input: String = "",
+    suggestions: List<CatalogSeed> = emptyList(),
+    onInputChange: (String) -> Unit = {},
+    onSubmitInput: () -> Unit = {},
+    onSuggestionSelected: (CatalogSeed) -> Unit = {},
+    quickAddFocus: FocusRequester = FocusRequester(),
     /** Bir gozlem silindi - snackbar'in UCUNCU kullanimi (karar 46). */
     observationDeleted: Boolean = false,
     onUndoObservationDelete: () -> Unit = {},
@@ -416,6 +434,23 @@ internal fun ListContent(
                 // ekranin en ustunu evde verilecek bir karar (butce) yiyordu -
                 // orada gorulmesi gereken sey siradaki satirin kendisi. Ayni
                 // tabloya uyan oneri seridi zaten `!state.shoppingMode` icinde.
+                // OZET EN USTTE, tahminin de ustunde: alisveris yeni bitti ve
+                // ekranda once o okunmali. Karti listenin ICINDE cizmek
+                // kararin kendisi (69) - "gorulen sey listenin son hali
+                // olmali; ozet ona ilistirilmis bir yorum".
+                summary?.let { o ->
+                    item(key = "ozet") {
+                        SummaryCard(
+                            takenCount = o.takenCount,
+                            totalCount = o.totalCount,
+                            amountMinor = o.amountMinor,
+                            previous = o.previous,
+                            onDismiss = onDismissSummary,
+                            modifier = Modifier.padding(bottom = Spacing.sm),
+                        )
+                    }
+                }
+
                 if (!state.isEmpty && !state.shoppingMode) {
                     item(key = "tahmin") {
                         EstimatedBasket(
@@ -576,9 +611,15 @@ internal fun ListContent(
                     ),
                 ) {
                     QuickAdd(
+                        input = input,
+                        suggestions = suggestions,
                         engineSuggestions = engineSuggestions,
+                        onInputChange = onInputChange,
+                        onSubmit = onSubmitInput,
+                        onSuggestionSelected = onSuggestionSelected,
                         onEngineSuggestion = onEngineSuggestion,
-                        onOpenAdd = onOpenSheet,
+                        onOpenCatalog = onOpenSheet,
+                        focusRequester = quickAddFocus,
                     )
                     // BIRINCIL AKSIYON EN ALTTA (tasarim: "tum birincil
                     // aksiyonlar ekranin alt %40'inda"). Onceden yalnizca

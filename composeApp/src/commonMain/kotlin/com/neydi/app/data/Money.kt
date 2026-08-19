@@ -52,6 +52,33 @@ fun formatEstimate(minor: Long, currency: String = "TL"): String {
     }
 }
 
+/**
+ * Kurus SIFIRSA yazilmayan tutar: **"32 TL"**, ama "32,50 TL" (karar 67 · 2).
+ *
+ * EKRAN OKUYUCU KURALININ GORSEL IKIZI. Gezinme sozlesmesi fiyat cipini
+ * *"38 lira 50 kuruş"* diye okutuyor, *"kuruş sıfırsa okunmaz: 149 lira"*.
+ * Manset ayni cumleyi goze yaziyor: `32,00 TL → 41,00 TL` iki kez sifir
+ * gosterip cumlenin okunacak sayilarini bogar, gormeyen kullanici ise ayni
+ * cumleyi kurussuz duyar - ayni metnin iki kanalda farkli okunmasi.
+ *
+ * TILDE YOK, ve bu ayrimin kendisi: [formatEstimate] de kurusu dusuruyor ama
+ * bir TAHMIN isaretiyle. Buradaki sayilar gozlenmis fiyat - etiketten okunmus,
+ * kesin. Tildeyi onlara koymak, kullanicinin kendi kaydettigi fiyati
+ * uygulamanin uydurdugu bir sayi gibi gosterirdi.
+ *
+ * KURUS VARSA YAZILIYOR: "32 TL" ile "32,50 TL" arasindaki fark elli kurus ve
+ * yuvarlamak, gozlenmis bir sayiyi degistirmek olurdu.
+ */
+fun formatHeadlineMinor(minor: Long, currency: String = "TL"): String {
+    val absolute = if (minor < 0) -minor else minor
+    if (absolute % 100 != 0L) return formatMinor(minor, currency)
+    return buildString {
+        if (minor < 0) append('-')
+        append(groupThousands(absolute / 100))
+        if (currency.isNotEmpty()) { append(' '); append(currency) }
+    }
+}
+
 /** 1085 -> "1.085". Binlik ayirici NOKTA (Turkce yazim). */
 private fun groupThousands(value: Long): String = buildString {
     val digits = value.toString()

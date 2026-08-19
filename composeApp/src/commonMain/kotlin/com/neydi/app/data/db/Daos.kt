@@ -64,6 +64,33 @@ interface CatalogSeedDao {
 
 @Dao
 interface ProductDao {
+
+    /**
+     * Hanenin urunleri, EN COK ALINANDAN aza (karar 64 · kesif sheet'i).
+     *
+     * ## Neden katalog degil hanenin kendi urunleri
+     *
+     * Sheet'in basligi *"En sık aldıkların"* - katalogun genel yaygınlıgı
+     * degil, BU hanenin gecmisi. Katalogun `commonalityRank`i Turkiye
+     * ortalamasi; kullanicinin kendi rafi degil.
+     *
+     * `LEFT JOIN` ve `COALESCE`: hic alinmamis urunun istatistik satiri yok ve
+     * `INNER JOIN` onu tamamen dusururdu - oysa listeye yazilmis ama henuz
+     * alinmamis urun de eklenebilir olmali, yalnizca sona gider.
+     *
+     * Ikinci siralama ANAHTARI AD: esit sayida alinan urunler her acilista
+     * ayni sirada gelsin diye. Sirasi rastgele olan bir izgara, kas hafizasi
+     * kurulmasini engelliyor.
+     */
+    @Query(
+        """
+        SELECT p.* FROM product p
+        LEFT JOIN product_stats s ON s.productId = p.id
+        WHERE p.householdId = :householdId AND p.deletedAt IS NULL
+        ORDER BY COALESCE(s.purchaseCount, 0) DESC, p.name
+        """,
+    )
+    fun observeByPurchaseCount(householdId: String): Flow<List<Product>>
     @Query("SELECT * FROM product WHERE householdId = :householdId AND deletedAt IS NULL ORDER BY name")
     fun observeAll(householdId: String): Flow<List<Product>>
 

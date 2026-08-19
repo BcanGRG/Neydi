@@ -14,6 +14,7 @@ import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLine
 import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
+import com.neydi.app.data.formatRelativeDay
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
@@ -158,9 +159,9 @@ class ListViewModel(
     /**
      * Motorun onerileri - TEK SERIT yaklasiminin veri yarisi (F6.3).
      *
-     * SERIDIN TEK MODU KALDI. Ikinci mod otomatik tamamlamaydi ve kokteki
-     * metin alanina baglaydi; karar 63 o alani kaldirdi, tamamlama Ekle
-     * sheet'inin arama alanina tasindi.
+     * SERIT TEK, MODU IKI (F6.3): girdi BOSKEN bunlar, kullanici yazarken
+     * otomatik tamamlama. Ikinci mod karar 63 ile bir tur kaybolmus, karar 64
+     * kok alani geri getirince o da geri gelmisti.
      *
      * `rows` akisina bagli: liste her degistiginde (ekleme, isaretleme, yeni
      * gezi) yeniden hesaplaniyor - boylece cipten eklenen urun aninda seritten
@@ -300,11 +301,11 @@ class ListViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * Bos durumdaki bir reyona dokunus - o reyonun urunleri EKLE SHEET'INDE.
+     * Bos durumdaki bir reyona dokunus - kesif sheet'ini O REYON SECILI acar.
      *
-     * Once kokteki oneri seridini dolduruyordu; karar 63 o seridi tek moda
-     * (motorun onerileri) indirdi ve katalog gezinmesini sheet'e verdi.
-     * Reyondan urun secmek zaten sheet'in kendi akisi.
+     * Karar 64 sheet'in ic yapisini degistirdi (kutucuk izgarasi olduу, yerine
+     * yatay filtre cipi geldi) ama bu giris noktasinin isi ayni: kullanici bir
+     * reyon soylemis, sheet o filtreyle acilmali.
      */
     fun onCategorySelected(category: Category) {
         openSheet()
@@ -319,8 +320,30 @@ class ListViewModel(
     private val _sheetCategory = MutableStateFlow<Category?>(null)
     val sheetCategory: StateFlow<Category?> = _sheetCategory
 
-    private val _sheetProducts = MutableStateFlow<List<CatalogSeed>>(emptyList())
-    val sheetProducts: StateFlow<List<CatalogSeed>> = _sheetProducts
+    /**
+     * Kesif sheet'inin GOVDESI: hanenin kendi urunleri, sik/nadir ayrilmis.
+     *
+     * ## Karar 64 kutucuk izgarasini oldurdu
+     *
+     * Sheet once 12 reyon kutucugu ciziyordu ve kullanicinin ilk IKI
+     * dokunusunda ekranda hicbir urun adi gorunmuyordu - kutucuk, sonra o
+     * reyonun urunleri. Karar 64 yuzeyin isini yeniden tanimladi: *"kesif
+     * yuzeyinin isi urun gostermek"*. Reyon artik bir hedef degil, bir FILTRE.
+     *
+     * ## Neden katalog degil hanenin urunleri
+     *
+     * Basligi *"En sık aldıkların"* diyor - katalogun genel yaygınlıgı degil,
+     * bu hanenin gecmisi. Siralama `product_stats.purchaseCount`tan geliyor.
+     *
+     * ## Sinir MAKETTEN, uydurma degil
+     *
+     * Maket izgarayi ALTI kutucukla ciziyor; ilk alti urun izgaraya, gerisi
+     * "Nadir aldıkların" cipi olarak asagi gidiyor. Bir "kac kereden sonra
+     * siktir" esigi UYDURMADIM - tasarim boyle bir sayi vermedi ve vermesi de
+     * gerekmiyordu: sira zaten frekanstan, kesim de maketin kendi sayisindan.
+     */
+    private val _sheetBody = MutableStateFlow(DiscoveryBody())
+    val sheetBody: StateFlow<DiscoveryBody> = _sheetBody
 
     /**
      * Listedeki urunlerin `matchKey`leri - Ekle sheet'indeki isaret icin
@@ -357,6 +380,34 @@ class ListViewModel(
         viewModelScope.launch {
             _starterProducts.value = catalogSeedDao.mostCommon(limit = 12)
         }
+    }
+
+    /**
+     * Govdeyi besleyen akis: urunler x secili filtre.
+     *
+     * ILK GUN GERI DUSUYOR: hanenin hic urunu yoksa katalogun en yaygin
+     * urunleri geliyor. Bu bir varsayim degil, gorunur bir gercek - yeni bir
+     * hanede gosterilecek "senin gecmisin" yok ve bos bir sheet acmak, kesif
+     * yuzeyinin tek isini yapmamak olurdu.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val discovery: Flow<DiscoveryBody> =
+        combine(productDao.observeByPurchaseCount(household), _sheetCategory) { products, filter ->
+            val mine = products
+                .filter { filter == null || it.categoryId == filter.id }
+                .map { DiscoveryItem(it.id, it.name, it.defaultUnit, it.matchKey) }
+            if (mine.isNotEmpty()) {
+                DiscoveryBody(frequent = mine.take(GRID_ITEMS), rare = mine.drop(GRID_ITEMS))
+            } else {
+                val seeds = catalogSeedDao.mostCommon(limit = GRID_ITEMS)
+                    .filter { filter == null || it.categoryId == filter.id }
+                    .map { DiscoveryItem(it.id, it.name, it.defaultUnit, it.matchKey) }
+                DiscoveryBody(frequent = seeds, rare = emptyList(), fromCatalog = true)
+            }
+        }
+
+    init {
+        viewModelScope.launch { discovery.collect { _sheetBody.value = it } }
     }
 
     /** Sheet ici arama (Ekran 2 tasarimi). */
@@ -411,23 +462,37 @@ class ListViewModel(
         _sheetQuery.value = ""
         _sheetResults.value = emptyList()
         _sheetCategory.value = null
-        _sheetProducts.value = emptyList()
+    }
+
+    /**
+     * Filtre cipi: ayni reyona tekrar dokunmak "Tümü"ye doner.
+     *
+     * `selectSheetCategory` ile ayni alani yaziyor ama isi FARKLI: o, bos
+     * durumdan gelen bir GIRIS noktasi (reyon zaten secilmis), bu ise sheet
+     * icinde bir SUZME. Ikisini tek fonksiyona indirmek, bos durumdan gelen
+     * kullanicinin ilk dokunusunun filtreyi kapatmasi demek olurdu.
+     */
+    fun toggleSheetFilter(category: Category?) {
+        _sheetCategory.value = if (_sheetCategory.value?.id == category?.id) null else category
     }
 
     fun selectSheetCategory(category: Category) {
         _sheetCategory.value = category
-        viewModelScope.launch {
-            // Sheet'te daha fazla urun: burada yer var, oneri seridinde yok.
-            _sheetProducts.value = catalogSeedDao.byCategory(category.id, limit = 30)
-        }
     }
 
-    fun sheetBack() {
-        _sheetCategory.value = null
-        _sheetProducts.value = emptyList()
+    /**
+     * Kesif izgarasindan ekleme - sheet'i KAPATMAZ, pes pese ekleme normal.
+     *
+     * ADLA cozuluyor: oge katalog tohumu da olabilir hanenin kendi urunu de
+     * ([DiscoveryItem]) ve `resolveProduct` zaten adi kanonik urune bagliyor -
+     * ayni kapidan geciyorlar, ayni urunu iki farkli yazimla dogurmuyorlar.
+     */
+    fun addFromDiscovery(item: DiscoveryItem) {
+        addInternal(item.name, categoryId = null, unit = item.unit, count = 1.0)
+        _sheetAddedCount.value += 1
     }
 
-    /** Sheet'ten urun eklemek sheet'i KAPATMAZ: pes pese ekleme normal. */
+    /** Arama sonucundan ekleme: kategori ve birim katalogdan geliyor. */
     fun addFromSheet(seed: CatalogSeed) {
         addInternal(seed.name, seed.categoryId, seed.defaultUnit, 1.0)
         _sheetAddedCount.value += 1
@@ -483,12 +548,24 @@ class ListViewModel(
             // "E18 ile ayni PR'da olmali, yoksa kart tamamen kaybolur"di.
             // E18 kapandi; erteleme gerekcesi de kapandi.
             val amount = estimate.takeIf { priced >= MIN_PRICED_ITEMS }
+            // ONCEKI GEZI: maketin alt satiri "Geçen sefer ~601 TL (18 gün
+            // önce)". Kaynagi kapanmis gezilerin tahminleri - ve BU gezi
+            // henuz kapanmadigi icin listenin ilki gercekten "gecen sefer".
+            val previous = priceObservationDao.observeTripEstimates(household).first()
+                .firstOrNull { it.tripId != trip.id && it.shownMinor() != null }
+                ?.let { est ->
+                    val closedAt = tripDao.observeHistory(household, limit = 8).first()
+                        .firstOrNull { it.id == est.tripId }?.completedAt
+                    val minor = est.shownMinor()
+                    if (minor == null || closedAt == null) null
+                    else PreviousTrip(minor, formatRelativeDay(closedAt, clock()))
+                }
             _summary.value = amount?.let {
                 ShoppingSummary(
                     takenCount = rows.count { row -> row.checked },
                     totalCount = rows.size,
                     amountMinor = it,
-                    durationMinutes = null,
+                    previous = previous,
                 )
             }
             // TEK CIHAZ KAPATIR. Donen deger onemli: false ise gezi baska bir
@@ -638,6 +715,65 @@ class ListViewModel(
     }
 
 
+    // --- Kok yazma yolu (karar 64) ----------------------------------------
+
+    /**
+     * Kokteki hizli yazma alaninin metni.
+     *
+     * BIR TUR ONCE SILINMISTI: karar 63 kokteki alani butona cevirmis, bu
+     * durum da sahipsiz kalmisti. Karar 64 o karari GERI ALDI - defterden
+     * dustu - cunku olcum acikti: yazarak ekleme 1 dokunustan 3'e cikmis,
+     * on kalemlik bir turda otuz fazladan dokunus etmisti.
+     */
+    private val _input = MutableStateFlow("")
+    val input: StateFlow<String> = _input
+
+    /**
+     * Otomatik tamamlama. SKORA GORE sirali, alfabetik DEGIL - "ek" yazan biri
+     * once Ekmek gormeli. Bu, algilanan zekanin buyuk kismini sifir maliyetle
+     * veriyor; alfabetik siralamak ayni veriyle aptal gorunur.
+     */
+    private val _suggestions = MutableStateFlow<List<CatalogSeed>>(emptyList())
+    val suggestions: StateFlow<List<CatalogSeed>> = _suggestions
+
+    fun onInputChanged(value: String) {
+        _input.value = value
+        viewModelScope.launch {
+            // Miktar onekini ATIP arama yapiyoruz: "2 kg el" yazan biri "el"
+            // ile eslesme bekler, "2 kg el" ile degil.
+            val name = parseQuantity(value).name
+            val found = if (name.isBlank()) emptyList() else catalogSeedDao.search(matchKey(name), limit = 6)
+            if (_input.value == value) _suggestions.value = found
+        }
+    }
+
+    /**
+     * Enter'a basildi: satir ekleniyor ve ALAN ACIK KALIYOR.
+     *
+     * Karar 64'un seri ekleme sarti. Alani temizlemek sart - temizlenmezse
+     * kullanici ikinci kalemi yazarken birincinin uzerine yazmaya baslar.
+     */
+    fun submitInput() {
+        val text = _input.value
+        if (text.isBlank()) return
+        add(text)
+        _input.value = ""
+        _suggestions.value = emptyList()
+    }
+
+    /** Tamamlama cipinden ekle: kategori ve birim katalogdan gelir. */
+    fun addFromSuggestion(seed: CatalogSeed) {
+        val m = parseQuantity(_input.value)
+        addInternal(
+            name = seed.name,
+            categoryId = seed.categoryId,
+            unit = m.unit ?: seed.defaultUnit,
+            count = m.count,
+        )
+        _input.value = ""
+        _suggestions.value = emptyList()
+    }
+
     private val _lastAdded = MutableStateFlow<AddedRow?>(null)
 
     /**
@@ -749,11 +885,20 @@ data class BasketEstimate(
     val pricedCount: Int = 0,
 )
 
+/**
+ * Alisveris sonrasi ozet karti (karar 69).
+ *
+ * `amountMinor` NULLABLE DEGIL: tutar hesaplanamiyorsa kart HIC acilmiyor
+ * (karar 45) ve o hal `_summary = null` ile anlatiliyor. Alanin nullable
+ * kalmasi, "kart var ama mansetsiz" diye bir hal varmis gibi gorunurdu -
+ * kararin tam olarak yasakladigi sey.
+ */
 data class ShoppingSummary(
     val takenCount: Int,
     val totalCount: Int,
-    val amountMinor: Long?,
-    val durationMinutes: Int?,
+    val amountMinor: Long,
+    /** Alt satir: bir onceki gezi. Ilk gezide null ve satir alinan sayiya doner. */
+    val previous: PreviousTrip?,
 )
 
 /** Basligin uc parcasi: son gezi, avatar bas harfleri, es var mi. */
@@ -765,3 +910,34 @@ private data class HeaderData(
 
 /** Ekran 5'in alim gecmisi dokuz satir gosteriyor (tasarim). */
 private const val HISTORY_LIMIT = 9
+
+/**
+ * Kesif sheet'inin izgarasindaki oge - urun de olabilir katalog tohumu da.
+ *
+ * TEK TIP, iki kaynak: sheet ikisini AYNI cizecek ve ayrimi kullanicinin
+ * bilmesi gerekmiyor. `matchKey` listede olup olmadigini isaretlemek icin
+ * (karar 12); ekleme adla yapiliyor cunku `resolveProduct` zaten adi kanonik
+ * urune baglıyor.
+ */
+data class DiscoveryItem(
+    val id: String,
+    val name: String,
+    val unit: String,
+    val matchKey: String,
+)
+
+/**
+ * Kesif sheet'inin iki bolumu (karar 64).
+ *
+ * @param fromCatalog govde hanenin gecmisinden DEGIL katalogdan geldi - ilk
+ *   gun hali. Sheet basligi buna gore degisiyor: "En sık aldıkların" yalnizca
+ *   gercekten alinmis urunler icin dogru bir cumle.
+ */
+data class DiscoveryBody(
+    val frequent: List<DiscoveryItem> = emptyList(),
+    val rare: List<DiscoveryItem> = emptyList(),
+    val fromCatalog: Boolean = false,
+)
+
+/** Izgaranin kutucuk sayisi - maketin kendi sayisi (6 hucre). */
+const val GRID_ITEMS = 6

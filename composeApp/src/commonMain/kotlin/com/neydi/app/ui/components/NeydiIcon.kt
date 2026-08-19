@@ -43,8 +43,8 @@ import com.neydi.app.ui.theme.Spacing
  * guvenilir degil). Geriye kalan iki secenek AYNI mekanik isi istiyordu, o
  * yuzden kimlik kazanci olan taraf secildi.
  *
- * Sonuc: 17 ikon **Phosphor Regular** cizimleriyle elle tasindi.
- * - Bagimlilik YOK - 17 path dizesi, birkac KB kaynak.
+ * Sonuc: 19 ikon **Phosphor Regular** cizimleriyle elle tasindi.
+ * - Bagimlilik YOK - 19 path dizesi, birkac KB kaynak.
  * - Font paketlenmiyor, ikon `Text` olarak cizilmiyor.
  * - `androidx.compose.material.icons` bagimliligi tamamen dustu (o artifact
  *   JetBrains tarafinda 1.7.3'ten sonra yayinlanmiyordu zaten).
@@ -53,13 +53,17 @@ import com.neydi.app.ui.theme.Spacing
  * MIT lisansli. viewBox 256x256, tek `path`, dolgu ile cizilmis konturlar -
  * `Icon` zaten tinting yaptigi icin dolgunun rengi onemsiz.
  *
- * ## Envanter: 17 (tasarim karari 34)
+ * ## Envanter: 19 (tasarim karari 34, uzerine karar 64)
+ *
+ * Bu baslik "17" diyordu - karar 34'un sayisiydi ve karar 64'e kadar dogruydu.
+ * 64 ekleme akisini iki yola ayirinca envanter iki ikon buyudu: [GridView]
+ * kesif yolunun kapisi, [Keyboard] o yoldan yazma yoluna donus.
  *
  * `check` ile `check_circle` AYRI kaliyor ve bu kasitli: ciplak `check` satirda
  * *"isaretlendi"*, `check_circle` ise cipte/secicide *"secili"* demek. Ikisini
  * tek ikona indirmek iki farkli fiili ayni sozcukle soylemek olurdu.
  *
- * Iki ikon Phosphor'un `fill` agirligindan geliyor, kalan on bes `regular`:
+ * Iki ikon Phosphor'un `fill` agirligindan geliyor, kalan on yedi `regular`:
  * [CheckCircle] tasarimin `FILL 1` ikonu (*"dolu cizilen tek ikon"*), [PushPin]
  * ise envanterde FILL demedigi halde dolu - 12dp'lik rozette kontur cizim
  * okunmuyor. Bu satir once *"[PushPin] tek dolgulu ikon"* diyordu; check_circle
@@ -230,6 +234,36 @@ object NeydiIcons {
             "48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93," +
             "47.93,0,0,1,2.75-16H56V216H200Z",
     )
+
+    /**
+     * "Katalog" - kok hizli yazma alaninin yanindaki kesif hedefi
+     * (tasarim karari 64). Dokunusla kesif sheet'ini acar.
+     *
+     * Tasarim `grid_view` diyor, Phosphor'daki karsiligi `squares-four`.
+     */
+    val GridView: ImageVector = phosphor(
+        "GridView",
+        "M104,40H56A16,16,0,0,0,40,56v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40Zm0,64H56V56h48v48Z" +
+            "m96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,64H152V56h48v48Z" +
+            "m-96,32H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm0,64H56V152h48v48Z" +
+            "m96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Zm0,64H152V152h48v48Z",
+    )
+
+    /**
+     * "Kendim yazayim" - kesif sheet'inin alt kacisi (tasarim karari 64).
+     *
+     * Sheet'i kapatip kok yazma alanini acar: [GridView]'in actigi yoldan
+     * yazma yoluna donusu saglayan tek hedef bu.
+     */
+    val Keyboard: ImageVector = phosphor(
+        "Keyboard",
+        "M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,144H32V64H224V192Z" +
+            "m-16-64a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,128Z" +
+            "m0-32a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,96Z" +
+            "M72,160a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16h8A8,8,0,0,1,72,160Z" +
+            "m96,0a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,160Z" +
+            "m40,0a8,8,0,0,1-8,8h-8a8,8,0,0,1,0-16h8A8,8,0,0,1,208,160Z",
+    )
 }
 
 /**
@@ -306,7 +340,7 @@ fun NeydiIcon(
 // --- Onizlemeler ------------------------------------------------------------
 
 /**
- * On yedi ikonun atlasi.
+ * On dokuz ikonun atlasi.
  *
  * TESTIN OLCEMEDIGI SEYI BU GOSTERIYOR: `NeydiIconsTest` her path'in ayristigini
  * ve tekil oldugunu kanitliyor ama CIZIMIN NE OLDUGUNU bilmiyor. Yanlis Phosphor
@@ -337,6 +371,8 @@ private fun NeydiIconAtlasPreview() = NeydiPreview {
         "content_paste" to NeydiIcons.ContentPaste,
         "arrow_upward" to NeydiIcons.ArrowUpward,
         "arrow_downward" to NeydiIcons.ArrowDownward,
+        "grid_view" to NeydiIcons.GridView,
+        "keyboard" to NeydiIcons.Keyboard,
     )
     Column(
         modifier = Modifier.padding(Spacing.md),

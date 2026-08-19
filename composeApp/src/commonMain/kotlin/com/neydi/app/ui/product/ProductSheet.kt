@@ -78,14 +78,13 @@ data class ProductSheetState(
  * Anahtari gecici olarak Ayarlar'a koymak alternatifti; tasarimin kendi
  * affordance'ini kullanmak yerine yeni bir yer icat etmek olurdu.
  *
- * MANSETIN YALNIZCA BIR YARISI BURADA. Tasarimin iki manseti var: *"Son
- * ödediğin: 138,50 TL"* (tek gozlem hali) ve trend cumlesi *"Süt 32 TL → 41 TL
- * · son 3 ayda %28 arttı"*. Birincisi ciziliyor; ikincisi F5.3'te, cunku
- * grafigin aritmetigine bagli - ay araligi ve ambalaj degisiminde iki donemi
- * ayirma. Ikisini de bekletmek, ekranin merkezindeki cumleyi hic olmayan bir
- * grafigin arkasinda tutmak olurdu.
+ * MANSETIN IKI HALI DE BURADA (karar 67). Tek gozlem hali *"Son ödediğin:
+ * 138,50 TL"*, uc gozlemden itibaren trend hali *"32 TL → 41 TL · 6
+ * Haziran'dan beri %28 arttı"* - cumleyi [PriceSection] kuruyor, sheet
+ * yalnizca ciziyor. Trend cumlesi bir sure GRAFIGE bagli sanildi ve bekletildi;
+ * degilmis: araligi grafik degil gozlemlerin kendisi veriyor.
  *
- * F5.3 ayrica Canvas grafigi, min/ortalama referans cizgilerini ve aralik
+ * F5.3 hala Canvas grafigini, min/ortalama referans cizgilerini ve aralik
  * secicisini ekleyecek.
  * F6.5 ikinci anahtari (*"Bunu onerme"*) baglayacak - bugun engelleme tablosu
  * var ama DAO'su yok, ve gorunup calismayan bir anahtar calismayan bir anahtardan
@@ -432,6 +431,37 @@ private fun ProductSheetStaplePreview() = NeydiPreview {
 private fun ProductSheetPlainPreview() = NeydiPreview {
     ProductSheetContent(
         state = ProductSheetState(productId = "p2", name = "Kuru Kayısı", isStaple = false),
+        onStapleChange = {},
+    )
+}
+
+/**
+ * TREND MANSETI (karar 67) - ve onizlemenin asil isi mansetin UZUNLUGU.
+ *
+ * Cumle 24sp Fraunces ile ciziliyor, yaninda 44dp kutucuk var ve iki satirla
+ * sinirli. Tek gozlem manseti ("Son ödediğin: 100,00 TL") o sinira hicbir
+ * zaman yaklasmiyor, trend cumlesi ise iki fiyat + tarih + yuzde tasiyor;
+ * kirpilip kirpilmadigi ancak burada gorunuyor.
+ */
+@PreviewLightDark
+@Composable
+private fun ProductSheetTrendPreview() = NeydiPreview {
+    ProductSheetContent(
+        state = ProductSheetState(
+            productId = "p3",
+            name = "Süt",
+            isStaple = true,
+            price = PriceSection(
+                headline = "32 TL → 41 TL · 6 Haziran'dan beri %28 arttı",
+                headlineSub = "Migros · dün · 1 lt",
+                history = listOf(
+                    HistoryRow(id = "t1", observedAt = 0, date = "14 Ağu", store = "Migros", price = "41,00 TL"),
+                    HistoryRow(id = "t2", observedAt = 0, date = "2 Tem", store = "Migros", price = "37,00 TL"),
+                    HistoryRow(id = "t3", observedAt = 0, date = "6 Haz", store = "Migros", price = "32,00 TL"),
+                ),
+                sparkline = listOf(3200f, 3700f, 4100f),
+            ),
+        ),
         onStapleChange = {},
     )
 }

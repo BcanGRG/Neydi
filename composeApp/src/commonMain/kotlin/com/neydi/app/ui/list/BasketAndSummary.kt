@@ -1,5 +1,15 @@
 package com.neydi.app.ui.list
 
+import androidx.compose.foundation.layout.Box
+import com.neydi.app.ui.theme.LocalNeydiExtraColors
+import com.neydi.app.ui.theme.pressable
+
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
+import com.neydi.app.ui.theme.Sizes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -92,52 +102,52 @@ internal fun EstimatedBasket(
 }
 
 /**
- * Alisveris sonrasi TEK SEFERLIK ozet karti.
+ * Alisveris sonrasi ozet - LISTENIN ICINDE bir kart (karar 69).
  *
- * Duygusal karsilik ve ekran goruntusu ani burasi: kullanici alisverisi
- * bitirdi, uygulama ona ne yaptigini gosteriyor. Tutar 36sp Fraunces -
- * ekranin geri kalaninda o boyutta baska hicbir sey yok, bakis oraya gidiyor.
+ * ## Sheet degil kart, ve fark iliskiyi ters cevirmekti
  *
- * Tutar bilinmiyorsa sayilar gosteriliyor: "8 urun, 24 dakika". Bu bile bos
- * bir karttan iyi. E18'e kadar tutar HER ZAMAN bilinmiyor - gozlemlerden
- * hesaplanan `~` tahmini henuz yazilmadi.
+ * Ozet bir `ModalBottomSheet` icinde aciliyordu: karartma, listeyi kapatan bir
+ * yuzey, kapatmak icin "Tamam" butonu. Denetimin tek YAPISAL bulgusu buydu ve
+ * karar 69 maketi onayladi: *"alisveris bitince gorulen sey listenin son hali
+ * olmali; ozet ona ilistirilmis bir yorum, ekrani ele geciren bir yuzey
+ * degil"*. Sheet tam tersini yapiyordu - yorum ekrani kapatiyor, asil sey
+ * (liste) arkada kaliyordu.
+ *
+ * ## Kapatinca KALICI gidiyor
+ *
+ * Ve bu mesru, cunku kart bir BILDIRIM degil - yeniden uretilebilir bir ozet.
+ * Kaynagi Gecmis'te duruyor: ayni bilgi ("N urun + tutar") gezi satirinda
+ * yasiyor.
+ *
+ * ## Tutar yoksa kart HIC acilmiyor
+ *
+ * Karar 45, degismedi. Cagiran taraf (`ListViewModel.finishShopping`) tutar
+ * hesaplanamiyorsa `_summary`yi hic doldurmuyor.
  */
 @Composable
 internal fun SummaryCard(
-    bottomPadding: Dp = 0.dp,
     takenCount: Int,
     totalCount: Int,
-    amountMinor: Long?,
-    durationMinutes: Int?,
+    amountMinor: Long,
+    previous: PreviousTrip?,
     onDismiss: () -> Unit,
-    /**
-     * Fissiz mutabakati duzeltme yolu (F4.8).
-     *
-     * GORUNUR OLMASI SART: kapanista planlananlar alindi yazildi ve kullanici
-     * bunu bilmiyor. Duzeltme yolu olmadan iyimser varsayim bir tuzak olurdu -
-     * alinmamis urun satin alma gecmisine girer, kullanici gormez, oneri
-     * motoru o urunu duzenli aliniyor sanar.
-     */
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(Spacing.md)
+            .padding(horizontal = Spacing.md)
             .clip(NeydiExtraShapes.card)
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = Spacing.lg)
-            .padding(top = Spacing.xl, bottom = Spacing.xl + bottomPadding),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+            .border(1.dp, LocalNeydiExtraColors.current.hairline, NeydiExtraShapes.card)
+            .padding(Spacing.lg),
     ) {
-        Text(
-            text = if (takenCount == totalCount) "Liste tamam." else "Alışveriş bitti.",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        if (amountMinor != null) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Text(
+                text = "Bu alışveriş",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Text(
                 text = formatEstimate(amountMinor),
                 // 36sp Fraunces: ekranda bu boyutta baska hicbir sey yok.
@@ -147,55 +157,48 @@ internal fun SummaryCard(
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(Sizes.hairline)
+                    .background(LocalNeydiExtraColors.current.hairline),
+            )
+            Text(
+                // ALINAN SAYISI VE ONCEKI GEZI AYNI SATIRDA DEGIL: maket alt
+                // satiri yalnizca onceki geziye ayirmis. Kac urun alindigi
+                // artik Gecmis gezi satirinda yasiyor (karar 69).
+                text = previous?.let { "Geçen sefer ${formatEstimate(it.amountMinor)} (${it.ago})" }
+                    ?: "$takenCount ürün alındı",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
-        Text(
-            text = buildString {
-                append("$takenCount ürün alındı")
-                if (takenCount < totalCount) append(", ${totalCount - takenCount} tanesi kaldı")
-                if (durationMinutes != null) append(" · $durationMinutes dakika")
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-
-        // "Fis cek" butonu E6'da kalkti ve yerine bir sey GELMEYECEK.
-        // Tasarim karari 27 girisi tek bir yere koydu: liste basligindaki
-        // kalici kamera hedefi. Gerekcesi ozet kartini dogrudan eliyor -
-        // cekim geziden bagimsiz (karar 3), ozet karti ise yalnizca alisveris
-        // sonrasi gorunuyor; buraya bir dugme koymak cekimi yeniden geziye
-        // baglardi. Ikinci bir giris noktasi da yasak: "ayni ise iki kapi
-        // acip ikisini de zayiflatirdi".
-
-        // "HEPSINI ALMADIM" HEDEFI KALKTI (F11.20).
+        // KAPATMA IKONU SAG USTTE, alttaki "Tamam" butonunun yerine.
         //
-        // Bos Durumlar cerceve 04'un basligi birebir *"Alisveris kapanisi ·
-        // acilmaz"*: kontrol edilecek bir belge yok, liste kapanista
-        // kendiliginden temizleniyor. Karar 31 pivot turunda bunu yeniden ele
-        // alip teyit etti.
-        //
-        // ISARETLENMEMIS SATIRLARIN CEVABI VAR, sadece baska zamanda: bir
-        // SONRAKI gezinin basinda "Eksik olabilir" ekraninda *"gecen sefer
-        // unuttun"* diye geri geliyorlar. Duzeltmeyi kapanis aninda istemek,
-        // kullaniciyi kasadan cikarken bir forma oturtmak olurdu.
-
-        // "Tamam" en altta ve SILIK: kartin asil isi bir sey ANLATMAK, bir
-        // sey yaptirmak degil. Ustte ve vurgulu bir "Tamam", karti okunmadan
-        // kapatilan bir dialog'a cevirirdi.
-        //
-        // Eskiden burada "Fis cek" butonu vardi ve "Tamam"in silikligi onu
-        // one cikarmak icindi. O buton E6'da kalkti (pivot karari 3: cekim
-        // geziden bagimsiz, girisi liste basliginda - karar 27).
-        NeydiButton(
-            text = "Tamam",
-            onClick = onDismiss,
-            container = MaterialTheme.colorScheme.surfaceVariant,
-            content = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = Spacing.xs),
-        )
+        // Buton kartin sonunu bir AKSIYONA baglıyordu - okunup kapatilan bir
+        // dialog gibi. Kart artik listenin icinde duruyor ve kapatmak onu
+        // gormezden gelmek kadar hafif olmali.
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .size(Sizes.minTapTarget)
+                .clip(NeydiExtraShapes.pill)
+                .pressable(onTap = onDismiss),
+            contentAlignment = Alignment.Center,
+        ) {
+            NeydiIcon(
+                icon = NeydiIcons.Close,
+                contentDescription = "özeti kapat",
+                size = 20.dp,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
+
+/** Ozet kartinin alt satiri: bir onceki gezinin tutari ve ne kadar once oldugu. */
+data class PreviousTrip(val amountMinor: Long, val ago: String)
 
 // --- Preview ---------------------------------------------------------------
 
@@ -214,14 +217,27 @@ private fun EstimateCompletePreview() = NeydiPreview {
 @PreviewLightDark
 @Composable
 private fun SummaryWithTotalPreview() = NeydiPreview {
-    SummaryCard(takenCount = 8, totalCount = 8, amountMinor = 128990, durationMinutes = 24, onDismiss = {})
+    SummaryCard(
+        takenCount = 8, totalCount = 8, amountMinor = 64_250,
+        previous = PreviousTrip(60_100, "18 gün önce"), onDismiss = {},
+    )
 }
 
-/** Fis okunmadi: tutar yok ama kart yine de bir sey soyluyor. */
+/**
+ * ILK GEZI: karsilastirilacak onceki gezi yok, alt satir alinan sayiya doner.
+ *
+ * ONCEKI ONIZLEME "tutar yok ama kart yine de bir sey soyluyor" halini
+ * tutuyordu ve o hal ARTIK YOK: karar 45 tutar hesaplanamiyorsa karti hic
+ * acmiyor, karar 69 de bunu teyit etti. Olmayan bir hali cizen onizleme,
+ * incelemeye yanlis bir sey gosterir.
+ */
 @PreviewLightDark
 @Composable
-private fun SummaryWithoutTotalPreview() = NeydiPreview {
-    SummaryCard(takenCount = 6, totalCount = 8, amountMinor = null, durationMinutes = 31, onDismiss = {})
+private fun SummaryFirstTripPreview() = NeydiPreview {
+    SummaryCard(
+        takenCount = 6, totalCount = 8, amountMinor = 64_250,
+        previous = null, onDismiss = {},
+    )
 }
 
 /** Sepet tahmininin cizilmesi icin gereken en az fiyatli urun (tasarim esigi). */
