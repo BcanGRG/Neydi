@@ -9,7 +9,7 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro bilinçli olarak ertelendi. Fikstür seti **99 gerçek
-etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **389 test yeşil**,
+etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **398 test yeşil**,
 **sıfır derleyici uyarısı**.
 
 Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
@@ -27,8 +27,8 @@ Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanl�
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
 | 1 | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi; ölçüm kareleri rehbersiz çekilmişti | A101'de bir çekim |
-| 2 | **F5.7 — ambalaj boyu** | `PriceHint.PackChanged`'i besleyip shrinkflation'ı yakalar; bu olmadan 1 L → 900 ml "fiyat sabit" görünüyor | — |
-| 3 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
+| 2 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
+| 3 | **F6.5 — sabit terfisi + bastırma** | "Bunu önerme" listesinin giriş noktası | — |
 
 *E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ · E19 ✅ — Faz E kapandı.*
 
@@ -403,11 +403,31 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 
 ## Öncelik 1 — Fiyat hafızasını tamamlayan işler
 
-- [ ] **F5.7 — Ambalaj boyu çıkarımı.** `readTagPack` **gramaj satırından**
-      okuyor (birim-fiyat satırından değil — ilk yazdığım tarif yanlıştı):
-      `750 G` → `750.0` + `gr`, 23/27 etikette. Kalan iş `PriceHint.PackChanged`'i
-      besleyip shrinkflation'ı gerçekten yakalamak. *Bu olmadan 1 L → 900 ml
-      düşüşü "fiyat sabit" diye raporlanır.*
+- [~] **F5.7 ✅ (kod) — Ambalaj boyu çıkarımı.** `readTagPack` **gramaj
+      satırından** okuyor: `750 G` → `750.0` + `gr`.
+      **Kopukluk tek bir yerdeydi ve sinsiydi:** şema kolonları (`packSize`,
+      `packUnit`), `observeList`in alt sorguları ve `PriceHint.PackChanged`
+      dalı E16'dan beri hazırdı, `readTagPack` gramajı okuyordu — ama
+      `TagCaptureViewModel`'de **`pack` kelimesi hiç geçmiyordu**. Her gözlem
+      iki NULL kolonla yazılıyordu, yani shrinkflation dalı **hiç
+      ateşleyemezdi** ve hiçbir test bunu söylemiyordu.
+      **Yazmadan önce ölçüldü** — 99 fikstürde 50 gramaj okunuyor; asıl soru
+      *aynı etiketin iki çekimi aynı gramajı veriyor mu* idi ve cevap evet:
+      `133220/226/227` üçünde de `1.0 lt`, `133247/248/249` üçünde de `2.0 kg`.
+      İki **farklı** gramaj okuyan tek vaka yok — uydurma bir ambalaj
+      değişiminin kaynağı tam da bu olurdu.
+      **Çelişkili etikette gramaj da düşüyor** (7/50): çapraz kontrol üç
+      sayıdan birinin yanlış olduğunu söylüyor, hangisinin olduğunu değil.
+      Fiyat hatası bir sayıdır, yanlış gramaj bir **iddiadır** — *"ambalaj
+      küçüldü"*.
+      Kartın kopyası `ConfirmCard.readFrom` olarak **ayrıldı**: kusurun yaşadığı
+      dikiş artık ViewModel'in dışında ve test edilebilir.
+      `writeTagObservation`'ın ambalaj parametrelerinin **varsayılanı yok** —
+      atlanmaları derleme hatası; `save()`in çağrı yeri birim testle
+      korunamıyor, tek nöbetçisi derleyici.
+      ⚠ **Cihazda görülmedi:** ipucu için aynı üründen **iki farklı boyda**
+      gerçek çekim gerekiyor. Ölçüm `docs/24`'ün yöntemiyle, kanıt
+      `ListPriceHintTest.twoRealTagsInDifferentSizesRaiseShrinkflation`.
 - **F5.10 ✅ (yerel yarısı) — Mükerrer gözlem koruması.** Tasarımın kuralı:
       *"aynı market + ürün + fiyat 60 sn içinde tekrarlanırsa ikinci gözlem
       yazılmaz"*. `countRecentDuplicates` + `insertUnlessRecentDuplicate`,
@@ -427,7 +447,7 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
 - [~] **F6.4 — Eksik Olabilir (Ekran 3).** "Son ödenen fiyat" kolonu artık
       gözlemden besleniyor.
 - [ ] **F6.5 — Sabit terfisi + bastırma.** "Bunu önerme" listesinin giriş
-      noktası; Ekran 5'e bağlı.
+      noktası; Ekran 5'e bağlı. *(Öncelik 1'de kalan tek kodlanacak madde.)*
 
 ## Öncelik 2 — Dış veri
 

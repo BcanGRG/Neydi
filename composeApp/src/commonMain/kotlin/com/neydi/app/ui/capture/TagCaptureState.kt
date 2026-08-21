@@ -86,6 +86,31 @@ internal data class ConfirmCard(
      * sessizce kaydetmekten iyi.
      */
     val kurusFromOcr: Boolean = false,
+    /**
+     * Etiketten okunan ambalaj boyu - shrinkflation'in TEK kaynagi (F5.7).
+     *
+     * ## Kartta GORUNMUYOR ve bu bilincli
+     *
+     * Sozlesme kartin alanlarini sayiyor: Fiyat, Urun, Marka, Market, Tarih.
+     * Gramaj gorunur bir satir olsaydi kullanicidan onaylamasi beklenirdi -
+     * oysa dogrulayabilecegi tek an zaten sonrasi: ambalaj degistiginde
+     * ipucunun kendisi *"900 gr -> 800 gr"* diye ikisini birden yaziyor.
+     *
+     * ## Sessizce yazilmasi neden guvenli - OLCULDU
+     *
+     * Tekrar cekimlerde gramaj KAYMIYOR: `133220/133226/133227` (ayni sut
+     * etiketi, uc kare) ucunde de `1.0 lt`, `133247/133248/133249` ucunde de
+     * `2.0 kg`. Doksan dokuz fiksturde ayni etiketin iki FARKLI gramaj okudugu
+     * tek vaka yok - uydurma bir ambalaj degisiminin kaynagi tam da bu olurdu.
+     *
+     * Okundu/okunmadi asimetrisi de zararsiz: `toPriceHint` iki gozlemin
+     * IKISININ de gramajini istiyor, biri null ise degisim iddia etmiyor.
+     * `null` "ayni degil" degil, "bilmiyorum" demek.
+     *
+     * Celiskili etiketlerde gramaj hic gelmiyor - bkz. `readTagFields`.
+     */
+    val packSize: Double? = null,
+    val packUnit: String? = null,
     /** Okuyucu neden sustu - amber seridin cumlesi buna dayaniyor. */
     val skipped: TagSkip? = null,
 ) {
