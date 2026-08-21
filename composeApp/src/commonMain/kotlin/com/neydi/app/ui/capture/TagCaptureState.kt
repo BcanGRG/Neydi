@@ -40,6 +40,14 @@ internal data class TagCaptureState(
     val pendingStoreName: String? = null,
     val productQuery: String = "",
     val productPicks: List<CatalogSeed> = emptyList(),
+    /**
+     * Son secilen urun - secicinin EN BASINDA, kartta DEGIL.
+     *
+     * Karttan cikarilmasinin gerekcesi `TagCaptureViewModel.lastProductName`
+     * KDoc'unda: urun markette tekrarlamiyor, o yuzden onu karta yazmak
+     * neredeyse her cekimde yanlis bir ad iddia etmek oluyordu.
+     */
+    val lastProduct: String? = null,
     /** Bu markette gorulmus markalar - marka sheet'inin havuzu (karar 52). */
     val brandPool: List<String> = emptyList(),
 )

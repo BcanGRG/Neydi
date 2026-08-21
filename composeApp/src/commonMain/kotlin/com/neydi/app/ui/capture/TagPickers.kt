@@ -94,6 +94,7 @@ private val ROW_PRODUCT = 60.dp
 @Composable
 internal fun ProductPicker(
     tagText: String?,
+    lastProduct: String?,
     query: String,
     picks: List<CatalogSeed>,
     onQueryChange: (String) -> Unit,
@@ -145,6 +146,30 @@ internal fun ProductPicker(
         Box(Modifier.fillMaxWidth().height(1.dp).background(Flow.chipBorder))
 
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp)) {
+            // SON SECILEN URUN EN BASTA - karar 51'in "hazir gelir" niyeti
+            // BURADA yasiyor, kartta degil. Karta yazildiginda her cekimde bir
+            // ad IDDIA ediyordu ve iddia neredeyse hep yanlisti (bkz.
+            // `TagCaptureViewModel.lastProductName`); burada bir TEKLIF ve
+            // yanlissa hicbir sey maliyeti yok.
+            if (lastProduct != null && query.isBlank()) {
+                item {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .pressable(onTap = { onPick(lastProduct) })
+                            .height(ROW_PRODUCT),
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(lastProduct, style = MaterialTheme.typography.bodyLarge, color = Flow.text)
+                        Text(
+                            text = "son seçtiğin",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Flow.label,
+                        )
+                    }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(Flow.chipBorder))
+                }
+            }
             items(picks.size) { i ->
                 val seed = picks[i]
                 Column(
@@ -532,6 +557,7 @@ private fun BrandPickerPreview() = NeydiPreview {
 private fun ProductPickerPreview() = NeydiPreview {
     ProductPicker(
         tagText = "DST YGRT 1000G",
+        lastProduct = "Süt 1 L",
         query = "yoğurt",
         picks = listOf(
             CatalogSeed(id = "1", name = "Yoğurt 1 kg", matchKey = "yogurt 1 kg", categoryId = "sut", commonalityRank = 1, defaultUnit = "kg"),

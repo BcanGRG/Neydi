@@ -25,8 +25,31 @@ import io.github.vinceglb.filekit.readBytes
 /** Kirpimin uzun kenari, piksel. */
 private const val THUMB_EDGE = 720
 
-/** Seridin yuksekligi - tasarim maketi `height:92px`. */
-private val STRIP_HEIGHT = 92.dp
+/**
+ * Seridin yuksekligi.
+ *
+ * ## Maket 92px diyor, cihaz 128 gosteriyor
+ *
+ * Maketin sayisi 92px ve ilk hali oydu. Ama o maket kirpimi bir YER TUTUCUYLA
+ * cizmis - kutunun icinde *"etiketin kirpilmis goruntusu · gercek fotograf
+ * bekleniyor"* yaziyor - yani 92px'in gercek bir etiketi gosterip
+ * gostermedigi hic sinanmamis.
+ *
+ * Sinandi: tam genislikte 92dp yaklasik 4:1 bir bant demek, oysa kadraj
+ * rehberi 3:2. [ContentScale.Crop] merkezden aldigi icin etiketin ust ve alt
+ * kenarlari kesiliyordu; kullanici bunu *"ustten kesiyor gibi"* diye bildirdi.
+ *
+ * 128dp yaklasik 3:1 - hala rehberin 1,5:1'inden uzak ama kesilen pay yariya
+ * iniyor ve kart ekrana sigmaya devam ediyor. Rehberin oranini birebir vermek
+ * 379dp genislikte ~250dp ederdi; o, karti ekrandan tasiran ilk denemenin ta
+ * kendisiydi.
+ *
+ * KALICI COZUM BU DEGIL: dogrusu kucuk kopyayi cekerken REHBERIN BOLGESINDEN
+ * kirpmak - o zaman serit ne kadar kisa olursa olsun gosterdigi sey tam olarak
+ * kullanicinin kadraja oturttugu sey olur. Bunun icin rehberin karedeki
+ * karsiligini hesaplamak gerekiyor (`PreviewView` FILL_CENTER) ve ayri bir is.
+ */
+private val STRIP_HEIGHT = 128.dp
 
 /**
  * Cekilen karenin kartin BASINDAKI kirpimi (karar 62).
