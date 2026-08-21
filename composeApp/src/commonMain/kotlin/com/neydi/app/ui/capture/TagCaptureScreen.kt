@@ -229,6 +229,7 @@ internal fun TagCaptureScreen(
         when (state.picker) {
             TagPicker.PRODUCT -> ProductPicker(
                 tagText = state.card?.tagText,
+                lastProduct = state.lastProduct,
                 query = state.productQuery,
                 picks = state.productPicks,
                 onQueryChange = onSearchProducts,

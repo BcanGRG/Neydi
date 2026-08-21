@@ -57,13 +57,37 @@ internal class TagCaptureViewModel(
     private val household = DEFAULT_HOUSEHOLD_ID
 
     /**
-     * Son secilen urunun adi - kart acilirken hazir gelir (karar 51).
+     * Son secilen urunun adi - SECICININ BASINDA duruyor, kartta DEGIL.
      *
-     * State'te DEGIL, cunku cizilen bir sey degil: kartin baslangic degeri.
-     * State'e koymak "su an gosterilen" ile "bir dahakine gelecek" arasindaki
-     * farki silerdi.
+     * ## Karar 51'den bilincli sapma, ve sebebi olculdu
+     *
+     * Karar 51 *"son secilen urun hazir gelir"* diyor ve gerekcesini
+     * *"market yapiskanliginin ikizi"* diye veriyor. Benzetme yanlis ve fark
+     * kullanimda: bir turda market TEKRARLIYOR - bir markette duruyorsun -
+     * ama urun tekrarlamiyor, her etikette baska bir sey cekiyorsun.
+     *
+     * Sonucu kullanici A101'de bildirdi: kartta hep *"cici BEBE BEBEK
+     * BİSKÜVİsi"* yaziyordu - kola etiketinde de, dis macununda da - ve akisi
+     * birakip telefonun kendi kamerasiyla cekim yapmaya basladi. Veritabani da
+     * ayni seyi soyluyor: on iki gozlem, on iki AYRI urunde. Urun tekrarlamiyor.
+     *
+     * Daha kotusu, yanlis ad ONAYLANMIS gibi duruyordu: cip market cipiyle ayni
+     * bicimde, hicbir isaret "bu gecen seferden kalma bir tahmin" demiyordu.
+     *
+     * ## Ne degisti
+     *
+     * Alan BOS aciliyor; son urun secicinin EN BASINDA bir satir olarak
+     * duruyor. Karar 51'in *"hazir gelir"* niyeti korunuyor - tek dokunusluk
+     * mesafede - ama kart artik bilmedigi bir seyi iddia etmiyor.
+     *
+     * Not: kararin ilk dali (*"etiket metni guvenilirse eslesme ona baglanir"*)
+     * hic kosmuyor, cunku etiket metni -> urun tablosu yok (Faz 4). Yani iki
+     * dalli bir karar tek dala inmisti ve o dal da yanlis olaniydi.
      */
     private var lastProductName: String? = null
+
+    /** Secicinin basindaki "son sectigin" satiri. */
+    val lastProduct: String? get() = lastProductName
 
     private val _state = MutableStateFlow(TagCaptureState())
     val state: StateFlow<TagCaptureState> = _state.asStateFlow()
@@ -134,7 +158,9 @@ internal class TagCaptureViewModel(
                     // katalogdan geliyor. Onceki hal OCR'i dogrudan ada
                     // yaziyordu ve Migros'ta ayni sut cihazda IKI urun oldu.
                     tagText = fields?.name?.name,
-                    productName = lastProductName.orEmpty(),
+                    // URUN ALANI BOS ACILIYOR - son secilen urun BURAYA
+                    // YAZILMIYOR (karar 51'den sapma, gerekcesi asagida).
+                    productName = "",
                     brand = fields?.name?.brand,
                     kurusFromOcr = fields?.price?.kurusFromOcr == true,
                     skipped = fields?.skipped,
@@ -158,7 +184,10 @@ internal class TagCaptureViewModel(
             //
             // Secicinin isi katalogdan SECTIRMEK; bos sorgu en yaygin
             // urunleri getiriyor ve kullanici oradan daraltiyor.
-            TagPicker.PRODUCT -> searchProducts("")
+            TagPicker.PRODUCT -> {
+                _state.value = _state.value.copy(lastProduct = lastProductName)
+                searchProducts("")
+            }
             TagPicker.BRAND -> loadBrandPool()
             TagPicker.STORE -> Unit
         }
