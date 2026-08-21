@@ -7,10 +7,13 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E 18/19 · **E15 kod olarak bitti, cihazda 12 gözlem üretti**; sıradaki **E16**.
-Etiket okuyucusu **iki zincirde** çalışıyor (BİM, Migros), Metro bilinçli olarak ertelendi.
-Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu, **325 test yeşil**,
-**sıfır derleyici uyarısı**.
+**Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **iki zincirde** çalışıyor
+(BİM, Migros); Metro bilinçli olarak ertelendi, **A101 ölçüm bekliyor**.
+Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu,
+**375 test yeşil**, **sıfır derleyici uyarısı**.
+
+Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
+**41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
 > Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -23,11 +26,29 @@ Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda k
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **E19** — tasarım revizyonu | Faz E'nin son adımı; ölen ekranların dokümanları hâlâ duruyor | tasarım denetimi |
-| 2 | **F11.19 + F11.29** — cihazda göz kontrolü | aynı üründen iki gözlem çekilince ikisi birden bakılabilir | E16 |
-| 3 | **E19** — tasarım revizyonu | ölen ekranların dokümanları hâlâ duruyor | E18 |
+| 1 | **A101 grameri** | Zincir önceliğinde 4. sıra; kullanıcı orada fiyatı hep elle yazıyor. 19 fotoğraf var, etiket yapısı BİM sınıfı görünüyor | **kullanıcının uygulamadan çekmesi** — ölçüm dökümü hazır |
+| 2 | **F5.7 — ambalaj boyu** | `PriceHint.PackChanged`'i besleyip shrinkflation'ı yakalar; bu olmadan 1 L → 900 ml "fiyat sabit" görünüyor | — |
+| 3 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
 
-*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ — yedisi de kapandı.*
+*E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ · E19 ✅ — Faz E kapandı.*
+
+### A101 ölçümü nasıl yapılır
+
+Gramer **fotoğraftan yazılamaz** — kurallar metnin değil GEOMETRİSİNİN üstünde
+duruyor (`docs/18`: E14'ün kuralları 27 BİM etiketinden ölçüldü, 53 Metro/Migros
+etiketi onların BİM'e özel olduğunu gösterdi).
+
+`TagOcrDump.kt` bunu çözüyor: **işaret dosyası varsa** her çekimde ML Kit'in ham
+çıktısını `TagFixtures` biçiminde diske yazıyor.
+
+```
+adb shell run-as com.neydi.app mkdir -p files/tags-dump
+adb shell "run-as com.neydi.app sh -c 'echo x > files/tags-dump/ENABLE'"
+```
+
+Kullanıcı normal çekim yapar; dökümler `files/tags-dump/*.kt.txt` olarak birikir
+ve doğrudan `TagFixtures`'a yapıştırılır. **Ölçüm bitince işaret dosyası silinir**
+— bu bir teşhis, ürün özelliği değil.
 
 ## Zincir önceliği *(kullanıcı verdi, 18 Ağustos)*
 
@@ -356,12 +377,18 @@ sayı olsaydı aynı gezi listede tutarlı, başlıkta tutarsız görünürdü. 
 mevcut 12 gözlem hiçbir geziye bağlı değil (etiketler geziden bağımsız
 çekildi, pivot kararı 3).
 
-### ▸ E19 — Tasarım revizyonu
+### ▸ E19 — Tasarım revizyonu ✅
 
 `10-tasarima-pivot.md`'nin cevabıyla karar defteri güncellenir, ölen ekranlar
 silinir.
 
 **Bitti sayılır:** hiçbir tasarım dokümanı var olmayan bir ekranı anlatmıyor.
+
+**Nasıl kapandı:** tasarım projesi yedinci ve dokuzuncu turlarda baştan üretildi;
+dokuz `.dc.html` dosyasının hepsi repoda güncel (21 Ağustos). Fiş dönemine ait
+her şey `ARSIV-fis-donemi.md`'de dondurulmuş ve oradan geri taşınmıyor. Karar
+defteri 56 geçerli karar taşıyor ve **karar 63 kendi yazarı tarafından geri
+alındı** — defter artık yalnızca bugün geçerli olanı anlatıyor.
 
 ---
 

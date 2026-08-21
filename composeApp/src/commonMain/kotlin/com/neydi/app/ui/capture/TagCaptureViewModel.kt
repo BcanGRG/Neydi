@@ -13,6 +13,7 @@ import com.neydi.app.data.db.writeTagObservation
 import com.neydi.app.data.image.deleteFileAt
 import com.neydi.app.data.image.downscaleForOcr
 import com.neydi.app.data.ocr.TagFields
+import com.neydi.app.data.ocr.dumpTagOcr
 import com.neydi.app.data.ocr.readTag
 import com.neydi.app.data.ocr.readTagFields
 import com.neydi.app.data.formatMinor
@@ -388,6 +389,17 @@ private suspend fun readFieldsFromPhoto(photoPath: String, chain: String?): TagF
     val ok = downscaleForOcr(bytes, staged)
     val ocr = if (ok) readTag(staged) else readTag(photoPath)
     deleteFileAt(staged)
+    // OLCUM DOKUMU - yalnizca isaret dosyasi varsa (bkz. `dumpTagOcr`).
+    // Yeni bir zincirin grameri fotograftan degil OCR GEOMETRISINDEN yaziliyor;
+    // bu, o geometriyi kullanicinin normal cekimi sirasinda yakalamanin yolu.
+    // DOKUM KLASORU AYRI: `tags/` yetim supurmesine takiliyor
+    // (`deleteFilesIn`, ekran acilinca oradaki HER SEYI siliyor) ve o supurme
+    // hem dokumu hem isaret dosyasini goturur.
+    dumpTagOcr(
+        ocr = ocr,
+        dirPath = photoPath.substringBeforeLast('/') + "-dump",
+        name = photoPath.substringAfterLast('/'),
+    )
     return readTagFields(ocr, chain)
 }
 
