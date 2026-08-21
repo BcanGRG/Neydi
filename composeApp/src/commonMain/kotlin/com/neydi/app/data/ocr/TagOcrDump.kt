@@ -1,5 +1,8 @@
 package com.neydi.app.data.ocr
 
+import com.neydi.app.data.image.deleteFileAt
+import com.neydi.app.data.image.downscaleForOcr
+import com.neydi.app.data.image.listFilesIn
 import com.neydi.app.data.image.writeBytesTo
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readBytes
@@ -66,4 +69,46 @@ private fun renderFixture(ocr: TagOcr, name: String): String = buildString {
     append(", sourceHeight = ").append(ocr.sourceHeight)
     append(", exifOrientation = ").append(ocr.exifOrientation).append(",\n")
     append("        ),\n")
+}
+
+/**
+ * Klasordeki HAZIR fotograflari okuyup dokumlerini yazar.
+ *
+ * ## Neden gerekti
+ *
+ * Kullanici A101'de on dokuz etiket cekmisti - ama telefonun kendi
+ * kamerasiyla, cunku o sirada uygulamanin urun alani her karede yanlis bir ad
+ * gosteriyordu. "Fotograflar ise yaramaz" demistim; DOGRUSU su: fotografa
+ * BAKARAK gramer yazilamaz, ama OCR o fotograflarin uzerinde kosturulabilirse
+ * olcum aynen elde edilir. Ikinci bir market turu gerekmiyor.
+ *
+ * Kural degismiyor - gramer hala OLCULMUS geometriden yaziliyor. Degisen tek
+ * sey geometrinin nereden geldigi: canli cekim yerine diskteki bir kare.
+ *
+ * ## Ayni kapi, ayni sebep
+ *
+ * Isaret dosyasi olmadan hicbir sey yapmiyor ([dumpTagOcr] ile ayni gerekce).
+ * Girdi klasoru bir kez okunuyor ve okunan kare SILINMIYOR: olcumu tekrar
+ * kosturmak - kural degistiginde - ayni girdiyi gerektiriyor.
+ *
+ * @param stage kucultulmus kopyanin yazilacagi gecici yol; cagiran veriyor
+ *   cunku `readTag` DIK bir kare bekliyor ve EXIF'i piksele isleyen adim
+ *   [downscaleForOcr] (bkz. `readFieldsFromPhoto`).
+ */
+internal suspend fun dumpImportedPhotos(dirPath: String): Int {
+    if (!dumpEnabled(dirPath)) return 0
+    val inbox = "$dirPath/in"
+    var written = 0
+    listFilesIn(inbox).filter { it.endsWith(".jpg", ignoreCase = true) }.forEach { path ->
+        val name = path.substringAfterLast('/')
+        val staged = "$dirPath/$name.ocr.jpg"
+        runCatching {
+            val bytes = PlatformFile(path).readBytes()
+            val ok = downscaleForOcr(bytes, staged)
+            val ocr = if (ok) readTag(staged) else readTag(path)
+            deleteFileAt(staged)
+            if (writeBytesTo("$dirPath/$name.kt.txt", renderFixture(ocr, name).encodeToByteArray())) written++
+        }
+    }
+    return written
 }

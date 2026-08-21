@@ -12,14 +12,17 @@ import com.neydi.app.data.store.chainKey
  * sayi buluyor ama YANLIS sayiyi (`docs/18-zincir-karsilastirmasi.md`). Uc
  * duzenin de birbirine benzemeyen uc kurali var:
  *
- * | | BIM | Metro | Migros |
- * |---|---|---|---|
- * | Kurus | ustsimge, ayri parca (`50t`) | `TL` liraya yapisik (`79,TL` + `90`) | VIRGULLU parca (`,95`) |
- * | Gramaj | KENDI SATIRI, ad blogunu bitirir | ad satirinin ICINDE | ad satirinin ICINDE |
- * | Ekstra | - | cok-al etiketinde IKI gecerli fiyat | urunu kilo fiyatli manav etiketi |
+ * | | BIM | Metro | Migros | A101 |
+ * |---|---|---|---|---|
+ * | Kurus | ustsimge, ayri parca (`50t`) | `TL` liraya yapisik (`79,TL` + `90`) | VIRGULLU parca (`,95`) | BES AYRI SEKIL, cogu yapisik (`6450`) |
+ * | Gramaj | KENDI SATIRI, ad blogunu bitirir | ad satirinin ICINDE | ad satirinin ICINDE | KENDI SATIRI (BIM gibi) |
+ * | Ekstra | - | cok-al etiketinde IKI gecerli fiyat | urunu kilo fiyatli manav etiketi | kurus `00` ise HIC OKUNMUYOR |
  *
  * Bunlari tek kurala sigdirmak her birinde biraz yanlis olmak demekti. Ayri
  * gramer, her zincirin kendi gercegini kendi yerinde tutuyor.
+ *
+ * A101 bu tabloya sonradan girdi ve BIM'e en yakin duzen o - ad ile gramaj
+ * okuyuculari paylasiliyor. Fiyat paylasilamadi: bkz. [A101Grammar].
  *
  * ## Gramer YOKSA hicbir sey okunmuyor
  *
@@ -44,6 +47,7 @@ internal interface TagGrammar {
  */
 internal fun grammarFor(chain: String?): TagGrammar? = when (chain) {
     null -> null
+    chainKey("A101") -> A101Grammar
     chainKey("BİM") -> BimGrammar
     chainKey("Migros") -> MigrosGrammar
     else -> null
@@ -52,13 +56,15 @@ internal fun grammarFor(chain: String?): TagGrammar? = when (chain) {
 /**
  * Grameri COZULMUS zincirlerin GORUNEN adlari.
  *
- * Karar 49'un cumlesi bu listeden kuruluyor - *"BİM ve Migros etiketlerini
- * okuyabiliyoruz"* - ve elle yazilmiyor. Sebep dogrudan: ucuncu gramer
- * eklendiginde elle yazilmis bir cumle SESSIZCE YALAN olur, kullaniciya
- * okuyabildigimiz bir marketi okuyamiyoruz diye soyler. Liste ile
- * [grammarFor] birlikte degismek zorunda ve testte kilitli.
+ * Karar 49'un cumlesi bu listeden kuruluyor - *"A101, BİM ve Migros
+ * etiketlerini okuyabiliyoruz"* - ve elle yazilmiyor. Sebep dogrudan: ucuncu
+ * gramer eklendiginde elle yazilmis bir cumle SESSIZCE YALAN olur, kullaniciya
+ * okuyabildigimiz bir marketi okuyamiyoruz diye soyler. Tam da bu oldu: A101
+ * grameri yazildiginda burasi disinda hicbir yere dokunulmadi ve cumle
+ * kendiliginden dogru kaldi. Liste ile [grammarFor] birlikte degismek zorunda
+ * ve testte kilitli.
  */
-internal val SUPPORTED_CHAINS = listOf("BİM", "Migros")
+internal val SUPPORTED_CHAINS = listOf("A101", "BİM", "Migros")
 
 /**
  * BIM grameri - E12'de 27 gercek etiketten olculdu.

@@ -148,6 +148,14 @@ internal fun ConfirmCard.unsupportedChainMessage(
     supported: List<String> = SUPPORTED_CHAINS,
 ): String? {
     if (reading || skipped != TagSkip.UNSUPPORTED_CHAIN) return null
-    val chains = supported.joinToString(" ve ")
+    if (supported.isEmpty()) return null
+    // SON ZINCIR "ve" ILE, ONCEKILER VIRGULLE. Onceki hali hepsini " ve " ile
+    // bagliyordu; iki zincirle dogru gorunuyordu ve UCUNCUSU eklendigi gun
+    // "A101 ve BİM ve Migros" cikti. Turkce liste baglaci boyle kurulmaz.
+    val chains = if (supported.size == 1) {
+        supported.first()
+    } else {
+        supported.dropLast(1).joinToString(", ") + " ve " + supported.last()
+    }
     return "$chains etiketlerini okuyabiliyoruz; burada fiyatı sen yaz."
 }
