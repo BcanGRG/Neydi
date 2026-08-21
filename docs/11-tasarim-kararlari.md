@@ -352,3 +352,60 @@ bırakıyor.
   değerlerle dönmesini istiyor.
 - **Karar 55'in ikinci yarısı** — yakalanan karenin küçülerek kırpıma uçması
   (260 ms). Flaş ve haptik var, uçuş yok.
+
+---
+
+## Dokuzuncu tur — kararlar 64, 66–69 · **karar 63 defterden düştü**
+
+Tasarım projesi 19 Ağustos'ta `docs/22` ve `docs/23`'teki soruların hepsini
+cevapladı. Defter artık **elli altı geçerli karar** taşıyor.
+
+### Karar 63 geri alındı — tasarımın kendi cümlesiyle
+
+> *"63'ün 'aynı işi yapan ikinci yol' teşhisi yanlıştı; **bunu biz koyduk, biz
+> düzeltiyoruz**."*
+
+Karar 63 kökteki metin alanını butona çevirmişti; PR #77'de kodladım ve
+kullanıcı cihazda bildirdi: yazarak ekleme 1 dokunuştan 3'e çıkmıştı, on
+kalemlik bir turda otuz fazladan dokunuş. `docs/22` bunu ölçümle sordu, karar
+64 kararı düşürdü.
+
+| # | Karar | Kod |
+|---|---|---|
+| **64** | Ekleme iki yola ayrıldı: kökte yazma, sheet'te keşif | ✅ |
+| **66** | Ekle kataloğunda fiyat çizilmez — alt satır her zaman birim | ✅ zaten öyleydi |
+| **67** | Trend manşetinin üç kuralı (aralık veriden, kuruşsuz tam lira, ambalajda yüzde yok) | ✅ |
+| **68** | Geçmiş grafiği **tutar** ölçer; tutarsız gezi kesik konturlu kısa çubuk | ✅ |
+| **69** | Alışveriş özeti listenin **içinde** kart, sheet değil | ✅ |
+
+### Karar 64'ün iki yolu
+
+**Yol 1 — kökte yazma.** Hedef dokunuşla *yerinde* alana dönüşüyor (yeşil 2dp
+odak çerçevesi), klavye açılıyor, Enter ekliyor ve **alan açık kalıyor** (seri
+ekleme). Klavyenin üstünde tek sıra öneri çipi; girdi boşken motorun
+önerileri, yazarken otomatik tamamlama. Klavye kuralı bozulmuyor — klavyeyi
+ekran değil kullanıcının dokunuşu açıyor.
+
+**Yol 2 — sheet'te keşif.** Reyon kutucukları **öldü**; sheet doğrudan ürünle
+açılıyor. Üstte arama, altında yatay reyon *filtre* çipleri, sonra iki bölüm:
+"En sık aldıkların" iki sütunlu kutucuk ızgarası, "Nadir aldıkların" sarılan
+çip. Sıralama `product_stats.purchaseCount`tan — kataloğun genel yaygınlığından
+değil, **bu hanenin geçmişinden**. Izgara kesimi altı kutucuk: maketin kendi
+sayısı, uydurulmuş bir eşik değil.
+
+**Alt kaçış iki yolu bağlıyor:** "Kendim yazayım" sheet'i kapatıp kökteki alanı
+odaklıyor.
+
+### İçe aktarımda kalan boşluk
+
+Tasarım projesinden **dokuz dosyanın altısı** tazelendi. Üçü — Boş Durumlar,
+İkonografi, Compose Spec — araç tarafından satır içi döndüğü için betikle
+yazılamadı; repodaki kopyaları **17 Ağustos tarihli**. Okundular ve maddi
+değişiklikleri buraya işlendi, ama dosyalar bayat:
+
+- **İkonografi** artık **19 ikon** sayıyor (karar 64 `grid_view` ve `keyboard`
+  ekledi) ve etiketsiz ikon istisnası **sekize** çıktı (katalog eklendi).
+  Repodaki kopya hâlâ 17 ve altı diyor.
+- **Compose Spec** karar 64 ve 67'yi denetim listesine işlemiş.
+
+Bu üçü elle yeniden indirilmeli.

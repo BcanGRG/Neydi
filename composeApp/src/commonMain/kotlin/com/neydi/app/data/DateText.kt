@@ -121,6 +121,69 @@ fun formatDayMonth(epochMillis: Long, zone: TimeZone = TimeZone.currentSystemDef
     return "${t.day} ${MONTH_NAMES[t.month.ordinal]}"
 }
 
+/**
+ * Epoch millis -> **"6 Haziran'dan"**: bir ARALIGIN BASLANGICI (karar 67).
+ *
+ * Trend manseti araligini VERIDEN aliyor - *"6 Haziran'dan beri %28 arttı"*,
+ * yani kullanilan ilk gozlemin tarihi. Sabit bir *"son 3 ayda"* metni, gozlem
+ * penceresi ne olursa olsun ayni cumleyi yazardi ve manset gozlenmemis bir
+ * aralik iddia ederdi; DateText haftada bittigi icin o metnin dayanagi da yoktu.
+ *
+ * AYRILMA EKI ON IKI ADLIK TABLODAN, unlu uyumu ISLETILEREK degil: ay adlari
+ * kapali bir kume, tablo bakarak dogrulanabilir. Kural motoru ise "Ağustos'tan"
+ * ile "Eylül'den" arasindaki sessiz benzesmesini (d/t) bir gun yanlis kurar ve
+ * kimse fark etmez. Ek KESME ISARETIYLE yaziliyor cunku ay adi ozel ad.
+ *
+ * YIL YALNIZCA FARKLI YILSA - [formatRelativeDay]'in kurali, ayni gerekceyle:
+ * ayni yil icinde yili tekrarlamak gurultu, farkli yilda atlamak yaniltici.
+ * Gecmis dokuz gozlemle sinirli ama dokuz gozlem rahatca yil sinirini asar ve
+ * "6 Haziran'dan beri" on dort aylik bir araligi iki ay gibi okuturdu.
+ */
+@OptIn(ExperimentalTime::class)
+fun formatDayMonthAblative(
+    epochMillis: Long,
+    nowMillis: Long,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): String {
+    val t = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(zone)
+    val simdi = Instant.fromEpochMilliseconds(nowMillis).toLocalDateTime(zone)
+    val month = MONTH_NAMES[t.month.ordinal]
+    return if (t.year == simdi.year) "${t.day} $month'${MONTH_ABLATIVE[t.month.ordinal]}"
+    else "${t.day} $month ${t.year}'${yearAblative(t.year)}"
+}
+
+/**
+ * Ay adlarinin ayrilma eki, [MONTH_NAMES] ile AYNI SIRADA.
+ *
+ * Ocak'tan, Subat'tan, Mart'tan, Nisan'dan, Mayis'tan, Haziran'dan,
+ * Temmuz'dan, Agustos'tan, Eylul'den, Ekim'den, Kasim'dan, Aralik'tan.
+ */
+private val MONTH_ABLATIVE = listOf(
+    "tan", "tan", "tan", "dan", "tan", "dan",
+    "dan", "tan", "den", "den", "dan", "tan",
+)
+
+/**
+ * Yilin ayrilma eki: 2025 -> `2025'ten`, 2026 -> `2026'dan`.
+ *
+ * Ek yilin OKUNUSUNA bakiyor, rakamina degil: "iki bin yirmi bes" sonunda
+ * *bes* var, o yuzden 'ten. Son hane sifir degilse eki o hane belirliyor;
+ * sifirsa onlar basamaginin adi ("yirmi" -> 'den, "otuz" -> 'dan). Onlar da
+ * sifirsa okunus "yuz"/"bin" ile bitiyor - [TENS_ABLATIVE]'in sifirinci girdisi.
+ */
+private fun yearAblative(year: Int): String {
+    val ones = year % 10
+    return if (ones != 0) ONES_ABLATIVE[ones] else TENS_ABLATIVE[(year / 10) % 10]
+}
+
+/** bir, iki, uc, dort, bes, alti, yedi, sekiz, dokuz - sifirinci girdi kullanilmiyor. */
+private val ONES_ABLATIVE =
+    listOf("", "den", "den", "ten", "ten", "ten", "dan", "den", "den", "dan")
+
+/** yuz/bin, on, yirmi, otuz, kirk, elli, altmis, yetmis, seksen, doksan. */
+private val TENS_ABLATIVE =
+    listOf("den", "dan", "den", "dan", "tan", "den", "tan", "ten", "den", "dan")
+
 /** "az önce" esigi, saat. */
 private const val RECENT_HOURS = 6
 

@@ -22,8 +22,8 @@
 <div style="padding:56px 56px 96px;display:flex;flex-direction:column;gap:40px;color:#221A14">
 
   <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
-    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">18 Ağustos 2026 · karar defteri</div>
-    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Elli iki geçerli karar</div>
+    <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">19 Ağustos 2026 · karar defteri</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Elli altı geçerli karar</div>
     <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">İlk turda kodun ölçtüğü yirmi altı yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var. Defter yalnızca bugün geçerli olan kararları taşıyor: ürün raf etiketi okuyor, önceki döneme ait kararlar tamamen çıkarıldı.</div>
     <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Gezinme Sozlesmesi.dc.html">Gezinme sözleşmesi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
   </div>
@@ -32,7 +32,7 @@
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Karar defteri</div>
-      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Elli iki karar, 63'e kadar numaralı. Her biri bugünkü üründe geçerli.</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Elli altı karar, 69'a kadar numaralı. Her biri bugünkü üründe geçerli.</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:20px;max-width:1400px">
@@ -71,7 +71,7 @@
   <sc-if value="{{ showOpen }}" hint-placeholder-val="{{ true }}">
     <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:32px;padding:32px;display:flex;flex-direction:column;gap:12px;max-width:1400px">
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Defterin bugünkü hâli</div>
-      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde elli iki karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde elli altı karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
     </div>
   </sc-if>
 </div>
@@ -111,7 +111,7 @@ class Component extends DCLogic {
           no: "3",
           title: "Toolbar'ın undo ve filter_list'i",
           rule: "Alışveriş modu toolbar'ında dört hedef: add, undo, filter_list, \"Bitir (0/18)\".",
-          decision: "Toolbar iki hedefe indi: add (Ekle sheet'i) ve Bitir (n/n). undo ile filter_list kaldırıldı.",
+          decision: "Toolbar iki hedefe indi: add (keşif sheet'i) ve Bitir (n/n). undo ile filter_list kaldırıldı.",
           why: "Geri almayı tasarım zaten \"Alındı\" bölümüne veriyor ve orada tek dokunuş; ikinci bir geri alma yolu ikinci bir zihinsel model demekti. filter_list'in tanımlı bir işi yok: liste reyona göre gruplu, başlık kaç kaldığını yazıyor. Hiçbir şey yapmayan buton çizmek, \"boş bölüm çizilmez\" ilkesinin aynı sınıfı. İki hedef kalınca Bitir de genişledi.",
           where: "Ekran 1 · Tasarım sistemi",
           href: "Neydi - Tasarim Sistemi.dc.html"
@@ -172,11 +172,11 @@ class Component extends DCLogic {
         },
         {
           no: "12",
-          title: "Ekle sheet'indeki işaret",
+          title: "Keşif sheet'indeki işaret",
           rule: "Tasarım eklenmiş ürünleri işaretli ve pasif gösteriyor; \"eklenmiş\"in tanımı yazılmamış.",
           decision: "İşaret \"bu listede var\" demek — bu oturumda eklendi demek değil. İşaretli çip pasif kalıyor.",
           why: "Oturumda eklenen ürün zaten listede, yani iki tanım çakışmıyor; oturumun kendi sayacı da başlıkta duruyor (\"3 ürün eklendi\"). Listenin durumunu göstermek sheet'i kapatıp açmaya karşı dayanıklı: aynı ürün ikinci kez işaretsiz görünmüyor. Pasif olması da aynı şeyi söylüyor — aynı satırı iki kez eklemek bir iş değil.",
-          where: "Ekran 2 · Ekle sheet'i",
+          where: "Ekran 2 · keşif sheet'i",
           href: "Neydi - Ekranlar 2-4.dc.html"
         },
         {
@@ -549,13 +549,49 @@ class Component extends DCLogic {
           href: "Neydi - Gezinme Sozlesmesi.dc.html"
         },
         {
-          no: "63",
-          title: "Alt giriş bir buton",
-          rule: "Matris hedef, Tasarım sistemi yazılabilir alan çiziyordu — biri kodlanınca diğeri yanlış olacaktı.",
-          decision: "Buton: dokunuş Ekle sheet'ini açar, kök ekranda metin alanı yok. Odaklı hâl ve otomatik tamamlama Ekle sheet'inin arama alanına aittir; bileşen yeniden etiketlendi.",
-          why: "Kökte dördüncü bir metin alanı, Ekle sheet'iyle aynı işi yapan ikinci bir yol demekti — gereksiz karmaşa. \"Hiçbir ekran açılırken klavye açmaz\" da böyle en temiz korunuyor.",
-          where: "Ekran 1",
-          href: "Neydi - Tasarim Sistemi.dc.html"
+          no: "64",
+          title: "Ekleme akışı yeniden: iki iş, iki yol",
+          rule: "Sekizinci turun iki şikayeti aynı yüzeye bakıyordu: karar 63 yazarak eklemeyi 1 dokunuştan 3'e çıkarmıştı (on kalemde otuz dokunuş) ve reyon grid'i kırpık, iki harfli, bilgi taşımayan bir gezinmeydi (TE iki reyon; '18 ürün' sayacının veri karşılığı da işi de yoktu).",
+          decision: "Karar 63 düştü; ekleme iki yola ayrıldı. (1) Yazma yolu kökte: hedef dokunuşla yerinde alana dönüşür, klavye açılır, Enter ekler, alan açık kalır (seri ekleme), liste görünür; klavyenin üstünde tek sıra öneri çipi. (2) Keşif yolu sheet'te: tam açık, üstte arama, altında doğrudan ürün listesi (en sık alınanlar), reyonlar yatay filtre çipi; kutucuklar ve reyon başına sayacak öldü. Alt kaçış \"Kendim yazayım\" sheet'i kapatıp kök alanı açar — iki yol birbirine bağlı.",
+          why: "İki yol aynı işi yapmıyor: biri bildiğini yazmak, öteki ne alacağını hatırlamak — 63'ün 'aynı işi yapan ikinci yol' teşhisi yanlıştı; bunu biz koyduk, biz düzeltiyoruz. Klavye kuralı bozulmaz: klavyeyi ekran değil kullanıcının Ekle dokunuşu açar. Keşif yüzeyinin işi ürün göstermek — eski akışta ilk iki dokunuşta hiç ürün adı görünmüyordu; 'liste arkada görünsün' hiçbir tasarım dosyasının kuralı değildi, tam açık meşru.",
+          where: "Ekran 1 + Ekran 2 · Ekle akışı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "66",
+          title: "Ekle kataloğunda fiyat çizilmez",
+          rule: "Maket her hücreye fiyat çiziyordu; katalog tohumunun fiyat alanı yok ve hanenin hiç almadığı üründe gözlem sıfır.",
+          decision: "Hücrenin alt satırı her zaman birim ('kg', 'adet', 'lt') — dokuzuncu turun 2. sorusunda (b). Fiyat bu yüzeyde hiç çizilmez; 2b düşer.",
+          why: "Grid ritmi hücreden hücreye değişmez ve yüzeye market kararı sızmaz: ekleme 'ne alacağım' işi, 'nereden alacağım' değil. Yarısı dolu fiyat kolonu 'eksik veri' değil 'bozuk uygulama' okunur.",
+          where: "Ekran 2 · Ekle",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "67",
+          title: "Trend manşetinin üç kuralı",
+          rule: "'Son 3 ayda %28 arttı' üç şeye dayanıyordu ve üçü de yoktu: ay biçimleyicisi, kuruşsuz tam lira, ambalaj değişiminde yüzde.",
+          decision: "(1) Aralık veriden: '6 Haziran'dan beri' — kullanılan ilk gözlemin tarihi; sabit '3 ay' iddiası yok. (2) Kuruş sıfırsa yazılmaz: '32 TL → 41 TL' — TalkBack kuralının görsel ikizi; tilde yalnız tahminlere. (3) Ambalaj değiştiyse yüzde iddia edilmez; manşet ambalaj cümlesine döner: 'Ambalaj küçüldü: 5 L → 4 L'. Eşik: 3 gözlem — sparkline'la aynı; altında tek gözlem manşeti.",
+          why: "Manşet gözlenmiş veriden kurulan tek cümle; uydurma aralık ya da tahmin işareti onu yalanlar. Eşik tablosuna girdi.",
+          where: "Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "68",
+          title: "Geçmiş grafiği tutar ölçer",
+          rule: "Çubuğun neyi ölçtüğü ve tutarsız gezinin nasıl çizileceği yazılı değildi; sıfır çubuk 'bedava alışveriş', atlanan çubuk bozuk aralık demekti.",
+          decision: "Çubuk = gezi tutarı (uygulamanın konusu para; kalem sayısı gezi satırında zaten yazılı). Tutarı hesaplanamayan gezi: yeri korunur, dolgusuz kesik konturlu sabit kısa çubuk — 'gezi var, tutarı bilinmiyor'. Eşik: 3 tutarlı geziden az ise grafik hiç çizilmez.",
+          why: "Tek çubuklu grafik grafik değildir — defterin kendi mantığı; kesik kontur karar 50'nin jestiyle aynı dil: eksik olan şey biçimle söylenir, sayıyla değil.",
+          where: "Ekran 6 · Geçmiş",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "69",
+          title: "Alışveriş özeti listenin içinde",
+          rule: "Maket satır içi kart, kod karartmalı ModalBottomSheet; denetimin tek yapısal maddesi.",
+          decision: "Kart onaylandı: alışveriş bitince görülen şey listenin son hâli olmalı; özet ona iliştirilmiş bir yorum, ekranı ele geçiren bir yüzey değil. Kapatınca kalıcı gider; aynı bilgi Geçmiş gezi satırında yaşar — 'N ürün + tutar' oraya girer (maket zaten öyle). Tutar hesaplanamıyorsa kart hiç açılmaz (karar 45, değişmedi).",
+          why: "Sheet ilişkiyi tersine çeviriyordu: yorum ekranı kapatıyor, asıl şey (liste) arkada kalıyordu. Kalıcı kapanış meşru çünkü kart bir bildirim değil, tekrar üretilebilir bir özet — kaynağı Geçmiş'te.",
+          where: "Ekran 1 · özet kartı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
         }
       ]
     };

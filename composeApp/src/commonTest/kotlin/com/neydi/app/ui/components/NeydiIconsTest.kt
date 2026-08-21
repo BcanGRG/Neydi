@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * Elle tasinan ikon setinin kilidi (tasarim karari 32-34).
  *
- * BU TESTIN ISIRDIGI YER, 15 path DIZESININ ELLE YAZILMIS OLMASI. Bir ikon
+ * BU TESTIN ISIRDIGI YER, 19 path DIZESININ ELLE YAZILMIS OLMASI. Bir ikon
  * paketinden `Icons.Rounded.Add` cagirirken yanlis yazmak derleme hatasi verir;
  * burada ayni hata SESSIZ. Kirpilmis bir `d` dizesi bos bir vektor uretir,
  * kopyala-yapistir kazasi iki ikona ayni cizimi verir - ikisi de derlenir,
@@ -23,7 +23,9 @@ import kotlin.test.assertTrue
 class NeydiIconsTest {
 
     /**
-     * Envanter karar 34 ile 17'ye sabitlendi. Liste burada ELLE yaziliyor:
+     * Envanter karar 34 ile 17'ye sabitlenmisti; karar 64 ekleme akisini iki
+     * yola ayirinca `grid_view` ile `keyboard` eklendi ve sayi 19 oldu.
+     * Liste burada ELLE yaziliyor:
      * yansima commonMain'de yok, ve olsaydi bile testin `NeydiIcons`ten
      * bagimsiz bir envanter iddiasi olmasi daha iyi - ikisi ayrisirsa test
      * kirilsin diye.
@@ -46,11 +48,13 @@ class NeydiIconsTest {
         "content_paste" to NeydiIcons.ContentPaste,
         "arrow_upward" to NeydiIcons.ArrowUpward,
         "arrow_downward" to NeydiIcons.ArrowDownward,
+        "grid_view" to NeydiIcons.GridView,
+        "keyboard" to NeydiIcons.Keyboard,
     )
 
     @Test
-    fun inventoryIsSeventeen() {
-        assertEquals(17, icons.size, "Karar 34 envanteri 17'ye sabitledi")
+    fun inventoryIsNineteen() {
+        assertEquals(19, icons.size, "Karar 34 envanteri 17'ye sabitledi, karar 64 iki ikon ekledi")
     }
 
     /**
@@ -76,7 +80,7 @@ class NeydiIconsTest {
     /**
      * IKI IKON AYNI CIZIMI TASIMIYOR.
      *
-     * On bes benzer gorunumlu dizeyi elle tasirken en olasi kaza bu: satiri
+     * On dokuz benzer gorunumlu dizeyi elle tasirken en olasi kaza bu: satiri
      * kopyalayip adi degistirmek, path'i degistirmeyi unutmak. Sonuc derlenir
      * ve `chevron_right` yerine `caret-down` cizer.
      */

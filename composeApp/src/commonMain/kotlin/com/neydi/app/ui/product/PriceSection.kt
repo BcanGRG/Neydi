@@ -5,8 +5,12 @@ import com.neydi.app.data.db.ObservationRow
 import com.neydi.app.data.daysBetween
 import com.neydi.app.data.formatAge
 import com.neydi.app.data.formatDayMonth
+import com.neydi.app.data.formatDayMonthAblative
+import com.neydi.app.data.formatHeadlineMinor
 import com.neydi.app.data.formatMinor
 import com.neydi.app.di.now
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * "Nerede ucuz" bolumundeki bir satir (E17).
@@ -65,10 +69,12 @@ data class HistoryRow(
 /**
  * Ekran 5'in fiyat bolumu - gozlemlerden.
  *
- * @param headline sheet'in MANSET CUMLESI - "Son ödediğin: 138,50 TL".
- *   Gozlem yoksa `null` ve sheet urun adini yaziyor. Bolum basligi acikca
- *   *"okunacak sey grafik degil manset cumlesi"* diyor; sheet bugune kadar
- *   yalnizca urun adini yaziyordu, yani ekranin merkezindeki cumle hic yoktu.
+ * @param headline sheet'in MANSET CUMLESI. Uc gozlemden itibaren trend hali
+ *   ("32 TL → 41 TL · 6 Haziran'dan beri %28 arttı"), altinda tek gozlem hali
+ *   ("Son ödediğin: 138,50 TL"). Gozlem yoksa `null` ve sheet urun adini
+ *   yaziyor. Bolum basligi acikca *"okunacak sey grafik degil manset cumlesi"*
+ *   diyor; sheet bugune kadar yalnizca urun adini yaziyordu, yani ekranin
+ *   merkezindeki cumle hic yoktu.
  * @param headlineSub mansetin altindaki kaynak satiri - "A101 · 12 gün önce ·
  *   600 g". Mansetin tek basina soylemedigi seyi soyluyor: o fiyat NEREDE ve
  *   NE ZAMAN gorulmus.
@@ -140,13 +146,13 @@ internal fun List<ObservationRow>.toPriceSection(nowMillis: Long = now()): Price
     }
 
     // MANSET EN SON GOZLEMDEN: liste yeniden eskiye geliyor, yani `first()`
-    // kullanicinin en son odedigi fiyat. Trend cumlesi ("32 TL -> 41 TL · son
-    // 3 ayda %28 arttı") BILEREK YOK - o cumle grafigin aritmetigini (ay
-    // araligi, ambalaj normalizasyonu) gerektiriyor ve grafik henuz yok;
-    // dayanagi olmayan bir yuzde yazmak, bu ekranin kacindigi tek sey.
+    // kullanicinin en son odedigi fiyat. Trend cumlesi (karar 67) uc gozlemden
+    // itibaren onun YERINE geciyor; kuramadigi her durumda tek gozlem manseti
+    // geri geliyor - bir cumle yazamamak, dayanaksiz bir yuzde yazmaktan iyi.
     val newest = first()
     return PriceSection(
-        headline = "Son ödediğin: ${formatMinor(newest.unitPriceMinor)}",
+        headline = trendHeadline(nowMillis)
+            ?: "Son ödediğin: ${formatMinor(newest.unitPriceMinor)}",
         // MARKET BILINMIYORSA SATIRDAN DUSUYOR, "market yok" YAZILMIYOR:
         // gecmis tablosunda o metin bos bir SUTUNU dolduruyor, burada ise
         // cumlenin ortasina girip hata gibi okunurdu.
@@ -165,12 +171,81 @@ internal fun List<ObservationRow>.toPriceSection(nowMillis: Long = now()): Price
                 price = formatMinor(it.unitPriceMinor),
             )
         },
-        sparkline = if (size < MIN_SPARKLINE) {
+        sparkline = if (size < MIN_TREND) {
             emptyList()
         } else {
             map { it.unitPriceMinor.toFloat() }.reversed()
         },
     )
+}
+
+/**
+ * Trend manseti (karar 67): **"32 TL → 41 TL · 6 Haziran'dan beri %28 arttı"**.
+ *
+ * Kuramiyorsa `null` ve manset tek gozlem haline dusuyor. Uc dal, ucu de
+ * kararin uc kurali:
+ *
+ * 1. **Aralik VERIDEN.** Cumlenin tarihi kullanilan ILK gozlemin tarihi -
+ *    liste yeniden eskiye geldigi icin `last()`. Sabit bir *"son 3 ayda"*
+ *    iddiasi, iki haftalik da uc yillik da olsa ayni seyi yazardi.
+ * 2. **Kurus sifirsa yazilmiyor** ([formatHeadlineMinor]). Tilde YOK:
+ *    `formatEstimate` de kurusu dusuruyor ama tahmin isaretiyle, oysa bu iki
+ *    sayi kullanicinin etiketten okudugu kesin fiyatlar.
+ * 3. **Ambalaj degistiyse yuzde IDDIA EDILMIYOR** ve manset ambalaj cumlesine
+ *    donuyor. Kontrol yuzdenin ONUNDE, `PriceHintMapping` ile ayni sirada ve
+ *    ayni sebeple: 5 L -> 4 L ayni fiyata satiliyorsa bu bir dusus degil gizli
+ *    zam, yuzde ise onu dusus diye yazardi.
+ *
+ * Ambalajlardan biri BILINMIYORSA degisim iddia edilmiyor - `null` "ayni degil"
+ * degil, "bilmiyorum" demek; bilinmeyenden zam cikarmak uydurma olurdu.
+ *
+ * YUZDE SIFIRA YUVARLANIYORSA cumle de yok: *"%0 arttı"* okunacak bir sey
+ * soylemiyor ve iki ucu esit fiyat trend degil. Onceki fiyat sifir ya da eksi
+ * ise ayni sekilde - fiyat alani elle duzenlenebiliyor ve `0,00` yazilabiliyor,
+ * yani sifira bolme teorik degil.
+ */
+private fun List<ObservationRow>.trendHeadline(nowMillis: Long): String? {
+    if (size < MIN_TREND) return null
+    val newest = first()
+    val oldest = last()
+
+    val fromPack = packLabel(oldest.packSize, oldest.packUnit)
+    val toPack = packLabel(newest.packSize, newest.packUnit)
+    if (fromPack != null && toPack != null && fromPack != toPack) {
+        return "${packVerb(oldest, newest)}: $fromPack → $toPack"
+    }
+
+    val from = oldest.unitPriceMinor
+    val to = newest.unitPriceMinor
+    if (from <= 0L) return null
+    val percent = abs((to - from).toDouble() / from * 100).roundToInt()
+    if (percent == 0) return null
+
+    // "düştü", ikonografinin asagi ok icin kullandigi sozcuk ("Fiyat düştü");
+    // "arttı" maketin kendi cumlesinden.
+    val direction = if (to > from) "arttı" else "düştü"
+    val since = formatDayMonthAblative(oldest.observedAt, nowMillis)
+    return "${formatHeadlineMinor(from)} → ${formatHeadlineMinor(to)} · " +
+        "$since beri %$percent $direction"
+}
+
+/**
+ * Ambalaj cumlesinin FIILI: "Ambalaj küçüldü" / "büyüdü" / "değişti".
+ *
+ * Kararin ornegi kuculme ("5 L → 4 L") ama tek fiil yazmak, buyuyen ambalajda
+ * dogrudan yalan olurdu - ve 4 L -> 5 L en az oteki kadar sik.
+ *
+ * YON ANCAK AYNI BIRIMDE OKUNUR: "900 g → 1 kg"da sayilar 900 ile 1, yani
+ * kiyaslanan sey sayi degil birim; orada yonsuz "değişti" tek dogru cumle.
+ * Birim metinleri HARFI HARFINE kiyaslaniyor: locale'siz buyutme/kucultme
+ * Turkce'de yasak (noktali ve noktasiz i birbirine donusur) ve zaten farkli
+ * yazilan bir birim gercekten farkli birim olabilir.
+ */
+private fun packVerb(from: ObservationRow, to: ObservationRow): String {
+    val before = from.packSize
+    val after = to.packSize
+    if (before == null || after == null || from.packUnit != to.packUnit) return "Ambalaj değişti"
+    return if (after < before) "Ambalaj küçüldü" else "Ambalaj büyüdü"
 }
 
 /** "4 L" / "900 gr"; ikisinden biri bilinmiyorsa null. */
@@ -183,8 +258,16 @@ private fun packLabel(size: Double?, unit: String?): String? {
 /** Bolumun cizilmesi icin gereken en az SATIR - market+marka cifti (karar 58). */
 private const val MIN_ROWS = 2
 
-/** Sparkline'in cizilmesi icin gereken en az gozlem (tasarim). */
-private const val MIN_SPARKLINE = 3
+/**
+ * Sparkline ile trend mansetinin ORTAK esigi: uc gozlem.
+ *
+ * Karar 67 esigi acikca sparkline'a bagliyor ve tek sabit olmasi bunun
+ * kendisi: iki ayri sayi olsaydi ayni urunde grafik cizilirken manset
+ * cizilmeyebilirdi - ayni ekranin iki yarisi farkli konusurdu. Gerekce de
+ * ortak: iki nokta bir dogru parcasi cizer ve olmayan bir trendi varmis gibi
+ * gosterir.
+ */
+private const val MIN_TREND = 3
 
 /** Marketi secilmemis gozlem - kullanici acele etmis. */
 private const val MARKET_YOK = "market yok"

@@ -1,10 +1,15 @@
 package com.neydi.app.ui.history
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.theme.Sizes
@@ -26,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -83,26 +89,12 @@ fun HistoryScreen(
     val extras = LocalNeydiExtraColors.current
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-        // BASLIK BLOGU: geri oku + baslik, altinda hairline. Tasarimda blok tek
-        // parca ve blogun alt kenari ayirici.
+        // BASLIK BLOGU: geri oku + baslik + mini grafik, altinda hairline.
+        // Tasarimda blok tek parca ve blogun alt kenari ayirici.
         //
-        // MINI GRAFIK CIZILMIYOR - bu yorum once "geri oku + baslik + mini
-        // grafik" diyordu, oysa dosyanin hicbir yerinde cubuk cizen bir satir
-        // yok; yorum olmayan bir seyi anlatiyordu. Tasarimin blogu gercekten uc
-        // parcali: ok, baslik ve 96dp yuksekliginde ALTI cubuklu bir grafik
-        // (Ekranlar 5-8, "6 Gecmis" cercevesi; cubuklar primary renginde, ust
-        // koseleri 8dp yuvarlak, aralarinda 10dp).
-        //
-        // NEDEN HALA YOK: grafik yeni bir bilesen ve tasarimin sustugu iki seye
-        // karar vermeyi gerektiriyor - cubugun boyu neyi olcuyor, ve tutari
-        // hesaplanamayan gezi (`estimateMinor == null`) nasil ciziliyor. Ikisini
-        // de uydurmak kullaniciya yalan bir olcek gostermek olurdu. Esigi ise
-        // uydurmak gerekmiyor, yazili: esik tablosu grafigi 3 GEZININ altinda
-        // hic cizdirmiyor, gerekcesi de tasarimda duruyor - "tek cubuklu grafik
-        // grafik degildir".
-        //
-        // Asagidaki 14dp'lik ara tasarimin baslik-grafik boslugu: tek cocukla
-        // etkisiz, grafik gelince yerini buluyor.
+        // Aradaki 14dp tasarimin baslik-grafik boslugu; grafik esigin altinda
+        // hic cizilmedigi icin (bkz. [TripTotalChart]) o durumda blok yine tek
+        // cocuklu kaliyor ve ara etkisiz oluyor.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -130,6 +122,7 @@ fun HistoryScreen(
                     fontWeight = FontWeight.Bold,
                 )
             }
+            TripTotalChart(trips)
         }
         Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
 
@@ -144,6 +137,130 @@ fun HistoryScreen(
             }
         }
     }
+    }
+}
+
+/**
+ * Baslik altindaki mini grafik: son alti gezinin TUTARI (karar 68).
+ *
+ * CUBUK PARAYI OLCUYOR, kalem sayisini degil - uygulamanin konusu para, ve
+ * kalem sayisi gezi satirinda zaten yazili; ayni sayiyi ikinci kez cizmek
+ * grafigi bezemeye cevirirdi.
+ *
+ * TABAN CIZGISI SIFIR: cubugun boyu buyuklugu kodluyor, bu yuzden olcek en
+ * kucuk tutardan degil sifirdan basliyor. Sparkline'in min-max olcegi orada
+ * dogru (o bir egilim cizgisi), burada olsaydi en ucuz gezi "sifir lira"
+ * gorunurdu.
+ *
+ * TalkBack icin sessiz (Canvas'in semantigi yok): her cubugun tarihi ve
+ * tutari hemen asagidaki gezi satirlarinda okunuyor - grafik onlarin gorsel
+ * ozeti, yeni bir bilgi degil.
+ */
+@Composable
+private fun TripTotalChart(trips: List<HistoryTrip>, modifier: Modifier = Modifier) {
+    val bars = remember(trips) { tripTotalBars(trips) }
+    // Esigin altinda bilesen HIC emit etmiyor; Sparkline ile ayni korunma.
+    if (bars.isEmpty()) return
+
+    val fill = MaterialTheme.colorScheme.primary
+    Canvas(modifier.fillMaxWidth().height(ChartHeight)) {
+        val gap = ChartBarGap.toPx()
+        val radius = ChartBarCorner.toPx()
+        // Cubuklar kalan genisligi esit paylasiyor (tasarimda `flex:1`), yani
+        // alti geziden az varsa cubuk kalinlasiyor - grafik dar kalmiyor.
+        val barWidth = (size.width - gap * (bars.size - 1)) / bars.size
+        val outline = UnknownBarOutline.toPx()
+        val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
+
+        bars.forEachIndexed { i, fraction ->
+            val left = i * (barWidth + gap)
+            val right = left + barWidth
+            if (fraction == null) {
+                // TUTARI HESAPLANAMAYAN GEZI YERINI KORUYOR: dolgusuz, kesik
+                // konturlu, SABIT kisa cubuk. Sifir boy cubuk "bedava
+                // alisveris" iddiasi olurdu; cubugu hic cizmemek ise yanindaki
+                // gezileri kaydirip aralari bozardi. Kesik kontur karar 50'nin
+                // jesti - eksik olan sey bicimle soyleniyor, sayiyla degil.
+                //
+                // Kontur cubugun kutusunun ICINE cekiliyor (yarim kalinlik
+                // pay): ilk cubugun sol kenari x=0'da, ortalanmis firca yarisi
+                // tuvalin disinda kalir ve o tek cubuk ince gorunurdu.
+                val half = outline / 2f
+                drawPath(
+                    path = barPath(
+                        left = left + half,
+                        top = size.height - UnknownBarHeight.toPx() + half,
+                        right = right - half,
+                        bottom = size.height,
+                        radius = radius,
+                    ),
+                    color = fill,
+                    style = Stroke(width = outline, pathEffect = dash),
+                )
+            } else {
+                drawPath(
+                    path = barPath(
+                        left = left,
+                        top = size.height * (1f - fraction),
+                        right = right,
+                        bottom = size.height,
+                        radius = radius,
+                    ).apply { close() },
+                    color = fill,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Grafigin cubuklari: en yeni [CHART_BAR_COUNT] gezi, ESKIDEN YENIYE.
+ *
+ * Donen listede `null` = tutari hesaplanamayan gezi (kesik konturlu cubuk);
+ * digerleri penceredeki en buyuk tutara gore 0..1 arasi oran. Esigin altinda
+ * BOS liste donuyor, yani grafik hic cizilmiyor.
+ *
+ * AYRI VE SAF FONKSIYON: esik ile "yeri korunan gezi" kuralinin ikisi de
+ * gozle dogrulanamayacak seyler - bir cubugun eksilmesi ya da esigin bir
+ * kayamasi ekranda "biraz farkli bir grafik" gibi gorunur, halbuki
+ * kullaniciya yanlis bir olcek gosterir. Test bu yuzden burayi tutuyor.
+ */
+internal fun tripTotalBars(trips: List<HistoryTrip>): List<Float?> {
+    // Liste en yeniden eskiye geliyor (observeHistory: `completedAt DESC`);
+    // grafik zaman eksenini soldan saga okuttugu icin pencere ters ceviriliyor.
+    val window = trips.take(CHART_BAR_COUNT).reversed()
+    val totals = window.mapNotNull { it.estimateMinor }
+    // ESIK: UC TUTARLI GEZI (esik tablosu · "Gecmis mini grafigi"). Altinda
+    // grafik hic cizilmiyor - "tek cubuklu grafik grafik degildir". Esik
+    // PENCEREYE bakiyor, tum gecmise degil: alti gezinin besi tutarsizsa
+    // ekranda kalan tek dolu cubuk yine grafik olmazdi.
+    if (totals.size < MIN_TRIPS_WITH_TOTAL) return emptyList()
+    // Tum tutarlar sifirsa hepsi sifir boy cubuk olurdu; o da "bedava
+    // alisveris" iddiasi. Boyle bir olcek yerine grafik hic cizilmiyor.
+    val max = totals.max().takeIf { it > 0L } ?: return emptyList()
+    return window.map { trip -> trip.estimateMinor?.let { it.toFloat() / max.toFloat() } }
+}
+
+/**
+ * Ust koseleri [radius] yuvarlak, TABANI ACIK cubuk yolu.
+ *
+ * drawRoundRect kullanilamiyor cunku o dort koseyi birden yuvarliyor; cubuk
+ * taban cizgisine oturdugu icin alt koseler kare olmak zorunda, yoksa cubuk
+ * zeminden kopmus gorunur. Yol acik biraktigi icin ayni sekil hem `close()`
+ * ile doldurulabiliyor hem de tutari bilinmeyen gezide tabani cizilmeden
+ * konturlanabiliyor.
+ */
+private fun barPath(left: Float, top: Float, right: Float, bottom: Float, radius: Float): Path {
+    // Cok kisa ya da cok dar cubukta yaricap kutuya sigmaz; sigdirilmazsa
+    // yaylar birbirinin uzerine biner ve sekil bozulur.
+    val r = radius.coerceAtMost((right - left) / 2f).coerceAtMost(bottom - top)
+    return Path().apply {
+        moveTo(left, bottom)
+        lineTo(left, top + r)
+        arcTo(Rect(left, top, left + 2 * r, top + 2 * r), 180f, 90f, false)
+        lineTo(right - r, top)
+        arcTo(Rect(right - 2 * r, top, right, top + 2 * r), 270f, 90f, false)
+        lineTo(right, bottom)
     }
 }
 
@@ -217,8 +334,35 @@ private fun TripRow(trip: HistoryTrip) {
     }
 }
 
+// --- Grafik olculeri (Ekranlar 5-8 · "6 Gecmis" cercevesi) -------------------
+// Tema dosyasina girmediler cunku hicbiri paylasilan bir olcu degil: hepsi
+// yalnizca bu grafigi tarif ediyor. Sizes'a konsalardi orasi tek kullanimlik
+// sayilarla dolar ve "paylasilan olcu" anlamini kaybederdi.
+
+/** Grafik blogunun yuksekligi. */
+private val ChartHeight = 96.dp
+
+/** Cubuklar arasi bosluk. */
+private val ChartBarGap = 10.dp
+
+/** Cubugun UST koselerinin yaricapi; alt koseler kare - cubuk tabana oturuyor. */
+private val ChartBarCorner = 8.dp
+
+/** Tutari bilinmeyen gezinin SABIT boyu (96dp'lik blokta 24dp). */
+private val UnknownBarHeight = 24.dp
+
+/** Kesik konturun kalinligi (tasarimda `1.5px dashed`). */
+private val UnknownBarOutline = 1.5.dp
+
+/** Grafigin gosterdigi gezi sayisi - tasarimda alti cubuk. */
+private const val CHART_BAR_COUNT = 6
+
+/** Grafigin cizilmesi icin gereken en az TUTARLI gezi sayisi (esik tablosu). */
+private const val MIN_TRIPS_WITH_TOTAL = 3
+
 // --- Onizlemeler ------------------------------------------------------------
 
+/** Iki gezi: esigin altinda, yani grafiksiz hal. */
 @PreviewLightDark
 @Composable
 private fun HistoryPreview() = NeydiPreview {
@@ -228,6 +372,43 @@ private fun HistoryPreview() = NeydiPreview {
             HistoryTrip(id = "t2", closedAt = 1_754_900_000_000, itemCount = 3),
         ),
         onBack = {},
+    )
+}
+
+/** Grafikli hal: alti cubuk ve aralarinda tutari bilinmeyen bir gezi. */
+@PreviewLightDark
+@Composable
+private fun HistoryWithChartPreview() = NeydiPreview {
+    HistoryScreen(
+        trips = listOf(
+            HistoryTrip(id = "t1", closedAt = 1_755_100_000_000, itemCount = 18, estimateMinor = 88_400),
+            HistoryTrip(id = "t2", closedAt = 1_754_900_000_000, itemCount = 12, estimateMinor = 62_150),
+            HistoryTrip(id = "t3", closedAt = 1_754_700_000_000, itemCount = 21, estimateMinor = 78_900),
+            HistoryTrip(id = "t4", closedAt = 1_754_500_000_000, itemCount = 2),
+            HistoryTrip(id = "t5", closedAt = 1_754_300_000_000, itemCount = 9, estimateMinor = 68_300),
+            HistoryTrip(id = "t6", closedAt = 1_754_100_000_000, itemCount = 7, estimateMinor = 52_000),
+        ),
+        onBack = {},
+    )
+}
+
+/**
+ * Grafik tek basina: dolgulu cubuklarin arasinda tutari bilinmeyen gezinin
+ * kesik konturlu kisa cubugu - ekran onizlemesinde 96dp'lik blok kuculuyor.
+ */
+@PreviewLightDark
+@Composable
+private fun TripTotalChartPreview() = NeydiPreview {
+    TripTotalChart(
+        trips = listOf(
+            HistoryTrip(id = "c1", closedAt = 1_755_100_000_000, estimateMinor = 88_400),
+            HistoryTrip(id = "c2", closedAt = 1_754_900_000_000, estimateMinor = 62_150),
+            HistoryTrip(id = "c3", closedAt = 1_754_700_000_000, estimateMinor = 78_900),
+            HistoryTrip(id = "c4", closedAt = 1_754_500_000_000),
+            HistoryTrip(id = "c5", closedAt = 1_754_300_000_000, estimateMinor = 68_300),
+            HistoryTrip(id = "c6", closedAt = 1_754_100_000_000, estimateMinor = 52_000),
+        ),
+        modifier = Modifier.padding(Spacing.md),
     )
 }
 
