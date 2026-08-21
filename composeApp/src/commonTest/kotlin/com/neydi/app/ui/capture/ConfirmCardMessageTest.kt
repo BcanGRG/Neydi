@@ -43,13 +43,21 @@ class ConfirmCardMessageTest {
     fun `desteklenmeyen zincir cumlesi gramer kaydindan kuruluyor`() {
         val c = card(price = "", skipped = TagSkip.UNSUPPORTED_CHAIN)
         assertEquals(
-            "BİM ve Migros etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.",
+            "A101, BİM ve Migros etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.",
             c.unsupportedChainMessage(),
         )
-        // UCUNCU ZINCIR: cumle sabit yazilmis olsaydi bu satir gecmezdi.
+        // DORDUNCU ZINCIR: cumle sabit yazilmis olsaydi bu satir gecmezdi.
+        // Yer tutucu LISTEDE OLMAYAN bir ad olmali - burada once "A101"
+        // yaziyordu ve A101 grameri gercekten yazilinca ad listeye girdi, yani
+        // test kendi yer tutucusunu kaybetti.
         assertEquals(
-            "BİM ve Migros ve A101 etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.",
-            c.unsupportedChainMessage(SUPPORTED_CHAINS + "A101"),
+            "A101, BİM, Migros ve ŞOK etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.",
+            c.unsupportedChainMessage(SUPPORTED_CHAINS + "ŞOK"),
+        )
+        // TEK ZINCIR: virgulsuz, "ve"siz.
+        assertEquals(
+            "BİM etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.",
+            c.unsupportedChainMessage(listOf("BİM")),
         )
     }
 

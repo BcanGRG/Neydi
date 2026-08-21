@@ -7,10 +7,10 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **iki zincirde** çalışıyor
-(BİM, Migros); Metro bilinçli olarak ertelendi, **A101 ölçüm bekliyor**.
-Fikstür seti **80 gerçek etiket**, üç zincir. Uygulama derleniyor, cihazda kurulu,
-**375 test yeşil**, **sıfır derleyici uyarısı**.
+**Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **üç zincirde** çalışıyor
+(A101, BİM, Migros); Metro bilinçli olarak ertelendi. Fikstür seti **99 gerçek
+etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **389 test yeşil**,
+**sıfır derleyici uyarısı**.
 
 Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
 **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
@@ -26,29 +26,33 @@ Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanl�
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **A101 grameri** | Zincir önceliğinde 4. sıra; kullanıcı orada fiyatı hep elle yazıyor. 19 fotoğraf var, etiket yapısı BİM sınıfı görünüyor | **kullanıcının uygulamadan çekmesi** — ölçüm dökümü hazır |
+| 1 | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi; ölçüm kareleri rehbersiz çekilmişti | A101'de bir çekim |
 | 2 | **F5.7 — ambalaj boyu** | `PriceHint.PackChanged`'i besleyip shrinkflation'ı yakalar; bu olmadan 1 L → 900 ml "fiyat sabit" görünüyor | — |
 | 3 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
 
 *E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ · E19 ✅ — Faz E kapandı.*
 
-### A101 ölçümü nasıl yapılır
+### Yeni bir zincirin grameri nasıl ölçülür
 
-Gramer **fotoğraftan yazılamaz** — kurallar metnin değil GEOMETRİSİNİN üstünde
-duruyor (`docs/18`: E14'ün kuralları 27 BİM etiketinden ölçüldü, 53 Metro/Migros
-etiketi onların BİM'e özel olduğunu gösterdi).
+Gramer **fotoğrafa bakarak yazılamaz** — kurallar metnin değil GEOMETRİSİNİN
+üstünde duruyor (`docs/18`). Ama OCR o fotoğrafların **üstünde koşturulabilir**
+ve ölçüm aynen elde edilir; A101 grameri (`docs/24`) tam olarak böyle yazıldı.
 
-`TagOcrDump.kt` bunu çözüyor: **işaret dosyası varsa** her çekimde ML Kit'in ham
-çıktısını `TagFixtures` biçiminde diske yazıyor.
+`TagOcrDump.kt` iki yol sunuyor, ikisi de **işaret dosyasına** bağlı:
 
-```
+```bash
 adb shell run-as com.neydi.app mkdir -p files/tags-dump
 adb shell "run-as com.neydi.app sh -c 'echo x > files/tags-dump/ENABLE'"
 ```
 
-Kullanıcı normal çekim yapar; dökümler `files/tags-dump/*.kt.txt` olarak birikir
-ve doğrudan `TagFixtures`'a yapıştırılır. **Ölçüm bitince işaret dosyası silinir**
-— bu bir teşhis, ürün özelliği değil.
+- **Canlı çekim** — kullanıcı normal çeker, döküm her karede yazılır.
+- **Hazır fotoğraf** — `files/tags-dump/in/` altına kopyalanan `.jpg`'ler
+  Etiket çek ekranı açılınca aynı ML Kit yolundan geçirilir
+  (`dumpImportedPhotos`). İkinci bir market turu gerekmez.
+
+Dökümler `files/tags-dump/*.kt.txt` olarak birikir ve doğrudan `TagFixtures`'a
+yapıştırılır. **Ölçüm bitince işaret dosyası silinir** — bu bir teşhis, ürün
+özelliği değil.
 
 ## Zincir önceliği *(kullanıcı verdi, 18 Ağustos)*
 
@@ -60,12 +64,12 @@ için gramer **yazılmayacak** (Metro, CarrefourSA, File dahil).
 | 1 | **FullGross** | ❌ | ❌ **yok** | toptancı — Metro sınıfı, en zoru |
 | 2 | **Gimat** | ❌ | ❌ **yok** | toptancı — Metro sınıfı |
 | 3 | **BİM** | ✅ | ✅ 27 | 24/27 fiyat, sıfır yanlış |
-| 4 | **A101** | ❌ | ❌ **yok** | BİM sınıfı olabilir |
+| 4 | **A101** | ✅ | ✅ 19 | 15/19 fiyat, sıfır yanlış (`docs/24`) |
 | 5 | **ŞOK** | ❌ | ❌ **yok** | BİM sınıfı olabilir |
 | 6 | **Tarım Kredi** | ❌ | ❌ **yok** | |
 | 7 | **Migros** | ✅ | ✅ 19 | 16/19 fiyat, sıfır yanlış |
 
-**Yedi zincirin beşi fotoğraf bekliyor.** Görmediğim bir etiketin gramerini
+**Yedi zincirin dördü fotoğraf bekliyor.** Görmediğim bir etiketin gramerini
 yazamam — E14'ün kuralları 27 BİM etiketinden çıkarıldı ve 53 Metro/Migros
 etiketi onların BİM'e özel olduğunu gösterdi (`docs/18`). Tahminle yazılmış
 bir gramer, ölçülmüş bir gramerin verdiği güveni vermez.

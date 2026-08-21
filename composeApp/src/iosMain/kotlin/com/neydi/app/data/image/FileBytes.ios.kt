@@ -17,3 +17,6 @@ actual suspend fun deleteFilesIn(dirPath: String): Int = 0
  * gelene kadar bu fonksiyon hicbir sey iddia etmiyor.
  */
 actual suspend fun jpegIsComplete(path: String): Boolean = true
+
+/** iOS dosya yollari Faz 8'de; olcum ice aktarimi Android'de yapiliyor. */
+actual suspend fun listFilesIn(dirPath: String): List<String> = emptyList()

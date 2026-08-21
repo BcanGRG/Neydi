@@ -40,3 +40,9 @@ actual suspend fun jpegIsComplete(path: String): Boolean = withContext(Dispatche
 
 /** SOI + EOI + arada bir sey: dort bayttan kucugu JPEG olamaz. */
 private const val MIN_JPEG_BYTES = 4L
+
+actual suspend fun listFilesIn(dirPath: String): List<String> = withContext(Dispatchers.IO) {
+    runCatching {
+        File(dirPath).listFiles()?.filter { it.isFile }?.map { it.absolutePath }?.sorted() ?: emptyList()
+    }.getOrElse { emptyList() }
+}

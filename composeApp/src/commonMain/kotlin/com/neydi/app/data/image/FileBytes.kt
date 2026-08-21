@@ -63,3 +63,12 @@ expect suspend fun deleteFilesIn(dirPath: String): Int
  * gecer. Kapatabildigi sey OLCULEN hata: yarida kesilmis yazma.
  */
 expect suspend fun jpegIsComplete(path: String): Boolean
+
+/**
+ * Klasordeki dosya YOLLARI - yalnizca olcum ice aktarimi icin.
+ *
+ * `deleteFilesIn`in ikizi ve ayni gerekceyle platformda: `java.io.File` ve
+ * `NSFileManager` disinda ortak bir listeleme yok, tek bir teshis yolu icin
+ * `kotlinx-io` eklemek fazla.
+ */
+expect suspend fun listFilesIn(dirPath: String): List<String>

@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neydi.app.data.image.deleteFileAt
 import com.neydi.app.data.image.deleteFilesIn
 import com.neydi.app.data.image.jpegIsComplete
+import com.neydi.app.data.ocr.dumpImportedPhotos
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.absolutePath
 import io.github.vinceglb.filekit.createDirectories
@@ -72,6 +73,10 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
         // ya da vazgecilmis olsaydi silinmis olurdu. Tek kalan yol uygulamanin
         // kart acikken oldurulmesi ve orada silecek kimse yok.
         if (state.card == null) deleteFilesIn(dir.absolutePath())
+        // OLCUM ICE AKTARIMI: isaret dosyasi varsa `<tags>-dump/in/` icindeki
+        // hazir kareleri okuyup dokumlerini yaziyor. Isaret yoksa hicbir sey
+        // yapmiyor - bir kullanicinin cihazinda o dosya hic olusmuyor.
+        dumpImportedPhotos(dir.absolutePath() + "-dump")
     }
 
     TagCaptureScreen(

@@ -177,7 +177,7 @@ private fun unitKey(raw: String): String = when (raw.lowercase()) {
  * (bosluk binlik). Sondaki `(?!\d)` bir sayinin ON EKINI eslemeyi engelliyor -
  * asil kusur oydu.
  */
-private val MONEY = Regex("""(\d{1,3}(?:[.\s]\d{3})+|\d{1,4})[.,]\d{2}(?!\d)""")
+internal val MONEY = Regex("""(\d{1,3}(?:[.\s]\d{3})+|\d{1,4})[.,]\d{2}(?!\d)""")
 
 /**
  * Para dizgisini kurusa cevirir - binlik ayiricilarini atarak.
@@ -188,7 +188,7 @@ private val MONEY = Regex("""(\d{1,3}(?:[.\s]\d{3})+|\d{1,4})[.,]\d{2}(?!\d)""")
  *
  * SON AYIRICI ONDALIK, oncekiler binlik - basamak sayisina bakmadan.
  */
-private fun moneyMinor(raw: String): Long? {
+internal fun moneyMinor(raw: String): Long? {
     val t = raw.replace(" ", "")
     val lastSep = t.lastIndexOfAny(charArrayOf('.', ','))
     if (lastSep < 0) return null
