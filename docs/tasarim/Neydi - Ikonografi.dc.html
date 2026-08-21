@@ -55,7 +55,7 @@
         </div>
       </sc-for>
     </div>
-    <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">Kalan sayı 17. Bir uygulamanın ikon envanteri iki düzineyi geçtiğinde ikonlar birbirinden ayırt edilemez hâle gelir; on yedi ikon, her biri tek bir işe bağlı olduğu sürece öğrenilebilir bir dil kurar.</div>
+    <div style="font:400 14px/1.5 'Plus Jakarta Sans';color:#5C4F45;max-width:90ch">Kalan sayı 19 — karar 64 iki ikon ekledi (grid_view, keyboard). Bir uygulamanın ikon envanteri iki düzineyi geçtiğinde ikonlar birbirinden ayırt edilemez hâle gelir; on yedi ikon, her biri tek bir işe bağlı olduğu sürece öğrenilebilir bir dil kurar.</div>
   </div>
 
   <div style="display:flex;flex-direction:column;gap:16px">
@@ -258,19 +258,21 @@ class Component extends DCLogic {
     const s = (icon, label, vf) => ({ icon, label, vf });
     return {
       inventory: [
-        { ms: "add", job: "Ekle", where: "Ekle sheet'i, toolbar, yeni ürün", note: "Tek ekleme ikonu; \"+ Yeni market\" de aynısını kullanır", state: "kalıyor", dropped: false },
+        { ms: "add", job: "Ekle", where: "Kök giriş, keşif sheet'i, toolbar, yeni ürün", note: "Tek ekleme ikonu; \"+ Yeni market\" de aynısını kullanır", state: "kalıyor", dropped: false },
+        { ms: "grid_view", job: "Katalog", where: "Kök alanın yanı — keşif sheet'ini açar", note: "Karar 64 ile girdi; etiketsiz sekizinci istisna", state: "yeni", dropped: false },
+        { ms: "keyboard", job: "Kendim yazayım", where: "Keşif sheet'i alt kaçışı", note: "Karar 64 ile girdi; her zaman etiketle", state: "yeni", dropped: false },
         { ms: "photo_camera", job: "Etiket çek", where: "Liste başlığı, kalanını çek", note: "Uygulamanın ikinci en önemli hedefi; ikonu yalnız o taşır", state: "kalıyor", dropped: false },
         { ms: "more_vert", job: "Menü", where: "Liste başlığı", note: "Tek taşma menüsü", state: "kalıyor", dropped: false },
         { ms: "arrow_back", job: "Geri", where: "Her destinasyon", note: "Kamera ve kartta close ile değişir", state: "kalıyor", dropped: false },
         { ms: "close", job: "Kapat", where: "Kamera, sheet tutamağı", note: "\"Geri\" ile aynı işi yapar ama tam ekran yüzeylerde", state: "kalıyor", dropped: false },
-        { ms: "search", job: "Ara", where: "Ekle sheet'i, ürün seçici", note: "Yalnızca arama alanının içinde", state: "kalıyor", dropped: false },
+        { ms: "search", job: "Ara", where: "Keşif sheet'i, ürün seçici, market seçici", note: "Yalnızca arama alanının içinde", state: "kalıyor", dropped: false },
         { ms: "check_circle", job: "Onaylandı", where: "Market seçici, işaretli çip", note: "FILL 1 — dolu olan tek ikon", state: "kalıyor", dropped: false },
         { ms: "chevron_right", job: "İleri", where: "Ayarlar satırı, kart alanı", note: "Dokunulabilirliğin tek işareti", state: "kalıyor", dropped: false },
         { ms: "expand_more", job: "Aç", where: "Market çipi, sheet ipucu", note: "Aşağı açılan her şey", state: "kalıyor", dropped: false },
         { ms: "logout", job: "Alışverişi bırak", where: "Taşma menüsü", note: "Tek maddelik menünün tek ikonu", state: "kalıyor", dropped: false },
-        { ms: "bolt", job: "Flaş", where: "Kamera", note: "Sistem davranışı; kendi ikonumuz olmalı", state: "kalıyor", dropped: false },
+        { ms: "bolt", job: "Flaş", where: "Kamera · sağ üst", note: "İki hâl: kapalı/açık; oturumluk, yapışkan değil. Etiketsiz istisnalardan (karar 60)", state: "kalıyor", dropped: false },
         { ms: "info", job: "Eksik bilgi", where: "Onay kartı amber şeridi", note: "Uyarı değil bilgi; error ikonu kullanılmaz", state: "kalıyor", dropped: false },
-        { ms: "check", job: "İşaretlendi", where: "Liste satırı, Ekle sheet'i", note: "Çıplak check satırda; check_circle yalnızca çipte ve seçicide", state: "kalıyor", dropped: false },
+        { ms: "check", job: "İşaretlendi", where: "Liste satırı, keşif sheet'i", note: "Çıplak check satırda; check_circle yalnızca çipte ve seçicide", state: "kalıyor", dropped: false },
         { ms: "push_pin", job: "Sabit ürün", where: "Ayarlar · her zamankiler", note: "\"Bu her listeye giriyor\" demek; seçili demek değil", state: "kalıyor", dropped: false },
         { ms: "content_paste", job: "Listeyi yapıştır", where: "Kurulum", note: "Tek kez görünen akışın tek ikonu", state: "kalıyor", dropped: false },
         { ms: "arrow_upward", job: "Fiyat arttı", where: "Delta çipi, trend oku", note: "Yalnızca çipin içinde, 12sp metinle birlikte; çipin rengini alır", state: "kalıyor", dropped: false },
@@ -360,11 +362,11 @@ class Component extends DCLogic {
       rules: [
         { name: "İkon iş yapar", rule: "Bir ikon ya dokunulabilir bir hedeftir ya da bir durumu bildirir. Süs ikonu, başlık ikonu, bölüm ikonu yok." },
         { name: "Tek metafor", rule: "Bir kavramın tek ikonu vardır: zaman her yerde aynı saat, market her yerde aynı dükkân. İki ikon aynı şeyi anlatamaz." },
-        { name: "Etiketsiz ikon", rule: "Yalnızca evrensel altı hedef etiketsiz durabilir: geri, kapat, menü, ara, ekle, kamera. Diğer her ikon metinle birlikte." },
+        { name: "Etiketsiz ikon", rule: "Yalnızca sekiz hedef etiketsiz durabilir: geri, kapat, menü, ara, ekle, kamera, flaş, katalog. Diğer her ikon metinle birlikte." },
         { name: "Yıkıcı iş", rule: "Silme asla ikonla anlatılmaz; \"Verilerimi sil\" bir metin satırıdır. Çöp kutusu ikonu uygulamada yok." },
         { name: "Boyut", rule: "Varsayılan 24dp; satır içi metadata 20dp; kamera kontrolleri 26dp. Dokunma hedefi her zaman en az 48dp, ikonun kendisi değil." },
         { name: "Hizalama", rule: "İkon metnin optik ortasına hizalanır (baseline'a değil). Satırda ikon–metin boşluğu 12dp, sabit." },
-        { name: "Renk", rule: "İkon kendi rengini taşımaz; içinde bulunduğu metnin rengini alır. Tek istisna amber şeritteki bilgi ikonu." },
+        { name: "Renk", rule: "İkon metnin rengini alır; karanlık temada ikincil metnin yanındaki ikon bir kademe açık çizilir (#C6B6A9 → #E4D8C9), birincil metnin yanında telafi yok. Delta oku çipin rengini alır. Amber şeritteki info dahil istisna yok — şerit cümlesi hangi renkse (warning) ikon da o." },
         { name: "Erişilebilirlik", rule: "Etiketsiz her ikonun içerik açıklaması Türkçe ve fiil: \"etiket çek\", \"geri git\". Durum bildiren ikonlar okunmaz, durumu satırın metni söyler." }
       ]
     };
