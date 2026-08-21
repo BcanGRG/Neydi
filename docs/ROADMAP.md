@@ -295,9 +295,9 @@ silindi, yerine ölçülmüş bir kural kondu.
 | Geri sırası: kart → destinasyon | ✅ |
 | 60 sn mükerrer koruması | ✅ |
 | Başlıkta kamera hedefi, iki modda | ✅ |
-| OCR 1,5 sn'yi geçerse iskelet | ⚠️ iskelet var, **eşik yok** — OCR süresince duruyor |
-| Kart fotoğrafın üstünde | ⚠️ kamera karartılıyor, çekilen kare gösterilmiyor |
-| Yatay düzen | ❌ (`Gezinme Sozlesmesi:587`) |
+| OCR sırasında iskelet | ✅ **eşik yok ve olmamalı** — karar 62 1,5 sn eşiğini kaldırdı (ölçülen süre 1,15 sn, eşik hiç tetiklenmiyordu) |
+| Kart fotoğrafın üstünde | ✅ `TagThumbnail` kırpılmış kareyi çiziyor (`TagCaptureScreen.kt:491`) |
+| Yatay düzen | ❌ (`Gezinme Sozlesmesi:587`) — **E15'ten kalan tek madde** |
 
 **Bitti sayılır — ÖLÇÜT DÜZELTİLDİ.** Önce *"1 etiket → Tahmini sepet
 görünüyor"* yazıyordu ve bu **ulaşılamaz**: `BasketAndSummary.kt:228`
@@ -483,14 +483,23 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       yardımcısı `internal`), o yüzden küçük bir `expect/actual` gerekti:
       `plainTextOrNull()`. Android'de `ClipData`, iOS'ta `getPlainText()`.
       **Projenin tek derleyici uyarısı kapandı** — zorlanmış tam derlemede sıfır.
-- [ ] **F10.5 — Sheet yüksekliğindeki sihirli sayı.** `TODO(sheet-yuksekligi)`
-- [ ] **F10.2 — Bottom sheet'leri Nav3 Scene'e taşı.** F10.5'e bağlı.
+- **F10.5 ✅ — Sheet yüksekliğindeki sihirli sayı.** `TODO(sheet-yuksekligi)`
+      koddan silindi. Oran denendi ve **cihazda düştü**: kısmen açılmış bir M3
+      sheet içeriği kısıtlamıyor, **kırpıyor** — üçüncü satır 22 piksele iniyor
+      ve kaçış butonu `bounds=[0,0][0,0]` oluyordu. Çözüm sayı değil davranış:
+      `rememberModalBottomSheetState(skipPartiallyExpanded = true)`
+      (`ListScreen.kt:221`).
+- [ ] **F10.2 — Bottom sheet'leri Nav3 Scene'e taşı.** *(F10.5 bağı düştü)*
 - **F10.6 ✅ — M3 tıklanabilir bileşen sözleşmesi.** Kod zaten temiz: tıklanabilir
       `Button`/`Card`/`ListItem` sıfır, dokuz `Surface`'ın hiçbiri tıklanamaz.
       `HistoryScreen` satırları da fiş döneminde dokunulabilirdi, karar 30 o hedefi
       kaldırdı — madde koda değil, kendi kaydına takılı kalmış.
 - [ ] **F10.7 — Odak halkasını bağla.** `Modifier.focusRing` tanımlı, çağıranı yok.
-- [ ] **F10.8 — 44dp altındaki üç kontrol.**
+- [ ] **F10.8 — 48dp altında kalan TEK kontrol.** `ProductSheet.kt:143`
+      (`.size(44.dp)`). Üç değil bir: karar 56 en küçük hedefi tek sayıya
+      indirdi (48dp) ve kalanlar o turda düzeltildi. `SafeArea.top = 44.dp`
+      bu listeye ait değil — dokunma hedefi değil, güvenli alan boşluğu
+      (üstelik `SafeArea`'nın kendisi ölü, bkz. F11.4).
 - **F10.9 ✅ — Satır silme** *(cihazda doğrulandı)*. Sağdan sola swipe,
       arkasında 100dp'lik alan ve içinde **"Sil" kelimesi** — çöp kutusu
       ikonu envanterde yok. Eşik 60dp; geçilmeden bırakılırsa 200 ms'de
@@ -705,13 +714,16 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 
 ## Kod TODO eşlemesi
 
+Kodda bugün duran TODO'lar (`grep -rn "TODO(" composeApp/src`):
+
 | TODO | Kapatan adım |
 |---|---|
-| `sheet-yuksekligi` | F10.5 |
 | `tnum` | F9.4 |
-| `kategori-tonlari` | F6.9 *(kapandı, TODO silinecek)* |
-| `splash` | F8.4 |
+| `kategori-tonlari` | F6.9 *(adım kapandı, TODO hâlâ kodda — silinecek)* |
 | `ios` · `ios-statusbar` | F9.1 · F9.3 |
+
+`sheet-yuksekligi` ✅ silindi (F10.5). `splash` kodda yok — F8.4 geldiğinde
+yazılacak.
 
 ---
 
@@ -719,8 +731,10 @@ göç öncesi hâli görünür — WAL henüz checkpoint edilmemiş olur; `-wal`
 
 | Dosya | Ne işe yarar |
 |---|---|
-| [12-tasarima-sorular-4.md](12-tasarima-sorular-4.md) | **Aktif** — tasarıma dördüncü tur: boş durum atlası, ikon envanteri, ikon ekseni teknik engeli |
-| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 20 kararın kod durumu, gezinme sözleşmesi sabitleri, ikonografi |
+| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 56 kararın kod durumu (46–69 dahil), gezinme sözleşmesi sabitleri, ikonografi |
+| [17](17-e12-etiket-olcumu.md) · [18](18-zincir-karsilastirmasi.md) · [24](24-a101-olcumu.md) | **Etiket ölçüm raporları** — BİM · üç zincir karşılaştırması · A101 |
+| [21](21-tasarim-denetimi-38-kalan.md) · [22](22-tasarima-sorular-8.md) · [23](23-tasarima-sorular-9.md) | Sekizinci/dokuzuncu tur denetim ve sorular |
+| [12-tasarima-sorular-4.md](12-tasarima-sorular-4.md) | Dördüncü tur — cevaplandı, arşiv değeri |
 | [10-tasarima-pivot.md](10-tasarima-pivot.md) | Tasarıma pivot bildirimi — cevaplandı, arşiv değeri |
 | [ARSIV-fis-donemi.md](ARSIV-fis-donemi.md) | Pivottan önceki tam harita; F-numaralarının kaynağı |
 | [01-claude-design-prompt.md](01-claude-design-prompt.md) | Sekiz ekranın özgün spesifikasyonu |
