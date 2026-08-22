@@ -88,7 +88,8 @@ internal fun readTagName(ocr: TagOcr): TagName? {
         it.corners[0].y < limit &&
             it !== pack &&
             !it.text.isStoreCode() &&
-            !it.text.looksLikeCount()
+            !it.text.looksLikeCount() &&
+            !it.text.isTagBoilerplate()
     }
     if (block.isEmpty()) return null
 
@@ -210,3 +211,76 @@ private fun String.isStoreCode(): Boolean = Regex("""^P\d{2,4}$""").matches(trim
  */
 private fun String.looksLikeCount(): Boolean =
     Regex("""^[Xx]\s*\d+\s*(Adet|ADET|adet)?$""").matches(trim())
+
+/**
+ * ETIKETIN ZORUNLU IBARELERI - urun metni DEGIL.
+ *
+ * ## Neden bu kural var: olculdu
+ *
+ * 99 fikstur uzerinde marka okumasi kosturuldugunda 46 etikette marka
+ * uretiliyordu ve bunlarin **22'si copt**u. Copun yarisindan fazlasi tek bir
+ * kaynaktan geliyordu: her etikette basili duran YASAL ibareler.
+ *
+ * ```
+ * MENSE ULKE:TURKYE      x8   (mense ulke)
+ * FİYAT GEÇERLİLİK TARİHİ x3
+ * Ürt. yeri:Türkiye       x1
+ * Gùvencesi               x1   ("BIM guvencesi")
+ * ```
+ *
+ * Bunlar ad blogunun icine dusuyor cunku KONUMLARI dogru - sol sutunda,
+ * fiyatin ustunde. Ayirt edici olan sey konum degil METIN.
+ *
+ * ## Neden govde degil KOK esleniyor
+ *
+ * OCR bu ibareleri surekli baska turlu bozuyor: `MENSE ULIKE:TURKYE`,
+ * `MENSE ULKE.TURKYE`, `MENSEL`, `MENSE ULURKYE`, `FNAT DTARIHI`. Tam metin
+ * karsilastirmasi besini yakalar, altisini kacirirdi. Bu yuzden harf disi her
+ * sey atiliyor, Turkce harfler katlaniyor ve kalan dizginin **basi** kok
+ * listesine bakiliyor.
+ *
+ * ⚠ **KOKLER KISA OLMAMALI.** `MENSE` guvenli (Turkce'de baska bir urun adi
+ * boyle baslamiyor) ama ornegin `NET` olsaydi `NETTAR` gibi mesru bir adi
+ * yerdi. Yeni kok eklenirken sart: koku tasiyan bir URUN ADI dusunulemiyor
+ * olmali.
+ */
+private fun String.isTagBoilerplate(): Boolean {
+    // AKSAN KATLAMASI TURKCE'DEN GENIS. OCR ayni harfi surekli komsu bir
+    // aksanla basiyor: olculmus vakada `Güvencesi` cihazdan `Gùvencesi` diye
+    // cikti (u-grave, u-umlaut degil) ve yalnizca Turkce harfleri katlayan bir
+    // eslesme onu KACIRDI. Liste, gercekten gorulen bozulmalardan.
+    val folded = trim()
+        .map {
+            when (it.lowercaseChar()) {
+                'ı', 'i', 'İ', 'ì', 'í', 'î', 'ï' -> 'i'
+                'ş' -> 's'
+                'ğ' -> 'g'
+                'ü', 'ù', 'ú', 'û' -> 'u'
+                'ö', 'ò', 'ó', 'ô', 'õ' -> 'o'
+                'ç' -> 'c'
+                'à', 'á', 'â', 'ä', 'ã' -> 'a'
+                'è', 'é', 'ê', 'ë' -> 'e'
+                else -> it.lowercaseChar()
+            }
+        }
+        .filter { it.isLetter() }
+        .joinToString("")
+    return BOILERPLATE_STEMS.any { folded.startsWith(it) }
+}
+
+/**
+ * Katlanmis (harf disi atilmis, Turkce harfleri sadelestirilmis) kokler.
+ *
+ * Hepsi olculmus vakalardan geliyor; hicbiri tahmin degil.
+ */
+private val BOILERPLATE_STEMS = listOf(
+    "mense", // MENSE ULKE:TURKYE ve alti bozuk varyanti
+    "urtyeri", // Ürt. yeri:Türkiye
+    "uretimyeri",
+    "fiyatgecerlilik", // FİYAT GEÇERLİLİK TARİHİ
+    "fnatd", // OCR'in ayni ibareyi bozdugu hali: FNAT DTARIHI
+    "fiyattarihi",
+    "guvencesi", // "BIM guvencesi" / "Gùvencesi"
+    "sontuketim",
+    "normalsatis", // NORMAL SATIS FIYATI
+)

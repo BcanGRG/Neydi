@@ -783,3 +783,129 @@ sıralama, silinmiş ürünün elenmesi. **449 test yeşil, sıfır uyarı.**
 
 Cihazda uçtan uca doğrulandı: anahtar açıldı → Ayarlar'da *"Önerilmeyenler ·
 Süt · [Geri al]"* göründü → geri alındı → bölüm kayboldu.
+
+---
+
+## Marka okuması ölçüldü: %52 → %66, ve çöpün yarısı tek bir kaynaktı
+
+**23 Ağustos 2026.** Kullanıcı *"çektiğim etiketlerin marka ve ürün kısmını hep
+ben elimle doldurdum"* diye şikâyet etmişti. Ölçüm **tur beklemeden** yapıldı —
+repodaki 99 gerçek etiket fikstürü zaten elde.
+
+`readTagFields` 99 fikstür üzerinde koşturuldu: **46 etikette marka
+üretiliyordu ve 22'si çöptü** (%52 doğruluk). Ve çöpün yarısından fazlası tek
+bir sınıftan geliyordu — **her etikette basılı duran yasal ibareler**:
+
+| Üretilen "marka" | Kaç kez |
+|---|---|
+| `MENSE ULKE:TURKYE` ve altı bozuk varyantı | **8** |
+| `FİYAT GEÇERLİLİK TARİHİ` / `FNAT DTARIHI` | 3 |
+| `Ürt. yeri:Türkiye` · `Gùvencesi` | 2 |
+
+### Neden ad bloğuna düşüyorlardı
+
+**Konumları doğru.** Sol sütunda, fiyatın üstünde, tam ad bloğunun hizasında.
+Geometriye bakan bir eleme bunları asla yakalayamaz — ayırt edici olan konum
+değil **metin**. Bu yüzden kural sözlüğe bakıyor.
+
+### Kök eşleniyor, gövde değil
+
+OCR aynı ibareyi sürekli başka türlü bozuyor: `MENSE ULIKE:TURKYE`,
+`MENSE ULKE.TURKYE`, `MENSEL`, `MENSE ULURKYE`. Tam metin karşılaştırması
+beşini yakalar, altısını kaçırırdı. Harf dışı her şey atılıyor, aksanlar
+katlanıyor, kalan dizginin **başı** kök listesine bakılıyor.
+
+Aksan katlaması Türkçe'den geniş tutuldu ve bu da ölçümden: `Güvencesi` cihazdan
+**`Gùvencesi`** diye çıkmıştı (u-grave, u-umlaut değil) ve yalnızca Türkçe
+harfleri katlayan bir eşleme onu kaçırdı.
+
+### Sonuç ve kalan
+
+**36 marka, 24'ü doğru (%66).** Doğru markaların hiçbiri kaybolmadı.
+
+Kalan 12 çöp **başka bir sınıf**: `orize`, `NUIK KREMIASI`, `Aklı Diş Etleri`,
+`Florürlü Dis Macunu` — bunlar rafın etiketi değil, **ürünün kendi ambalajı**
+okunuyor. Fotoğraf çerçevesi/geometri sorunu, sözlükle çözülmez.
+
+⚠ **Kök listesi kısa kök kabul etmiyor.** `MENSE` güvenli (Türkçe'de böyle
+başlayan ürün adı yok) ama `NET` olsaydı `NEKTAR` gibi meşru bir adı yerdi.
+Yeni kök eklenirken şart: kökü taşıyan bir **ürün adı düşünülemiyor** olmalı.
+
+---
+
+## F2.7: katalog düzeltmeleri kurulu telefonlara hiç ulaşmıyordu
+
+**23 Ağustos 2026.** Tohumlayıcının kapısı `SELECT COUNT(*) FROM category > 0`
+idi: kategori tablosu bir kez doldu mu bir daha hiçbir şey yazmıyordu. Yani
+**ilk açılıştan sonra `CatalogSeedData`daki hiçbir düzeltme o telefona
+ulaşmıyordu** — yeni bir ürün, düzeltilmiş bir kategori, değişmiş bir
+`matchKey` kuralı, hiçbiri. Yalnızca uygulamayı silip yeniden kuranlar
+görüyordu. Sessiz, çünkü hiçbir şey patlamıyor.
+
+Kapı artık **sürüme** bakıyor (`app_settings.catalogSeedVersion` ↔
+`CATALOG_SEED_VERSION`). `null` damga "bilinmiyor, yeniden yaz" demek, yani
+v6'dan önceki kurulumların kataloğu ilk açılışta tazeleniyor.
+
+### Silme yok, üzerine yazma var
+
+`DELETE` + `INSERT` yıkıcı olurdu: `product.categoryId` kategorilere bakıyor ve
+aradaki o anda **kullanıcının kendi ürünleri sahipsiz kalırdı**. `INSERT OR
+REPLACE`in güvenli olmasının şartı id'lerin deterministik olması — kategoriler
+sabit id taşıyor, tohum ürünleri `seed-<yaygınlık>`.
+
+### Yakalanan ikinci sessiz hata
+
+Damga satırını açan `INSERT OR IGNORE` yalnızca `householdId` veriyordu, oysa
+`syncPhotos` ve `createdAt` NOT NULL. **`OR IGNORE` o ihlali yutuyordu**: satır
+hiç doğmuyor, damga hiç düşmüyor, katalog her açılışta baştan yazılıyordu — ve
+hiçbir şey patlamıyordu. Testi yazmasaydım fark edilmezdi.
+
+### v6 tek bump'ta iki ekleme
+
+`catalogSeedVersion` kolonu ve `suggestion_event` üzerindeki
+`(householdId, productId, outcome)` indeksi aynı bump'a alındı: ikisi de
+otomatik, veri geri-doldurması yok, ve ayrı iki bump iki cihaz dansı demek
+olurdu. `suggestion_event` bugün boş — boş tablonun şema değişikliği bedava.
+
+**Cihazda doğrulandı** (`pm clear` YAPILMADAN): sürüm 5 → 6, dokuz tablonun
+satır sayısı birebir aynı (product 59, trip_line 118, price_observation 26…),
+damga düştü, indeks oluştu, uygulama açıldı.
+
+---
+
+## Karar 61 uygulandı — ve bir cümlesi Android'de uygulanamıyor
+
+**23 Ağustos 2026.** Faz E'nin son açık maddesi. Karar 61 birebir:
+
+> *"Kart yatayda sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü)
+> örter, kartı asla örtmez; amber şerit kartın içinde kalır."*
+
+**Birinci cümle yapıldı ve cihazda doğrulandı**: kart `CenterEnd`'e yapışık,
+tam yükseklik, sol köşeleri yuvarlak. Yön `BoxWithConstraints`ten okunuyor,
+platform yapılandırmasından değil — `commonMain`de çalışıyor, yani aynı kural
+iOS'ta da geçerli olacak ve bölünmüş ekranda doğru cevabı veriyor.
+
+Genişlik **yarım değil %58**. Tam yarım denendi ve sığmadı: kart iki sütunlu
+alan çifti ve Kaydet+Vazgeç ikilisi taşıyor; 360dp'lik bir cihazda kartın iç
+genişliği 148dp'ye düşüyor. Vizöre kalan %42, 3:2 rehberi çizmeye fazlasıyla
+yetiyor.
+
+### İkinci cümle uygulanamıyor
+
+Android'de IME **alttan ve tam genişlikte** gelir; bir yarıya hapsedilemez.
+Cihazda görüldü: yatayda klavye kartın alt yarısını örtüyor. Dikeyde bu sorunu
+karar 70 çözmüştü (şerit toplanır, kart kendi içinde kayar) ve aynı çözüm
+yatayda da çalışıyor — ama kararın cümlesi bunu söylemiyor. Tasarıma bildirildi
+(`docs/32`).
+
+### Yatay vizör hiç tarif edilmemiş — ve kırıktı
+
+Karar 61 yalnızca kartı anlatıyor. Vizörün yatay hâli hiçbir maketle
+karşılanmıyor ve dikey için yazılmış kural yatayda **bozuluyordu**:
+`fillMaxWidth().aspectRatio(3:2)` 2280px genişliği **1520px yüksekliğe**
+çıkarıyor, ekran 1080 — rehber taşıp yalnızca iki dikey kenarı görünüyor,
+içindeki *"Etiket kadraja otursun."* metni ekranın altına düşüyordu.
+
+Rehberi kısa kenardan bağladık (yatayda yükseklikten). Cihazda ipucu metni
+y=1051'den y=693'e çıktı, yani ekrana girdi. **Bu seçim bizim, tasarımın
+değil** — `docs/32`'de soruldu.

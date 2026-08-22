@@ -9,11 +9,11 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E'nin **on sekiz adımı kapandı**; açık kalan tek madde
-**E15'in yatay düzeni** (karar 61). Etiket okuyucusu **üç zincirde** çalışıyor
+**Durum:** **Faz E kapandı (19/19)** — son madde, E15'in yatay düzeni (karar
+61), 23 Ağustos'ta bağlandı. Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro ölçüldü ve bilinçli olarak ertelendi. Fikstür seti
 **99 gerçek etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu,
-**452 test yeşil**, **sıfır derleyici uyarısı**.
+**458 test yeşil**, **sıfır derleyici uyarısı**.
 
 Tasarım kararları **46–75** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı
 denetimin **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
@@ -38,7 +38,6 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
 | 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(her market kararının ÖN KOŞULU)* | [→](#tahmin-carpimi) |
-| 4 | **E15 — yatay düzen** (karar 61) | `[ ]` | — *(Faz E'nin son maddesi)* | [→](#e15-yatay) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
 | 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
@@ -53,7 +52,6 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 16 | **F1.3b — `@Preview` altyapısı** | `[cihaz]` | Göz kontrolünü | [→](#f13b) |
 | 17 | **F3.3 — Hızlı ekleme** | `[cihaz]` | Göz kontrolünü | [→](#f33) |
 | 18 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
-| 19 | **F2.7 — katalog yeniden tohumlanabilir olmalı** | `[ ]` | — *(sessiz kullanıcı hatası taşıyor)* | [→](#f27) |
 | 20 | **F3.9 — "Diğer" kategorisi** | `[ ]` | F2.7'yi | [→](#f39) |
 | 21 | **F6.9 — `kategori-tonlari` TODO'su silinecek** | `[ ]` | — *(tek satır)* | [→](#f69) |
 | 22 | **F10.7 + F10.11 + F11.4 — ölü primitifler** | `[ ]` | Önce **soruyu yazmayı** — `focusRing`/`AccentStrip` tasarıma **sorulmadı** | [→](#olu-kod) |
@@ -221,11 +219,19 @@ değil.
 Hiçbiri dış veriye bağlı değil; hepsi bugünkü şema ve bugünkü verinin üstünde
 yazılabilir.
 
-#### E15 — yatay düzen (karar 61) <a id="e15-yatay"></a>
 
-**Faz E'den kalan tek madde.** Etiket çekme ekranı bugün yalnızca dikey düzeni
-tanıyor; yatay düzen sözleşmede yazılı ama kodda karşılığı yok
-(`Gezinme Sozlesmesi:587`). Bu kutu kapandığında Faz E tamamen kapanır.
+**✅ Kapandı (23 Ağustos).** Kart yatayda sağ yarıda dikey panel (%58); yön
+`BoxWithConstraints`ten okunuyor, yani kural iOS'ta da geçerli olacak.
+
+⚠ **Kararın ikinci cümlesi uygulanamıyor:** *"klavye sol yarıyı örter, kartı
+asla örtmez"* — Android'de IME alttan ve tam genişlikte gelir. Dikeydeki çözüm
+(karar 70: şerit toplanır, kart kendi içinde kayar) yatayda da çalışıyor ama
+karar bunu söylemiyor. Tasarıma soruldu (`docs/32`).
+
+⚠ **Yatay vizör hiç tarif edilmemişti ve kırıktı:** `fillMaxWidth` + 3:2,
+2280px genişliği 1520px yüksekliğe çıkarıyordu (ekran 1080) — rehber taşıyor,
+ipucu metni ekranın altına düşüyordu. Kısa kenardan bağlandı; seçim bizim,
+`docs/32` S2'de soruldu.
 
 #### F6.5 — Sabit terfisi + bastırma <a id="f65"></a>
 
@@ -247,7 +253,21 @@ eksik olan yalnızca DAO'suydu. Cihazda uçtan uca doğrulandı.
   çelişiyor ve kodun kendi KDoc'u otomatiği yasaklıyor: *"kullanıcı işaretler,
   motor değil"*.
 
-#### F2.7 — Katalog yeniden tohumlanabilir olmalı <a id="f27"></a>
+#### F2.7 ✅ — Katalog yeniden tohumlanabilir oldu <a id="f27"></a>
+
+**Kapandı (23 Ağustos).** Kapı artık `SELECT COUNT(*) FROM category > 0` değil
+`app_settings.catalogSeedVersion`. Gömülü sabit (`CATALOG_SEED_VERSION`)
+büyükse katalog **üzerine yazılıyor** — silinmiyor, çünkü `product.categoryId`
+kategorilere bakıyor ve aradaki o anda kullanıcının ürünleri sahipsiz kalırdı.
+`null` damga = "bilinmiyor, yeniden yaz", yani v6 öncesi kurulumların kataloğu
+ilk açılışta tazeleniyor. Cihazda doğrulandı.
+
+⚠ **Bir sessiz hata daha yakalandı:** damga satırını açan `INSERT OR IGNORE`
+yalnızca `householdId` veriyordu, oysa `syncPhotos` ve `createdAt` NOT NULL —
+`OR IGNORE` o ihlali **yutuyordu**, satır hiç doğmuyor, damga hiç düşmüyor ve
+katalog her açılışta baştan yazılıyordu. Hiçbir şey patlamadan.
+
+#### ~~F2.7 — eski hâli~~ <a id="f27-eski"></a>
 
 *(cihazsız)* F0.4 ve F3.9'u açar.
 

@@ -41,7 +41,7 @@ import androidx.room3.migration.AutoMigrationSpec
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
     //
@@ -108,6 +108,20 @@ import androidx.room3.migration.AutoMigrationSpec
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5, spec = Migration4To5Spec::class),
+        // v5 -> v6: IKI OTOMATIK EKLEME, TEK CIHAZ DANSI.
+        //
+        // (1) `app_settings.catalogSeedVersion` - gomulu katalogun hangi
+        //     surumunun yazildigi (F2.7). Nullable: eski kurulumlarda null
+        //     kaliyor ve tohumlayici bunu "bilinmiyor, yeniden yaz" diye
+        //     okuyor.
+        // (2) `suggestion_event` uzerinde `(householdId, productId, outcome)`
+        //     indeksi - uc-vurus kuralinin sorgusu bu ucluyu sayiyor ve
+        //     indekssiz her gosterimle buyuyen bir gunlukte TAM TARAMA olurdu.
+        //
+        // IKISI AYNI BUMP'TA cunku ayri iki bump iki cihaz dansi demek olurdu
+        // ve `suggestion_event` bugun BOS - bos tablonun sema degisikligi
+        // bedava (yol haritasi, sema kurali).
+        AutoMigration(from = 5, to = 6),
     ],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)

@@ -43,6 +43,12 @@ class SchemaBaselineTest {
         // `price_observation.brand` GIRDI. Silmeler `Migration4To5Spec`
         // uzerinden, tamamen otomatik.
         5 to "f3f49c1da71c866c63044e4bd2ccde9a",
+        // v6: IKI OTOMATIK EKLEME. `app_settings.catalogSeedVersion` (F2.7 -
+        // gomulu katalogun bu haneye yazilmis surumu) ve `suggestion_event`
+        // uzerinde `(householdId, productId, outcome)` indeksi (F6.5'in
+        // uc-vurus sorgusu). Ikisi de nullable/indeks, veri geri-doldurmasi
+        // YOK - toplu bump kuralinin sarti korunuyor.
+        6 to "eb22e60bf4e0d69ab72f6b8049ca1734",
     )
 
     private val schemaDir: File by lazy {

@@ -19,7 +19,10 @@ const val DEFAULT_HOUSEHOLD_ID: String = "0198f2a1-0000-7000-8000-000000000001"
  * Tamami idempotent; tekrar cagrilmasi zararsiz.
  */
 suspend fun NeydiDatabase.bootstrap(newId: () -> String, clock: () -> Long) {
-    seedCatalog()
+    // HANE KIMLIGI GECIYOR: tohumlayici katalog surumunu buraya damgaliyor
+    // (F2.7). Damgasiz cagri hala mesru - testler oyle cagiriyor - ama o
+    // halde her seferinde yeniden yaziyor.
+    seedCatalog(DEFAULT_HOUSEHOLD_ID, clock)
     // Market zincirleri: etiket cekiminde secilecek liste cekimden ONCE hazir
     // olmali (tasarim karari 11). Idempotent - bkz. seedStores.
     seedStores(storeDao(), DEFAULT_HOUSEHOLD_ID, clock)
