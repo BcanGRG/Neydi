@@ -283,7 +283,7 @@ internal class TagCaptureViewModel(
         _state.value = _state.value.copy(toast = null)
     }
 
-    fun editPrice(text: String) = updateCard { it.copy(priceText = text) }
+    fun editPrice(text: String) = updateCard { it.withPrice(text) }
 
     fun editProductName(text: String) = updateCard { it.copy(productName = text) }
 
@@ -423,6 +423,27 @@ internal fun ConfirmCard.readFrom(fields: TagFields?): ConfirmCard = copy(
     packUnit = fields?.pack?.unit,
     skipped = fields?.skipped,
 )
+
+/**
+ * Fiyat alani duzenlendi - ve KURUS UYARISI SUSUYOR.
+ *
+ * CIHAZDA GORULDU: kullanici `39,50` yaziyor ve kart hala *"Kuruş okunamadı -
+ * kontrol et"* diyor. Uyari, kullanici kurusu kendi eliyle yazdiktan SONRA
+ * hala duruyordu.
+ *
+ * Uyarinin isi `kurusFromOcr`in KDoc'unda yazili: *"kullanicidan iki hane
+ * istemek, yanlis iki haneyi sessizce kaydetmekten iyi"*. Yani is kullaniciyi
+ * fiyat alanina BAKTIRMAK - ve alani duzenledigi anda o is bitmis oluyor.
+ * Uyariyi surdurmek, cevaplanmis bir soruyu tekrar sormak demek.
+ *
+ * `39` yazip kurus yazmamak da bir CEVAP: bos birakilmis degil, secilmis.
+ * O yuzden metnin kurus tasiyip tasimadigina bakilmiyor.
+ *
+ * VIEWMODEL'IN DISINDA, [readFrom] ile ayni sebeple: bu kusurun kendisi
+ * ViewModel govdesinde yasiyordu ve orasi birim testle korunamiyor.
+ */
+internal fun ConfirmCard.withPrice(text: String): ConfirmCard =
+    copy(priceText = text, kurusFromOcr = true)
 
 /** Kurusu duzenlenebilir metne cevirir: 3850 -> "38,50". */
 internal fun minorToInput(minor: Long): String {

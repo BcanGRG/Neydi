@@ -9,7 +9,7 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro bilinçli olarak ertelendi. Fikstür seti **99 gerçek
-etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **398 test yeşil**,
+etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **400 test yeşil**,
 **sıfır derleyici uyarısı**.
 
 Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
@@ -753,6 +753,7 @@ yazılacak.
 |---|---|
 | [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 56 kararın kod durumu (46–69 dahil), gezinme sözleşmesi sabitleri, ikonografi |
 | [17](17-e12-etiket-olcumu.md) · [18](18-zincir-karsilastirmasi.md) · [24](24-a101-olcumu.md) | **Etiket ölçüm raporları** — BİM · üç zincir karşılaştırması · A101 |
+| [25-tasarima-sorular-10.md](25-tasarima-sorular-10.md) | **Aktif** — onay kartı + klavye; cihaz provasından beş soru |
 | [21](21-tasarim-denetimi-38-kalan.md) · [22](22-tasarima-sorular-8.md) · [23](23-tasarima-sorular-9.md) | Sekizinci/dokuzuncu tur denetim ve sorular |
 | [12-tasarima-sorular-4.md](12-tasarima-sorular-4.md) | Dördüncü tur — cevaplandı, arşiv değeri |
 | [10-tasarima-pivot.md](10-tasarima-pivot.md) | Tasarıma pivot bildirimi — cevaplandı, arşiv değeri |

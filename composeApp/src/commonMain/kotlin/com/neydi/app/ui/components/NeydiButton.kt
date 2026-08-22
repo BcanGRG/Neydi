@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -35,6 +36,19 @@ import com.neydi.app.ui.theme.pressable
  *   clip      -> en disda, overlay'i hap seklinde kirpar
  *   pressable -> graphicsLayer(scale) + clickable; icindeki her sey olcekleniyor
  *   background-> olceklenen katmanin icinde, yani hap da kuculuyor
+ *
+ * ## DEVRE DISI HAL GORUNUYOR - eskiden gorunmuyordu
+ *
+ * `enabled` yalnizca [pressable]a gidiyordu, yani pasif bir buton aktif
+ * olanla BIREBIR AYNI ciziliyor ve dokunuldugunda hicbir sey olmuyordu.
+ * Kullaniciya "bozuk" gorunen hal tam olarak budur.
+ *
+ * Tasarim sozlesmesi acik: *"Devre disi: %38 opaklik, dolgu surfaceVariant'a
+ * duser"* (Tasarim Sistemi, etkilesim halleri). Ikisi birlikte uygulaniyor.
+ *
+ * Bu kural onay kartinda gorunur bir sozun on kosulu: gezinme sozlesmesi
+ * *"Kaydet pasif; ilk rakamda etkinlesir"* diyor ve pasif hal cizilmezse o
+ * cumlenin gozlemlenecek bir karsiligi yok.
  */
 @Composable
 fun NeydiButton(
@@ -47,16 +61,24 @@ fun NeydiButton(
 ) {
     Box(
         modifier = modifier
+            .alpha(if (enabled) 1f else DISABLED_ALPHA)
             .clip(NeydiExtraShapes.pill)
             .pressable(enabled = enabled, onTap = onClick)
-            .background(container)
+            .background(if (enabled) container else MaterialTheme.colorScheme.surfaceVariant)
             .defaultMinSize(minHeight = Sizes.minTapTarget)
             .padding(horizontal = Spacing.lg, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge, color = content)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (enabled) content else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
+
+/** Tasarim sistemi: devre disi her etkilesimli elemanda %38. */
+private const val DISABLED_ALPHA = 0.38f
 
 // --- Preview ---------------------------------------------------------------
 
