@@ -17,6 +17,55 @@ class TagFieldsTest {
 
     private val bim = chainKey("BİM")
 
+
+    /**
+     * ETIKETIN ZORUNLU IBARELERI MARKA OLMUYOR - 99 fikstur uzerinde olculdu.
+     *
+     * ## Bu testin dogdugu olcum
+     *
+     * Kullanici *"marka ve urun kismini hep ben elimle doldurdum"* diye
+     * sikayet etti. 99 fikstur uzerinde marka okumasi kosturuldu: 46 etikette
+     * marka uretiliyordu ve **22'si copt**u (%52 dogruluk). Copun yarisindan
+     * fazlasi TEK bir kaynaktan geliyordu - her etikette basili duran yasal
+     * ibareler:
+     *
+     * | Uretilen "marka" | Kac kez |
+     * |---|---|
+     * | `MENSE ULKE:TURKYE` ve alti bozuk varyanti | 8 |
+     * | `FİYAT GEÇERLİLİK TARİHİ` / `FNAT DTARIHI` | 3 |
+     * | `Ürt. yeri:Türkiye` · `Gùvencesi` | 2 |
+     *
+     * Durdurma listesinden sonra: **36 marka, 24'u dogru (%66)** ve dogru
+     * markalarin HICBIRI kaybolmadi.
+     *
+     * ## Neden bunlar ad blogunun icine dusuyordu
+     *
+     * Konumlari DOGRU: sol sutunda, fiyatin ustunde, tam ad blogunun
+     * hizasinda. Ayirt edici olan konum degil metin - bu yuzden kural
+     * geometriye degil sozluge bakiyor.
+     */
+    @Test
+    fun tagBoilerplateNeverBecomesABrand() {
+        // Dordu de GERCEK olcumden: bu etiketlerin her biri once bir yasal
+        // ibareyi marka diye donduruyordu.
+        val vakalar = listOf(
+            "20260817_211234", // MENSE ULIKE:TURKYE
+            "20260817_211316", // Gùvencesi  (u-grave: OCR'in `ü` yerine bastigi)
+            "20260821_133226", // FİYAT GEÇERLİLİK TARİHİ
+            "20260821_133227", // Ürt. yeri:Türkiye
+        )
+        vakalar.forEach { ad ->
+            val ocr = TagFixtures.all[ad] ?: return@forEach
+            listOf("BİM", "A101").forEach { zincir ->
+                val marka = readTagFields(ocr, chainKey(zincir)).name?.brand.orEmpty()
+                assertTrue(
+                    BOILERPLATE_PROBE.none { marka.contains(it, ignoreCase = true) },
+                    "$ad [$zincir] yasal ibareyi marka yapti: $marka",
+                )
+            }
+        }
+    }
+
     /**
      * KAPI TOHUMLA AYNI SOZLUGU KULLANIYOR.
      *
@@ -160,3 +209,9 @@ class TagFieldsTest {
         assertEquals(24, priced, "BIM'de fiyat veren etiket sayisi degisti")
     }
 }
+
+/** Testin aradigi ibare parcalari - kuralin kendi kok listesinden BAGIMSIZ.
+ *
+ *  Ayni listeyi paylassalardi test kuralin dogru oldugunu degil kendisiyle
+ *  tutarli oldugunu gosterirdi. Buradakiler CIHAZDAN cikan metinler. */
+private val BOILERPLATE_PROBE = listOf("MENSE", "GEÇERLİLİK", "Ürt. yeri", "vencesi", "FNAT")

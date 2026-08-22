@@ -783,3 +783,50 @@ sıralama, silinmiş ürünün elenmesi. **449 test yeşil, sıfır uyarı.**
 
 Cihazda uçtan uca doğrulandı: anahtar açıldı → Ayarlar'da *"Önerilmeyenler ·
 Süt · [Geri al]"* göründü → geri alındı → bölüm kayboldu.
+
+---
+
+## Marka okuması ölçüldü: %52 → %66, ve çöpün yarısı tek bir kaynaktı
+
+**23 Ağustos 2026.** Kullanıcı *"çektiğim etiketlerin marka ve ürün kısmını hep
+ben elimle doldurdum"* diye şikâyet etmişti. Ölçüm **tur beklemeden** yapıldı —
+repodaki 99 gerçek etiket fikstürü zaten elde.
+
+`readTagFields` 99 fikstür üzerinde koşturuldu: **46 etikette marka
+üretiliyordu ve 22'si çöptü** (%52 doğruluk). Ve çöpün yarısından fazlası tek
+bir sınıftan geliyordu — **her etikette basılı duran yasal ibareler**:
+
+| Üretilen "marka" | Kaç kez |
+|---|---|
+| `MENSE ULKE:TURKYE` ve altı bozuk varyantı | **8** |
+| `FİYAT GEÇERLİLİK TARİHİ` / `FNAT DTARIHI` | 3 |
+| `Ürt. yeri:Türkiye` · `Gùvencesi` | 2 |
+
+### Neden ad bloğuna düşüyorlardı
+
+**Konumları doğru.** Sol sütunda, fiyatın üstünde, tam ad bloğunun hizasında.
+Geometriye bakan bir eleme bunları asla yakalayamaz — ayırt edici olan konum
+değil **metin**. Bu yüzden kural sözlüğe bakıyor.
+
+### Kök eşleniyor, gövde değil
+
+OCR aynı ibareyi sürekli başka türlü bozuyor: `MENSE ULIKE:TURKYE`,
+`MENSE ULKE.TURKYE`, `MENSEL`, `MENSE ULURKYE`. Tam metin karşılaştırması
+beşini yakalar, altısını kaçırırdı. Harf dışı her şey atılıyor, aksanlar
+katlanıyor, kalan dizginin **başı** kök listesine bakılıyor.
+
+Aksan katlaması Türkçe'den geniş tutuldu ve bu da ölçümden: `Güvencesi` cihazdan
+**`Gùvencesi`** diye çıkmıştı (u-grave, u-umlaut değil) ve yalnızca Türkçe
+harfleri katlayan bir eşleme onu kaçırdı.
+
+### Sonuç ve kalan
+
+**36 marka, 24'ü doğru (%66).** Doğru markaların hiçbiri kaybolmadı.
+
+Kalan 12 çöp **başka bir sınıf**: `orize`, `NUIK KREMIASI`, `Aklı Diş Etleri`,
+`Florürlü Dis Macunu` — bunlar rafın etiketi değil, **ürünün kendi ambalajı**
+okunuyor. Fotoğraf çerçevesi/geometri sorunu, sözlükle çözülmez.
+
+⚠ **Kök listesi kısa kök kabul etmiyor.** `MENSE` güvenli (Türkçe'de böyle
+başlayan ürün adı yok) ama `NET` olsaydı `NEKTAR` gibi meşru bir adı yerdi.
+Yeni kök eklenirken şart: kökü taşıyan bir **ürün adı düşünülemiyor** olmalı.
