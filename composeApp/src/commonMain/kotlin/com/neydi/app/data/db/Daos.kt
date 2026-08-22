@@ -351,12 +351,21 @@ interface TripLineDao {
 
             (SELECT po.unitPriceMinor FROM price_observation po
                 WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.storeId IS (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
                 ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPriceMinor,
             (SELECT po.packSize FROM price_observation po
                 WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.storeId IS (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
                 ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPackSize,
             (SELECT po.packUnit FROM price_observation po
                 WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.storeId IS (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
                 ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPackUnit,
 
             -- BASKA MARKETTE UCUZ (F5.5, karar 41): son gozlemin marketinden
@@ -378,6 +387,12 @@ interface TripLineDao {
                     AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
                         WHERE po2.productId = p.id AND po2.deletedAt IS NULL
                         ORDER BY po2.observedAt DESC LIMIT 1)
+                    -- ...VE O ZINCIRDEKI EN SON GOZLEM OLACAK (karar 78).
+                    AND po.observedAt = (SELECT MAX(po3.observedAt)
+                        FROM price_observation po3
+                        WHERE po3.productId = p.id AND po3.deletedAt IS NULL
+                          AND po3.storeId = po.storeId
+                          AND po3.observedAt >= :freshAfter)
                 ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPriceMinor,
             (SELECT s.name FROM price_observation po
                 LEFT JOIN store s ON s.id = po.storeId
@@ -387,6 +402,12 @@ interface TripLineDao {
                     AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
                         WHERE po2.productId = p.id AND po2.deletedAt IS NULL
                         ORDER BY po2.observedAt DESC LIMIT 1)
+                    -- ...VE O ZINCIRDEKI EN SON GOZLEM OLACAK (karar 78).
+                    AND po.observedAt = (SELECT MAX(po3.observedAt)
+                        FROM price_observation po3
+                        WHERE po3.productId = p.id AND po3.deletedAt IS NULL
+                          AND po3.storeId = po.storeId
+                          AND po3.observedAt >= :freshAfter)
                 ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalStoreName,
             (SELECT po.packSize FROM price_observation po
                 WHERE po.productId = p.id AND po.deletedAt IS NULL
@@ -395,6 +416,12 @@ interface TripLineDao {
                     AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
                         WHERE po2.productId = p.id AND po2.deletedAt IS NULL
                         ORDER BY po2.observedAt DESC LIMIT 1)
+                    -- ...VE O ZINCIRDEKI EN SON GOZLEM OLACAK (karar 78).
+                    AND po.observedAt = (SELECT MAX(po3.observedAt)
+                        FROM price_observation po3
+                        WHERE po3.productId = p.id AND po3.deletedAt IS NULL
+                          AND po3.storeId = po.storeId
+                          AND po3.observedAt >= :freshAfter)
                 ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPackSize,
             (SELECT po.packUnit FROM price_observation po
                 WHERE po.productId = p.id AND po.deletedAt IS NULL
@@ -403,6 +430,12 @@ interface TripLineDao {
                     AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
                         WHERE po2.productId = p.id AND po2.deletedAt IS NULL
                         ORDER BY po2.observedAt DESC LIMIT 1)
+                    -- ...VE O ZINCIRDEKI EN SON GOZLEM OLACAK (karar 78).
+                    AND po.observedAt = (SELECT MAX(po3.observedAt)
+                        FROM price_observation po3
+                        WHERE po3.productId = p.id AND po3.deletedAt IS NULL
+                          AND po3.storeId = po.storeId
+                          AND po3.observedAt >= :freshAfter)
                 ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPackUnit,
 
             -- Sparkline satirin ICINDE ciziliyor, yani gecmis de bu sorgudan

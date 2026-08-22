@@ -46,14 +46,19 @@ internal fun ListRowProjection.toPriceHint(now: Long, chipWins: Boolean = false)
 
     val fromPack = packLabel(prevPackSize, prevPackUnit)
     val toPack = packLabel(lastPackSize, lastPackUnit)
-    if (!comparablePack(prevPackSize, prevPackUnit, lastPackSize, lastPackUnit) &&
-        fromPack != null && toPack != null
-    ) {
-        return PriceHint.PackChanged(
-            fromPack = fromPack,
-            toPack = toPack,
-            note = formatChipMinor(last),
-        )
+    if (!comparablePack(prevPackSize, prevPackUnit, lastPackSize, lastPackUnit)) {
+        // IKISI DE BILINIYOR VE FARKLI -> ambalaj degisimi (karar 67).
+        if (fromPack != null && toPack != null) {
+            return PriceHint.PackChanged(
+                fromPack = fromPack,
+                toPack = toPack,
+                note = formatChipMinor(last),
+            )
+        }
+        // TAM OLARAK BIRI BILINIYOR -> hicbir iddia (karar 76). Ne "zam" ne
+        // "ambalaj degisti"; ikisi de ayni onermeye dayaniyor ve o onerme
+        // dogrulanamiyor. Satir ne odedigini soylemekle yetiniyor.
+        return single
     }
 
     // CIP KAZANIRSA TREND BASTIRILIYOR (karar 41). Ambalaj dali bunun USTUNDE
@@ -107,14 +112,27 @@ internal fun parseHistory(raw: String?): List<Float> =
  * `null` "ayni degil" demek degil, "bilmiyorum" demek. Bilinmeyenden ambalaj
  * degisimi cikarmak uydurma olurdu.
  *
- * ⚠ Ama bu, madalyonun oteki yuzunu acikta birakiyor: **bilinmeyenden trend
- * cikarmak da ayni uydurma.** Bir yanin ambalaji okunmus, oteki okunmamissa
- * (1,5 kg -> `null`) bugun trend dali cekinmeden yuzde yaziyor. Gercek
- * cihazda bu bir kez oldu: ayni markette bir dakika arayla cekilen iki farkli
- * boy yogurt *"%88 zam"* diye gorundu. Kural tasarima soruldu
- * (`docs/27-tasarima-sorular-12.md`); cevap gelince degisecek TEK yer burasi.
+ * ## DORT DURUM, VE UCUNCUSU ILE DORDUNCUSU AYNI DEGIL (karar 76)
  *
- * Cip bu gevsekligi PAYLASMIYOR - bkz. [provablySamePack].
+ * | Ambalajlar | Sonuc |
+ * |---|---|
+ * | ikisi biliniyor, ayni | trend |
+ * | ikisi biliniyor, farkli | `PackChanged` (karar 67) |
+ * | **ikisi de bilinmiyor** | trend - tarihsel taban, baska bilgi yok |
+ * | **tam olarak biri biliniyor** | **hicbir iddia yok**, satir `Single`a doner |
+ *
+ * Son satir bu turda eklendi ve gercek bir cihaz hatasindan geldi: ayni
+ * markette bir dakika arayla cekilen iki farkli boy yogurt (1,5 kg ve
+ * ambalaji okunamamis) *"↑ %88"* diye gorundu. Hicbir fiyat artmamisti.
+ *
+ * Tasarimin gerekcesi: *"«%88 zam» da «ambalaj değişti» de aynı önermeye
+ * dayanıyor: bu iki şey aynı boy. **Bilginin yarısı varken iddia kurmak, hiç
+ * yokken kurmaktan daha çok uydurma** — eldeki yarı, iddiayı çürütebilecek
+ * yarı."*
+ *
+ * Cip bu gevsekligi HIC paylasmiyor - bkz. [provablySamePack].
+ *
+ * @return `true` = karsilastirilabilir (trend kurulabilir).
  */
 internal fun comparablePack(
     aSize: Double?,
@@ -122,8 +140,12 @@ internal fun comparablePack(
     bSize: Double?,
     bUnit: String?,
 ): Boolean {
-    val a = packLabel(aSize, aUnit) ?: return true
-    val b = packLabel(bSize, bUnit) ?: return true
+    val a = packLabel(aSize, aUnit)
+    val b = packLabel(bSize, bUnit)
+    // TAM OLARAK BIRI BILINIYOR: karsilastirilamaz.
+    if ((a == null) != (b == null)) return false
+    // Ikisi de bilinmiyor: tarihsel taban, trend kurulabilir.
+    if (a == null) return true
     return a == b
 }
 
