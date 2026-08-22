@@ -10,6 +10,7 @@ import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.matchKey as matchKeyOf
 import com.neydi.app.data.store.chainKey as chainKeyOf
 import com.neydi.app.data.db.writeTagObservation
+import com.neydi.app.data.image.GuideBox
 import com.neydi.app.data.image.deleteFileAt
 import com.neydi.app.data.image.downscaleForOcr
 import com.neydi.app.data.ocr.TagFields
@@ -139,8 +140,11 @@ internal class TagCaptureViewModel(
      * Kartin beklememesi tasarimin sarti: kullanici deklansore basti, bir sey
      * gorunmek zorunda. Alanlar `reading = true` iken iskelet ciziliyor.
      */
-    fun onCaptured(photoPath: String) {
-        _state.value = _state.value.copy(card = ConfirmCard(photoPath = photoPath), failure = null)
+    fun onCaptured(photoPath: String, guide: GuideBox? = null) {
+        _state.value = _state.value.copy(
+            card = ConfirmCard(photoPath = photoPath, guide = guide),
+            failure = null,
+        )
         viewModelScope.launch {
             val chain = currentChain()
             val fields = runCatching { readFields(photoPath, chain) }.getOrNull()

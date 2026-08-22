@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.neydi.app.data.image.deleteFileAt
+import com.neydi.app.data.image.GuideBox
+import com.neydi.app.data.image.cropToGuide
 import com.neydi.app.data.image.downscaleForOcr
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readBytes
@@ -28,30 +30,31 @@ import io.github.vinceglb.filekit.readBytes
 private const val THUMB_EDGE = 720
 
 /**
- * Seridin yuksekligi.
+ * Seridin yuksekligi - MAKETIN SAYISI, ve artik turetilmis.
  *
- * ## Maket 92px diyor, cihaz 128 gosteriyor
+ * ## 92 -> 128 -> 92: sayinin degil KAYNAGIN hikayesi
  *
- * Maketin sayisi 92px ve ilk hali oydu. Ama o maket kirpimi bir YER TUTUCUYLA
- * cizmis - kutunun icinde *"etiketin kirpilmis goruntusu · gercek fotograf
- * bekleniyor"* yaziyor - yani 92px'in gercek bir etiketi gosterip
- * gostermedigi hic sinanmamis.
+ * Maket bastan beri `height:92px` diyordu. Ilk hali oydu ve cihazda kotu
+ * cikti: kullanici *"ustten kesiyor gibi"* diye bildirdi. Sebep yukseklik
+ * degildi - kirpim TAM KAREDEN MERKEZ kirpimla aliniyordu, yani serit
+ * kullanicinin kadraja oturttugu seyi degil karenin ortasini gosteriyordu.
+ * 128dp'ye cikarmak kesileni yariya indirdi ama yanlis kaynagi duzeltmedi;
+ * ustelik kartin dikey butcesinden caliyordu (karar 70'in sebebi).
  *
- * Sinandi: tam genislikte 92dp yaklasik 4:1 bir bant demek, oysa kadraj
- * rehberi 3:2. [ContentScale.Crop] merkezden aldigi icin etiketin ust ve alt
- * kenarlari kesiliyordu; kullanici bunu *"ustten kesiyor gibi"* diye bildirdi.
+ * Karar 74 asil duzeltmeyi onayladi: kirpim [cropToGuide] ile rehberin
+ * bolgesinden aliniyor. Kaynak dogru olunca serit maketin sayisina donebilir -
+ * *"92dp'nin isi taninabilirlik, belgeleme degil"*.
  *
- * 128dp yaklasik 3:1 - hala rehberin 1,5:1'inden uzak ama kesilen pay yariya
- * iniyor ve kart ekrana sigmaya devam ediyor. Rehberin oranini birebir vermek
- * 379dp genislikte ~250dp ederdi; o, karti ekrandan tasiran ilk denemenin ta
- * kendisiydi.
+ * Sozlesme oran degil KAYNAK: seridin gosterdigi piksel, kullanicinin kadraja
+ * oturttugu pikseldir. Bant 3:1, rehber 3:2 - fark artik zararsiz, cunku
+ * [ContentScale.Crop] dogru bolgenin ortasini aliyor ve fiyat etiketin
+ * merkezinde.
  *
- * KALICI COZUM BU DEGIL: dogrusu kucuk kopyayi cekerken REHBERIN BOLGESINDEN
- * kirpmak - o zaman serit ne kadar kisa olursa olsun gosterdigi sey tam olarak
- * kullanicinin kadraja oturttugu sey olur. Bunun icin rehberin karedeki
- * karsiligini hesaplamak gerekiyor (`PreviewView` FILL_CENTER) ve ayri bir is.
+ * ⚠ iOS'ta [cropToGuide] bugun her zaman `false` donuyor (Faz 9), yani orada
+ * serit hala merkez kirpimi ve 92dp'de daha cok kesiyor. Kabul edildi: iOS
+ * kabugu henuz yok.
  */
-private val STRIP_HEIGHT = 128.dp
+private val STRIP_HEIGHT = 92.dp
 
 /**
  * Cekilen karenin kartin BASINDAKI kirpimi (karar 62).
@@ -110,14 +113,21 @@ internal fun TagThumbnail(
     photoPath: String,
     modifier: Modifier = Modifier,
     collapsed: Boolean = false,
+    guide: GuideBox? = null,
 ) {
     val image by produceState<ImageBitmap?>(initialValue = null, photoPath) {
         value = runCatching {
             val thumbPath = thumbPathOf(photoPath)
             val source = PlatformFile(photoPath).readBytes()
+            // REHBER BOLGESINDEN KIRPIM, MERKEZDEN DEGIL (karar 74).
+            //
+            // Kirpim basarisiz olursa merkez kirpimina DUSULUYOR: yanlis
+            // yerden dogru bir serit, hic serit olmamasindan iyi. iOS'ta
+            // `cropToGuide` bugun her zaman false donuyor (Faz 9).
+            val cropped = guide != null && cropToGuide(source, thumbPath, guide, THUMB_EDGE)
             // KUCULTME BASARISIZ OLURSA KIRPIM CIZILMIYOR - ham kareyi cozmeye
             // kalkmaktansa yer bos kalsin. Kirpim bir dogrulama, bir vaat degil.
-            if (!downscaleForOcr(source, thumbPath, THUMB_EDGE)) return@runCatching null
+            if (!cropped && !downscaleForOcr(source, thumbPath, THUMB_EDGE)) return@runCatching null
             PlatformFile(thumbPath).readBytes().decodeToImageBitmap()
         }.getOrNull()
     }

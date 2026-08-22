@@ -9,10 +9,10 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro bilinçli olarak ertelendi. Fikstür seti **99 gerçek
-etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **409 test yeşil**,
+etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **415 test yeşil**,
 **sıfır derleyici uyarısı**.
 
-Tasarım kararları **46–74** kodlandı (74 hariç) (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
+Tasarım kararları **46–74** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
 **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -26,8 +26,7 @@ Tasarım kararları **46–74** kodlandı (74 hariç) (`11-tasarim-kararlari.md`
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **Karar 74 — kırpım rehber bölgesinden** | Onuncu turun tek uygulanmayan kararı; 128dp şerit tasarımın deyimiyle "geçici yama" ve kartın dikey bütçesinden çalıyor | — |
-| 1b | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi | A101'de bir çekim |
+| 1 | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi | A101'de bir çekim |
 | 2 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
 | 3 | **F6.5 — sabit terfisi + bastırma** | "Bunu önerme" listesinin giriş noktası | — |
 

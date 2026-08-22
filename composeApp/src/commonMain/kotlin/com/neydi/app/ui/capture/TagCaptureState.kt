@@ -2,6 +2,7 @@ package com.neydi.app.ui.capture
 
 import com.neydi.app.data.db.CatalogSeed
 import com.neydi.app.data.db.Store
+import com.neydi.app.data.image.GuideBox
 import com.neydi.app.data.ocr.SUPPORTED_CHAINS
 import com.neydi.app.data.ocr.TagSkip
 
@@ -133,6 +134,14 @@ internal data class ConfirmCard(
      */
     val packSize: Double? = null,
     val packUnit: String? = null,
+    /**
+     * Cekim anindaki kadraj rehberi - seridin KAYNAGI (karar 74).
+     *
+     * Serit karenin merkezinden degil, kullanicinin kadraja oturttugu yerden
+     * kirpiliyor. `null` = olculemedi; serit o zaman merkez kirpimla ciziliyor
+     * (eski davranis) - bos kalmasindansa yanlis yerden dogru.
+     */
+    val guide: GuideBox? = null,
     /** Okuyucu neden sustu - amber seridin cumlesi buna dayaniyor. */
     val skipped: TagSkip? = null,
 ) {

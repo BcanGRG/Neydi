@@ -94,7 +94,7 @@ actual suspend fun downscaleForOcr(
  * kurucu API 24'ten beri var (minSdk 26). AndroidX surumu daha genis bicim
  * destegi icin duruyor, burada karsiligi olmayan bir bagimlilik olurdu.
  */
-private fun orientationOf(source: ByteArray): Int = runCatching {
+internal fun orientationOf(source: ByteArray): Int = runCatching {
     ExifInterface(ByteArrayInputStream(source))
         .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
 }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
@@ -107,7 +107,7 @@ private fun orientationOf(source: ByteArray): Int = runCatching {
  * cekimi arka kamerayla yapiliyor ama bu fonksiyonun girdisi galeriden de
  * gelebilir.
  */
-private fun Matrix.applyExifOrientation(orientation: Int) {
+internal fun Matrix.applyExifOrientation(orientation: Int) {
     when (orientation) {
         ExifInterface.ORIENTATION_ROTATE_90 -> postRotate(90f)
         ExifInterface.ORIENTATION_ROTATE_180 -> postRotate(180f)
