@@ -247,20 +247,98 @@ class ListPriceHintTest {
     }
 
     /**
-     * AMBALAJI BILINMEYEN gozlem "degisti" SAYILMIYOR.
+     * TAM OLARAK BIRI BILINIYORSA HICBIR IDDIA YOK (karar 76).
      *
-     * `null` "ayni degil" demek degil, "bilmiyorum" demek - ve bilmediginden
-     * zam cikarmak uydurma olurdu. Etiketlerin cogunda gramaj okunamiyor
-     * (`docs/18`), yani bu dal nadir degil.
+     * BEKLENTI DEGISTI ve degismesi dogru cozumdu. Once `Trend` bekliyordu:
+     * `null` "bilmiyorum" demek oldugu icin ambalaj degisimi iddia
+     * edilmiyordu - ama TREND iddia ediliyordu. Cihazda bunun bedeli goruldu:
+     * ayni markette bir dakika arayla cekilen iki farkli boy yogurt satirda
+     * *"↑ %88"* diye gorundu; hicbir fiyat artmamisti.
+     *
+     * Karar 76: *"Bilginin yarısı varken iddia kurmak, hiç yokken kurmaktan
+     * daha çok uydurma."*
      */
     @Test
-    fun anUnknownPackIsNotAPackChange() = runTest {
+    fun exactlyOneKnownPackMakesNoClaimAtAll() = runTest {
         val (db, trip) = setup()
         val p = lineFor(db, trip, "Zeytin")
         observe(db, p, 5_000, at = now - 30 * day, packSize = 900.0, packUnit = "gr", id = "a")
         observe(db, p, 6_000, at = now - day, id = "b")
 
+        val hint = assertIs<PriceHint.Single>(hintFor(db, trip, p))
+        assertEquals("60,00", hint.price)
+    }
+
+    /**
+     * IKISI DE BILINMIYORSA TREND DURUYOR - tarihsel taban (karar 76).
+     *
+     * Ustteki testin AYNASI; ikisi birlikte kurali tanimliyor. Tek basina
+     * ustteki "ambalaj bilinmiyorsa hic trend yok" gibi de okunabilirdi ve o
+     * kural, etiketlerin cogunda gramaj okunamadigi icin (`docs/18`) trendi
+     * neredeyse tamamen oldururdu.
+     */
+    @Test
+    fun twoUnknownPacksStillMakeATrend() = runTest {
+        val (db, trip) = setup()
+        val p = lineFor(db, trip, "Kavanoz")
+        observe(db, p, 5_000, at = now - 30 * day, id = "a")
+        observe(db, p, 6_000, at = now - day, id = "b")
+
         assertIs<PriceHint.Trend>(hintFor(db, trip, p))
+    }
+
+
+    /**
+     * TREND AYNI ZINCIRIN CUMLESIDIR (karar 77).
+     *
+     * Cihazda goruldu: ayni gun A101 36,00 ve BIM 62,50 cekilen sut satiri
+     * *"↑ %74"* yazdi - hicbir fiyat artmamisti, iki ayri zincirdi. `prev`
+     * "zamanda bir onceki gozlem"di ve zincir sarti yoktu.
+     *
+     * Karar 41 ikisini zaten ayirmisti: trend *"geçen ay 38,50'ydi"*, ayni
+     * yerin zaman cumlesi; cip *"A101'de 36,00"*, yerler arasi fark. Farkli
+     * zincirlerden kurulan yuzde gercek zamla magaza farkini tek sayiya eziyor.
+     *
+     * Bedeli (zincir degistirende trend seyreklesir) DOGRU yonde: iddia
+     * dayanaksizsa cumle kurulmaz.
+     */
+    @Test
+    fun theTrendIsBuiltFromTheSameChain() = runTest {
+        val (db, trip) = setup()
+        db.storeDao().insert(
+            Store(id = "s-a101", householdId = home, name = "A101", chain = "a101", createdAt = 0),
+        )
+        val p = lineFor(db, trip, "Süt")
+        observe(db, p, 3_600, at = now - 2 * day, store = "s-a101", id = "a")
+        observe(db, p, 6_250, at = now - day, store = "s-bim", id = "b")
+
+        // BIM'de tek gozlem var -> trend kurulamiyor, satir ne odedigini soyluyor.
+        val hint = assertIs<PriceHint.Single>(hintFor(db, trip, p))
+        assertEquals("BİM", hint.store)
+    }
+
+    /**
+     * AYNI ZINCIRDE IKI GOZLEM VARSA TREND KURULUYOR.
+     *
+     * Ustteki testin aynasi: karar 77 trendi oldurmuyor, KAYNAGINI
+     * daraltiyor. Tek basina ustteki, "iki zincir varsa trend hic yok" gibi
+     * de okunabilirdi.
+     */
+    @Test
+    fun twoObservationsAtTheSameChainStillMakeATrend() = runTest {
+        val (db, trip) = setup()
+        db.storeDao().insert(
+            Store(id = "s-a101", householdId = home, name = "A101", chain = "a101", createdAt = 0),
+        )
+        val p = lineFor(db, trip, "Süt")
+        observe(db, p, 9_900, at = now - 3 * day, store = "s-a101", id = "x")
+        observe(db, p, 3_600, at = now - 2 * day, store = "s-bim", id = "a")
+        observe(db, p, 6_250, at = now - day, store = "s-bim", id = "b")
+
+        val hint = assertIs<PriceHint.Trend>(hintFor(db, trip, p))
+        // Onceki BIM gozlemi 36,00 - A101'in 99,00'i ARADAN atlaniyor.
+        assertEquals("36,00", hint.from)
+        assertEquals("62,50", hint.to)
     }
 
     /**

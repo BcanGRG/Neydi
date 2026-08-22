@@ -909,3 +909,54 @@ içindeki *"Etiket kadraja otursun."* metni ekranın altına düşüyordu.
 Rehberi kısa kenardan bağladık (yatayda yükseklikten). Cihazda ipucu metni
 y=1051'den y=693'e çıktı, yani ekrana girdi. **Bu seçim bizim, tasarımın
 değil** — `docs/32`'de soruldu.
+
+---
+
+## Kararlar 76–101 geldi — on altıncı tur
+
+**23 Ağustos 2026.** Tasarım altı dosyanın hepsini cevapladı: **25 yeni karar
+(76–100)**, artı 41/55/56/61'e güncelleme notu, artı gecikmeli gelen **101**.
+Otuz dört sorunun otuz dördü cevaplı.
+
+### Bu turda kodlananlar: 76 · 77 · 78
+
+**Karar 76 — trend tek taraflı bilinmezlikte susar.** Dört durum tamamlandı:
+
+| Ambalajlar | Sonuç |
+|---|---|
+| ikisi biliniyor, aynı | trend |
+| ikisi biliniyor, farklı | `PackChanged` (karar 67) |
+| ikisi de bilinmiyor | trend — tarihsel taban |
+| **tam olarak biri biliniyor** | **hiçbir iddia**, satır `Single`'a döner |
+
+Gerekçe tasarımın: *"«%88 zam» da «ambalaj değişti» de aynı önermeye dayanıyor:
+bu iki şey aynı boy. **Bilginin yarısı varken iddia kurmak, hiç yokken
+kurmaktan daha çok uydurma** — eldeki yarı, iddiayı çürütebilecek yarı."*
+
+Çipin "kanıtlı aynı ambalaj" şartı **koddaki katı hâliyle onaylandı** —
+`null` yetmez.
+
+**Karar 77 — trend aynı zincirin cümlesi.** `prev` artık "zamanda bir önceki"
+değil, **son gözlemin zincirinden bir önceki**. O zincirde tek gözlem varsa
+satır `Single`. Cihazdaki Süt satırı (A101 36,00 → BİM 62,50, *"↑ %74"*)
+kendiliğinden düzeldi.
+
+Çip bastırması (karar 41) duruyor ama **artık tesadüfe yaslanmıyor**: eskiden
+Süt satırı yalnızca 3 çip sınırının içinde kaldığı için doğruydu.
+
+**Karar 78 — çip en son gözlemi söyler.** Eskiden 14 günlük penceredeki *en
+ucuz* karşı gözlemi yazıyordu; A101'de üç taze gözlem varken (36 · 40 · 44)
+çip **36,00** diyordu — görülmüş en iyi fiyat, güncel değil.
+
+Seçim artık **iki katmanlı**: önce her rakip zincirin *en son* gözlemi, sonra
+onların arasından *en ucuzu*. Tek katmanlı bir sıralama iki rakip zincirde
+yanlış cevap verirdi — testi de o vakayı kuruyor.
+
+**Karar 79** kodun davranışını onayladı (çip yalnız plan modunda); karar 41'in
+*"reyonda"* cümlesi gerekçeden düştü.
+
+### Kalan kod işleri
+
+80–86 (satır bütçesi), 87–88 (F6.5 metinleri), 89–92 (ekleme geri bildirimi),
+93–94 (focusRing + amber), 95–96 (tahmin), 98–100 (yatay), 101 (kategori tonu
+silinir — şema kolonu, v7 bump'ı gerekiyor). 97 yol haritasına yazıldı.

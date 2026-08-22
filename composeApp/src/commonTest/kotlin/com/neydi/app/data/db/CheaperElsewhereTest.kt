@@ -131,6 +131,49 @@ class CheaperElsewhereTest {
         assertEquals("BİM", hint.store)
     }
 
+
+    /**
+     * CIP RAKIP ZINCIRIN EN SON GOZLEMINI YAZAR - en ucuzunu degil (karar 78).
+     *
+     * Once 14 gunluk penceredeki en ucuz gozlem yaziliyordu: A101'de uc taze
+     * gozlem varken (36 - 40 - 44) cip "36,00" diyordu, yani GORULMUS EN IYI
+     * fiyati. Ama cip tarihsiz bir iddia ve reyonda "bugunku fiyat" gibi
+     * okunuyor; gidip pahali bulan kullanici cipe bir daha inanmaz.
+     */
+    @Test
+    fun theChipQuotesTheRivalChainsMostRecentPrice() = runTest {
+        val (db, trip) = setup()
+        val p = lineFor(db, trip, "Kahve")
+        observe(db, p, 3_600, at = now - 5 * day, store = "s-a101")
+        observe(db, p, 4_000, at = now - 4 * day, store = "s-a101")
+        observe(db, p, 4_400, at = now - 3 * day, store = "s-a101") // EN SON
+        observe(db, p, 9_900, at = now - day, store = "s-bim")
+
+        assertEquals("A101'de 44,00", rows(db, trip).getValue("Kahve").row.cheaperElsewhere)
+    }
+
+    /**
+     * IKI RAKIP ZINCIR VARSA: her birinin EN SONU alinir, aralarindan EN UCUZU.
+     *
+     * Karar 78'in ikinci cumlesi. Tek katmanli bir siralama (butun rakip
+     * gozlemler icinde en son) SOK'un 90,00'ini secerdi - oysa A101'in bilinen
+     * son hali 50,00 ve ucuz olan o.
+     */
+    @Test
+    fun amongRivalChainsTheCheapestOfTheirLatestWins() = runTest {
+        val (db, trip) = setup()
+        db.storeDao().insert(
+            Store(id = "s-sok", householdId = home, name = "ŞOK", chain = "sok", createdAt = 0),
+        )
+        val p = lineFor(db, trip, "Çay")
+        observe(db, p, 3_000, at = now - 6 * day, store = "s-a101")
+        observe(db, p, 5_000, at = now - 5 * day, store = "s-a101") // A101'in en sonu
+        observe(db, p, 9_000, at = now - 2 * day, store = "s-sok") // SOK'un en sonu (daha yeni)
+        observe(db, p, 20_000, at = now - day, store = "s-bim")
+
+        assertEquals("A101'de 50,00", rows(db, trip).getValue("Çay").row.cheaperElsewhere)
+    }
+
     /**
      * YUZDE GECIYOR AMA TL GECMIYOR: cip yok.
      *
