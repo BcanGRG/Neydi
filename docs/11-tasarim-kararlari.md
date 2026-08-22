@@ -548,3 +548,47 @@ sayısal klavye tek yerde, amber dolgu kart paletinin kendi şeridinde.
 Boş durum atlasının **05 karesi** Ürün Detayı'nda üç satır çiziyor — *Her
 zamankilere ekle · **Bunu önerme** · Listeden çıkar*. Kodda ikisi var; cihazda
 doğrulandı. F6.5 olarak yol haritasında ve **sıradaki iş**.
+
+---
+
+## On birinci tur — karar 75 · fiyat alanında hane seçimi
+
+`docs/26`'nın tek sorusu **gevşetilerek** cevaplandı. Gerekçe bizim
+gözlemimizin aynısı:
+
+> *"Yüz kat hata **ayracın yokluğundan** doğuyordu, haneye dokunmaktan değil —
+> ayraç sabit kaldıkça karar 73'ün koruduğu şey bozulmuyor."*
+
+### Kural
+
+Dokunuş en yakın haneye **tek atımlık** seçim koyuyor (hane altında 2dp
+çizgi); yazılan rakam **yalnız o haneyi** değiştiriyor, uzunluk sabit kalıyor,
+seçim düşüyor. **Seçim ilerlemiyor** — ikinci hane ikinci dokunuş ister.
+
+Seçim yokken her şey karar 73. **İki kural çakışmıyor çünkü tetikleyicileri
+ayrık:** sıfırlama yalnızca *seçimsiz* ilk rakamda.
+
+### Uygulamada iki şey ölçümle öğrenildi
+
+**1 · Dokunuş `Initial` geçişte, tüketilmeden dinleniyor.** İlk hali
+`detectTapGestures` kullanıyordu ve cihazda **hiç ateşlenmedi**: `450,99`da
+5'e dokunup 6 yazmak `4.509,96` verdi — dokunuş sessizce karar 73'e düştü.
+Sebep sıra: `BasicTextField` kendi dokunuş işleyicisini **içeride** kuruyor ve
+Main geçişinde önce o görüp tüketiyor. Initial geçiş dışarıdan içeriye aktığı
+için önce biz görüyoruz; tüketmediğimiz için alan odağını ve imlecini normal
+alıyor.
+
+**2 · Hane, imleçten değil dokunuşun x'inden çözülüyor.** `TextFieldValue`
+imleci bir **sınır** veriyor — iki hane arası — ve hangi glife dokunulduğu
+ondan çıkmıyor: `450,99`da 5'in soluna dokunmakla sağına dokunmak aynı sınırı
+verip farklı haneleri kastediyor. Glifin kutusu (`getBoundingBox`) tam cevap
+veriyor; tasarımın gerekçesi de bunu varsayıyor (*"tnum hane konumlarını
+sabitliyor"*).
+
+### Baştaki sıfır atılmıyor
+
+`450` (4,50) için baş hane `0` yapılırsa değer `050` olmalı, `50` değil —
+yoksa kullanıcı tek hane değiştirdiğini sanırken fiyat 0,50'ye düşer.
+`trimStart('0')` bu dalda **bilerek** uygulanmıyor.
+
+**Cihazda doğrulandı:** `450,99` → 5'e dokun → `6` → **`460,99`**.

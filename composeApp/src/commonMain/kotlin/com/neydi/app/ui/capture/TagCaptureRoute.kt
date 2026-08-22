@@ -107,6 +107,7 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
         },
         onSelectStore = vm::selectStore,
         onPriceChange = vm::editPrice,
+        onSelectDigit = vm::selectPriceDigit,
         onSave = vm::save,
         onToastShown = vm::toastShown,
         onFailureShown = vm::failureShown,

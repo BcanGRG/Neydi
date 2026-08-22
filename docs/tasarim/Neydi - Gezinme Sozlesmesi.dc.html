@@ -482,7 +482,7 @@ class Component extends DCLogic {
       ],
       inputRules: [
         { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Metin girişi dört yerde: kök hızlı yazma alanı (karar 64) ve üç arama alanı — keşif sheet'i, ürün seçici, market seçici. Marka seçicide arama yok, liste kısa." },
-        { name: "Sağdan dolum", rule: "Fiyat alanı yazar kasa gibi sağdan dolar: 3 → 0,03 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler; dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır, boşalan alan — TL hâline döner (karar 73)." },
+        { name: "Sağdan dolum", rule: "Fiyat alanı yazar kasa gibi sağdan dolar: 3 → 0,03 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler; dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır, boşalan alan — TL hâline döner (karar 73). Dokunuş en yakın haneye tek atımlık seçim koyar: yazılan rakam yalnız o haneyi değiştirir, uzunluk sabit, seçim düşer; ayraç sabit — taşınamaz, silinemez. Sıfırlama yalnız seçimsiz ilk rakamda (karar 75)." },
         { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Kök alanın klavyesini ekran değil kullanıcının Ekle dokunuşu açar. Tek istisna: fiyatı okunamamış onay kartı." },
         { name: "Dokunma hedefi", rule: "En küçük hedef 48dp. Alışveriş modunda satır 72dp, çünkü yürürken dokunuluyor." },
         { name: "Haptik", rule: "Üç olay: işaretlemede hafif tık, çekimde hafif darbe, kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },

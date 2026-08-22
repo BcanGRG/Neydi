@@ -288,6 +288,9 @@ internal class TagCaptureViewModel(
 
     fun editPrice(raw: String) = updateCard { it.withPriceInput(raw) }
 
+    /** Dokunulan haneyi secer - tek atimlik (karar 75). */
+    fun selectPriceDigit(index: Int?) = updateCard { it.withPriceSelection(index) }
+
     fun editProductName(text: String) = updateCard { it.copy(productName = text) }
 
     /** Karti kapatir ve kareyi siler - saklanmayan fotograf saklanmamali. */

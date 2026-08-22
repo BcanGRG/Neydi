@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -31,6 +33,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +51,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -55,6 +60,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.OffsetMapping
@@ -109,6 +115,7 @@ internal fun TagCaptureScreen(
     onShutter: (GuideBox) -> Unit,
     onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
+    onSelectDigit: (Int?) -> Unit,
     onOpenPicker: (TagPicker) -> Unit,
     onClosePicker: () -> Unit,
     onPickProduct: (String) -> Unit,
@@ -232,6 +239,7 @@ internal fun TagCaptureScreen(
                 saving = state.saving,
                 today = today,
                 onPriceChange = onPriceChange,
+                onSelectDigit = onSelectDigit,
                 onOpenPicker = onOpenPicker,
                 onSave = onSave,
                 onDismiss = onDismissCard,
@@ -496,6 +504,7 @@ private fun BoxScope.ConfirmCardLayer(
     saving: Boolean,
     today: String,
     onPriceChange: (String) -> Unit,
+    onSelectDigit: (Int?) -> Unit,
     onOpenPicker: (TagPicker) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
@@ -607,7 +616,7 @@ private fun BoxScope.ConfirmCardLayer(
                 if (card.reading) {
                     Skeleton(width = 160.dp, height = 38.dp)
                 } else {
-                    PriceField(card = card, onPriceChange = onPriceChange)
+                    PriceField(card = card, onPriceChange = onPriceChange, onSelectDigit = onSelectDigit)
                 }
                 card.missingFieldMessage()?.let { message ->
                     Text(
@@ -737,7 +746,11 @@ private fun BoxScope.ConfirmCardLayer(
  * gosteriyor.
  */
 @Composable
-private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
+private fun PriceField(
+    card: ConfirmCard,
+    onPriceChange: (String) -> Unit,
+    onSelectDigit: (Int?) -> Unit,
+) {
     val focusRequester = remember { FocusRequester() }
     // ACILIS HALI SAKLANIYOR: sart "su an bos" degil, "BOS ACILDI".
     val openedEmpty = remember { card.priceMinor == 0L }
@@ -745,10 +758,41 @@ private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
         if (openedEmpty) focusRequester.requestFocus()
     }
     val digits = card.priceDigits()
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+
     BasicTextField(
         value = digits,
         onValueChange = onPriceChange,
-        modifier = Modifier.focusRequester(focusRequester),
+        modifier = Modifier
+            .focusRequester(focusRequester)
+            // HANE SECIMI DOKUNUSUN X'INDEN, IMLECTEN DEGIL (karar 75).
+            //
+            // `TextFieldValue.selection` bir SINIR veriyor - iki hane arasi -
+            // ve hangi hanenin glifine dokunuldugu ondan cikmiyor: `450,99`da
+            // 5'in soluna dokunmakla sagina dokunmak ayni siniri verip farkli
+            // haneler kastediyor. Yaridan fazla vaka yanlis haneyi secerdi.
+            //
+            // Glifin KUTUSU tam cevap veriyor. Yedi hanelik bir alanda dongu
+            // bedava; tasarimin gerekcesi de bunu varsayiyor (*"tnum hane
+            // konumlarini sabitliyor"*).
+            //
+            // OLAY **INITIAL** GECISTE, TUKETILMEDEN dinleniyor.
+            //
+            // Cihazda goruldu: `detectTapGestures` hic atesleneMEdi ve dokunus
+            // sessizce karar 73'e dustu - `450,99`da 5'e dokunup 6 yazmak
+            // 4.509,96 verdi. Sebep sira: `BasicTextField` kendi dokunus
+            // isleyicisini ICERIDE kuruyor ve Main gecisinde once o gorup
+            // tuketiyor, disaridaki jest hicbir zaman sirasini alamiyor.
+            //
+            // Initial gecis disaridan iceriye akiyor, yani once biz goruyoruz;
+            // tuketmedigimiz icin alan da odagini ve imlecini normal aliyor.
+            .pointerInput(digits) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                    onSelectDigit(digitAt(layout, digits, down.position.x))
+                }
+            },
+        onTextLayout = { layout = it },
         textStyle = MaterialTheme.typography.displayLarge.copy(color = Flow.text),
         singleLine = true,
         cursorBrush = SolidColor(Flow.amber),
@@ -765,10 +809,63 @@ private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
                     color = Flow.label,
                 )
             }
-            inner()
+            Box(
+                // SECILI HANENIN ALTINDA 2dp CIZGI (karar 75) - dolgu degil.
+                //
+                // Secim bir HAL degil bir NISAN: bir sonraki rakam nereye
+                // gidecek onu soyluyor ve tek atimda dusuyor. Dolgulu bir
+                // vurgulama kaliciymis gibi durur; ince cizgi durmaz.
+                Modifier.drawBehind {
+                    val at = card.priceSelection ?: return@drawBehind
+                    val box = digitBox(layout, digits, at) ?: return@drawBehind
+                    drawRect(
+                        color = Flow.amber,
+                        topLeft = Offset(box.first, size.height - SELECTION_BAR_PX),
+                        size = Size(box.second - box.first, SELECTION_BAR_PX),
+                    )
+                },
+            ) {
+                inner()
+            }
         },
     )
 }
+
+/**
+ * Dokunulan x'in hangi haneye dustugu - yoksa `null` (karar 75).
+ *
+ * Ayraca dokunmak SECIM YAPMIYOR: ayrac alanda sabit ve secilebilir bir sey
+ * degil. Aradaki bosluga dokunmak da secimi dusuruyor - kullanici bir hane
+ * kastetmediyse bir hane secilmemeli.
+ */
+private fun digitAt(layout: TextLayoutResult?, digits: String, x: Float): Int? {
+    digits.indices.forEach { i ->
+        val box = digitBox(layout, digits, i) ?: return null
+        if (x >= box.first && x <= box.second) return i
+    }
+    return null
+}
+
+/**
+ * Hanenin GORUNEN kutusunun yatay sinirlari - hane indeksinden.
+ *
+ * Hane dizisi ile gorunen metin ayni degil: `45099` ekranda `450,99` ve
+ * ayrac son iki hanenin ONUNE giriyor. Esleme bu tek kaydirmadan ibaret.
+ */
+private fun digitBox(layout: TextLayoutResult?, digits: String, index: Int): Pair<Float, Float>? {
+    val result = layout ?: return null
+    if (index !in digits.indices) return null
+    // AYRACIN YERI: son iki hane kurus, virgul onlarin onunde.
+    val shownIndex = if (index < digits.length - 2) index else index + 1
+    if (shownIndex >= result.layoutInput.text.length) return null
+    return runCatching {
+        val box = result.getBoundingBox(shownIndex)
+        box.left to box.right
+    }.getOrNull()
+}
+
+/** Secim nisaninin kalinligi - tasarim 2dp diyor. */
+private const val SELECTION_BAR_PX = 5f
 
 /**
  * Hane dizisini para gibi cizer: `3950` -> `39,50` (karar 73).
@@ -994,7 +1091,7 @@ private fun TagCaptureCameraPreview() = NeydiPreview {
         onToggleFlash = {}, onOpenSettings = {},
         onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
         onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
-        onDeleteStore = {},
+        onDeleteStore = {}, onSelectDigit = {},
     )
 }
 
@@ -1020,7 +1117,7 @@ private fun TagCaptureCardPreview() = NeydiPreview {
         onToggleFlash = {}, onOpenSettings = {},
         onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
         onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
-        onDeleteStore = {},
+        onDeleteStore = {}, onSelectDigit = {},
     )
 }
 
@@ -1043,7 +1140,7 @@ private fun TagCaptureUnreadChainPreview() = NeydiPreview {
         onToggleFlash = {}, onOpenSettings = {},
         onOpenPicker = {}, onClosePicker = {}, onPickProduct = {}, onSearchProducts = {},
         onPickBrand = {}, onSearchStores = {}, onProposeStore = {}, onConfirmNewStore = {},
-        onDeleteStore = {},
+        onDeleteStore = {}, onSelectDigit = {},
     )
 }
 

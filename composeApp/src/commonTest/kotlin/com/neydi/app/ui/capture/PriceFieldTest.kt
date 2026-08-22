@@ -116,6 +116,90 @@ class PriceFieldTest {
         assertEquals(9_999_999L, card.priceMinor)
     }
 
+    // --- KARAR 75 · hane secimi -------------------------------------------
+
+    /**
+     * KULLANICININ KENDI ORNEGI: `450,99` -> `460,99`.
+     *
+     * *"5'in oraya dokunup onu 6 yapabilmeliyim."* Karar 73 doneminde bu bes
+     * tusluk yeniden yazimdi (`4-6-0-9-9`) ve kararin kabul ettigi sinirin tam
+     * ucundaydi; karar 75 tek dokunus + tek tusa indirdi.
+     */
+    @Test
+    fun tappingADigitAndTypingReplacesOnlyThatDigit() {
+        val card = empty.copy(priceMinor = 45_099L)
+        val edited = card.withPriceSelection(1).withPriceInput("450996")
+        assertEquals(46_099L, edited.priceMinor)
+    }
+
+    /** Uzunluk SABIT kaliyor - hane degisiyor, deger on kata kaymiyor. */
+    @Test
+    fun replacingADigitKeepsTheLength() {
+        val card = empty.copy(priceMinor = 45_099L)
+        assertEquals(5, card.withPriceSelection(3).withPriceInput("4509 91").priceDigits().length)
+    }
+
+    /**
+     * BASTAKI HANE SIFIRLANABILIYOR ve deger on kata BOLUNMUYOR.
+     *
+     * `450` (4,50) icin bas hane `0` yapilirsa `050` olmali, `50` degil -
+     * yoksa kullanici tek hane degistirdigini sanirken fiyat 0,50'ye duser.
+     * `trimStart('0')` bu dalda bilerek uygulanmiyor.
+     */
+    @Test
+    fun zeroingTheLeadingDigitDoesNotShiftTheValue() {
+        val card = empty.copy(priceMinor = 450L)
+        val edited = card.withPriceSelection(0).withPriceInput("4500")
+        assertEquals(50L, edited.priceMinor, "0,50 bekleniyordu")
+        assertEquals(0, edited.priceMinor.toString().length - 2, "kurus haneleri korunmali")
+    }
+
+    /**
+     * SECIM TEK ATIMLIK ve ILERLEMIYOR - ikinci hane ikinci dokunus ister.
+     *
+     * Ilerleseydi ustteki hanede bir tus fazlasi degeri on kat kaydirirdi.
+     * Ikinci rakam secimsiz geldigi icin karar 73'e dusuyor.
+     */
+    @Test
+    fun theSelectionIsSingleShotAndDoesNotAdvance() {
+        val card = empty.copy(priceMinor = 45_099L).withPriceSelection(1)
+        val once = card.withPriceInput("450996")
+        assertEquals(null, once.priceSelection, "secim dusmeliydi")
+        // Ikinci rakam artik karar 73: secimsiz, dolu alan, DOKUNULMUS ->
+        // sifirlama yok, sagdan ekleme.
+        assertEquals(460_997L, once.withPriceInput("460997").priceMinor)
+    }
+
+    /**
+     * SECIM VARKEN "dolu alanda ilk rakam sifirlar" KURALI CALISMIYOR.
+     *
+     * Iki kural ayni anda tanimli olamaz; tasarim tetikleyicileri ayirdi:
+     * sifirlama yalnizca SECIMSIZ ilk rakamda.
+     */
+    @Test
+    fun selectionSuppressesTheRestartRule() {
+        val ocr = empty.copy(priceMinor = 2_490L)          // dokunulmamis
+        assertEquals(3L, ocr.withPriceInput("24903").priceMinor, "secimsiz: sifirlar")
+        assertEquals(2_493L, ocr.withPriceSelection(3).withPriceInput("24903").priceMinor)
+    }
+
+    /** Silme secimi dusuruyor - geri tusu bir hane secimi degil. */
+    @Test
+    fun backspaceClearsTheSelection() {
+        val card = empty.copy(priceMinor = 45_099L).withPriceSelection(2)
+        val after = card.withPriceInput("4509")
+        assertEquals(null, after.priceSelection)
+        assertEquals(4_509L, after.priceMinor)
+    }
+
+    /** Alan disi ya da bos alanda secim TUTMUYOR - secilecek hane yok. */
+    @Test
+    fun anOutOfRangeSelectionIsRefused() {
+        assertEquals(null, empty.copy(priceMinor = 450L).withPriceSelection(9).priceSelection)
+        assertEquals(null, empty.withPriceSelection(0).priceSelection, "bos alanda hane yok")
+        assertEquals(null, empty.copy(priceMinor = 450L).withPriceSelection(null).priceSelection)
+    }
+
     /** Ilk duzenleme kurus uyarisini susturuyor (karar 72) - tek tusla bile. */
     @Test
     fun theFirstKeyMarksTheFieldTouched() {
