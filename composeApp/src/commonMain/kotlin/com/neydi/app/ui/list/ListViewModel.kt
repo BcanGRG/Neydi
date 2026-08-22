@@ -548,13 +548,11 @@ class ListViewModel(
      */
     fun addFromDiscovery(item: DiscoveryItem) {
         addInternal(item.name, categoryId = null, unit = item.unit, count = 1.0)
-        _sheetAddedCount.value += 1
     }
 
     /** Arama sonucundan ekleme: kategori ve birim katalogdan geliyor. */
     fun addFromSheet(seed: CatalogSeed) {
         addInternal(seed.name, seed.categoryId, seed.defaultUnit, 1.0)
-        _sheetAddedCount.value += 1
     }
 
     // --- Sepet tahmini + ozet (F3.8) ---------------------------------------
@@ -873,6 +871,19 @@ class ListViewModel(
      */
     private fun signalAdded(line: TripLine) {
         _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
+        // SAYAC BURADA ARTIYOR, cagiranda DEGIL.
+        //
+        // Once iki cagiran (`addFromDiscovery`, `addFromSheet`) sayaci
+        // SENKRON artiriyordu; ekleme ise coroutine icinde ve sessizce
+        // basarisiz olabiliyor (uye okunamadi, gezi acilamadi). Yani sheet
+        // sifir satir eklenmisken *"3 ürün eklendi"* yazabiliyordu - sheet
+        // acikken kullanicinin listeyi GOREMEDIGI, yani sayaca mecbur
+        // oldugu yerde.
+        //
+        // Burada artmasi ayrica kurali cagiranlardan bagimsiz kiliyor: yeni
+        // bir ekleme yolu sheet'ten acilirsa sayaci ayrica artirmayi
+        // unutmak diye bir sey kalmiyor.
+        if (_sheetOpen.value) _sheetAddedCount.value += 1
     }
 
     /** Serbest metinden ekle: "2 kg elma" gibi. */

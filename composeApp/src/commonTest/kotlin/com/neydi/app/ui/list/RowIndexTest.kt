@@ -100,4 +100,40 @@ class RowIndexTest {
 
         assertNull(rowIndexInList(s, showsClipboardChip = false, rowId = "a"))
     }
+    /**
+     * ALISVERIS MODUNDA TAHMIN KARTI YOK - dizin bir GERI kayiyor.
+     *
+     * `ListContent` tahmini `!isEmpty && !shoppingMode` ile ciziyor, ayna ise
+     * yalnizca `!isEmpty` sayiyordu. Reyonda sheet'ten eklenen her satir bir
+     * fazla dizine kaydiriliyordu - yani kullanici ekledigi satiri degil bir
+     * sonrakini goruyordu. Ekleme reyonda YALNIZCA sheet'ten yapilabiliyor
+     * (kok alan gizli), yani bu tam da en cok gerektigi yerdeki kirikti.
+     */
+    @Test
+    fun theEstimateCardIsAbsentInShoppingMode() {
+        val sections = listOf(ListSection("Fırın-Ekmek", listOf(row("a"))))
+        val plan = ListState(sections = sections, loading = false)
+        val reyon = ListState(sections = sections, loading = false, shoppingMode = true)
+
+        assertEquals(3, rowIndexInList(plan, showsClipboardChip = false, rowId = "a"))
+        assertEquals(2, rowIndexInList(reyon, showsClipboardChip = false, rowId = "a"))
+    }
+
+    /**
+     * OZET KARTI DA BIR OGE (karar 69) - ayna onu hic saymiyordu.
+     *
+     * Kart alisveris biter bitmez basligin altinda beliriyor ve listenin
+     * icinde yasiyor. Sayilmayinca alisveris sonrasi eklenen her satir bir
+     * eksik dizine kaydiriliyordu.
+     */
+    @Test
+    fun theSummaryCardShiftsEverythingDown() {
+        val s = state(listOf(ListSection("Fırın-Ekmek", listOf(row("a")))))
+
+        assertEquals(3, rowIndexInList(s, showsClipboardChip = false, rowId = "a"))
+        assertEquals(
+            4,
+            rowIndexInList(s, showsClipboardChip = false, rowId = "a", showsSummary = true),
+        )
+    }
 }

@@ -16,10 +16,25 @@ package com.neydi.app.ui.list
  *
  * @return dizin, ya da satir listede yoksa null.
  */
-internal fun rowIndexInList(state: ListState, showsClipboardChip: Boolean, rowId: String): Int? {
+internal fun rowIndexInList(
+    state: ListState,
+    showsClipboardChip: Boolean,
+    rowId: String,
+    /**
+     * Ozet karti ciziliyor mu (karar 69). Aynanin ATLADIGI ilk oge buydu:
+     * `item(key = "ozet")` LazyColumn'da var, burada yoktu, yani alisveris
+     * biter bitmez eklenen her satir BIR EKSIK dizine kaydiriyordu.
+     */
+    showsSummary: Boolean = false,
+): Int? {
     // --- LazyColumn'un bas kismi (bkz. ListContent) ---
     var index = 1 // baslik: her zaman var
-    if (!state.isEmpty) index++ // "tahmin" karti
+    if (showsSummary) index++ // ozet karti - basligin hemen altinda
+    // TAHMIN KARTI ALISVERIS MODUNDA CIZILMIYOR ve ayna bunu bilmiyordu.
+    // `ListContent` kosulu `!isEmpty && !shoppingMode`; burada yalnizca
+    // `!isEmpty` yaziyordu, yani reyonda sheet'ten eklenen her satir BIR
+    // FAZLA dizine kaydiriliyordu - yanlis satira.
+    if (!state.isEmpty && !state.shoppingMode) index++ // "tahmin" karti
     if (state.isEmpty) {
         index++ // bos durum
     } else if (showsClipboardChip) {

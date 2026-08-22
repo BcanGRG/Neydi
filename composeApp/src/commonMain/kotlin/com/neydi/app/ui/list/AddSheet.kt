@@ -192,7 +192,11 @@ fun AddSheetContent(
                         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                     ) {
                         body.rare.take(RARE_LIMIT).forEach { item ->
-                            RareChip(text = item.name, onTap = { onPick(item) })
+                            RareChip(
+                                text = item.name,
+                                inList = item.matchKey in inList,
+                                onTap = { onPick(item) },
+                            )
                         }
                     }
                 }
@@ -316,18 +320,40 @@ private fun DiscoveryTile(item: DiscoveryItem, inList: Boolean, onTap: () -> Uni
     }
 }
 
+/**
+ * "Nadir aldiklarin" cipi - KARAR 12'NIN UCUNCU YUZEYI.
+ *
+ * Izgara kutucugu ve arama sonucu cipi isareti bastan beri tasiyordu; bu cip
+ * tasimiyordu. Sonucu sessiz bir yalandi: kullanici ayni cipe uc kez
+ * dokununca urunun ADEDI uce cikiyor, cipte hicbir sey degismiyor ve
+ * sheet'in sayaci *"3 ürün eklendi"* yaziyor - oysa uc urun degil bir urunun
+ * adedi artmis.
+ *
+ * Karar 12'nin cumlesi zaten yuzeyden bagimsiz: *"Isaret 'bu listede var'
+ * demek… Pasif olmasi da ayni seyi soyluyor - ayni satiri iki kez eklemek bir
+ * is degil."*
+ */
 @Composable
-private fun RareChip(text: String, onTap: () -> Unit) {
-    Box(
+private fun RareChip(text: String, inList: Boolean, onTap: () -> Unit) {
+    Row(
         Modifier
             .heightIn(min = FILTER_CHIP)
             .clip(NeydiExtraShapes.pill)
-            .pressable(onTap = onTap)
+            .pressable(enabled = !inList, onTap = onTap)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, LocalNeydiExtraColors.current.hairline, NeydiExtraShapes.pill)
             .padding(horizontal = 14.dp),
-        contentAlignment = Alignment.Center,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        if (inList) {
+            NeydiIcon(
+                icon = NeydiIcons.CheckCircle,
+                contentDescription = "listede var",
+                size = 16.dp,
+                tint = MaterialTheme.colorScheme.secondary,
+            )
+        }
         Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }

@@ -248,13 +248,29 @@ fun ListScreen(
                 onFilter = vm::toggleSheetFilter,
                 onPick = vm::addFromDiscovery,
                 onPickResult = vm::addFromSheet,
-                // "Kendim yazayım" IKI YOLU BAGLIYOR (karar 64): sheet
-                // kapaniyor ve kokteki yazma alani odagi aliyor. Once bu
-                // buton yalnizca sheet'i kapatiyordu ve kullaniciyi listenin
-                // ortasinda birakiyordu.
+                // ALT SATIR IKI AYRI IS YAPIYOR ve etiketi bunu zaten
+                // soyluyor (`AddSheet` icinde `query.isNotBlank()` dallanmasi):
+                //
+                // - Arama BOSSA *"Kendim yazayım"* - karar 64'un iki yolu
+                //   baglayan kacisi: sheet kapaniyor, kokteki alan odagi
+                //   aliyor.
+                // - Arama DOLUYSA *"«kuru kayısı» ekle"* - ve bu satirin isi
+                //   EKLEMEK.
+                //
+                // Ikisi ayni davranisa baglanmisti: dolu aramada da yalnizca
+                // sheet kapaniyor, yazilan kelime ATILIYORDU (gezinme
+                // sozlesmesi bunu *"arama metni atılır"* diye yaziyor). Yani
+                // ustunde "ekle" yazan bir dugme hicbir sey eklemiyordu -
+                // kullanicinin *"eklenmis hissi vermiyor"* dedigi seyin en
+                // sert hali. Ekleyecek fonksiyon (`addSheetQuery`) yaziliydi
+                // ve HIC cagrilmiyordu.
                 onFreeText = {
-                    vm.closeSheet()
-                    quickAddFocus.requestFocus()
+                    if (sheetQuery.isNotBlank()) {
+                        vm.addSheetQuery()
+                    } else {
+                        vm.closeSheet()
+                        quickAddFocus.requestFocus()
+                    }
                 },
             )
         }
@@ -381,10 +397,18 @@ internal fun ListContent(
     // sonra beliren bir kaydirma, hic kaydirmamaktan daha kotu olurdu.
     val guncelState = rememberUpdatedState(state)
     val guncelChip = rememberUpdatedState(showsClipboardChip)
+    val guncelOzet = rememberUpdatedState(summary != null)
     LaunchedEffect(lastAdded) {
         val added = lastAdded ?: return@LaunchedEffect
         val index = withTimeoutOrNull(ADDED_ROW_WAIT_MS) {
-            snapshotFlow { rowIndexInList(guncelState.value, guncelChip.value, added.rowId) }
+            snapshotFlow {
+                rowIndexInList(
+                    guncelState.value,
+                    guncelChip.value,
+                    added.rowId,
+                    showsSummary = guncelOzet.value,
+                )
+            }
                 .filterNotNull()
                 .first()
         } ?: return@LaunchedEffect

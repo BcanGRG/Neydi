@@ -49,6 +49,26 @@ object Motion {
      */
     const val ROW_DELETE_MS = 200
 
+    /**
+     * AZ ONCE EKLENEN SATIRIN vurgusunun sonme suresi.
+     *
+     * ⚠ **BU SAYI TASARIMDAN DEGIL.** Maket vurgunun KENDISINI ciziyor (Ekran
+     * 2 · "Hızlı yazma · kök": Enter'lanan satir `#F6E7D2` amber-krem dolgu
+     * tasiyor, komsulari tasimiyor) ama ne suresini ne egrisini ne de adini
+     * hicbir tasarim dosyasi yaziyor. Yani piksel onlarin, zamanlama bizim -
+     * ve bu sabit tam da o bosluga isaret ediyor.
+     *
+     * Secim gerekcesi: vurgu bir OLAY bildirimi, durum degil; toast'in 2 sn'si
+     * ile ayni sinifta ama ondan kisa olmali cunku ekranin merkezinde ve
+     * kullanicinin gozu zaten orada. Girisi ANI (ekleme ani), cikisi yumusak.
+     *
+     * Tasarima soruldu (`docs/29`); cevap gelince degisecek TEK yer burasi.
+     */
+    const val JUST_ADDED_MS = 1_200
+
+    /** Vurgunun sonusu - girisi ani oldugu icin yalniz cikis egrisi var. */
+    const val JUST_ADDED_FADE_MS = 400
+
     const val PRESSED_SCALE = 0.97f
     const val CHECK_SCALE_DIP = 0.96f
     const val DISABLED_ALPHA = 0.38f
