@@ -31,6 +31,20 @@ data class AppSettings(
     val setupCompletedAt: Long? = null,
 
     /**
+     * Bu haneye YAZILMIS gomulu katalog surumu (F2.7).
+     *
+     * Tohumlayici eskiden `SELECT COUNT(*) FROM category > 0` ile kapida
+     * duruyordu, yani ilk acilistan sonra `CatalogSeedData`daki hicbir
+     * duzeltme o telefona ULASMIYORDU - yeni bir urun, duzeltilmis bir
+     * kategori ya da degismis bir `matchKey` kurali yalnizca uygulamayi
+     * silip yeniden kuranlara gidiyordu. Sessiz, cunku hicbir sey patlamiyor.
+     *
+     * `null` = bilinmiyor (v6 oncesi kurulum) ve **yeniden yaz** demek:
+     * eski cihazlarin katalogu ilk acilista tazeleniyor.
+     */
+    val catalogSeedVersion: Int? = null,
+
+    /**
      * Kullanicinin beyan ettigi alisveris temposu, gun.
      *
      * `medianIntervalDays` icin **gercek veri gelmeden onceki tek oncul** - ve

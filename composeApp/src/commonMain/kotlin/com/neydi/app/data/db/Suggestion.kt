@@ -12,7 +12,15 @@ import androidx.room3.PrimaryKey
  * uygulama ayni yanlisi her gezide tekrarlar ve kullanici oneri seridini
  * tamamen gormezden gelmeye baslar.
  */
-@Entity(tableName = "suggestion_event")
+@Entity(
+    tableName = "suggestion_event",
+    indices = [
+        // UC-VURUS KURALININ SORGUSU: bu urun icin kac REDDEDILDI/YOKSAYILDI
+        // var. Uclu tam olarak o sorgunun WHERE'i; indekssiz hali, her
+        // gosterimle BUYUYEN append-only bir gunlukte tam tarama olurdu.
+        Index(value = ["householdId", "productId", "outcome"]),
+    ],
+)
 data class SuggestionEvent(
     @PrimaryKey val id: String,
     val householdId: String,

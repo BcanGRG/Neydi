@@ -53,7 +53,6 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 16 | **F1.3b — `@Preview` altyapısı** | `[cihaz]` | Göz kontrolünü | [→](#f13b) |
 | 17 | **F3.3 — Hızlı ekleme** | `[cihaz]` | Göz kontrolünü | [→](#f33) |
 | 18 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
-| 19 | **F2.7 — katalog yeniden tohumlanabilir olmalı** | `[ ]` | — *(sessiz kullanıcı hatası taşıyor)* | [→](#f27) |
 | 20 | **F3.9 — "Diğer" kategorisi** | `[ ]` | F2.7'yi | [→](#f39) |
 | 21 | **F6.9 — `kategori-tonlari` TODO'su silinecek** | `[ ]` | — *(tek satır)* | [→](#f69) |
 | 22 | **F10.7 + F10.11 + F11.4 — ölü primitifler** | `[ ]` | Önce **soruyu yazmayı** — `focusRing`/`AccentStrip` tasarıma **sorulmadı** | [→](#olu-kod) |
@@ -247,7 +246,21 @@ eksik olan yalnızca DAO'suydu. Cihazda uçtan uca doğrulandı.
   çelişiyor ve kodun kendi KDoc'u otomatiği yasaklıyor: *"kullanıcı işaretler,
   motor değil"*.
 
-#### F2.7 — Katalog yeniden tohumlanabilir olmalı <a id="f27"></a>
+#### F2.7 ✅ — Katalog yeniden tohumlanabilir oldu <a id="f27"></a>
+
+**Kapandı (23 Ağustos).** Kapı artık `SELECT COUNT(*) FROM category > 0` değil
+`app_settings.catalogSeedVersion`. Gömülü sabit (`CATALOG_SEED_VERSION`)
+büyükse katalog **üzerine yazılıyor** — silinmiyor, çünkü `product.categoryId`
+kategorilere bakıyor ve aradaki o anda kullanıcının ürünleri sahipsiz kalırdı.
+`null` damga = "bilinmiyor, yeniden yaz", yani v6 öncesi kurulumların kataloğu
+ilk açılışta tazeleniyor. Cihazda doğrulandı.
+
+⚠ **Bir sessiz hata daha yakalandı:** damga satırını açan `INSERT OR IGNORE`
+yalnızca `householdId` veriyordu, oysa `syncPhotos` ve `createdAt` NOT NULL —
+`OR IGNORE` o ihlali **yutuyordu**, satır hiç doğmuyor, damga hiç düşmüyor ve
+katalog her açılışta baştan yazılıyordu. Hiçbir şey patlamadan.
+
+#### ~~F2.7 — eski hâli~~ <a id="f27-eski"></a>
 
 *(cihazsız)* F0.4 ve F3.9'u açar.
 

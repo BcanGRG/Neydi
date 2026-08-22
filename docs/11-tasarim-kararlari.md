@@ -830,3 +830,43 @@ okunuyor. Fotoğraf çerçevesi/geometri sorunu, sözlükle çözülmez.
 ⚠ **Kök listesi kısa kök kabul etmiyor.** `MENSE` güvenli (Türkçe'de böyle
 başlayan ürün adı yok) ama `NET` olsaydı `NEKTAR` gibi meşru bir adı yerdi.
 Yeni kök eklenirken şart: kökü taşıyan bir **ürün adı düşünülemiyor** olmalı.
+
+---
+
+## F2.7: katalog düzeltmeleri kurulu telefonlara hiç ulaşmıyordu
+
+**23 Ağustos 2026.** Tohumlayıcının kapısı `SELECT COUNT(*) FROM category > 0`
+idi: kategori tablosu bir kez doldu mu bir daha hiçbir şey yazmıyordu. Yani
+**ilk açılıştan sonra `CatalogSeedData`daki hiçbir düzeltme o telefona
+ulaşmıyordu** — yeni bir ürün, düzeltilmiş bir kategori, değişmiş bir
+`matchKey` kuralı, hiçbiri. Yalnızca uygulamayı silip yeniden kuranlar
+görüyordu. Sessiz, çünkü hiçbir şey patlamıyor.
+
+Kapı artık **sürüme** bakıyor (`app_settings.catalogSeedVersion` ↔
+`CATALOG_SEED_VERSION`). `null` damga "bilinmiyor, yeniden yaz" demek, yani
+v6'dan önceki kurulumların kataloğu ilk açılışta tazeleniyor.
+
+### Silme yok, üzerine yazma var
+
+`DELETE` + `INSERT` yıkıcı olurdu: `product.categoryId` kategorilere bakıyor ve
+aradaki o anda **kullanıcının kendi ürünleri sahipsiz kalırdı**. `INSERT OR
+REPLACE`in güvenli olmasının şartı id'lerin deterministik olması — kategoriler
+sabit id taşıyor, tohum ürünleri `seed-<yaygınlık>`.
+
+### Yakalanan ikinci sessiz hata
+
+Damga satırını açan `INSERT OR IGNORE` yalnızca `householdId` veriyordu, oysa
+`syncPhotos` ve `createdAt` NOT NULL. **`OR IGNORE` o ihlali yutuyordu**: satır
+hiç doğmuyor, damga hiç düşmüyor, katalog her açılışta baştan yazılıyordu — ve
+hiçbir şey patlamıyordu. Testi yazmasaydım fark edilmezdi.
+
+### v6 tek bump'ta iki ekleme
+
+`catalogSeedVersion` kolonu ve `suggestion_event` üzerindeki
+`(householdId, productId, outcome)` indeksi aynı bump'a alındı: ikisi de
+otomatik, veri geri-doldurması yok, ve ayrı iki bump iki cihaz dansı demek
+olurdu. `suggestion_event` bugün boş — boş tablonun şema değişikliği bedava.
+
+**Cihazda doğrulandı** (`pm clear` YAPILMADAN): sürüm 5 → 6, dokuz tablonun
+satır sayısı birebir aynı (product 59, trip_line 118, price_observation 26…),
+damga düştü, indeks oluştu, uygulama açıldı.

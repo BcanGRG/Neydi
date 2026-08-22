@@ -5,6 +5,7 @@ import androidx.room3.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.db.NeydiDatabase
 import com.neydi.app.data.db.NeydiDatabaseConstructor
+import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.matchKey
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -13,6 +14,8 @@ import kotlin.test.assertTrue
 
 class CatalogSeederTest {
 
+    private val HOME = DEFAULT_HOUSEHOLD_ID
+
     private fun db() = Room.inMemoryDatabaseBuilder<NeydiDatabase>(
         factory = { NeydiDatabaseConstructor.initialize() },
     ).setDriver(BundledSQLiteDriver()).build()
@@ -20,13 +23,16 @@ class CatalogSeederTest {
     private suspend fun NeydiDatabase.number(sql: String): Long =
         useWriterConnection { it.usePrepared(sql) { st -> st.step(); st.getLong(0) } }
 
+    private suspend fun NeydiDatabase.write(sql: String) =
+        useWriterConnection { it.usePrepared(sql) { st -> st.step() } }
+
     private suspend fun NeydiDatabase.text(sql: String): String =
         useWriterConnection { it.usePrepared(sql) { st -> st.step(); st.getText(0) } }
 
     @Test
     fun catalogIsSeeded() = runTest {
         val db = db()
-        val result = db.seedCatalog()
+        val result = db.seedCatalog(HOME)
 
         assertEquals(false, result.skipped)
         assertEquals(SEED_CATEGORIES.size.toLong(), db.number("SELECT COUNT(*) FROM category"))
@@ -40,18 +46,83 @@ class CatalogSeederTest {
     @Test
     fun secondCallWritesNothing() = runTest {
         val db = db()
-        db.seedCatalog()
-        val second = db.seedCatalog()
+        db.seedCatalog(HOME)
+        val second = db.seedCatalog(HOME)
 
         assertTrue(second.skipped, "ikinci tohumlama atlanmadi")
         assertEquals(SEED_PRODUCTS.size.toLong(), db.number("SELECT COUNT(*) FROM catalog_seed"))
+    }
+
+
+    /**
+     * SURUM DEGISINCE YENIDEN YAZILIYOR (F2.7) - ozelligin varlik sebebi.
+     *
+     * Once kapida `SELECT COUNT(*) FROM category > 0` vardi ve bu **sessiz bir
+     * kullanici hatasiydi**: ilk acilistan sonra katalogdaki hicbir duzeltme o
+     * telefona ulasmiyordu. Yeni bir urun, duzeltilmis bir kategori, degismis
+     * bir `matchKey` kurali - hicbiri. Yalnizca uygulamayi silip yeniden
+     * kuranlar goruyordu.
+     *
+     * Test damgayi ELLE geri aliyor cunku `CATALOG_SEED_VERSION` bir sabit;
+     * "surumu artir" demenin testten yapilabilir hali damgayi eskitmek.
+     */
+    @Test
+    fun aNewSeedVersionRewritesTheCatalog() = runTest {
+        val db = db()
+        db.seedCatalog(HOME)
+        // Katalogda elle bir bozulma: yeniden tohumlama bunu DUZELTMELI.
+        db.write("UPDATE catalog_seed SET name = 'BOZUK' WHERE id = 'seed-1'")
+        // Damgayi eskit = "gomulu katalog surumu artti".
+        db.write("UPDATE app_settings SET catalogSeedVersion = 0")
+
+        val again = db.seedCatalog(HOME)
+
+        assertEquals(false, again.skipped, "surum degisti, yeniden yazilmaliydi")
+        assertTrue(
+            db.text("SELECT name FROM catalog_seed WHERE id = 'seed-1'") != "BOZUK",
+            "yeniden tohumlama satiri duzeltmedi",
+        )
+    }
+
+    /**
+     * KATEGORILER SILINMIYOR, UZERINE YAZILIYOR.
+     *
+     * `DELETE` + `INSERT` olsaydi aradaki o anda `product.categoryId`
+     * kategorilere bakan butun KULLANICI urunleri sahipsiz kalirdi. Test
+     * kullanicinin kendi urununun yeniden tohumlamadan sag cikmasina bakiyor.
+     */
+    @Test
+    fun reseedingKeepsUserProductsAttached() = runTest {
+        val db = db()
+        db.seedCatalog(HOME)
+        db.write(
+            """
+            INSERT INTO product (id, householdId, name, matchKey, categoryId, defaultUnit,
+                                 isStaple, createdAt)
+            VALUES ('u1', '$DEFAULT_HOUSEHOLD_ID', 'Zencefil', 'zencefil', 'temel-gida',
+                    'adet', 0, 0)
+            """.trimIndent(),
+        )
+        db.write("UPDATE app_settings SET catalogSeedVersion = 0")
+
+        db.seedCatalog(HOME)
+
+        assertEquals(1L, db.number("SELECT COUNT(*) FROM product WHERE id = 'u1'"))
+        assertEquals(
+            1L,
+            db.number(
+                "SELECT COUNT(*) FROM category WHERE id = " +
+                    "(SELECT categoryId FROM product WHERE id = 'u1')",
+            ),
+            "kullanicinin urunu sahipsiz kaldi",
+        )
     }
 
     /** matchKey veri dosyasinda degil, ekleme aninda F2.4 kuraliyla turetiliyor. */
     @Test
     fun matchKeyIsDerivedOnWrite() = runTest {
         val db = db()
-        db.seedCatalog()
+        db.seedCatalog(HOME)
 
         assertEquals(
             matchKey("Ayçiçek Yağı"),
