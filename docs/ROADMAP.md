@@ -448,6 +448,10 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       gözlemden besleniyor.
 - [ ] **F6.5 — Sabit terfisi + bastırma.** "Bunu önerme" listesinin giriş
       noktası; Ekran 5'e bağlı. *(Öncelik 1'de kalan tek kodlanacak madde.)*
+      ⚠ **Tasarımda çizili, kodda yok:** boş durum atlasının 05 karesi Ürün
+      Detayı'nda üç satır gösteriyor (*Her zamankilere ekle · Bunu önerme ·
+      Listeden çıkar*), kodda ikisi var. Cihazda doğrulandı — **tasarımın
+      söyleyip de yapmadığımız tek yüzey bu.**
 
 ## Öncelik 2 — Dış veri
 
@@ -515,11 +519,13 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       `HistoryScreen` satırları da fiş döneminde dokunulabilirdi, karar 30 o hedefi
       kaldırdı — madde koda değil, kendi kaydına takılı kalmış.
 - [ ] **F10.7 — Odak halkasını bağla.** `Modifier.focusRing` tanımlı, çağıranı yok.
-- [ ] **F10.8 — 48dp altında kalan TEK kontrol.** `ProductSheet.kt:143`
-      (`.size(44.dp)`). Üç değil bir: karar 56 en küçük hedefi tek sayıya
-      indirdi (48dp) ve kalanlar o turda düzeltildi. `SafeArea.top = 44.dp`
-      bu listeye ait değil — dokunma hedefi değil, güvenli alan boşluğu
-      (üstelik `SafeArea`'nın kendisi ölü, bkz. F11.4).
+- **F10.8 ✅ — kapandı, ve madde baştan yanlış kurulmuştu.**
+      `ProductSheet.kt:143`'teki 44dp bir **dokunma hedefi değildi**: iki
+      harfli kategori kutucuğuydu ve elle çizilmişti. Tasarım sisteminin
+      ölçüsü 56dp (`Size.categoryTile`) ve `CategoryTile` bileşeni tam da bu
+      iş için yazılmıştı — kutucuk bileşene bağlandı, tipografisi de düzeldi.
+      `SafeArea.top = 44.dp` zaten bu listeye ait değildi (güvenli alan
+      boşluğu, hedef değil) ve `SafeArea`'nın kendisi ölü (F11.4).
 - **F10.9 ✅ — Satır silme** *(cihazda doğrulandı)*. Sağdan sola swipe,
       arkasında 100dp'lik alan ve içinde **"Sil" kelimesi** — çöp kutusu
       ikonu envanterde yok. Eşik 60dp; geçilmeden bırakılırsa 200 ms'de
@@ -757,6 +763,7 @@ yazılacak.
 | [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 56 kararın kod durumu (46–69 dahil), gezinme sözleşmesi sabitleri, ikonografi |
 | [17](17-e12-etiket-olcumu.md) · [18](18-zincir-karsilastirmasi.md) · [24](24-a101-olcumu.md) | **Etiket ölçüm raporları** — BİM · üç zincir karşılaştırması · A101 |
 | [25-tasarima-sorular-10.md](25-tasarima-sorular-10.md) | Onuncu tur soruları — **cevaplandı**, kararlar 70–74 (`docs/11`) |
+| [26-tasarima-sorular-11.md](26-tasarima-sorular-11.md) | **Aktif** — fiyat alanında imleç; tasarımın denetim listesi koda karşı koşuldu |
 | [21](21-tasarim-denetimi-38-kalan.md) · [22](22-tasarima-sorular-8.md) · [23](23-tasarima-sorular-9.md) | Sekizinci/dokuzuncu tur denetim ve sorular |
 | [12-tasarima-sorular-4.md](12-tasarima-sorular-4.md) | Dördüncü tur — cevaplandı, arşiv değeri |
 | [10-tasarima-pivot.md](10-tasarima-pivot.md) | Tasarıma pivot bildirimi — cevaplandı, arşiv değeri |

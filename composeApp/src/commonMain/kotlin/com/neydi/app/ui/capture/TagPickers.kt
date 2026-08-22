@@ -288,7 +288,19 @@ internal fun StorePicker(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "«${pendingName.uppercase()}» diye yeni market",
+                    // AD YAZILDIGI GIBI - `uppercase()` KALDIRILDI.
+                    //
+                    // Locale'siz donusum Turkce'de bozuyor: "iskur" -> "ISKUR",
+                    // dogrusu "ISKUR" degil "İŞKUR". Tasarim sistemi bunu
+                    // denetim listesine yazmis (*"sifir uppercase/lowercase
+                    // donusumu - Turkce İ/ı bozulmaz"*) ve burasi kacmisti.
+                    //
+                    // Maket ornegi buyuk harfli (`«AKYRUT»`) ama o ORNEGIN
+                    // kendisi buyuk harfli; bicimlendirme kurali degil. Ustelik
+                    // cipin kendi gerekcesi de bunu soyluyor: onaylanan sey
+                    // "yeni market" degil TAM OLARAK BU AD - donusturulmus bir
+                    // ad o iddiayi cururtuyor.
+                    text = "«$pendingName» diye yeni market",
                     style = MaterialTheme.typography.labelLarge,
                     color = Flow.brandText,
                 )

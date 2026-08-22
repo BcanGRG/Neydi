@@ -515,3 +515,36 @@ dönüyor (Faz 9) ve orada şerit 92dp'de daha çok kesiyor; iOS kabuğu henüz 
 kabul edildi.
 
 **Onuncu tur kapandı: kararlar 70–74'ün beşi de kodda.**
+
+---
+
+## Denetim: tasarımın kendi listesi koda karşı *(22 Ağustos)*
+
+Compose Spec'in **20 maddelik kod incelemesi denetim listesi** koda karşı
+koşuldu — tasarımın bu iş için yazdığı araç. **On sekizi temiz**, ikisi
+sapmıştı:
+
+| # | Madde | Bulgu |
+|---|---|---|
+| 13 | Sıfır uppercase/lowercase | ❌ → ✅ market onay çipi `.uppercase()` çağırıyordu |
+| 18 | Kategori kutucuğu / hedef ölçüleri | ❌ → ✅ Ürün Detayı elle 44dp kutu çiziyordu |
+
+**Madde 13 gerçek bir Türkçe hatasıydı.** `«${ad.uppercase()}» diye yeni
+market` — kullanıcı `işkur` yazsa çip `ISKUR` gösteriyordu, doğrusu `İŞKUR`.
+Projenin en çok belgelenmiş tuzağı (`"İNCİR".lowercase()` yedi kod noktası
+üretiyor) tam da kullanıcıya görünen tek yerde kaçmış. Ad artık yazıldığı gibi.
+
+**Madde 18 bileşen atlamasıydı.** `CategoryTile` bu iş için yazılmış ve 56dp;
+Ürün Detayı kendi 44dp kutusunu çiziyor, tipografisi de farklıydı
+(`labelLarge` yerine `quantityBadge` olmalı). Aynı görsel öğenin iki boyu
+olması bileşen katmanının vaadini boşa çıkarıyordu.
+
+Temiz çıkanlar arasında: sıfır dialog/push/badge, sıfır dynamic color, sıfır
+`0.5.dp`, Fraunces 24sp altında yok, gölge yalnızca floating toolbar'da,
+sayısal klavye tek yerde, amber dolgu kart paletinin kendi şeridinde.
+
+### Kalan tek yüzey eksiği: `Bunu önerme`
+
+Boş durum atlasının **05 karesi** Ürün Detayı'nda üç satır çiziyor — *Her
+zamankilere ekle · **Bunu önerme** · Listeden çıkar*. Kodda ikisi var; cihazda
+doğrulandı. F6.5 olarak yol haritasında ve **sıradaki iş**.
