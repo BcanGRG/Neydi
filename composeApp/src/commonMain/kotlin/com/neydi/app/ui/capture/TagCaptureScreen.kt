@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,13 +51,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import com.neydi.app.data.formatChipMinor
 import com.neydi.app.data.db.Store
 import com.neydi.app.data.ocr.TagSkip
 import com.neydi.app.ui.components.NeydiIcon
@@ -481,6 +489,25 @@ private fun BoxScope.ConfirmCardLayer(
     // kart hala tasabilir ve o zaman kaydirmak, bir dugmeyi ulasilmaz
     // birakmaktan iyi.
     val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    // SERIT TOPLANMIS DOGUYOR - klavye acik doguyorsa (sozlesme, karar 70).
+    //
+    // Fiyati okunamamis kart klavyeyi kendiliginden aciyor, ama IME birkac
+    // yuz milisaniye sonra gorunuyor. Yalnizca `imeBottom`a baglanan serit o
+    // aralikta bir gorunup sonra toplaniyordu - sozlesme *"serit toplanmis
+    // dogar"* diyor ve gerekcesi net: fiyat zaten okunamadi, kullanici onu
+    // ekrandan degil raftaki etiketten okuyor.
+    //
+    // Bekleme SINIRLI: klavye hic gelmezse (donanim klavyesi, erisilebilirlik
+    // ayari) serit sonsuza kadar gizli kalmamali.
+    val bornEmpty = remember(card.photoPath) { card.priceMinor == 0L }
+    var awaitingIme by remember(card.photoPath) { mutableStateOf(bornEmpty) }
+    LaunchedEffect(card.photoPath, imeBottom > 0) {
+        if (imeBottom > 0) awaitingIme = false else if (awaitingIme) {
+            delay(IME_WAIT_MS)
+            awaitingIme = false
+        }
+    }
+    val stripCollapsed = imeBottom > 0 || awaitingIme
     Column(
         Modifier
             .align(Alignment.BottomCenter)
@@ -519,7 +546,7 @@ private fun BoxScope.ConfirmCardLayer(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // KIRPIM KARTIN BASINDA (karar 62) - "ne cektim"in tek cevabi.
-        TagThumbnail(photoPath = card.photoPath, collapsed = imeBottom > 0)
+        TagThumbnail(photoPath = card.photoPath, collapsed = stripCollapsed)
 
         // DESTEKLENMEYEN ZINCIR CUMLESI kartin BASINDA, seridin YERINE
         // (karar 49). Amber serit bu halde hic cizilmiyor - cumle onun isini
@@ -605,29 +632,44 @@ private fun BoxScope.ConfirmCardLayer(
         CardRow(label = "Tarih", value = today, reading = false, plain = true)
 
         val haptics = LocalHapticFeedback.current
-        SaveButton(
-            enabled = card.canSave && !saving,
-            saving = saving,
-            onSave = {
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                onSave()
-            },
-        )
-
-        // VAZGEC GERI GELDI. Kaldirmistim cunku maket yalnizca Kaydet
-        // ciziyordu; yanlis olan yari maketmis - sozlesme onu baştan beri iki
-        // yerde saydigi icin tasarim maketi duzeltti (karar C1).
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(Sizes.minTapTarget)
-                .pressable(onTap = onDismiss),
-            contentAlignment = Alignment.Center,
+        // VAZGEC ILE KAYDET YATAY CIFT (karar 71).
+        //
+        // Alt alta iki satirdi ve kirpim toplandiktan sonra bile Vazgec fold'un
+        // 22 px altinda kaliyordu - yani gorunur tek cikis kalmiyordu. Geri
+        // jesti vardi ama gorunmez; oysa Vazgec karar 29'un (fotograf silinir)
+        // gorunur yolu ve gorunurlugu klavyenin durumuna baglanamaz.
+        //
+        // Oranlar tasarimdan: solda Vazgec `flex:1` metin buton, sagda Kaydet
+        // `flex:2` dolgulu, arada 10dp, satir 52dp. Tek satir karta ~56 px
+        // kazandiriyor ve fold sorununu kokten kapatiyor.
+        Row(
+            Modifier.fillMaxWidth().height(CARD_ACTION_HEIGHT),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(
-                text = "Vazgeç",
-                style = MaterialTheme.typography.labelLarge,
-                color = Flow.cancel,
+            // VAZGEC HEDEFI SATIRIN TAMAMI: 52dp yukseklik, karar 56'nin 48dp
+            // en kucuk hedefinin ustunde. Metin buton, dolgu yok.
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .pressable(onTap = onDismiss),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Vazgeç",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Flow.cancel,
+                )
+            }
+            SaveButton(
+                enabled = card.canSave && !saving,
+                saving = saving,
+                onSave = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onSave()
+                },
+                modifier = Modifier.weight(2f).fillMaxHeight(),
             )
         }
     }
@@ -650,30 +692,43 @@ private fun BoxScope.ConfirmCardLayer(
  *
  * Odak alanin ILK bilesiminde isteniyor ve o an okumanin bittigi an: OCR
  * kosarken bu bilesen hic cizilmiyor, yerinde iskelet var (bkz. cagiran).
- * Kosul `card.priceText` ile canli baglansaydi, kullanici yazdigini silip alani
+ * Kosul alana CANLI baglansaydi, kullanici yazdigini silip alani
  * bosalttiginda klavye kendini yeniden zorlardi - oysa o an odak zaten onda.
+ *
+ * ## ALAN SAGDAN DOLUYOR (karar 73)
+ *
+ * Tutulan deger ham HANE DIZISI (`"3950"`), gorunen deger ondan
+ * turetiliyor (`39,50`). Kural [ConfirmCard.withPriceInput]'ta; burasi
+ * yalnizca gosterimi bagliyor.
+ *
+ * Klavye [KeyboardType.Number]: ondalik tusu artik anlamsiz. Yine de gelen
+ * metin suzuluyor, cunku klavyenin hangi tuslari cizecegi cihazin bilecegi
+ * is - Samsung'un sayisal klavyesi `.` ve `,` tuslarini `Number`da da
+ * gosteriyor.
  */
 @Composable
 private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
     val focusRequester = remember { FocusRequester() }
     // ACILIS HALI SAKLANIYOR: sart "su an bos" degil, "BOS ACILDI".
-    val openedEmpty = remember { card.priceText.isBlank() }
+    val openedEmpty = remember { card.priceMinor == 0L }
     LaunchedEffect(Unit) {
         if (openedEmpty) focusRequester.requestFocus()
     }
+    val digits = card.priceDigits()
     BasicTextField(
-        value = card.priceText,
+        value = digits,
         onValueChange = onPriceChange,
         modifier = Modifier.focusRequester(focusRequester),
         textStyle = MaterialTheme.typography.displayLarge.copy(color = Flow.text),
         singleLine = true,
         cursorBrush = SolidColor(Flow.amber),
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal,
+            keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Done,
         ),
+        visualTransformation = MoneyFieldTransformation,
         decorationBox = { inner ->
-            if (card.priceText.isEmpty()) {
+            if (digits.isEmpty()) {
                 Text(
                     text = "— TL",
                     style = MaterialTheme.typography.displayLarge,
@@ -683,6 +738,27 @@ private fun PriceField(card: ConfirmCard, onPriceChange: (String) -> Unit) {
             inner()
         },
     )
+}
+
+/**
+ * Hane dizisini para gibi cizer: `3950` -> `39,50` (karar 73).
+ *
+ * IMLEC HER ZAMAN SONDA oldugu icin esleme tek noktaya cokuyor. Alanin baska
+ * bir yerine imlec koymanin anlami yok: sagdan dolan bir alanda ortadan
+ * duzenleme diye bir islem tanimli degil, duzeltme yeniden yazmak.
+ */
+private object MoneyFieldTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text
+        val shown = digits.toLongOrNull()?.let { formatChipMinor(it) }.orEmpty()
+        return TransformedText(
+            AnnotatedString(shown),
+            object : OffsetMapping {
+                override fun originalToTransformed(offset: Int) = shown.length
+                override fun transformedToOriginal(offset: Int) = digits.length
+            },
+        )
+    }
 }
 
 @Composable
@@ -822,11 +898,14 @@ private fun ValueChip(
  * veriyor ve "Kaydet pasif; ilk rakamda etkinlesir" sozlesmenin sarti.
  */
 @Composable
-private fun SaveButton(enabled: Boolean, saving: Boolean, onSave: () -> Unit) {
+private fun SaveButton(
+    enabled: Boolean,
+    saving: Boolean,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        Modifier
-            .fillMaxWidth()
-            .height(52.dp)
+        modifier
             .clip(CircleShape)
             .pressable(enabled = enabled, onTap = onSave)
             .background(if (enabled) Flow.save else Flow.saveDisabled),
@@ -859,6 +938,17 @@ private fun Skeleton(width: Dp, height: Dp = 22.dp) {
 /** Ortucu flasinin suresi (karar 55). */
 private const val FLASH_MS = 120
 
+/**
+ * Vazgec + Kaydet satirinin yuksekligi (karar 71).
+ *
+ * Tasarim `height:52px` veriyor ve satirin tamami Vazgec'in dokunma hedefi -
+ * karar 56'nin 48dp en kucuk hedefinin ustunde.
+ */
+private val CARD_ACTION_HEIGHT = 52.dp
+
+/** Klavyenin gorunmesi icin beklenen en fazla sure - bkz. `stripCollapsed`. */
+private const val IME_WAIT_MS = 600L
+
 /** Kart satiri - tasarimin `min-height:56px`i. */
 private val ROW_HEIGHT = 56.dp
 
@@ -885,7 +975,7 @@ private fun TagCaptureCardPreview() = NeydiPreview {
         state = TagCaptureState(
             card = ConfirmCard(
                 photoPath = "/x.jpg",
-                priceText = "24,90",
+                priceMinor = 2_490L,
                 productName = "Yoğurt 1 kg",
                 brand = "Dost",
                 reading = false,

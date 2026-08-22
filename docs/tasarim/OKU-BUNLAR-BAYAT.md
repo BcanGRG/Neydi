@@ -33,3 +33,26 @@ Bayat bir tasarım dosyası sessiz bir tuzak. Bir ajan `NeydiIcon.kt`'ye
 "etiketsiz istisna sekiz hedef" yazmayı **reddetti**, çünkü repodaki kopya
 hâlâ altı diyordu ve iddiayı doğrulayamıyordu. Reddi doğruydu; eksik olan
 dosyaydı.
+
+---
+
+## 22 Ağustos 2026 · onuncu tur
+
+**Altı dosya betikle indirildi ve uzakla birebir doğrulandı:** Kararlar,
+Ekranlar 2-4, Gezinme Sözleşmesi, Ekran 1, Ekranlar 5-8, Tasarım Sistemi.
+
+**İkonografi güncelmiş** — bu dosyanın önceki "bayat" kaydı düştü.
+
+**Compose Spec kısmen elle işlendi.** Araç ~40KB altındaki dosyaları satır içi
+döndürüyor ve betikle yazılamıyor. Denetim listesindeki **altı eksik madde**
+elle eklendi; liste artık uzakla aynı yirmi maddeyi taşıyor:
+
+- Fiyat alanı sağdan dolar (karar 73)
+- Dikeyde klavye kartı örtmez (karar 70, 71, 74)
+- Safe area asimetrik ve zorunlu
+- Dokunma hedefi minimum 48dp
+- Sıfır dialog, sıfır push, sıfır badge
+- Dynamic color / Material You kapalı
+
+⚠ **Dosyanın geri kalanı doğrulanmadı** — yalnızca `checks` dizisi uzakla
+karşılaştırıldı. Tam eşitlik için dosya elle yeniden indirilmeli.

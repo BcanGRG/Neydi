@@ -58,15 +58,37 @@ internal enum class TagPicker { PRODUCT, STORE, BRAND }
 /**
  * Onay kartinin icerigi.
  *
- * FIYAT METIN OLARAK TUTULUYOR, sayi olarak degil. Kullanici yaziyorken alan
- * gecici olarak gecersiz oluyor ("38," gibi) ve bunu sayiya zorlamak imleci
- * kaybettirir ya da yazilani sessizce degistirir. Sayiya cevirme kaydetme
- * aninda, tek yerde.
+ * FIYAT SAYI OLARAK TUTULUYOR, metin olarak degil - ve bu karar 73 ile
+ * DEGISTI. Serbest yazim doneminde alan metindi cunku kullanici yazarken
+ * gecici olarak gecersiz olabiliyordu (`"38,"` gibi). Alan sagdan dolunca
+ * gecersiz bir ara hal kalmadi: her tus bir hane ekliyor, deger her an
+ * gecerli. Metin tutmanin tek sebebi ortadan kalkti, tasidigi risk kalmadi.
  */
 internal data class ConfirmCard(
     /** Cekilen karenin yolu; kaydedince ya da vazgecince SILINIYOR (karar 29). */
     val photoPath: String,
-    val priceText: String = "",
+    /**
+     * Fiyat KURUS olarak; `0` = alan bos ve ekranda *"— TL"* yaziyor.
+     *
+     * ALAN SAGDAN DOLUYOR (karar 73), yani metin degil SAYI tutuluyor:
+     * `3` → 0,03 · `39` → 0,39 · `3950` → 39,50. Serbest yazim doneminde
+     * `parseMinorInput` kullaniliyordu ve sozlesmesi *`"106"` → 106,00* idi;
+     * kullanici 39,50 demek isteyip `3950` yazinca kart **3.950,00** kabul
+     * ediyordu - yuz kat hata, hicbir uyari yok. Cihaz provasinda yasandi.
+     *
+     * `parseMinorInput` bu alandan CIKTI (karar 73); etiket metnini okuyan
+     * `parseMinor` yerinde duruyor - o baska bir kaynagin dogrusu.
+     */
+    val priceMinor: Long = 0L,
+    /**
+     * Kullanici fiyat alanina DOKUNDU mu - iki kurali birden tasiyor.
+     *
+     * - Karar 73: dolu alanda ILK RAKAM degeri sifirlayip bastan baslatiyor.
+     *   Ayrim bu bayrakta; ikinci rakamdan itibaren normal ekleme.
+     * - Karar 72: kurus uyarisi ilk duzenlemede susuyor ve o kartta geri
+     *   gelmiyor. Uyari yalnizca OCR degeri HIC ELLENMEDIYSE suruyor.
+     */
+    val priceTouched: Boolean = false,
     val productName: String = "",
     /**
      * ETIKETTEN OKUNAN ad - KANIT, urun adi DEGIL (karar 51).
@@ -127,8 +149,56 @@ internal data class ConfirmCard(
      * pasif birakip kullaniciyi neyin eksik oldugunu tahmin etmeye birakmak
      * yerine, dogrudan eksik olan seyi soruyor.
      */
-    val canSave: Boolean get() = priceText.isNotBlank()
+    val canSave: Boolean get() = priceMinor > 0L
 }
+
+/** Alanin ham hane dizisi - `0` bos demek, sifir bir fiyat degil. */
+internal fun ConfirmCard.priceDigits(): String = if (priceMinor == 0L) "" else priceMinor.toString()
+
+/**
+ * SAGDAN DOLAN fiyat alani (karar 73) - yazar kasa gibi.
+ *
+ * Alan ham HANE DIZISI tutuyor; gorunen deger ondan turuyor. Etiketteki
+ * `39,50` okuma sirasiyla 3-9-5-0 tuslaniyor ve dogru sonuca variyor. Serbest
+ * yazimda ayni tuslar 3.950,00 veriyordu.
+ *
+ * ## Uc kural, ucu de tasarimdan
+ *
+ * - **Virgul ve nokta yok sayiliyor** - ayirici diye bir kavram kalmadi.
+ * - **Dolu alanda ilk rakam bastan baslatiyor**: OCR `24,90` yazmissa ve
+ *   kullanici `3` tuslarsa deger `0,03` oluyor, `2490` + `3` degil. Duzeltme
+ *   YENIDEN YAZMAK; fiyat uc-bes tus. BOS alanda bu kural islemiyor - orada
+ *   sifirlanacak bir sey yok.
+ * - **Silme sagdan** ve bastan baslatma kuralina girmiyor: geri tusu rakam
+ *   degil, dokunulmus alani sifirlamasi icin sebep yok.
+ *
+ * Bos alan `0` donuyor ve ekran *"— TL"* ciziyor; Kaydet *"ilk rakamda"*
+ * degil DEGER SIFIRDAN CIKINCA etkinlesiyor - `0` tuslamak bir fiyat degil.
+ */
+internal fun ConfirmCard.withPriceInput(raw: String): ConfirmCard {
+    val typed = raw.filter { it.isDigit() }
+    val grew = typed.length > priceDigits().length
+    // SIFIRLAMA YALNIZCA **DOLU** ALANDA. Kural once bosa da uygulaniyordu ve
+    // testi kirdi: bos alana tek seferde gelen `3950` son haneye inip `0`
+    // oluyordu. Bos alanda sifirlanacak bir sey yok - tasarimin cumlesi de
+    // birebir *"dolu alanda ilk rakam"* diyor. Ayrica IME'nin birden cok
+    // karakteri tek seferde islemesine karsi da korumali.
+    val restart = grew && !priceTouched && priceMinor > 0L
+    val next = (if (restart) typed.takeLast(1) else typed)
+        .trimStart('0')
+        .takeLast(MAX_PRICE_DIGITS)
+    return copy(priceMinor = next.toLongOrNull() ?: 0L, priceTouched = true)
+}
+
+/**
+ * Alanin tasiyabilecegi en cok hane.
+ *
+ * Yedi hane 99.999,99 TL demek - bir raf etiketinde gorulebilecek her seyin
+ * ustunde. Sinir tasmayi degil, KAZA ile uzun basili kalmis bir tusu
+ * kesiyor: sinirsiz birakilsaydi `Long` tasmasi sessizce negatif fiyat
+ * yazardi.
+ */
+private const val MAX_PRICE_DIGITS = 7
 
 /**
  * Eksik alanin amber seritte gorunecek cumlesi - ya da null.
@@ -144,15 +214,20 @@ internal fun ConfirmCard.missingFieldMessage(): String? = when {
     // BASINDA tek cumle var ([unsupportedChainMessage]). Iki yuzeyin ayni seyi
     // soylemesi kullaniciya iki is varmis gibi gorunurdu.
     skipped == TagSkip.UNSUPPORTED_CHAIN -> null
-    priceText.isBlank() && skipped == TagSkip.PRICE_CONTRADICTS_UNIT_PRICE ->
+    priceMinor == 0L && skipped == TagSkip.PRICE_CONTRADICTS_UNIT_PRICE ->
         "Okunan fiyat etiketin birim fiyatıyla uyuşmuyor — doğrula"
-    priceText.isBlank() -> "Fiyat okunamadı — yaz"
+    priceMinor == 0L -> "Fiyat okunamadı — yaz"
     // "OKUNAMADI" DEGIL "SECILMEDI": OCR metni artik urun adi olmuyor
     // (karar 51), yani adin bos olmasi bir okuma hatasi degil - henuz
     // secilmemis olmasi. Eski cumle okunamayan bir sey varmis gibi
     // soyluyordu ve kullaniciyi etikete bakmaya gonderirdi.
     productName.isBlank() -> "Ürün seçilmedi — seç"
-    !kurusFromOcr -> "Kuruş okunamadı — kontrol et"
+    // KURUS UYARISI ILK DUZENLEMEDE SUSUYOR (karar 72) ve o kartta geri
+    // gelmiyor. Uyarinin isi kullaniciyi fiyata BAKTIRMAK; duzenleme bakisin
+    // kanitidir. Cevaptan sonra da bagiran uyari yalanci coban olur.
+    // Karar 73'ten sonra elle giren her deger zaten kuruslu, yani bu satir
+    // fiilen yalnizca ELLENMEMIS OCR degeri icin kaliyor.
+    !kurusFromOcr && !priceTouched -> "Kuruş okunamadı — kontrol et"
     else -> null
 }
 

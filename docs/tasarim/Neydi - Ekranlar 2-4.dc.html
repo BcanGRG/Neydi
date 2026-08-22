@@ -358,14 +358,16 @@
                 
               </div>
               </div>
-              <div style="height:52px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff;margin-top:4px">Kaydet</div>
-              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Vazgeç</div>
+              <div style="display:flex;gap:10px;margin-top:4px">
+                <div style="flex:1;height:52px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Vazgeç</div>
+                <div style="flex:2;height:52px;border-radius:999px;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#fff">Kaydet</div>
+              </div>
             </div>
           </div></div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:12px;flex:none">
-        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Fiyat okunamadı</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">tek boş alan vurgulanır, klavye hazır açılır</div></div>
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="font:700 16px/1.28 'Plus Jakarta Sans'">Fiyat okunamadı</div><div style="font:500 13px/1.3 'Plus Jakarta Sans';color:#5C4F45">tek boş alan vurgulanır, klavye hazır açılır · kırpım toplandı (karar 70)</div></div>
         <div data-screen-label="4 Fiyat boş" style="width:390px;height:844px;background:#221A14;border:1px solid #C9B9A5;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;flex:none;color:#F5EDE6"><div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums"><div>11:26</div><div style="display:flex;gap:5px;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:15px">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded';font-size:15px">wifi</span><span style="font-family:'Material Symbols Rounded';font-size:15px">battery_full</span></div></div>
           <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;background:repeating-linear-gradient(90deg,#2A231D 0 4px,#211B16 4px 9px)">
             <div style="flex:none;background:#FBF7F2;border-top-left-radius:28px;border-top-right-radius:28px;box-shadow:0 -8px 24px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:12px;padding:16px 16px 30px">
@@ -388,13 +390,16 @@
                 <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A7666;flex:none">chevron_right</span>
               </div>
               </div>
-              <div style="height:52px;border-radius:999px;background:#D9CDBE;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#8A7666;margin-top:2px">Kaydet</div>
-              <div style="height:44px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Vazgeç</div>
+              <div style="display:flex;gap:10px;margin-top:2px">
+                <div style="flex:1;height:52px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Plus Jakarta Sans';color:#5C4F45">Vazgeç</div>
+                <div style="flex:2;height:52px;border-radius:999px;background:#D9CDBE;display:flex;align-items:center;justify-content:center;font:600 17px/1 'Plus Jakarta Sans';color:#8A7666">Kaydet</div>
+              </div>
               <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:6px">
                 <sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
                   <div style="height:46px;border-radius:12px;background:#F1E7DB;display:flex;align-items:center;justify-content:center;font:600 20px/1 'Plus Jakarta Sans';color:#221A14">{{ k.ch }}</div>
                 </sc-for>
               </div>
+              <div style="font:400 12px/1.4 'Plus Jakarta Sans';color:#8A7666;text-align:center">virgül ve nokta yok sayılır — alan sağdan dolar: 3950 → 39,50 (karar 73)</div>
             </div>
           </div></div>
       </div>
@@ -570,12 +575,13 @@ class Component extends DCLogic {
         { name: "Labne 200 g", note: "katalog" }
       ],
       cardRules: [
-        { k: "bekleyen", v: "Kartın başındaki tarama deseni bir tasarım tercihi değil, eksik malzeme: gerçek bir raf etiketi fotoğrafı gelene kadar yer tutuyor. Kod tarafı burayı kırpılmış gerçek fotoğrafla çizecek, desenle değil." },
-        { k: "fiyat", v: "Elle fiyat girme yasağının tek istisnası: yanlış okunanı düzeltmek. Alan dolu gelirse dokunuşla düzeltilir, boş gelirse klavye kendiliğinden açılır." },
+        { k: "bekleyen", v: "Kartın başındaki tarama deseni bir tasarım tercihi değil, eksik malzeme: gerçek bir raf etiketi fotoğrafı gelene kadar yer tutuyor. Kod tarafı burayı kırpılmış gerçek fotoğrafla çizecek, desenle değil. Kırpım rehber (3:2) bölgesinden alınır — bant oran değil kaynak sözleşmesi; kaynak düzelince şerit 92dp'ye döner (karar 74)." },
+        { k: "fiyat", v: "Elle fiyat girme yasağının tek istisnası: yanlış okunanı düzeltmek. Alan dolu gelirse dokunuşla düzeltilir, boş gelirse klavye kendiliğinden açılır. Alan yazar kasa gibi sağdan dolar (3 → 0,03 · 3950 → 39,50); virgül ve nokta yok sayılır, dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır, boşalan alan — TL'ye döner. Kaydet değer sıfırdan çıkınca etkinleşir (karar 73)." },
+        { k: "klavye", v: "Dikeyde klavye açılınca kırpım şeridi toplanır, kapanınca geri gelir; kart hiç kaydırılmaz, Vazgeç+Kaydet çifti klavyenin üstünde kalır (karar 70–71). Yatayda klavye vizörü örter, kartı asla örtmez." },
         { k: "ürün", v: "Jenerik kalır — \"yoğurt\". Marka ürünün değil gözlemin alanı, çünkü karşılaştırılan şey aynı ürünün farklı marketlerdeki farklı markaları." },
         { k: "marka", v: "Etiket metninin ilk kelimesinden öneriliyor ve kesik çerçeveyle tahmin olduğunu söylüyor. Dokunmak klavyesiz bir çip sheet'i açıyor: bu üründe görülmüş markalar + \"Marka yok\". Yazma yok — OCR artığı (DST) tek dokunuşla doğrusuna çevriliyor ya da boşalıyor." },
         { k: "market", v: "Yapışkan — son seçilen bir sonraki çekimde hazır geliyor. Koridorda tek elle seri çekimin bütün mesele olduğu yer burası. Seçici ürün seçicinin ikizi: başında arama alanı var, uyan zincir yoksa \"+ Yeni market «AKYURT»\" tek dokunuşla ekliyor; var olan bir adın başka yazımı sessizce var olan zincire bağlanıyor." },
-        { k: "eksik alan", v: "OCR'ın dolduramadığı alan amber şerit ve tek satırlık bir cümle alıyor; kalan alanlar sessiz kalıyor. Aynı anda birden çok alan boşsa yalnızca ilki vurgulanıyor." }
+        { k: "eksik alan", v: "OCR'ın dolduramadığı alan amber şerit ve tek satırlık bir cümle alıyor; kalan alanlar sessiz kalıyor. Aynı anda birden çok alan boşsa yalnızca ilki vurgulanıyor. Kuruş uyarısı alandaki ilk düzenlemede susar ve o kartta geri gelmez (karar 72)." }
       ],
       unmarked: [
         { name: "Maydanoz" }, { name: "Havuç 1 kg" }, { name: "Limon 1 kg" }
