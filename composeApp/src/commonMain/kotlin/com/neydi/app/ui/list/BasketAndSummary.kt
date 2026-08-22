@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -71,7 +72,14 @@ internal fun EstimatedBasket(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
+        // SOL SUTUN ESNEK, SAG SUTUN KILITLI.
+        //
+        // Ikisi de kilitsizdi ve cihazda tasti: *"8 üründen 5 tanesini
+        // biliyorum"* uzayinca tutar (`en az ~1.200 TL`) IKI SATIRA bolundu ve
+        // satirin yuksekligi buyudu. Okunacak sey tutar; kirpilacak sey
+        // aciklama. Gecmis satirindaki tarih sutunuyla ayni kural: genisligi
+        // paylasan her metnin sarmaya karsi kilidi olmali.
+        Column(Modifier.weight(1f, fill = false)) {
             Text(
                 text = "Tahmini sepet",
                 style = MaterialTheme.typography.labelLarge,
@@ -87,6 +95,8 @@ internal fun EstimatedBasket(
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         Text(
@@ -97,6 +107,8 @@ internal fun EstimatedBasket(
             },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            modifier = Modifier.padding(start = Spacing.sm),
         )
     }
 }
