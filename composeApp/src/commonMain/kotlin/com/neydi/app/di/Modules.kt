@@ -57,6 +57,7 @@ val dataModule = module {
     single { get<NeydiDatabase>().appSettingsDao() }
     single { get<NeydiDatabase>().priceObservationDao() }
     single { get<NeydiDatabase>().productStatsDao() }
+    single { get<NeydiDatabase>().suggestionBlockDao() }
 
     // Acilis hazirligini saat/id ile birlikte tasiyan kucuk sarmalayici:
     // App() bunlari kendi uretmek zorunda kalmasin.
@@ -68,7 +69,8 @@ val dataModule = module {
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
             priceObservationDao = get(),
             statsRebuilder = get(),
-            suggestionEngine = get(), clock = ::now,
+            suggestionEngine = get(), blockDao = get(),
+            clock = ::now, newId = ::newUuid,
         )
     }
 
@@ -83,7 +85,7 @@ val dataModule = module {
         SettingsViewModel(
             householdDao = get(), memberDao = get(),
             productDao = get(), storeDao = get(),
-            priceObservationDao = get(), clock = ::now,
+            priceObservationDao = get(), blockDao = get(), clock = ::now,
         )
     }
 
@@ -114,7 +116,7 @@ val dataModule = module {
     single {
         SuggestionEngine(
             statsDao = get(), productDao = get(), tripDao = get(),
-            tripLineDao = get(), clock = ::now,
+            tripLineDao = get(), blockDao = get(), clock = ::now,
         )
     }
 

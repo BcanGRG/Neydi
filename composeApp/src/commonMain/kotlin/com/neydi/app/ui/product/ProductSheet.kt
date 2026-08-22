@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
@@ -59,6 +60,14 @@ data class ProductSheetState(
     val rowId: String? = null,
     val name: String,
     val isStaple: Boolean,
+    /**
+     * "Bunu onerme" anahtarinin hali (F6.5).
+     *
+     * [isStaple]'in tersi DEGIL ve olmasi da gerekmiyor: bir urun hem her
+     * zamanki hem onerilmeyen olabilir - kullanici onu her gezide kendisi
+     * yaziyor ama motorun hatirlatmasini istemiyor. Iki ayri beyan.
+     */
+    val isBlocked: Boolean = false,
     /** Fiyat bolumu (E17). Bos ise bolum HIC cizilmiyor. */
     val price: PriceSection = PriceSection(),
 )
@@ -87,14 +96,19 @@ data class ProductSheetState(
  *
  * F5.3 hala Canvas grafigini, min/ortalama referans cizgilerini ve aralik
  * secicisini ekleyecek.
- * F6.5 ikinci anahtari (*"Bunu onerme"*) baglayacak - bugun engelleme tablosu
- * var ama DAO'su yok, ve gorunup calismayan bir anahtar calismayan bir anahtardan
- * kotudur.
+ * F6.5 ikinci anahtari (*"Bunu onerme"*) BAGLADI. Tablo v5'ten beri vardi ama
+ * DAO'su yoktu; anahtari o hafta cizmek, gorunup calismayan bir anahtar
+ * uretirdi - calismayan bir anahtardan kotu olan tam olarak budur.
  */
 @Composable
 fun ProductSheetContent(
     state: ProductSheetState,
     onStapleChange: (Boolean) -> Unit,
+    /**
+     * "Bunu onerme" (F6.5). Varsayilani BOS: onizlemeler ve anahtari
+     * baglamayan cagiranlar icin - anahtar yine cizilir ama hicbir sey yazmaz.
+     */
+    onBlockChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
     bottomPadding: Dp = 0.dp,
     /**
@@ -213,6 +227,19 @@ fun ProductSheetContent(
             label = "Her zamankilere ekle",
             checked = state.isStaple,
             onCheckedChange = onStapleChange,
+        )
+        // IKINCI ANAHTAR (F6.5). Bu satirin yeri yorumla RESERVE EDILMISTI ve
+        // bir sure bos durdu: tablo v5'ten beri vardi ama DAO'su yoktu, ve
+        // *gorunup calismayan bir anahtar, olmayan bir anahtardan kotudur*.
+        // Artik calisiyor.
+        //
+        // ALT ACIKLAMA (`supporting`) YOK: tasarimin yedi ciziminin hicbirinde
+        // yok. Anahtarin acik halinin ne soyleyecegi de cizilmemis - tasarima
+        // soruldu (`docs/28`).
+        NeydiSwitch(
+            label = "Bunu önerme",
+            checked = state.isBlocked,
+            onCheckedChange = onBlockChange,
         )
 
         onRemoveFromList?.let { remove ->
@@ -367,6 +394,11 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
                     .padding(horizontal = Spacing.md, vertical = Spacing.xs)
                     .heightIn(min = Sizes.minTapTarget),
                 verticalAlignment = Alignment.CenterVertically,
+                // MAKETIN `gap:10px`'I. Bosluk yokken tarih sardiginda ikinci
+                // satirinin sonu market adinin basina BITISIK cikiyordu:
+                // ekranda `AğustoBİM` yaziyordu. Sutunlarin arasi, sutunlarin
+                // kendisi kadar sutun.
+                horizontalArrangement = Arrangement.spacedBy(HISTORY_COLUMN_GAP),
             ) {
                 // TARIH ONCE: tasarimin satir sirasi `6 Ağu · Migros · 41,00 TL`
                 // ve sira bir tercih degil - satiri AYIRT EDEN sey tarih.
@@ -374,18 +406,34 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
                     text = row.date,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // SABIT GENISLIK VEREN HER METNIN KILIDI OLMALI. Kilitsiz
+                    // hali cihazda "22 Ağustos"u uc satira boldu ve satirin
+                    // yuksekligini uce katladi.
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.width(HISTORY_DATE_WIDTH),
                 )
                 Text(
                     text = row.store,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
                     text = row.price,
                     style = MaterialTheme.typography.bodyMedium,
+                    // Maket `font-weight:600`. Satirin okunan seyi fiyat;
+                    // tarih ve market onu KONUMLANDIRIYOR.
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    // SAGA DAYALI SABIT SUTUN - `Chips.kt`'nin 92dp'lik fiyat
+                    // sutunuyla ayni gerekce: rakamlar sutun kenarinda
+                    // hizalanmazsa goz her satirda yeniden yer ariyor.
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(HISTORY_PRICE_WIDTH),
                 )
             }
         }
@@ -398,7 +446,24 @@ private fun PriceBlock(price: PriceSection, onDeleteObservation: (String) -> Uni
     }
 }
 
-private val HISTORY_DATE_WIDTH = 56.dp
+/**
+ * Maket: `width:76px` (390dp'lik cerceve, yani dogrudan 76dp).
+ *
+ * Onceki 56dp maketten degil TAHMINDEN geliyordu ve "22 Ağustos"u kutuya
+ * sigdiramiyordu. Onizleme fikstürleri hatayi GIZLEDI: `"6 Ağu"`, `"14 Ağu"`
+ * gibi kisa degerler tasiyorlardi, yani maketin kopyasiydilar - gercek
+ * uretim yolunun (`formatDayMonth`) ciktisinin degil.
+ */
+private val HISTORY_DATE_WIDTH = 76.dp
+
+/** Maket: fiyat sutunu da `width:76px`, saga dayali. */
+private val HISTORY_PRICE_WIDTH = 76.dp
+
+/**
+ * Maketin `gap:10px`'i. Spacing izgarasinda 10 adimi yok; satir ADIMA DEGIL
+ * makete uyuyor - [CHEAP_ROW_HEIGHT] ile ayni gerekce.
+ */
+private val HISTORY_COLUMN_GAP = 10.dp
 
 /** "Nerede ucuz" kutucugunun yuksekligi (maket: 52px). `min`, cunku %130 yazi
  *  olceginde iki satir 52dp'ye sigmiyor ve tasmak yerine buyumesi gerekiyor. */
@@ -448,7 +513,10 @@ private fun ProductSheetTrendPreview() = NeydiPreview {
                 headline = "32 TL → 41 TL · 6 Haziran'dan beri %28 arttı",
                 headlineSub = "Migros · dün · 1 lt",
                 history = listOf(
-                    HistoryRow(id = "t1", observedAt = 0, date = "14 Ağu", store = "Migros", price = "41,00 TL"),
+                    // EN UZUN GERCEK DEGERLER: fikstur maketin degil URETIMIN kopyasi
+                    // olmali. Kisa adlarla dolu bir fikstur, tarih sutununun
+                    // tasmasini bir sürüm boyunca gizledi.
+                    HistoryRow(id = "t1", observedAt = 0, date = "22 Ağu", store = "Tarım Kredi", price = "1.234,56 TL"),
                     HistoryRow(id = "t2", observedAt = 0, date = "2 Tem", store = "Migros", price = "37,00 TL"),
                     HistoryRow(id = "t3", observedAt = 0, date = "6 Haz", store = "Migros", price = "32,00 TL"),
                 ),

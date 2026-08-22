@@ -4,6 +4,7 @@ import com.neydi.app.data.daysBetween
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.ProductStats
 import com.neydi.app.data.db.ProductStatsDao
+import com.neydi.app.data.db.SuggestionBlockDao
 import com.neydi.app.data.db.TakeOutcome
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLineDao
@@ -97,7 +98,7 @@ internal fun score(
 /**
  * Oneri ureticisi (F6.2).
  *
- * YALNIZCA VERI URETIYOR - serit, cip, metin F6.3'un isi. Burada uc kural var:
+ * YALNIZCA VERI URETIYOR - serit, cip, metin F6.3'un isi. Burada dort kural var:
  *
  * 1. **Aktif listede olan urun onerilmez.** Kullanici zaten yazmis; onermek
  *    "uygulama listemi okumuyor" hissi verir.
@@ -106,12 +107,15 @@ internal fun score(
  *    durumu zaten kabul ediyor.
  * 3. **En fazla [MAX_SUGGESTIONS]:** tasarimin siniri. Ustu, seridi reklam
  *    yuzeyine cevirir.
+ * 4. **"Bunu onerme" denen urun onerilmez** (F6.5). Kural motorda, cunku
+ *    anahtarin adi *"bunu onerme"* - "bir yuzeyde susma" degil.
  */
 class SuggestionEngine(
     private val statsDao: ProductStatsDao,
     private val productDao: ProductDao,
     private val tripDao: TripDao,
     private val tripLineDao: TripLineDao,
+    private val blockDao: SuggestionBlockDao,
     private val clock: () -> Long,
 ) {
 
@@ -124,11 +128,22 @@ class SuggestionEngine(
             tripLineDao.observeLines(trip.id).first().map { it.productId }.toSet()
         }.orEmpty()
 
+        // "BUNU ONERME" DENENLER HARIC (F6.5, kural 4).
+        //
+        // Suzgec MOTORDA, tuketicilerde degil - ve bu tercih tasarimin
+        // cumlesinden cikiyor: anahtarin adi *"bunu onerme"*, *"bunu seritte
+        // gosterme"* degil. Motoru iki yuzey paylasiyor (Ekran 1'in oneri
+        // seridi ve Ekran 3 "Eksik Olabilir"); suzgeci tuketiciye koysaydik
+        // biri susar, oteki konusmaya devam ederdi ve kullanici ayarin
+        // calismadigini dusunurdu.
+        val blocked = blockDao.activeProductIds(householdId).toSet()
+
         val now = clock()
         // Sequence DEGIL: mapNotNull icinde suspend cagri var ve sequence
         // lambda'lari suspend olamiyor. 80 urunluk olcekte fark da yok.
         return allStats
             .filter { it.productId !in activeTripIds }
+            .filter { it.productId !in blocked }
             .mapNotNull { stats -> toSuggestion(stats, now) }
             .filter { it.score >= SCORE_THRESHOLD }
             .sortedByDescending { it.score }

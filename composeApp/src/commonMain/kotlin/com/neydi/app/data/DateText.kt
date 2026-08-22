@@ -11,6 +11,19 @@ private val MONTH_NAMES = listOf(
     "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 )
 
+/**
+ * Ay adlarinin kisaltmasi, [MONTH_NAMES] ile AYNI SIRADA.
+ *
+ * TABLODAN, `take(3)` ile kesip atarak DEGIL. Kesme Turkce'de tesadufen dogru
+ * sonuc verirdi ama kural olarak yanlis: kisaltma bir yazim gelenegi, karakter
+ * sayisi degil. Tablo ayrica "Ağu" ile "Ağustos"un yan yana durmasini ve
+ * ikisinin ayni indeksten okundugunu gorunur kiliyor.
+ */
+private val MONTH_SHORT = listOf(
+    "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+    "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
+)
+
 // `formatDayMonthTime` ("13 Ağustos 18:49") SILINDI: cagirani kalmamisti.
 // Gecmis satiri [formatDayMonthYear], liste basligi [formatRelativeDay]
 // kullaniyor. Gitmesiyle `hh:mm` bicimlemesi de tek yerde kaldi - iki
@@ -119,6 +132,34 @@ fun formatRelativeDay(
 fun formatDayMonth(epochMillis: Long, zone: TimeZone = TimeZone.currentSystemDefault()): String {
     val t = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(zone)
     return "${t.day} ${MONTH_NAMES[t.month.ordinal]}"
+}
+
+/**
+ * Epoch millis -> **"22 Ağu"**: DAR VE SABIT bir sutundaki tarih.
+ *
+ * ## Neden [formatDayMonth]'tan ayri bir bicimleyici
+ *
+ * Ayirim metnin degil, DURDUGU YERIN ozelligi. Urun Detayi'nin alim gecmisi
+ * satirinda tarih sabit genislikli bir sutunda; Gecmis ekraninin gezi
+ * satirinda ise esnek bir sutunda. Tasarim ikisini bilerek ayirmis: dar sabit
+ * sutunda `6 Ağu`, esnek sutunda `12 Ağustos`.
+ *
+ * Bunun bedeli cihazda goruldu: tam ay adi 56dp'lik kutuya sigmayinca metin
+ * UC SATIRA boluniyor ve satirin ikinci satiri yanindaki market adiyla
+ * bitisik okunuyordu - ekranda `22 / AğustoBİM / s` yaziyordu. Kirpilmiyordu
+ * bile, cunku sabit genislikli metnin sarmaya karsi kilidi yoktu.
+ *
+ * Kisaltmak tek basina yetmiyor (%130 yazi olceginde `22 Ağu` da zorlanir);
+ * cagiran taraf ayrica `maxLines = 1` koyuyor. Ikisi birlikte kural: **genislik
+ * veren her metnin sarmaya karsi kilidi olmali.**
+ */
+@OptIn(ExperimentalTime::class)
+fun formatDayMonthShort(
+    epochMillis: Long,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+): String {
+    val t = Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(zone)
+    return "${t.day} ${MONTH_SHORT[t.month.ordinal]}"
 }
 
 /**

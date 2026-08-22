@@ -715,3 +715,71 @@ Dokuz kuralın dokuzu da geri alındığında **tam kendi testini** düşürdü:
 okunuşu. 441 test yeşil, sıfır uyarı.
 
 Cihazda doğrulandı: Süt satırı artık `BİM · bugün` + **`A101'de 36,00`**.
+
+---
+
+## F6.5 — "Bunu önerme" bağlandı; tablo iki fazdır bekliyordu
+
+**22 Ağustos 2026.** Tasarım bu anahtarı Ürün Detayı'nın **yedi çiziminde**
+gösteriyor — sıfır gözlemli halde bile. Kodda yoktu.
+
+Sebep kayıtlıydı: `suggestion_block` tablosu **v5 şemasından beri** duruyor,
+`NeydiDatabase`'in KDoc'u da bunu bilerek yazmış — *"DAO'LAR BU BUMP'A DAHİL
+DEĞİL: yeni tabloların okuyucularını kendi fazları yazıyor (… F6.5 …)"*.
+`ProductSheet.kt` ise satırın yerini yorumla rezerve etmişti:
+
+> *"F6.5 ikinci anahtarı bağlayacak — bugün engelleme tablosu var ama DAO'su
+> yok, ve **görünüp çalışmayan bir anahtar, çalışmayan bir anahtardan
+> kötüdür**."*
+
+Yani **migrasyon gerekmedi.** Yazılan şey DAO, motorun dördüncü kuralı ve iki
+yüzey.
+
+### Süzgeç motorda, tüketicide değil
+
+Anahtarın adı *"bunu önerme"*, *"bunu şeritte gösterme"* değil. Motoru iki
+yüzey paylaşıyor — Ekran 1'in öneri şeridi ve Ekran 3 "Eksik Olabilir".
+Süzgeci tüketiciye koysaydık biri susar, öteki konuşmaya devam ederdi ve
+kullanıcı ayarın çalışmadığını düşünürdü.
+
+### Kaldırmak SİLMEK değil
+
+`unblock` satırı silmiyor, `unblockedAt` yazıyor. Gerekçe `SuggestionBlock`
+KDoc'unda ve **geleceğe ait**: üç-vuruş otomatik bastırma yazıldığında motor,
+bir ürünü geri engellemeden önce kullanıcının onu **elle** serbest bıraktığını
+görebilmeli — *"kullanıcının elle kaldırdığı bir engeli motorun sessizce geri
+koyması, ayarın işe yaramadığı hissi verir"*.
+
+Bu yüzden `blockHistory` sorgusu da yazıldı: bugün yalnızca testler çağırıyor,
+çağıran kodu AUTO yarısı getirecek. Satırların saklanmasının **tek** sebebi o.
+
+### Ayarlar bölümü özelliğin şartı, süsü değil
+
+*"Önerilmeyenler"* listesi kalıcı bir reddin geri alınabilir olduğunu gösteren
+tek yüzey — görünmeseydi "Bunu önerme" bir **kara delik** olurdu. Bölüm boşken
+hiç çizilmiyor ve bunun için bir açıklama notu da yok; sabitlerin aksine, boş
+engel listesi kullanıcının **yapması gerekmeyen** bir şey.
+
+Satır sonundaki kontrol ikon değil **kelime**: "çıkar" bir işlem, "geri al" bir
+düzeltme.
+
+### Yazılmayan yarılar ve neden
+
+- **Üç-vuruş otomatik bastırma:** kaynağı `suggestion_event` ve o tabloya
+  **yazan tek satır kod yok** — DAO'su, indeksi, `@Insert`'ü hiç yazılmamış.
+  Ayrıca üç-vuruş sorgusu `(householdId, productId, outcome)` indeksi istiyor
+  ve tablonun `indices` listesi boş, yani bir **v6 bump'ı** gerekiyor. Ayrı iş.
+- **Sabit terfisi:** F6.5'in başlığında ama **yapılmadı**, çünkü iki tasarım
+  dosyası çelişiyor (*"üç geziden sonra kendiliğinden"* ↔ *"birkaç geziden
+  sonra… istersen şimdi de ekleyebilirsin"*) ve kodun kendi KDoc'u otomatiği
+  **yasaklıyor**: *"kullanıcı işaretler, motor değil — sabitlik bir çıkarım
+  değil, beyan"*. Tasarıma soruldu (`docs/28`).
+
+### Kanıt
+
+Altı kuralın altısı da geri alındığında tam kendi testini düşürdü: motorun
+süzgeci, yürürlük şartı, ikinci kaldırmanın koruması, `REPLACE`, yeniden-eskiye
+sıralama, silinmiş ürünün elenmesi. **449 test yeşil, sıfır uyarı.**
+
+Cihazda uçtan uca doğrulandı: anahtar açıldı → Ayarlar'da *"Önerilmeyenler ·
+Süt · [Geri al]"* göründü → geri alındı → bölüm kayboldu.

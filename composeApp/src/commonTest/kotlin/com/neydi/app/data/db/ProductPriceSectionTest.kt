@@ -258,6 +258,38 @@ class ProductPriceSectionTest {
         assertTrue(s.cheapest.isEmpty(), "silinen gozlem ikinci marketi yaratmamali")
     }
 
+    /**
+     * GECMIS SATIRININ TARIHI KISA AY ADIYLA - dar sutunun sarti.
+     *
+     * Bu testin varlik sebebi bir cihaz hatasi. Satir tam ay adi yaziyordu
+     * ("22 Ağustos"), tarih sutunu ise sabit ve dar; metnin sarmaya karsi
+     * kilidi de yoktu. Sonuc ekranda `22 / AğustoBİM / s` diye okunuyordu:
+     * tarih uc satira boluniyor ve ikinci satiri market adiyla bitisiyordu.
+     *
+     * ONIZLEME NEDEN YAKALAMADI: fikstürleri `"6 Ağu"`, `"14 Ağu"` gibi KISA
+     * degerler tasiyordu - yani maketin kopyasiydilar, uretim yolunun degil.
+     * Bu yuzden nobetci `toPriceSection`in KENDI ciktisina bakiyor; fikstüre
+     * bakan bir nobetci ayni hatayi bir kez daha kacirirdi.
+     */
+    @Test
+    fun theHistoryRowDateUsesTheShortMonthName() = runTest {
+        val db = ready()
+        // On iki ay birden: hangi aya denk geldigi cihazin saat dilimine bagli
+        // ve iddia ONA bagli OLMAMALI. Kilitlenen sey gun/ay degil, BICIM.
+        (0 until 12).forEach { m -> observe(db, 6_250, at = (m * 31L + 1) * day, id = "m$m") }
+
+        section(db).history.forEach { row ->
+            val month = row.date.substringAfter(' ')
+            assertEquals(3, month.length, "dar sutun UC HARFLIK ay istiyor: ${row.date}")
+            assertTrue(
+                MONTH_LONG.none { it == month },
+                "tam ay adi dar sutunda satiri uce boluyor: ${row.date}",
+            )
+        }
+    }
+
+
+
     /** Ambalaj biliniyorsa satirda gosteriliyor. */
     @Test
     fun aKnownPackIsShownOnTheRow() = runTest {
@@ -270,3 +302,9 @@ class ProductPriceSectionTest {
         assertEquals(null, rows.single { it.store == "Migros" }.pack)
     }
 }
+
+/** Tam ay adlari - kisa bicimin onlardan BIRI OLMADIGINI gostermek icin. */
+private val MONTH_LONG = listOf(
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+)

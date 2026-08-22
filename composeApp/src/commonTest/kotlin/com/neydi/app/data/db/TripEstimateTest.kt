@@ -187,4 +187,69 @@ class TripEstimateTest {
         assertEquals("~643 TL", formatEstimate(64_250))
         assertEquals("~1.085 TL", formatEstimate(108_540))
     }
+    // --- AKTIF SEPET (E18'in ekranda gorunen yarisi) ------------------------
+    //
+    // Bu uc test bir BOSLUGU kapatiyor: yukaridaki sekiz test
+    // `observeTripEstimates`i, yani KAPANMIS gezi sorgusunu deniyordu. Ekranin
+    // ustundeki "Tahmini sepet" satirini besleyen sorgular AYRI
+    // (`observeEstimate` / `observePricedCount` / `observeLineCount`) ve
+    // hicbirinin testi yoktu - aktif sepette bir regresyon butun takimdan
+    // sessizce gecerdi.
+
+    /** Miktar CARPILIYOR: "4x Makarna" dortle. */
+    @Test
+    fun theActiveBasketMultipliesByQuantity() = runTest {
+        val db = ready()
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Makarna", qty = 4.0)
+        observe(db, "Makarna", 1_700, at = day, id = "o1")
+
+        assertEquals(6_800, db.priceObservationDao().observeEstimate("t1").first())
+    }
+
+    /**
+     * FIYATI BILINMEYEN URUN TOPLAMA GIRMIYOR, ve payda onu SAYIYOR.
+     *
+     * Ikisi birden, cunku satirin cumlesi ("3 üründen 2 tanesini biliyorum")
+     * tam olarak bu ikilinin farkindan cikiyor.
+     */
+    @Test
+    fun anUnpricedProductLeavesTheSumButStaysInTheDenominator() = runTest {
+        val db = ready()
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Süt"); line(db, "t1", "Çay"); line(db, "t1", "Ekmek")
+        observe(db, "Süt", 6_250, at = day, id = "o1")
+        observe(db, "Çay", 39_900, at = day, id = "o2")
+
+        val dao = db.priceObservationDao()
+        assertEquals(46_150, dao.observeEstimate("t1").first())
+        assertEquals(2, dao.observePricedCount("t1").first())
+        assertEquals(3, dao.observeLineCount("t1").first())
+    }
+
+    /**
+     * PAY PAYDADAN BUYUK OLAMAZ - "hepsinin fiyatını biliyorum" yalani.
+     *
+     * Payda bir sure EKRANIN cizdigi satir sayisindan geliyordu, pay ise
+     * veritabanindan. Urunu silinmis bir satir ekranda cizilmiyor ama
+     * `pricedCount`ta duruyordu; `pricedCount > totalCount` olunca
+     * `pricedCount < totalCount` yanlis donuyor ve satir eksik bilgiyi TAM
+     * bilgi gibi sunuyordu. Ikisi artik ayni sorgu ailesinden geliyor.
+     */
+    @Test
+    fun thePricedCountNeverExceedsTheLineCount() = runTest {
+        val db = ready()
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Süt"); line(db, "t1", "Çay")
+        observe(db, "Süt", 6_250, at = day, id = "o1")
+        observe(db, "Çay", 39_900, at = day, id = "o2")
+        // Urun silindi: ekranda satir cizilmiyor, ama liste satiri duruyor.
+        db.productDao().softDelete("Çay", 2 * day)
+
+        val dao = db.priceObservationDao()
+        assertTrue(
+            dao.observePricedCount("t1").first() <= dao.observeLineCount("t1").first(),
+            "pay paydayi asarsa satir 'hepsinin fiyatını biliyorum' diye yalan yazar",
+        )
+    }
 }

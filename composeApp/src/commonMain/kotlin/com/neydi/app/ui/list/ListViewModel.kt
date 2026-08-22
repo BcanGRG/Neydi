@@ -9,7 +9,10 @@ import com.neydi.app.data.db.Category
 import com.neydi.app.data.db.CategoryDao
 import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
+import com.neydi.app.data.db.BlockSource
 import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.SuggestionBlock
+import com.neydi.app.data.db.SuggestionBlockDao
 import com.neydi.app.data.db.TripDao
 import com.neydi.app.data.db.TripLine
 import com.neydi.app.data.db.TripLineDao
@@ -58,8 +61,11 @@ class ListViewModel(
     private val priceObservationDao: PriceObservationDao,
     private val statsRebuilder: ProductStatsRebuilder,
     private val suggestionEngine: SuggestionEngine,
+    private val blockDao: SuggestionBlockDao,
     /** Fiyat ipucunun yas hesabi icin - test saat kurmadan kossun diye disaridan. */
     private val clock: () -> Long,
+    /** Engel satirinin kimligi icin; testte sabitlenebilsin diye disaridan. */
+    private val newId: () -> String,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
@@ -247,6 +253,13 @@ class ListViewModel(
                 rowId = rowId,
                 name = product.name,
                 isStaple = product.isStaple,
+                // ENGEL DURUMU FIYATTAN FARKLI OLARAK ACILISTA OKUNUYOR: tek
+                // satirlik bir `EXISTS` sorgusu ve anahtarin ILK cizimi zaten
+                // onu gosteriyor. Sonra gelseydi anahtar bir kare kapali
+                // gorunup kendiliginden acilirdi - kullanicinin dokunmadigi
+                // bir anahtarin oynamasi, uygulamanin kendi kendine ayar
+                // degistirdigi izlenimi verir.
+                isBlocked = blockDao.isBlocked(household, product.id),
             )
             // FIYAT BOLUMU AYRI VE SONRA: sheet gozlemleri BEKLEMEDEN aciliyor.
             // Tek atisla beklenseydi dokunusla acilis arasinda bir sorgu
@@ -277,6 +290,43 @@ class ListViewModel(
             repo.setStaple(productId, isStaple)
             _productSheet.update { current ->
                 current?.takeIf { it.productId == productId }?.copy(isStaple = isStaple) ?: current
+            }
+        }
+    }
+
+    /**
+     * "Bunu onerme" (F6.5) - [setStaple]'in ikizi, ayni iyimser guncellemeyle.
+     *
+     * ## Kapatmak SILMEK DEGIL
+     *
+     * Anahtar kapatilinca satir silinmiyor, `unblockedAt` doluyor. Sebep
+     * `SuggestionBlock` KDoc'unda: motor ayni urunu otomatik engellemeye
+     * kalkismadan once kullanicinin bu karari gorebilmeli. Silseydik uc-vurus
+     * kurali bir sonraki turda ayni urunu sessizce geri engeller ve kullanici
+     * ayarin ise yaramadigini dusunurdu.
+     *
+     * Yeniden acmak da yeni bir satir DOGURMUYOR: benzersiz indeks yuzunden
+     * `upsert` eskisini eziyor, yani bir urunun engel gecmisi tek satir.
+     */
+    fun setBlocked(productId: String, blocked: Boolean) {
+        viewModelScope.launch {
+            val at = clock()
+            if (blocked) {
+                blockDao.upsert(
+                    SuggestionBlock(
+                        id = newId(),
+                        householdId = household,
+                        productId = productId,
+                        source = BlockSource.MANUAL,
+                        blockedAt = at,
+                        createdAt = at,
+                    ),
+                )
+            } else {
+                blockDao.unblock(household, productId, at)
+            }
+            _productSheet.update { current ->
+                current?.takeIf { it.productId == productId }?.copy(isBlocked = blocked) ?: current
             }
         }
     }
@@ -518,7 +568,8 @@ class ListViewModel(
                 combine(
                     priceObservationDao.observeEstimate(trip.id),
                     priceObservationDao.observePricedCount(trip.id),
-                ) { amount, fiyatli -> BasketEstimate(amount, fiyatli) }
+                    priceObservationDao.observeLineCount(trip.id),
+                ) { amount, fiyatli, toplam -> BasketEstimate(amount, fiyatli, toplam) }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BasketEstimate())
 
@@ -888,10 +939,17 @@ data class AddedRow(val rowId: String, val seq: Long)
  */
 data class DeletedRow(val rowId: String, val name: String, val seq: Long)
 
-/** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */
+/**
+ * Fiyati bilinen urunlerin toplami ve kacinin bilindigi.
+ *
+ * [totalCount] DA BURADAN geliyor, ekranin cizdigi satir sayisindan degil.
+ * Ikisi ayri kaynaktan gelirken payda paydan kucuk olabiliyordu ve satir
+ * "hepsinin fiyatını biliyorum" diye YANLIS yaziyordu.
+ */
 data class BasketEstimate(
     val amountMinor: Long = 0,
     val pricedCount: Int = 0,
+    val totalCount: Int = 0,
 )
 
 /**
