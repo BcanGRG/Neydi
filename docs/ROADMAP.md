@@ -30,6 +30,7 @@ Tasarım kararları **46–75** kodlandı (`11-tasarim-kararlari.md`); 56 ajanl�
 | 1b | **Marka okuma ölçümü** | Bugünkü turda marka bazen çöp geldi (`CE UZ`, `BAlkon`, `BILI BIL`); ölçüm dökümü **açık**, sonraki çekimler kaydedilecek | bir tur daha |
 | 2 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
 | 3 | **F6.5 — sabit terfisi + bastırma** | "Bunu önerme" listesinin giriş noktası | — |
+| 4 | **On ikinci tur cevapları** (`docs/27`) | Yoğurt satırı hâlâ `↑ %88` yazıyor; trendin `null` kuralı tasarımın kuralı, tek taraflı gevşetilmedi | tasarım |
 
 *E12 ✅ · E13 ✅ · E14 ✅ · E15 ✅ · E16 ✅ · E17 ✅ · E18 ✅ · E19 ✅ — Faz E kapandı.*
 
@@ -464,9 +465,21 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       zorunlu, agresif cache. **Çevrimdışıysa blok sessizce yok olur** —
       reyonda elleri dolu birine ağ hatası göstermek özelliği zararlı yapar.
       Repoda `HttpClient` yok; ktor katalogda hazır ama bağımlılık değil.
-- [ ] **F5.5 — "Başka markette ucuz" çipi.** Çip çizili ve hazır; eksik olan
-      kural: **liste başına en fazla 3**, mutlak TL tasarrufuna göre sıralı.
-      Üstü listeyi reklam yüzeyine çevirir.
+- [~] **F5.5 ✅ (yerel yarısı) — "Başka markette ucuz" çipi.** Karar 41'in
+      dört kuralı da kodda: **hem %10 hem 5 TL**, **14 gün** (SQL penceresi),
+      **liste başına en fazla 3** mutlak TL tasarrufuna göre sıralı, ve
+      **çakışmada trend bastırılıyor**. Ambalaj şartı tasarımdakinden **katı**
+      tutuldu (kanıt isteniyor, `null` yetmiyor) — gerekçesi
+      `docs/27-tasarima-sorular-12.md`.
+
+      ⚠ **Bu madde "Öncelik 2 — Dış veri" altında beklemesi YANLIŞTI.** Dış
+      veriye bağlı olan şey çipin **kapsamı**, mekanizması değil: kullanıcının
+      iki zincirde çektiği her ürün karşılaştırmayı zaten kendi verisinden
+      kuruyor ve "Nerede ucuz" (E17) bunu aynı tablodan çoktan çiziyordu.
+      Alias'ta olanın aynısı: makine hazırdı, çağıran yoktu.
+
+      Kalan yarısı **F5.4**'te — kullanıcının hiç etiket çekmediği zincirler
+      için karşı gözlem marketfiyati'nden gelecek.
 
 ## Öncelik 3 — Cihaz doğrulaması bekleyenler
 

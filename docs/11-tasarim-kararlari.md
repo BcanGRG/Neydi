@@ -643,3 +643,75 @@ kullanıcının *daha önce kendi seçtiği* ürün, ve `save` onu yine
 Bugünkü BİM turunda marka bazen çöp geldi (`CE UZ`, `BAlkon`, `BILI BIL`).
 Bugünkü fotoğraflar karar 29 gereği silindiği için ölçüm yapılamadı; **OCR
 dökümü cihazda açıldı**, bir sonraki tur kaydedilecek.
+
+---
+
+## F5.5 — "Başka markette ucuz" çipi bağlandı, iki yanlış yüzde bulundu
+
+**22 Ağustos 2026.** Kullanıcı akşam listeye baktı. Dört satırın **ikisinde
+trend çipi** vardı ve **ikisi de yanlıştı** — ne OCR ne de fiyat okuma hatası;
+ikisi de doğru okunmuştu.
+
+| Ürün | Gözlemler | Satırın yazdığı | Gerçek |
+|---|---|---|---|
+| **Süt** | 16:48 A101 36,00 (1 lt) · 16:55 BİM 62,50 (1 lt) | `↑ %74` | aynı gün, iki zincir — **zam yok** |
+| **Yoğurt** | 16:58 BİM 102,00 (1,5 kg) · 16:59 BİM 192,00 (ambalaj okunamadı) | `↑ %88` | iki farklı kova — **zam yok** |
+
+Süt'te çarpıcı olan şu: **bir ekran derindeki "Nerede ucuz" aynı iki sayıyı
+doğru okuyordu** (*A101 36,00 · BİM 62,50*). Uygulama aynı veri hakkında
+birbiriyle çelişen iki cümle kuruyordu ve yanlış olan, önce görülendi.
+
+### Karar 41 bu vakayı zaten yazmış
+
+> *"Çip iki koşulu birden istiyor: karşı gözlem en az %10 ve en az 5 TL daha
+> ucuz, ve 14 günden eski değil. Aynı satırda hem trend hem çip doğruysa
+> **çip kazanıyor, trend bastırılıyor**. Sıralama mutlak TL tasarrufuna göre,
+> liste başına en fazla 3."*
+
+Eksik olan tek şey **çipi dolduran taraftı**. `cheaperElsewhere` alanı,
+`CheaperChip` bileşeni ve satır bağlantısı hazırdı; `RowModel.kt`'nin kendi
+KDoc'u *"bu alan bugün hiçbir yerden dolmuyor"* diye yazıyordu. **Alias
+vakasının aynısı: makine hazır, çağıran yok.**
+
+Yol haritası bunu *"Öncelik 2 — Dış veri"* altında bekletiyordu; yanlıştı. Dış
+veriye bağlı olan çipin **kapsamı**, mekanizması değil.
+
+### Ambalaj şartı tasarımdakinden katı tutuldu
+
+Çip yeni bir iddia kuruyor (*"şu ürün orada şu fiyata"*) ve yanlışsa
+kullanıcıyı başka bir markete yolluyor. Trendin gevşek `null` kuralı burada
+paylaşılmadı: **iki ambalajın aynı olduğu kanıtlı olmalı.**
+
+Bunun bedeli kullanıcının kendi verisinde ölçüldü. Gevşek bıraksaydık Yoğurt
+satırına **`A101'de 49,00`** yazacaktı — 250 ml'lik kâseyle 3 kg'lık kovayı
+karşılaştıran bir cümle. Trendin yalanını çipin yalanıyla değiştirmiş
+olurduk. Gerekçe karar 58'in kendi ilkesi: karşılaştırılamayan bir
+karşılaştırmadansa **sessizlik**.
+
+Kod bunu iki ayrı yüklemle söylüyor: `comparablePack` (trend, gevşek) ve
+`provablySamePack` (çip, kanıt ister). İkisi yan yana duruyor ve farkın
+gerekçesi ikisinin de KDoc'unda.
+
+### Türkçe bulunma hâli eki
+
+Çip metni `A101'de` / `ŞOK'ta` / `Migros'ta` istiyor. Ek, harften değil son
+rakamın **okunuşundan** çıkıyor: *"yüz bir"* → `i` ince, `r` yumuşak →
+**A101'de** — tasarımın kendi maketindeki metnin aynısı. Harfe bakan bir kural
+`A101'da` yazardı.
+
+### Yoğurt satırı DÜZELMEDİ
+
+Ambalajlardan biri okunamadığı için çip de çizilmiyor, trend de bastırılmıyor;
+satır hâlâ `↑ %88` yazıyor. Bu bilinçli: trendin `null` kuralı **tasarımın**
+kuralı ve tek taraflı gevşetilmedi. Dört soru tasarıma gitti
+(`docs/27-tasarima-sorular-12.md`) — asimetrik ambalaj, aynı-zincir şartı,
+çipin hangi gözlemi söylediği, ve çipin reyonda neden gizlendiği.
+
+### Kanıt
+
+Dokuz kuralın dokuzu da geri alındığında **tam kendi testini** düşürdü:
+5 TL eşiği, %10 eşiği, ambalaj kapısı, en-fazla-3, tasarrufa göre sıralama,
+14 gün penceresi (SQL), farklı market şartı, trendin bastırılması, rakamın
+okunuşu. 441 test yeşil, sıfır uyarı.
+
+Cihazda doğrulandı: Süt satırı artık `BİM · bugün` + **`A101'de 36,00`**.
