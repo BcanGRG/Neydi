@@ -579,6 +579,31 @@ interface PriceObservationDao {
     fun observePricedCount(tripId: String): Flow<Int>
 
     /**
+     * Gezideki TOPLAM satir sayisi - "kacinin fiyatini biliyorum"un paydasi.
+     *
+     * ## Neden ekranin cizdigi satiri saymiyoruz
+     *
+     * Payda bir sure ekrandan geliyordu (`ListState.totalRows`) ve pay
+     * buradan; **iki farkli evren**. Ekran en az iki yerde daha az satir
+     * cizebiliyor: sabitler `STAPLE_LIMIT` ile 12'de kesiliyor ve urunu
+     * silinmis satir hic cizilmiyor. Bu hallerde `pricedCount > totalCount`
+     * oluyor, `pricedCount < totalCount` yanlis donuyor ve satir
+     * ***"hepsinin fiyatını biliyorum"*** yaziyor - eksik bilgi TAM bilgi gibi
+     * sunuluyor. Bileseninin kendi KDoc'unun kacinmak istedigi sey tam olarak
+     * buydu.
+     *
+     * Pay ile paydanin ayni sorgu ailesinden gelmesi bunu yapisal olarak
+     * imkansiz kiliyor: ikisi de `trip_line`i ayni kosullarla sayiyor.
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM trip_line tl
+        WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
+        """,
+    )
+    fun observeLineCount(tripId: String): Flow<Int>
+
+    /**
      * TABLONUN ILK YAZANI. `price_observation` sema v1'den beri duruyordu ve
      * dort surum boyunca hicbir sey ona satir yazmadi - pivotun inecegi yerin
      * hazir olmasinin sebebi buydu.

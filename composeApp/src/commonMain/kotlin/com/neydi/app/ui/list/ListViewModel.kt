@@ -568,7 +568,8 @@ class ListViewModel(
                 combine(
                     priceObservationDao.observeEstimate(trip.id),
                     priceObservationDao.observePricedCount(trip.id),
-                ) { amount, fiyatli -> BasketEstimate(amount, fiyatli) }
+                    priceObservationDao.observeLineCount(trip.id),
+                ) { amount, fiyatli, toplam -> BasketEstimate(amount, fiyatli, toplam) }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BasketEstimate())
 
@@ -938,10 +939,17 @@ data class AddedRow(val rowId: String, val seq: Long)
  */
 data class DeletedRow(val rowId: String, val name: String, val seq: Long)
 
-/** Fiyati bilinen urunlerin toplami ve kacinin bilindigi. */
+/**
+ * Fiyati bilinen urunlerin toplami ve kacinin bilindigi.
+ *
+ * [totalCount] DA BURADAN geliyor, ekranin cizdigi satir sayisindan degil.
+ * Ikisi ayri kaynaktan gelirken payda paydan kucuk olabiliyordu ve satir
+ * "hepsinin fiyatını biliyorum" diye YANLIS yaziyordu.
+ */
 data class BasketEstimate(
     val amountMinor: Long = 0,
     val pricedCount: Int = 0,
+    val totalCount: Int = 0,
 )
 
 /**

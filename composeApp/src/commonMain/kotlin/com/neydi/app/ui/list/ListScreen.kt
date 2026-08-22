@@ -457,7 +457,7 @@ internal fun ListContent(
                         EstimatedBasket(
                             amountMinor = estimate.amountMinor,
                             pricedCount = estimate.pricedCount,
-                            totalCount = state.totalRows,
+                            totalCount = estimate.totalCount,
                         )
                     }
                 }
