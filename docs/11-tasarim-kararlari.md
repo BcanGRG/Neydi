@@ -592,3 +592,54 @@ yoksa kullanıcı tek hane değiştirdiğini sanırken fiyat 0,50'ye düşer.
 `trimStart('0')` bu dalda **bilerek** uygulanmıyor.
 
 **Cihazda doğrulandı:** `450,99` → 5'e dokun → `6` → **`460,99`**.
+
+---
+
+## F4.7 — etiket metni → ürün eşlemesi *(23 Ağustos, kullanıcı bildirdi)*
+
+Kullanıcı BİM ve A101'de on çekim yaptı ve **onunda da ürünü elle seçti.**
+Sinirlenmesi haklıydı; sebebi OCR değildi.
+
+### Veri ne dedi
+
+| | Fiyat | Marka | Gramaj |
+|---|---|---|---|
+| A101 (4 çekim) | **4/4** | 0/4 *(bilerek kapalı, `docs/24`)* | 3/4 |
+| BİM (6 çekim) | **6/6** | 6/6 dolu, ~yarısı temiz | 4/6 |
+| **Ürün** | | **0/10 — her seferinde elle** | |
+
+### Sebep: tasarımın dört kez yazdığı bir kural hiç kodlanmamıştı
+
+> *"Seçim bu markette bu **etiket metnine bağlanır**; aynı etiket bir daha
+> sorulmaz."*
+> *"Aynı etiket metni daha önce eşlendiyse **ürün sorulmaz**."*
+
+`product_alias` tablosu, `UNIQUE(householdId, storeChain, rawTextNormalized)`
+indeksi ve `find` sorgusu **fiş döneminden beri duruyordu**. DAO'nun kendi
+KDoc'u bile *"alias öğrenmesinin bütün değeri bu sorguda"* diyor.
+
+**Hiçbiri çağrılmıyordu.** `tagText` karta geliyor, ürün seçiciye *"Etiket
+metni: …"* diye yazılıyor ve orada ölüyordu.
+
+### Ne yapıldı
+
+- **Kaydederken** etiket metni seçilen ürüne bağlanıyor — `confirmedAt` dolu,
+  çünkü tahmin değil kullanıcının kararı.
+- **Çekerken** eşleşme aranıyor; varsa ürün alanı kendiliğinden doluyor.
+- **Eşleme zincir bazında** (`storeChain`), şube bazında değil — `Shopping.kt`
+  zaten böyle diyor: fiyat karşılaştırması zincir bazında anlamlıysa eşleme de
+  öyle.
+- **Düzeltme kazanıyor** (`REPLACE`): metin yanlış ürüne bağlandıysa ikinci
+  seçim eskisini eziyor.
+- **Metin okunamadıysa hiçbir şey bağlanmıyor** — uydurma bir anahtar kalıcı
+  bir yanlış eşleme üretirdi.
+
+**Karar 51 bozulmuyor:** OCR metni hâlâ ürün adı olmuyor. Geri gelen şey
+kullanıcının *daha önce kendi seçtiği* ürün, ve `save` onu yine
+`resolveProduct`tan geçiriyor.
+
+### Kalan: marka kalitesi ölçülecek
+
+Bugünkü BİM turunda marka bazen çöp geldi (`CE UZ`, `BAlkon`, `BILI BIL`).
+Bugünkü fotoğraflar karar 29 gereği silindiği için ölçüm yapılamadı; **OCR
+dökümü cihazda açıldı**, bir sonraki tur kaydedilecek.
