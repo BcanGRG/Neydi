@@ -37,35 +37,34 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 |---|---|---|---|---|
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
-| 3 | **E15 — yatay düzen** (karar 61) | `[ ]` | — *(Faz E'nin son maddesi)* | [→](#e15-yatay) |
-| 4 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
-| 5 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
-| 6 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
-| 7 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
-| 8 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
-| 9 | **F5.7 — ambalaj küçülmesi ipucu** | `[cihaz]` | Aynı üründen **iki farklı boyda** gerçek çekim | [→](#f57) |
-| 10 | **F6.4 — Eksik Olabilir (Ekran 3)** | `[cihaz]` | Göz kontrolünü | [→](#f64) |
-| 11 | **F11.19 — karar 36'nın renk ayrımı** | `[cihaz]` | **Karışık liste**: kimi ürün gözlemli, kimi gözlemsiz | [→](#f1119) |
-| 12 | **F11.29 — delta oku (↑ / ↓ ikonu)** | `[cihaz]` | **İki gözlemli** ürün | [→](#f1129) |
-| 13 | **F1.3b — `@Preview` altyapısı** | `[cihaz]` | Göz kontrolünü | [→](#f13b) |
-| 14 | **F3.3 — Hızlı ekleme** | `[cihaz]` | Göz kontrolünü | [→](#f33) |
-| 15 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
-| 16 | **F2.7 — katalog yeniden tohumlanabilir olmalı** | `[ ]` | — *(sessiz kullanıcı hatası taşıyor)* | [→](#f27) |
-| 17 | **F3.9 — "Diğer" kategorisi** | `[ ]` | F2.7'yi | [→](#f39) |
-| 18 | **F6.9 — `kategori-tonlari` TODO'su silinecek** | `[ ]` | — *(tek satır)* | [→](#f69) |
-| 19 | **F10.7 + F10.11 + F11.4 — ölü primitifler** | `[ ]` | `focusRing` ve `AccentStrip` için **tasarım kararını** | [→](#olu-kod) |
-| 20 | **F11.6 — alışveriş modu satır container'ı** | `[ ]` | — | [→](#f116) |
-| 21 | **F10.2 — bottom sheet'leri Nav3 Scene'e taşı** | `[ ]` | — *(F10.5 bağı düştü)* | [→](#f102) |
-| 22 | **F10.3 — `graph.json` takip kararı** | `[ ]` | — | [→](#f103) |
-| 23 | **F0.4 — kanonik ürün kimliği** | `[ ]` | — *(F5.4'ü açar)* | [→](#f04) |
-| 24 | **F5.4 — marketfiyati entegrasyonu** | `[ ]` | F0.4'ü; **F5.5'in kalan yarısı buraya bağlı** | [→](#f54) |
-| 25 | **Faz 7 — Senkron** | `[ ]` | Mimari düzeltmeyi: deterministik id, yoksa outbox tıkanıyor | [→](#faz7) |
-| 26 | **Faz 8 — Marka varlıkları** | `[ ]` | — | [→](#faz8) |
-| 27 | **Faz 9 — iOS** | `[ ]` | Mac'i | [→](#faz9) |
-
-**Bugünkü cihaz verisi — üç tuzak.** Tablodaki "neyi bekliyor" hücrelerinin
-çoğu buradan geliyor; hiçbiri kod hatası değil, hepsi veri durumu:
-
+| 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(her market kararının ÖN KOŞULU)* | [→](#tahmin-carpimi) |
+| 4 | **E15 — yatay düzen** (karar 61) | `[ ]` | — *(Faz E'nin son maddesi)* | [→](#e15-yatay) |
+| 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
+| 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
+| 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
+| 8 | **docs/29 — ekleme geri bildirimi (beş soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
+| 9 | **docs/30 — markete göre tahmin (beş soru)** | `[ ]` | Tasarımı; **ölçüm ertelemeyi öneriyor** | [→](#tasarim) |
+| 10 | **Ölü primitif sorusunu YAZ** | `[ ]` | — *(ölü primitif maddesi ona bağlı)* | [→](#olu-kod) |
+| 11 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
+| 12 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
+| 13 | **F5.7 — ambalaj küçülmesi ipucu** | `[cihaz]` | Aynı üründen **iki farklı boyda** gerçek çekim | [→](#f57) |
+| 14 | **F6.4 — Eksik Olabilir (Ekran 3)** | `[cihaz]` | Göz kontrolünü | [→](#f64) |
+| 15 | **F11.19 — karar 36'nın renk ayrımı** | `[cihaz]` | **Karışık liste**: kimi ürün gözlemli, kimi gözlemsiz | [→](#f1119) |
+| 16 | **F1.3b — `@Preview` altyapısı** | `[cihaz]` | Göz kontrolünü | [→](#f13b) |
+| 17 | **F3.3 — Hızlı ekleme** | `[cihaz]` | Göz kontrolünü | [→](#f33) |
+| 18 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
+| 19 | **F2.7 — katalog yeniden tohumlanabilir olmalı** | `[ ]` | — *(sessiz kullanıcı hatası taşıyor)* | [→](#f27) |
+| 20 | **F3.9 — "Diğer" kategorisi** | `[ ]` | F2.7'yi | [→](#f39) |
+| 21 | **F6.9 — `kategori-tonlari` TODO'su silinecek** | `[ ]` | — *(tek satır)* | [→](#f69) |
+| 22 | **F10.7 + F10.11 + F11.4 — ölü primitifler** | `[ ]` | Önce **soruyu yazmayı** — `focusRing`/`AccentStrip` tasarıma **sorulmadı** | [→](#olu-kod) |
+| 23 | **F11.6 — alışveriş modu satır container'ı** | `[ ]` | — | [→](#f116) |
+| 24 | **F10.2 — bottom sheet'leri Nav3 Scene'e taşı** | `[ ]` | — *(F10.5 bağı düştü)* | [→](#f102) |
+| 25 | **F10.3 — `graph.json` takip kararı** | `[ ]` | — | [→](#f103) |
+| 26 | **F0.4 — kanonik ürün kimliği** | `[ ]` | — *(F5.4'ü açar)* | [→](#f04) |
+| 27 | **F5.4 — marketfiyati entegrasyonu** | `[ ]` | F0.4'ü; **F5.5'in kalan yarısı buraya bağlı** | [→](#f54) |
+| 28 | **Faz 7 — Senkron** | `[ ]` | Mimari düzeltmeyi: deterministik id, yoksa outbox tıkanıyor | [→](#faz7) |
+| 29 | **Faz 8 — Marka varlıkları** | `[ ]` | — | [→](#faz8) |
+| 30 | **Faz 9 — iOS** | `[ ]` | Mac'i | [→](#faz9) |
 1. **On iki kapanmış gezi var ama `observeTripEstimates` sıfır satır
    döndürüyor.** Bütün gözlemler 22 Ağustos, geziler 15–16 Ağustos ve sorgu
    `observedAt <= completedAt` şartını taşıyor (E18'in "o günkü fiyat" kuralı).
@@ -96,7 +95,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | **Material3 Surface** | Tıklanabilir M3 `Surface`/`Button`/`Card` **kullanılmaz** — etkileşimli her şey `Modifier.pressable`. |
 | **graphify** | post-commit hook kodu izliyor. `docs/` değişince manuel `/graphify --update`. |
 
-**İşaretler:** `[ ]` yapılmadı · `[x]` bitti ve cihazda doğrulandı · `[~]` kod
+**İşaretler:** `[ ]` yapılmadı · `[~]` **kısmen kodlandı** · `[cihaz]` kod
 tamam, cihaz doğrulaması bekliyor · `(cihazsız)` Kapı 2'den muaf ·
 **✅ = kapanmış, kutusu yok — §6 arşivinde**.
 
@@ -195,6 +194,30 @@ emülatörde ve testte anlamlı bir kanıt üretmiyor.)*
 
 ### 3.2 Kodlanacak — yerel
 
+#### Tahmin çarpımı ambalajı okumuyor <a id="tahmin-carpimi"></a>
+
+Tahmin sorgusu `adet × etiket fiyatı` yapıyor; `packSize`, `packUnit`,
+`priceUnit` ve `trip_line.unit`'in **hiçbirini** okumuyor.
+
+Satır seviyesinde bu koruma **var ve çalışıyor** — `PriceHintMapping` ambalaj
+değişiminde trendi bastırıyor ve KDoc'u *"trend dalı önce seçilseydi yeşil bir
+aşağı ok çizerdi ve kullanıcıya gerçeğin tersini söylerdi"* diyor. Bir
+üstteki tahmin satırının bu korumaların **hiçbiri yok**: ürün satırı *"ambalaj
+değişti, karşılaştırma yapmıyorum"* derken tahmin aynı iki sayıyı sessizce
+çarpıyor.
+
+Somut vaka (kullanıcının kendi listesi): `3 kg Yoğurt`, son gözlem `192,00 TL`
+— bir **3 kg'lık kova**. Bugün 3 × 192,00 = **576,00 TL** hesaplanıyor;
+doğrusu 192,00.
+
+`priceUnit` kolonu ayrıca **hiç yazılmıyor** — tanımı ve bir test yorumu
+dışında sıfır referansı var, oysa kendi KDoc'u *"bu kolon olmadan
+`unitPriceMinor` tek başına anlamsızdı"* diyor.
+
+⚠ **Bu, «markete göre tahmin» tartışmasının ön koşulu** (`docs/30`): yanlış
+markete göre yanlış bir çarpım, doğru markete göre yanlış bir çarpımdan iyi
+değil.
+
 Hiçbiri dış veriye bağlı değil; hepsi bugünkü şema ve bugünkü verinin üstünde
 yazılabilir.
 
@@ -265,7 +288,7 @@ import etmiyordu), `ListScreen`'deki altı FileKit import'u,
 
 | İsim | Bugünkü durum | Karar |
 |---|---|---|
-| `Modifier.focusRing` | Tanımlı, üretimde **sıfır çağıran** | **AÇIK SORU — tasarıma sorulacak:** bağlanacak mı, silinecek mi? Odak halkası bir erişilebilirlik sözleşmesi; silmek tasarımın kararı olmalı, bizim değil. |
+| `Modifier.focusRing` | Tanımlı, üretimde **sıfır çağıran** | **AÇIK SORU — soru henüz yazılmadı:** bağlanacak mı, silinecek mi? Odak halkası bir erişilebilirlik sözleşmesi; silmek tasarımın kararı olmalı, bizim değil. |
 | `SafeArea` | Ölü | Silinecek. `SafeArea.top = 44.dp` F10.8'de bu listeye ait olmadığı anlaşılmıştı (güvenli alan boşluğu, dokunma hedefi değil) — ama o düzeltme boyutla ilgiliydi, `SafeArea`'nın kendisi hâlâ çağrılmıyor. |
 | `AccentStrip` | Ölü | **Tasarıma bağlı:** amber şerit 3dp ve amber sözleşmesi 1.5dp kenarlık şart koşuyor, yani iki yandan kenarlık konunca iç dolgu 0dp kalıyor ve amber tamamen kayboluyor. Sorulacak. |
 | `AccentSurface` | Ölü | **Listeye geri girdi.** Eskiden *"bu listeden çıktı, `AccentChip.kt:62` ve `:78`'den çağrılıyor"* yazıyordu; düzeltmenin kendisi yanlıştı — `AccentChip`'in de kendi dosyası dışında sıfır çağıranı var. |
@@ -296,7 +319,8 @@ Kod tarafında yapılacak bir şey yok; ikisi de tasarımın kalemini bekliyor.
   taraflı gevşetilmedi. F5.5'in ambalaj şartını tasarımdakinden **katı**
   tutmamızın gerekçesi de bu dosyada.
 - **`docs/28` — on üçüncü tur, on üç soru.** İçinde F6.5'in sabit terfisi ve
-  `focusRing` / `AccentStrip` kaderi var.
+  ⚠ `focusRing` / `AccentStrip` bu turlarda **sorulmadı**; sorunun kendisi
+  hâlâ yazılacak iş.
 
 ### 3.3 Kodlanacak — dış veri
 
@@ -963,9 +987,10 @@ PR geçmişi ve kod göndermeleri bozulmasın diye korunuyor.
       **Projenin tek derleyici uyarısı kapandı** — zorlanmış tam derlemede sıfır.
 - ✅ **~~F10.12 — Derleyici uyarıları~~** *(uyarı sayısı 5→1)*
 - ✅ **~~F10.13~~**
-- ⚠ **F10.14 / F10.15 — kaydı bulunamadı.** Eski "Kapandı" satırı F10.13'ten
+- ⚠ **F10.14 — kaydı bulunamadı.** Eski "Kapandı" satırı F10.13'ten
       doğrudan F10.15'e atlıyordu: **F10.14 bu dosyada hiç geçmiyor** ve
-      F10.15'in ne olduğu ne burada ne arşivde tanımlı. Sessizce geçilmiyor;
+      **F10.15 ise tanımlı**: şema temellerinin nöbetçisi (`SchemaBaselineTest`),
+      arşivde ve kodun kendi KDoc'unda yazılı. Sessizce geçilmiyor;
       kaynağı (PR başlığı ya da eski taslak) bulunursa buraya yazılacak.
 - ✅ **~~F10.16~~**
 - ✅ **~~F10.17 — Fiş dönemi mağaza kalıntısı~~.** Test cihazında 17 çöp `store`
