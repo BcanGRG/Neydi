@@ -18,13 +18,15 @@ import kotlin.test.assertTrue
 class ConfirmCardMessageTest {
 
     private fun card(
-        price: String = "24,90",
+        price: Long = 2_490L,
         product: String = "Süt 1 L",
         skipped: TagSkip? = null,
         kurus: Boolean = true,
+        touched: Boolean = false,
     ) = ConfirmCard(
         photoPath = "/x.jpg",
-        priceText = price,
+        priceMinor = price,
+        priceTouched = touched,
         productName = product,
         reading = false,
         kurusFromOcr = kurus,
@@ -41,7 +43,7 @@ class ConfirmCardMessageTest {
      */
     @Test
     fun `desteklenmeyen zincir cumlesi gramer kaydindan kuruluyor`() {
-        val c = card(price = "", skipped = TagSkip.UNSUPPORTED_CHAIN)
+        val c = card(price = 0L, skipped = TagSkip.UNSUPPORTED_CHAIN)
         assertEquals(
             "A101, BİM ve Migros etiketlerini okuyabiliyoruz; burada fiyatı sen yaz.",
             c.unsupportedChainMessage(),
@@ -78,13 +80,13 @@ class ConfirmCardMessageTest {
      */
     @Test
     fun `desteklenmeyen zincirde amber serit cizilmiyor`() {
-        val c = card(price = "", skipped = TagSkip.UNSUPPORTED_CHAIN)
+        val c = card(price = 0L, skipped = TagSkip.UNSUPPORTED_CHAIN)
         assertNull(c.missingFieldMessage())
     }
 
     @Test
     fun `celiskili fiyatin kendi cumlesi var`() {
-        val c = card(price = "", skipped = TagSkip.PRICE_CONTRADICTS_UNIT_PRICE)
+        val c = card(price = 0L, skipped = TagSkip.PRICE_CONTRADICTS_UNIT_PRICE)
         assertEquals("Okunan fiyat etiketin birim fiyatıyla uyuşmuyor — doğrula", c.missingFieldMessage())
         assertNull(c.unsupportedChainMessage(), "iki yuzey ayni anda konusuyor")
     }
@@ -102,7 +104,10 @@ class ConfirmCardMessageTest {
     }
 
     /**
-     * KAYDET ILK RAKAMDA ETKINLESIR - sozlesmenin birebir kurali.
+     * KAYDET DEGER SIFIRDAN CIKINCA ETKINLESIR (karar 73).
+     *
+     * Sozlesme once *"ilk rakamda etkinlesir"* diyordu; alan sagdan dolunca
+     * o cumle yanlis oldu - `0` tuslamak bir rakam ama bir fiyat degil.
      *
      * Urun adi SART DEGIL: adsiz kalabilecegi tek hal ilk kurulumun ilk cekimi
      * ve orada `save()` urun secicisini aciyor.
@@ -110,6 +115,6 @@ class ConfirmCardMessageTest {
     @Test
     fun `kaydet yalnizca fiyata bakiyor`() {
         assertTrue(card(product = "").canSave)
-        assertTrue(!card(price = "").canSave)
+        assertTrue(!card(price = 0L).canSave)
     }
 }

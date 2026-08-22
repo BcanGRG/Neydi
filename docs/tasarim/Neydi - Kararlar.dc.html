@@ -592,6 +592,51 @@ class Component extends DCLogic {
           why: "Sheet ilişkiyi tersine çeviriyordu: yorum ekranı kapatıyor, asıl şey (liste) arkada kalıyordu. Kalıcı kapanış meşru çünkü kart bir bildirim değil, tekrar üretilebilir bir özet — kaynağı Geçmiş'te.",
           where: "Ekran 1 · özet kartı",
           href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "70",
+          title: "Dikeyde klavye açılınca kırpım toplanır",
+          rule: "Sözleşme klavye-kart ilişkisini yalnız yatay için yazmıştı; cihaz ölçümü dikeyde kartın sığmadığını gösterdi: içerik 1669px, klavyenin üstünde 1198px — Kaydet ile Vazgeç fold altında.",
+          decision: "Kod tarafının geçici çözümü kural oldu: dikeyde klavye açılınca kırpım şeridi toplanır, kapanınca geri gelir. Kart kaydırılmaz, Tarih satırı kalır; kalan her şey — fiyat, seçiciler, tarih, iki buton — kaydırmasız görünür.",
+          why: "Kırpımın işi 'ne çektim' doğrulaması ve o iş kart açılırken yapılıyor (karar 62); fiyatı yazmaya geçen kullanıcı doğrulamayı bitirmiş durumda. Kaydırmak tam o anda yazılan fiyat alanını kaçırır; bir satırı feda etmek kalıcı kayıp — geçici durumda gizlenebilecek tek 'işi bitmiş' parça şerit.",
+          where: "Ekran 4 · onay kartı · dikey",
+          href: "Neydi - Gezinme Sozlesmesi.dc.html"
+        },
+        {
+          no: "71",
+          title: "Kaydet ile Vazgeç yatay çift",
+          rule: "Kırpım toplandıktan sonra bile Vazgeç fold'un 22px altındaydı; görünür tek çıkış kalmıyordu — geri jesti var ama görünmez.",
+          decision: "Alt alta iki satır tek satıra indi: solda Vazgeç (metin buton, 52dp satır, hedef ≥48dp), sağda Kaydet (dolgulu, iki kat genişlik), arada 10dp. Her durumda böyle — dikey, yatay, klavye açık ya da kapalı.",
+          why: "Vazgeç fotoğrafı silen kararın görünür yolu (karar 29); görünürlüğü klavyenin durumuna bağlanamaz. Yatay çift onay yüzeylerinin bilinen düzeni, karta ~56px kazandırır ve fold sorununu kökten kapatır; geri tuşu sözleşmesi değişmez.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "72",
+          title: "Kuruş uyarısı ilk düzenlemede susar",
+          rule: "Cihazda kullanıcı 39,50 yazarken kart hâlâ 'Kuruş okunamadı — kontrol et' diyordu.",
+          decision: "Onaylandı: fiyat alanındaki ilk düzenleme uyarıyı susturur ve aynı kartta geri gelmez. Uyarı yalnız OCR değeri hiç ellenmediyse sürer; Kaydet'i hiçbir hâlde engellemez.",
+          why: "Uyarının yazılı gerekçesi kullanıcıyı fiyata baktırmak; düzenleme bakışın kanıtı. Cevaptan sonra da bağıran uyarı yalancı çoban olur — bir daha kimse bakmaz. Sağdan dolumla (karar 73) elle giren her değer zaten kuruşlu; soru fiilen yalnız ellenmemiş OCR değeri için kalıyor.",
+          where: "Ekran 4 · onay kartı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "73",
+          title: "Fiyat alanı sağdan dolar",
+          rule: "Serbest yazımda 39,50 niyetiyle yazılan '3950', 3.950,00 olarak sessizce kaydedildi — provada bizzat yaşanan yüz kat hata, hiçbir uyarı yok.",
+          decision: "Alan yazar kasa gibi sağdan dolar: 3 → 0,03 · 39 → 0,39 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler. Dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır — düzeltme yeniden yazmaktır, fiyat 3–5 tuş. Boşalan alan '— TL' hâline döner; Kaydet 'ilk rakamda' değil değer sıfırdan çıkınca etkinleşir. parseMinorInput kartın alanından çıkar; OCR metnini parseMinor okumaya devam eder.",
+          why: "Etiketteki '39,50' okuma sırasıyla 3-9-5-0 tuşlanır — sağdan dolum bu doğal yazımı doğru sonuca, serbest yazım yüz kat hataya çevirir. Sessiz yanlış veri fiyat hafızasını zehirler; tam liralık etikete iki sıfır tuşlamak bunun yanında ucuz bedel. İmleç, seçim, ondalık ayracı — üç kural birden düşer.",
+          where: "Ekran 4 · fiyat alanı",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "74",
+          title: "Kırpım rehber bölgesinden; şerit 92dp'ye döner",
+          rule: "Küçük kopya tam kareden merkez-kırpımla alınıyordu: 92dp bant etiketin üst-altını kesti, kod 128dp'ye çıkardı — ikisi de türetilmemiş sayı.",
+          decision: "Asıl düzeltme onaylandı: küçük kopya rehber (3:2) bölgesinden kırpılır; o gün şerit maketin 92dp'sine döner. 128dp geçici yama — kalıcı olamaz, kartın dikey bütçesinden çalıyor (karar 70'in sebebi). Sözleşme oran değil kaynak: şeridin gösterdiği piksel, kullanıcının kadraja oturttuğu pikseldir.",
+          why: "Yanlış kaynaktan alınan banda hiçbir yükseklik yetmez; doğru kaynaktan alınan bant kısa da olsa 'ne çektim'e cevap verir — fiyat etiketin merkezinde. 92dp'nin işi tanınabilirlik, belgeleme değil.",
+          where: "Ekran 4 · kırpım şeridi",
+          href: "Neydi - Ekranlar 2-4.dc.html"
         }
       ]
     };

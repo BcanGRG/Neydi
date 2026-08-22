@@ -439,7 +439,8 @@ class Component extends DCLogic {
       labelFlow: [
         { state: "Kamera hazır", input: "Deklanşöre dokunuş", result: "Kare alınır, kırpılır, OCR başlar; kart hemen açılır (iskelet alanlarla).", edge: "Eşik yok: alanlar OCR dönene kadar iskelet — OCR her zaman görünür bir süre (~1,15 sn) çalışır." },
         { state: "Kart · OCR döndü", input: "—", result: "Fiyat, ürün, marka dolar; market yapışkan değerden gelir, tarih bugündür.", edge: "Aynı etiket metni daha önce eşlendiyse ürün sorulmaz." },
-        { state: "Kart · fiyat boş", input: "Klavye kendiliğinden açılır", result: "Kaydet pasif; ilk rakamda etkinleşir.", edge: "Kullanıcı yazmadan geri basarsa klavye kapanır, kart durur." },
+        { state: "Kart · fiyat boş", input: "Klavye kendiliğinden açılır", result: "Kaydet pasif; değer sıfırdan çıkınca etkinleşir — sağdan dolumda 0 tuşlamak etkinleştirmez (karar 73).", edge: "Kullanıcı yazmadan geri basarsa klavye kapanır, kart durur. Klavye açık doğduğu için şerit toplanmış doğar — fiyat zaten okunamadı, kullanıcı onu ekrandan değil raftaki etiketten okur; geri klavyeyi kapatınca şerit görünür (karar 70)." },
+        { state: "Kart · kuruş uyarısı", input: "Fiyat alanına ilk düzenleme", result: "Uyarı susar, aynı kartta geri gelmez; sağdan dolumla elle giren her değer kuruşlu (karar 72–73).", edge: "OCR değeri hiç ellenmezse uyarı durur ama Kaydet'i engellemez." },
         { state: "Kart · ürün tanınmadı", input: "\"Ürün seç\" dokunuşu", result: "Katalog sheet'i arama odaklı açılır; seçim etiket metnine bağlanır.", edge: "Katalogda yoksa \"Yeni ürün olarak ekle\" tek dokunuş." },
         { state: "Kart · marka satırı", input: "Marka dokunuşu", result: "Klavyesiz çip sheet'i açılır: bu ürün için görülmüş markalar + \"Marka yok\". Seçim kesik çerçeveyi kaldırır.", edge: "Hiç görülmüş marka yoksa sheet yalnızca \"Marka yok\" taşır; OCR artığı tek dokunuşla boşalır." },
         { state: "Kart · market satırı", input: "Market dokunuşu ya da kameranın market çipi", result: "Zincir listesi arama alanıyla açılır; uyan zincir yoksa \"+ Yeni market «AKYURT»\" tek dokunuşla ekler.", edge: "Var olan bir adın başka yazımı (BIM / BİM) sessizce var olan zincire bağlanır." },
@@ -481,6 +482,7 @@ class Component extends DCLogic {
       ],
       inputRules: [
         { name: "Tek klavye", rule: "Uygulamada bir tek sayısal klavye var: onay kartındaki fiyat alanı. Metin girişi dört yerde: kök hızlı yazma alanı (karar 64) ve üç arama alanı — keşif sheet'i, ürün seçici, market seçici. Marka seçicide arama yok, liste kısa." },
+        { name: "Sağdan dolum", rule: "Fiyat alanı yazar kasa gibi sağdan dolar: 3 → 0,03 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler; dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır, boşalan alan — TL hâline döner (karar 73)." },
         { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Kök alanın klavyesini ekran değil kullanıcının Ekle dokunuşu açar. Tek istisna: fiyatı okunamamış onay kartı." },
         { name: "Dokunma hedefi", rule: "En küçük hedef 48dp. Alışveriş modunda satır 72dp, çünkü yürürken dokunuluyor." },
         { name: "Haptik", rule: "Üç olay: işaretlemede hafif tık, çekimde hafif darbe, kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
@@ -592,7 +594,7 @@ class Component extends DCLogic {
       ],
       device: [
         { name: "Rotasyon · liste", rule: "Yatay tutuşta düzen değişmez, yalnızca genişler; iki sütuna geçmez. Kaydırma konumu korunur." },
-        { name: "Rotasyon · kamera", rule: "Tek yüzeyde gerçek yatay düzen var: kontroller kısa kenara taşınır, metin dönmez. Onay kartı sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü) örter, kartı asla örtmez; amber şerit kartın içinde." },
+        { name: "Rotasyon · kamera", rule: "Tek yüzeyde gerçek yatay düzen var: kontroller kısa kenara taşınır, metin dönmez. Dikeyde klavye açılınca kırpım şeridi toplanır, kapanınca geri gelir; kart kaydırılmaz, Vazgeç+Kaydet çifti klavyenin üstünde kalır (karar 70–71). Yatayda onay kartı sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü) örter, kartı asla örtmez; amber şerit kartın içinde." },
         { name: "Tablet ve katlanabilir", rule: "v1'de tek sütun, 600dp'de ortalanmış ve 480dp genişlikte sabitlenmiş. İki panelli düzen yok." },
         { name: "Karanlık tema", rule: "Sistemi takip eder, uygulama içi anahtar yok. Geçiş anında olur, animasyonsuz." },
         { name: "Karanlık tema · kamera", rule: "Etiket akışı temadan bağımsız tek paletle çizilir: vizör koyu (göz karanlık rafa uyumlu kalır), onay kartı açık (alanlar okunur). Tema değişimi bu akışı etkilemez." },

@@ -9,10 +9,10 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro bilinçli olarak ertelendi. Fikstür seti **99 gerçek
-etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **400 test yeşil**,
+etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **409 test yeşil**,
 **sıfır derleyici uyarısı**.
 
-Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
+Tasarım kararları **46–74** kodlandı (74 hariç) (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
 **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
 
 > Bu dosya yalnızca **yapılacak işi** ve **kalıcı kuralları** taşır.
@@ -26,7 +26,8 @@ Tasarım kararları **46–69** kodlandı (`11-tasarim-kararlari.md`); 56 ajanl�
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi; ölçüm kareleri rehbersiz çekilmişti | A101'de bir çekim |
+| 1 | **Karar 74 — kırpım rehber bölgesinden** | Onuncu turun tek uygulanmayan kararı; 128dp şerit tasarımın deyimiyle "geçici yama" ve kartın dikey bütçesinden çalıyor | — |
+| 1b | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi | A101'de bir çekim |
 | 2 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
 | 3 | **F6.5 — sabit terfisi + bastırma** | "Bunu önerme" listesinin giriş noktası | — |
 
@@ -537,7 +538,10 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       **Silinenler:** `ui/screens/Placeholders.kt` (86 satır, hiçbir dosya import
       etmiyordu), `ListScreen`'deki altı FileKit import'u, `formatDayMonthTime`,
       `NeydiExtraShapes.barTop`, katalogdan `coil`/`coil-compose`.
-      **Kalan adaylar:** `SafeArea`, `AccentStrip`, `Modifier.focusRing`.
+      **Kalan adaylar:** `SafeArea`, `AccentStrip`, `Modifier.focusRing`,
+      `parseMinorInput` *(karar 73 onu onay kartından çıkardı; üretimde
+      çağıranı kalmadı, yalnız kendi testi var — F5.4 dış veriyle geri
+      dönebileceği için silinmedi)*.
       ⚠ **`AccentSurface` bu listeden CIKTI:** "sıfır çağıran" iddiası yanlıştı —
       `AccentChip.kt:62` ve `:78`'den çağrılıyor, `AccentChip` da üretimde canlı
       (`ListItemRow.kt:256`).
@@ -753,7 +757,7 @@ yazılacak.
 |---|---|
 | [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 56 kararın kod durumu (46–69 dahil), gezinme sözleşmesi sabitleri, ikonografi |
 | [17](17-e12-etiket-olcumu.md) · [18](18-zincir-karsilastirmasi.md) · [24](24-a101-olcumu.md) | **Etiket ölçüm raporları** — BİM · üç zincir karşılaştırması · A101 |
-| [25-tasarima-sorular-10.md](25-tasarima-sorular-10.md) | **Aktif** — onay kartı + klavye; cihaz provasından beş soru |
+| [25-tasarima-sorular-10.md](25-tasarima-sorular-10.md) | Onuncu tur soruları — **cevaplandı**, kararlar 70–74 (`docs/11`) |
 | [21](21-tasarim-denetimi-38-kalan.md) · [22](22-tasarima-sorular-8.md) · [23](23-tasarima-sorular-9.md) | Sekizinci/dokuzuncu tur denetim ve sorular |
 | [12-tasarima-sorular-4.md](12-tasarima-sorular-4.md) | Dördüncü tur — cevaplandı, arşiv değeri |
 | [10-tasarima-pivot.md](10-tasarima-pivot.md) | Tasarıma pivot bildirimi — cevaplandı, arşiv değeri |

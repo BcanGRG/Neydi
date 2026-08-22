@@ -17,7 +17,6 @@ import com.neydi.app.data.ocr.dumpTagOcr
 import com.neydi.app.data.ocr.readTag
 import com.neydi.app.data.ocr.readTagFields
 import com.neydi.app.data.formatMinor
-import com.neydi.app.data.parseMinorInput
 import com.neydi.app.data.repo.ListRepository
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readBytes
@@ -283,7 +282,7 @@ internal class TagCaptureViewModel(
         _state.value = _state.value.copy(toast = null)
     }
 
-    fun editPrice(text: String) = updateCard { it.withPrice(text) }
+    fun editPrice(raw: String) = updateCard { it.withPriceInput(raw) }
 
     fun editProductName(text: String) = updateCard { it.copy(productName = text) }
 
@@ -310,7 +309,7 @@ internal class TagCaptureViewModel(
      */
     fun save() {
         val card = _state.value.card ?: return
-        val minor = parseMinorInput(card.priceText) ?: return
+        val minor = card.priceMinor
         if (!card.canSave || _state.value.saving) return
         // ADSIZ GOZLEM YAZILMAZ. `canSave` sozlesme geregi yalnizca fiyata
         // bakiyor; ad yine de bos olabilecegi tek yerde - ilk kurulumun ilk
@@ -407,7 +406,8 @@ private suspend fun readFieldsFromPhoto(photoPath: String, chain: String?): TagF
  */
 internal fun ConfirmCard.readFrom(fields: TagFields?): ConfirmCard = copy(
     reading = false,
-    priceText = fields?.price?.let { minorToInput(it.minor) } ?: "",
+    priceMinor = fields?.price?.minor ?: 0L,
+    priceTouched = false,
     // OCR METNI ASLA URUN ADI OLMAZ (karar 51). Okunan ad KANIT olarak
     // tasiniyor - urun seciciye "Etiket metni: DST YGRT 1000G" diye yaziliyor -
     // ve urun kimligi katalogdan geliyor. Onceki hal OCR'i dogrudan ada
@@ -424,33 +424,6 @@ internal fun ConfirmCard.readFrom(fields: TagFields?): ConfirmCard = copy(
     skipped = fields?.skipped,
 )
 
-/**
- * Fiyat alani duzenlendi - ve KURUS UYARISI SUSUYOR.
- *
- * CIHAZDA GORULDU: kullanici `39,50` yaziyor ve kart hala *"Kuruş okunamadı -
- * kontrol et"* diyor. Uyari, kullanici kurusu kendi eliyle yazdiktan SONRA
- * hala duruyordu.
- *
- * Uyarinin isi `kurusFromOcr`in KDoc'unda yazili: *"kullanicidan iki hane
- * istemek, yanlis iki haneyi sessizce kaydetmekten iyi"*. Yani is kullaniciyi
- * fiyat alanina BAKTIRMAK - ve alani duzenledigi anda o is bitmis oluyor.
- * Uyariyi surdurmek, cevaplanmis bir soruyu tekrar sormak demek.
- *
- * `39` yazip kurus yazmamak da bir CEVAP: bos birakilmis degil, secilmis.
- * O yuzden metnin kurus tasiyip tasimadigina bakilmiyor.
- *
- * VIEWMODEL'IN DISINDA, [readFrom] ile ayni sebeple: bu kusurun kendisi
- * ViewModel govdesinde yasiyordu ve orasi birim testle korunamiyor.
- */
-internal fun ConfirmCard.withPrice(text: String): ConfirmCard =
-    copy(priceText = text, kurusFromOcr = true)
-
-/** Kurusu duzenlenebilir metne cevirir: 3850 -> "38,50". */
-internal fun minorToInput(minor: Long): String {
-    val lira = minor / 100
-    val kurus = (minor % 100).toInt()
-    return "$lira,${kurus.toString().padStart(2, '0')}"
-}
 
 /**
  * `Gözlem kaydedildi · BİM · 24,90 TL` - tasarimin birebir bildirimi.

@@ -53,7 +53,7 @@ class ConfirmCardReadTest {
     @Test
     fun aContradictedTagFillsNeitherPriceNorPack() {
         val card = cardFor("20260821_133411", a101)
-        assertEquals("", card.priceText)
+        assertEquals(0L, card.priceMinor)
         assertNull(card.packSize)
         assertNull(card.packUnit)
         assertNotNull(card.skipped, "amber serit sebepsiz kalir")
@@ -84,7 +84,7 @@ class ConfirmCardReadTest {
     fun aFailedReadStillOpensAnEmptyCard() {
         val card = blank.readFrom(null)
         assertTrue(!card.reading)
-        assertEquals("", card.priceText)
+        assertEquals(0L, card.priceMinor)
         assertNull(card.packSize)
         assertNull(card.tagText)
     }
@@ -101,7 +101,7 @@ class ConfirmCardReadTest {
         val read = cardFor("20260821_133411", a101)
         assertEquals("Okunan fiyat etiketin birim fiyatıyla uyuşmuyor — doğrula", read.missingFieldMessage())
 
-        val typed = read.withPrice("39,50").copy(productName = "Süt")
+        val typed = read.withPriceInput("3950").copy(productName = "Süt")
         assertNull(typed.missingFieldMessage(), "kullanici yazdiktan sonra uyari kalmamali")
     }
 
@@ -113,7 +113,7 @@ class ConfirmCardReadTest {
      */
     @Test
     fun aPriceTypedWithoutKurusIsStillAnAnswer() {
-        val typed = blank.readFrom(null).withPrice("39").copy(productName = "Süt")
+        val typed = blank.readFrom(null).withPriceInput("39").copy(productName = "Süt")
         assertNull(typed.missingFieldMessage())
     }
 

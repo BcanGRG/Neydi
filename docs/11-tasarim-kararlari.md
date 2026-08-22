@@ -409,3 +409,76 @@ değişiklikleri buraya işlendi, ama dosyalar bayat:
 - **Compose Spec** karar 64 ve 67'yi denetim listesine işlemiş.
 
 Bu üçü elle yeniden indirilmeli.
+
+---
+
+## Onuncu tur — kararlar 70–74 · onay kartı + klavye
+
+`docs/25`'in beş sorusunun beşi de cevaplandı. Bu turun kaynağı bir denetim
+değil, **cihazda yapılan uçtan uca bir prova**: deklanşör → kart → fiyat →
+ürün → market → kaydet → veritabanı.
+
+### Karar 70 — dikeyde klavye açılınca kırpım toplanır ✅
+
+**Kod tarafının geçici çözümü kural oldu.** Ölçüm: kart içeriği 1669 px,
+klavyenin üstünde 1198 px. Kart kaydırılmıyor, Tarih satırı kalıyor; kalan her
+şey kaydırmasız görünüyor.
+
+Sözleşme bir ayrıntı daha ekledi: **şerit toplanmış doğuyor** — fiyatı
+okunamamış kart klavyeyi kendiliğinden açıyor ve o anda kullanıcı fiyatı
+ekrandan değil raftaki etiketten okuyor. `TagCaptureScreen`'de sınırlı bir
+bekleme var (`IME_WAIT_MS`), çünkü IME birkaç yüz milisaniye sonra görünüyor
+ve yalnızca ona bağlanan şerit bir görünüp sonra toplanıyordu.
+
+### Karar 71 — Kaydet ile Vazgeç yatay çift ✅
+
+Alt alta iki satır tek satıra indi: solda Vazgeç (metin, `flex:1`), sağda
+Kaydet (dolgulu, `flex:2`), arada 10dp, satır 52dp. **Her durumda böyle.**
+
+Gerekçe kalıcı: Vazgeç karar 29'un (fotoğraf silinir) görünür yolu ve
+görünürlüğü klavyenin durumuna bağlanamaz. Kırpım toplandıktan sonra bile
+Vazgeç fold'un 22 px altında kalıyordu.
+
+### Karar 72 — kuruş uyarısı ilk düzenlemede susar ✅
+
+**Onaylandı.** Uyarı yalnızca OCR değeri hiç ellenmediyse sürüyor ve
+**Kaydet'i hiçbir hâlde engellemiyor**. `ConfirmCard.priceTouched` taşıyor.
+
+### Karar 73 — fiyat alanı sağdan dolar ✅
+
+Yazar kasa girişi: `3` → 0,03 · `39` → 0,39 · `3950` → 39,50. Virgül ve nokta
+yok sayılıyor, ⌫ sağdan siliyor, **dolu** alanda ilk rakam değeri sıfırlayıp
+baştan başlatıyor, boşalan alan `— TL`ye dönüyor.
+
+**Sözleşmenin bir cümlesi değişti:** Kaydet artık *"ilk rakamda"* değil
+**değer sıfırdan çıkınca** etkinleşiyor — `0` tuşlamak bir rakam ama bir fiyat
+değil.
+
+`parseMinorInput` kartın alanından çıktı; kart `priceMinor: Long` tutuyor.
+Etiket metnini okuyan `parseMinor` yerinde — o başka bir kaynağın doğrusu.
+
+⚠ **`parseMinorInput` artık üretimde çağrılmıyor** (yalnızca kendi testi var).
+Silinmedi: para ayrıştırma veri katmanının genel API'si ve F5.4 dış veriyle
+geri gelebilir. F10.11'in ölü kod listesine eklendi.
+
+### Karar 74 — kırpım rehber bölgesinden; şerit 92dp'ye döner ❌ **yapılmadı**
+
+Tasarım asıl düzeltmeyi onayladı: küçük kopya **rehber (3:2) bölgesinden**
+kırpılacak ve *o gün* şerit maketin 92dp'sine dönecek. 128dp geçici yama.
+
+Bu tek karar bu turda **uygulanmadı** ve sebebi kapsam: kamera hattına
+dokunuyor (rehber dikdörtgenini kareye eşlemek, `PreviewView` FILL_CENTER
+ölçeği, yeni bir `expect/actual` kırpma). Tasarımın kendi cümlesi de ikisini
+ayırıyor — şerit ancak kaynak düzelince 92dp oluyor. **Sıradaki iş.**
+
+### Bu turda tazelenen dosyalar
+
+Altı `.dc.html` betikle indirildi ve uzakla **birebir** doğrulandı: Kararlar,
+Ekranlar 2-4, Gezinme Sözleşmesi, Ekran 1, Ekranlar 5-8, Tasarım Sistemi.
+
+**Compose Spec** yine satır içi döndü (araç ~40KB altını betikle yazmıyor);
+denetim listesindeki **altı eksik madde elle işlendi** ve liste artık uzakla
+aynı yirmi maddeyi taşıyor. Dosyanın kalanı için bkz. `OKU-BUNLAR-BAYAT.md`.
+
+**İkonografi** kontrol edildi ve **güncelmiş** — önceki turun "bayat" notu
+artık geçerli değil. **Boş Durumlar** bu turdan etkilenmedi.
