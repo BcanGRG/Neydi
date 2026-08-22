@@ -142,8 +142,14 @@ data class UiRow(
  * @param benimUyeId es avatarinin kuralini uygular: avatar YALNIZCA es
  *   ekledigunde cizilir. Kendi ekledigimizde cizmek her satira gurultu ekler
  *   ve hicbir sey soylemez.
+ * @param cheaper "A101'de 36,00" - listenin ilk uc adayindan biriyse dolu.
+ *   Doluysa trend BASTIRILIYOR (karar 41).
  */
-internal fun ListRowProjection.toUiRow(myMemberId: String?, now: Long): UiRow = UiRow(
+internal fun ListRowProjection.toUiRow(
+    myMemberId: String?,
+    now: Long,
+    cheaper: String? = null,
+): UiRow = UiRow(
     id = rowId,
     productId = productId,
     row = ListRow(
@@ -153,7 +159,8 @@ internal fun ListRowProjection.toUiRow(myMemberId: String?, now: Long): UiRow = 
         isStaple = isStaple,
         addedByInitial = if (addedByMemberId != myMemberId) turkishInitials(name).take(1) else null,
         note = note,
-        priceHint = toPriceHint(now),
+        priceHint = toPriceHint(now, chipWins = cheaper != null),
+        cheaperElsewhere = cheaper,
     ),
 )
 
@@ -217,16 +224,30 @@ internal fun List<ListRowProjection>.toSections(
         remaining.partition { it.isStaple }
     }
 
+    // "BASKA MARKETTE UCUZ" ADAYLARI, ALINMAMIS SATIRLAR UZERINDEN (karar 41).
+    //
+    // Isaretli satir kapsam disi ve bu, "en fazla 3" sinirinin nereye
+    // harcandigi meselesi: cip bir EYLEM cagrisi ("oraya ugra"), sepete
+    // girmis urunde ise eylem bitmis. Uc kontenjani bitmis islere harcamak,
+    // hala alinacak ucuz alternatifi olan satiri sessiz birakirdi.
+    //
+    // Harita BOLUMLENMEDEN ONCE kuruluyor: sinir liste geneline ait, bolume
+    // degil. Bolum basina uygulansaydi alti bolumlu bir liste on sekiz cip
+    // cizerdi.
+    val chips = remaining.cheaperChips()
+
     val categorySections = others
         .groupBy { it.categoryName }
-        .map { (title, rows) -> ListSection(title, rows.map { it.toUiRow(myMemberId, now) }) }
+        .map { (title, rows) ->
+            ListSection(title, rows.map { it.toUiRow(myMemberId, now, chips[it.rowId]) })
+        }
         .filter { it.rows.isNotEmpty() }
 
     // Sinir tasarimdan: en fazla 12 satir. Ustu, listeyi acan kullaniciya kendi
     // yazmadigi 20 satir gostermek olurdu.
     val stapleSection = staples
         .take(STAPLE_LIMIT)
-        .map { it.toUiRow(myMemberId, now) }
+        .map { it.toUiRow(myMemberId, now, chips[it.rowId]) }
         .takeIf { it.isNotEmpty() }
         ?.let { ListSection(STAPLE_SECTION_TITLE, it) }
 

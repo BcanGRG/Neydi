@@ -80,7 +80,7 @@ class ListPriceHintTest {
     )
 
     private suspend fun hintFor(db: NeydiDatabase, tripId: String, productId: String): PriceHint =
-        db.tripLineDao().observeList(tripId).first()
+        db.tripLineDao().observeList(tripId, 0L).first()
             .single { it.productId == productId }
             .toPriceHint(now)
 

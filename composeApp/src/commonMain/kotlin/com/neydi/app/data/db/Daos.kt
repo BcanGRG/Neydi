@@ -299,6 +299,11 @@ interface TripLineDao {
      *
      * Siralama: once REYON (market gezme sirasi), sonra eklenme zamani.
      * Alfabetik siralamak insani markette ileri geri yurutur.
+     *
+     * @param freshAfter "baska markette ucuz" cipinin tazelik siniri (karar 41:
+     *   14 gun). Disaridan geliyor cunku Room sorgusu saat okuyamaz; cagiran
+     *   `clock() - CHEAPER_FRESH_MS` veriyor. Akis gezi degisince yeniden
+     *   kuruluyor, yani sinir da tazeleniyor.
      */
     @Query(
         """
@@ -354,6 +359,52 @@ interface TripLineDao {
                 WHERE po.productId = p.id AND po.deletedAt IS NULL
                 ORDER BY po.observedAt DESC LIMIT 1 OFFSET 1)   AS prevPackUnit,
 
+            -- BASKA MARKETTE UCUZ (F5.5, karar 41): son gozlemin marketinden
+            -- BASKA bir markette, tazelik penceresi icinde gorulmus EN UCUZ
+            -- gozlem.
+            --
+            -- TARIH FILTRESI NEDEN SQL'DE, "kac gun once" gibi Kotlin'de
+            -- DEGIL: burada suzulen sey satirin kendisi, gosterimi degil. En
+            -- ucuz gozlemi once secip sonra Kotlin'de "bayat" diye atsaydik,
+            -- 20 gunluk 30 TL'lik gozlem 10 gunluk 34 TL'lik gozlemi golgeler
+            -- ve satir cipi hic gormezdi - oysa gecerli bir alternatifi vardi.
+            --
+            -- `po.storeId <> (...)` uc degerli mantik: son gozlem marketsizse
+            -- karsilastirma NULL doner ve alt sorgu bos kalir. Istenen bu.
+            (SELECT po.unitPriceMinor FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.observedAt >= :freshAfter
+                    AND po.storeId IS NOT NULL
+                    AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
+                ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPriceMinor,
+            (SELECT s.name FROM price_observation po
+                LEFT JOIN store s ON s.id = po.storeId
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.observedAt >= :freshAfter
+                    AND po.storeId IS NOT NULL
+                    AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
+                ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalStoreName,
+            (SELECT po.packSize FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.observedAt >= :freshAfter
+                    AND po.storeId IS NOT NULL
+                    AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
+                ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPackSize,
+            (SELECT po.packUnit FROM price_observation po
+                WHERE po.productId = p.id AND po.deletedAt IS NULL
+                    AND po.observedAt >= :freshAfter
+                    AND po.storeId IS NOT NULL
+                    AND po.storeId <> (SELECT po2.storeId FROM price_observation po2
+                        WHERE po2.productId = p.id AND po2.deletedAt IS NULL
+                        ORDER BY po2.observedAt DESC LIMIT 1)
+                ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPackUnit,
+
             -- Sparkline satirin ICINDE ciziliyor, yani gecmis de bu sorgudan
             -- gelmek zorunda. `group_concat` alt sorgunun SIRASINI korumuyor
             -- diye bir garanti yok ama pratikte koruyor; sira bozulursa
@@ -369,7 +420,7 @@ interface TripLineDao {
         ORDER BY c.sortOrder, tl.createdAt
         """,
     )
-    fun observeList(tripId: String): Flow<List<ListRowProjection>>
+    fun observeList(tripId: String, freshAfter: Long): Flow<List<ListRowProjection>>
 
     @Query("SELECT * FROM trip_line WHERE tripId = :tripId AND productId = :productId AND deletedAt IS NULL LIMIT 1")
     suspend fun find(tripId: String, productId: String): TripLine?

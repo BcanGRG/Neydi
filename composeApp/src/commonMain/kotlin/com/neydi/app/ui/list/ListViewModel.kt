@@ -135,7 +135,16 @@ class ListViewModel(
     val state: StateFlow<ListState> =
         combine(
             repo.activeTrip(household).flatMapLatest { trip ->
-                if (trip == null) flowOf(emptyList()) else tripLineDao.observeList(trip.id)
+                if (trip == null) {
+                    flowOf(emptyList())
+                } else {
+                    // Tazelik siniri AKIS KURULURKEN sabitleniyor. Gezi
+                    // degistikce yeniden hesaplaniyor, yani pratikte her acilista
+                    // taze. Sinirin bir oturum boyunca donmasi zararsiz: 14 gunluk
+                    // pencerede birkac saatlik kayma hicbir cipin kaderini
+                    // degistirmiyor.
+                    tripLineDao.observeList(trip.id, clock() - CheaperChip.FRESH_MS)
+                }
             },
             myMemberId,
             shoppingMode,
@@ -528,7 +537,7 @@ class ListViewModel(
         viewModelScope.launch {
             val memberId = selfMemberId() ?: return@launch
             val trip = repo.openOrGetActiveTrip(household, memberId)
-            val rows = tripLineDao.observeList(trip.id).first()
+            val rows = tripLineDao.observeList(trip.id, clock() - CheaperChip.FRESH_MS).first()
             // TUTAR AKTIF SEPETIN TAHMINI (E18). Gezi HENUZ kapanmadigi icin
             // `observeTripEstimates` onu gormuyor - o sorgu `completedAt`
             // dolu geziler icin. Aktif sepetin kendi tahmini zaten var ve

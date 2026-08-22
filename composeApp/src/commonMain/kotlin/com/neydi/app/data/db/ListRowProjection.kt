@@ -48,6 +48,22 @@ data class ListRowProjection(
     val prevPackSize: Double? = null,
     val prevPackUnit: String? = null,
 
+    // --- Baska markette ucuz (F5.5, karar 41) -------------------------------
+    //
+    // "Rakip" = SON gozlemin marketinden BASKA bir markette gorulmus, tazelik
+    // penceresine giren EN UCUZ gozlem. Esikler burada degil `cheaperCandidate`
+    // icinde: SQL veriyi getirir, iddiayi Kotlin kurar.
+    //
+    // Son gozlem MARKETSIZ kaydedilmisse bu alanlarin hepsi null geliyor -
+    // `storeId <> NULL` hicbir satir dondurmuyor. Bu bir kaza degil, dogru
+    // cevap: nereden aldigini bilmiyorsak "baska markette ucuz" diyemeyiz.
+
+    /** Rakip marketteki en ucuz fiyat; null = karsilastirilacak gozlem yok. */
+    val rivalPriceMinor: Long? = null,
+    val rivalStoreName: String? = null,
+    val rivalPackSize: Double? = null,
+    val rivalPackUnit: String? = null,
+
     /**
      * Son sekiz gozlemin fiyatlari, YENIDEN ESKIYE, virgulle ayrilmis.
      *

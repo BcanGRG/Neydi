@@ -72,7 +72,7 @@ class OptimisticReconcileTest {
         val reconciled = r.reconcileOptimistically(trip)
 
         assertEquals(3, reconciled)
-        val rows = db.tripLineDao().observeList(trip).first()
+        val rows = db.tripLineDao().observeList(trip, 0L).first()
         // BOYUT KONTROLU SART: bos liste uzerinde `all` her zaman true doner ve
         // testin ilk hali tam olarak bu yuzden bir sey kanitlamiyordu.
         assertEquals(3, rows.size)
@@ -85,7 +85,7 @@ class OptimisticReconcileTest {
         val db = db(); prepare(db)
         val r = repo(db)
         val trip = threeItemList(db, r)
-        val first = db.tripLineDao().observeList(trip).first().first()
+        val first = db.tripLineDao().observeList(trip, 0L).first().first()
         r.setTaken(first.rowId, true)
 
         assertEquals(2, r.reconcileOptimistically(trip))
@@ -115,7 +115,7 @@ class OptimisticReconcileTest {
         val db = db(); prepare(db)
         val r = repo(db)
         val trip = threeItemList(db, r)
-        val rows = db.tripLineDao().observeList(trip).first()
+        val rows = db.tripLineDao().observeList(trip, 0L).first()
         db.tripLineDao().softDelete(rows.first().rowId, 900L)
 
         assertEquals(2, r.reconcileOptimistically(trip))
@@ -135,10 +135,10 @@ class OptimisticReconcileTest {
         val trip = threeItemList(db, r)
         r.reconcileOptimistically(trip)
 
-        val sut = db.tripLineDao().observeList(trip).first().first { it.name == "Süt" }
+        val sut = db.tripLineDao().observeList(trip, 0L).first().first { it.name == "Süt" }
         r.setTaken(sut.rowId, false)
 
-        val after = db.tripLineDao().observeList(trip).first()
+        val after = db.tripLineDao().observeList(trip, 0L).first()
         // Bu dosyanin KDoc'u tam bu tuzagi anlatiyor ama bu test ondan
         // kacamamis: `first { }` yalnizca Süt satirinin varligini garanti eder,
         // FILTRELENMIS liste yine bos olabilir ve `all {}` bos listede true
@@ -155,7 +155,7 @@ class OptimisticReconcileTest {
         val r = repo(db)
         val trip = threeItemList(db, r)
         r.reconcileOptimistically(trip)
-        val row = db.tripLineDao().observeList(trip).first().first()
+        val row = db.tripLineDao().observeList(trip, 0L).first().first()
 
         r.setTaken(row.rowId, false)
 

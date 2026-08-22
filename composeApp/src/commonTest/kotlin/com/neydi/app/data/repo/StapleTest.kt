@@ -109,7 +109,7 @@ class StapleTest {
 
         val trip = r.openOrGetActiveTrip(home, me)
 
-        val rows = db.tripLineDao().observeList(trip.id).first()
+        val rows = db.tripLineDao().observeList(trip.id, 0L).first()
         assertEquals(setOf("Ekmek", "Süt"), rows.map { it.name }.toSet())
     }
 
@@ -132,7 +132,7 @@ class StapleTest {
         val second = r.openOrGetActiveTrip(home, me)
 
         assertEquals(first.id, second.id)
-        val rows = db.tripLineDao().observeList(first.id).first()
+        val rows = db.tripLineDao().observeList(first.id, 0L).first()
         assertEquals(1, rows.size)
         assertEquals(1.0, rows.single().count, "adet artmis - tohumlama iki kez kosmus")
     }
@@ -150,7 +150,7 @@ class StapleTest {
         val next = r.openOrGetActiveTrip(home, me)
 
         assertTrue(next.id != first.id, "yeni gezi acilmadi")
-        assertEquals(listOf("Ekmek"), db.tripLineDao().observeList(next.id).first().map { it.name })
+        assertEquals(listOf("Ekmek"), db.tripLineDao().observeList(next.id, 0L).first().map { it.name })
     }
 
     /**
@@ -169,7 +169,7 @@ class StapleTest {
 
         val trip = r.openOrGetActiveTrip(home, me)
 
-        assertEquals(STAPLE_LIMIT, db.tripLineDao().observeList(trip.id).first().size)
+        assertEquals(STAPLE_LIMIT, db.tripLineDao().observeList(trip.id, 0L).first().size)
     }
 
     /** Sabit olmayan urun tohumlanmiyor - aksi halde katalog listeye bosalirdi. */
@@ -181,6 +181,6 @@ class StapleTest {
 
         val trip = r.openOrGetActiveTrip(home, me)
 
-        assertEquals(emptyList(), db.tripLineDao().observeList(trip.id).first().map { it.name })
+        assertEquals(emptyList(), db.tripLineDao().observeList(trip.id, 0L).first().map { it.name })
     }
 }
