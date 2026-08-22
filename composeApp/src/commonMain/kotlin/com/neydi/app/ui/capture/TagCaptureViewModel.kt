@@ -149,24 +149,7 @@ internal class TagCaptureViewModel(
             // cekmis olabilir; geciken OCR sonucu yeni karti ezmemeli.
             val card = _state.value.card ?: return@launch
             if (card.photoPath != photoPath) return@launch
-            _state.value = _state.value.copy(
-                card = card.copy(
-                    reading = false,
-                    priceText = fields?.price?.let { minorToInput(it.minor) } ?: "",
-                    // OCR METNI ASLA URUN ADI OLMAZ (karar 51). Okunan ad
-                    // KANIT olarak tasiniyor - urun seciciye "Etiket metni:
-                    // DST YGRT 1000G" diye yaziliyor - ve urun kimligi
-                    // katalogdan geliyor. Onceki hal OCR'i dogrudan ada
-                    // yaziyordu ve Migros'ta ayni sut cihazda IKI urun oldu.
-                    tagText = fields?.name?.name,
-                    // URUN ALANI BOS ACILIYOR - son secilen urun BURAYA
-                    // YAZILMIYOR (karar 51'den sapma, gerekcesi asagida).
-                    productName = "",
-                    brand = fields?.name?.brand,
-                    kurusFromOcr = fields?.price?.kurusFromOcr == true,
-                    skipped = fields?.skipped,
-                ),
-            )
+            _state.value = _state.value.copy(card = card.readFrom(fields))
         }
     }
 
@@ -349,6 +332,8 @@ internal class TagCaptureViewModel(
                 priceMinor = minor,
                 storeId = _state.value.storeId,
                 brand = card.brand,
+                packSize = card.packSize,
+                packUnit = card.packUnit,
                 at = clock(),
                 newId = newId,
             )
@@ -402,6 +387,42 @@ private suspend fun readFieldsFromPhoto(photoPath: String, chain: String?): TagF
     )
     return readTagFields(ocr, chain)
 }
+
+/**
+ * OKUNAN ALANLARI KARTA TASIR - ve VIEWMODEL'IN DISINDA duruyor.
+ *
+ * Ayrilmasinin sebebi somut bir kusur: F5.7'ye kadar bu kopya gramaji hic
+ * tasimiyordu. Sema kolonlari, sorgunun alt sorgulari ve
+ * `PriceHint.PackChanged` dali E16'dan beri hazirdi, `readTagPack` gramaji
+ * okuyordu - ama ViewModel'de `pack` kelimesi HIC GECMIYORDU ve iki kolon her
+ * gozlemde NULL yaziliyordu. Shrinkflation dali asla atesleyemezdi ve hicbir
+ * test bunu soylemiyordu, cunku ViewModel'in govdesi test edilemiyordu
+ * (`viewModelScope` bir Main dispatcher istiyor, bkz. `writeTagObservation`).
+ *
+ * Kopya artik serbest bir fonksiyon: kamerasiz, veritabanisiz, dispatcher'siz
+ * kosuyor. Bir alanin sessizce dusurulmesi bundan sonra bir testi kirar.
+ *
+ * @param fields `null` = OCR patladi; kart yine aciliyor ama tamamen bos ve
+ *   `reading` kapaniyor - iskelet sonsuza kadar donmemeli.
+ */
+internal fun ConfirmCard.readFrom(fields: TagFields?): ConfirmCard = copy(
+    reading = false,
+    priceText = fields?.price?.let { minorToInput(it.minor) } ?: "",
+    // OCR METNI ASLA URUN ADI OLMAZ (karar 51). Okunan ad KANIT olarak
+    // tasiniyor - urun seciciye "Etiket metni: DST YGRT 1000G" diye yaziliyor -
+    // ve urun kimligi katalogdan geliyor. Onceki hal OCR'i dogrudan ada
+    // yaziyordu ve Migros'ta ayni sut cihazda IKI urun oldu.
+    tagText = fields?.name?.name,
+    // URUN ALANI BOS ACILIYOR - son secilen urun BURAYA YAZILMIYOR
+    // (karar 51'den sapma, gerekcesi `TagCaptureViewModel` KDoc'unda).
+    productName = "",
+    brand = fields?.name?.brand,
+    kurusFromOcr = fields?.price?.kurusFromOcr == true,
+    // AMBALAJ SESSIZCE TASINIYOR - gerekcesi `ConfirmCard.packSize`ta.
+    packSize = fields?.pack?.size,
+    packUnit = fields?.pack?.unit,
+    skipped = fields?.skipped,
+)
 
 /** Kurusu duzenlenebilir metne cevirir: 3850 -> "38,50". */
 internal fun minorToInput(minor: Long): String {

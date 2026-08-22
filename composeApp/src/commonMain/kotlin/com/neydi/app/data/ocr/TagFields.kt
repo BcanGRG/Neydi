@@ -89,7 +89,20 @@ internal fun readTagFields(ocr: TagOcr, chain: String?): TagFields {
         return TagFields(
             price = null,
             name = name,
-            pack = pack,
+            // GRAMAJ DA DUSUYOR - gerekcesi fiyatinkiyle AYNI cumle.
+            //
+            // Celiski uc sayidan birinin yanlis oldugunu soyluyor, HANGISININ
+            // oldugunu degil ([contradictsUnitPrice] bunu acikca yaziyor).
+            // Fiyata guvenmeyip ayni uclunun gramajini yazmak tutarsiz olurdu.
+            //
+            // Ustelik gramaj daha PAHALI: F5.7'den beri kalici olarak
+            // saklaniyor ve yanlis bir gramaj UYDURMA BIR GIZLI ZAM uretiyor
+            // (`PriceHint.PackChanged`) - kullaniciya reyonda *"ambalaj
+            // kuculdu"* diye yanlis bir cumle kurdurur. Fiyat hatasi bir
+            // sayidir, bu bir IDDIADIR.
+            //
+            // Olculen bedel: 99 fiksturde okunan 50 gramajin 7'si duser.
+            pack = null,
             skipped = TagSkip.PRICE_CONTRADICTS_UNIT_PRICE,
         )
     }

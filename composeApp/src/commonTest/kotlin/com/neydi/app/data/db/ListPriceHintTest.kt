@@ -4,7 +4,10 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.bootstrap
+import com.neydi.app.data.ocr.TagFixtures
+import com.neydi.app.data.ocr.readTagFields
 import com.neydi.app.data.repo.ListRepository
+import com.neydi.app.data.store.chainKey
 import com.neydi.app.ui.components.PriceHint
 import com.neydi.app.ui.list.toPriceHint
 import kotlinx.coroutines.flow.first
@@ -12,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -149,6 +153,76 @@ class ListPriceHintTest {
         assertEquals(10, hint.deltaPercent)
         assertTrue(!hint.rising)
     }
+
+    /**
+     * IKI GERCEK ETIKET, GERCEK YAZMA YOLU, GERCEK SORGU - F5.7'nin ISPATI.
+     *
+     * Yukaridaki ambalaj testleri gozlemleri DOGRUDAN yaziyor, yani yalnizca
+     * zincirin alt yarisini kanitliyor. Bu test ust yarisini de bagliyor:
+     * gramaj `readTagPack`ten cikiyor, **`writeTagObservation`dan geciyor**,
+     * `observeList`in alt sorgularindan donuyor ve `toPriceHint` onu ambalaj
+     * degisimi sayiyor.
+     *
+     * Iki A101 etiketi gercek: `132811` LAYS 125 G, `132813` LAYS FIRINDAN
+     * 110 G. Ayni urun adina yaziliyorlar cunku iddia edilen sey urunun ne
+     * oldugu degil, OKUNAN GRAMAJIN yolun sonuna varmasi.
+     *
+     * Iki yarim kanit birlestirilmeden birakilsaydi tam da aradaki kopukluk
+     * gozden kacardi - nitekim kacmisti: sema, sorgu ve dal hazirdi, yalnizca
+     * ViewModel gramaji karta hic koymuyordu.
+     */
+    @Test
+    fun twoRealTagsInDifferentSizesRaiseShrinkflation() = runTest {
+        val (db, trip) = setup()
+        val a101 = chainKey("A101")
+        val product = lineFor(db, trip, "Cips")
+
+        val big = assertNotNull(
+            readTagFields(TagFixtures.all.getValue("20260821_132811"), a101).pack,
+            "fikstur degisti: 125 G okunmuyor",
+        )
+        val small = assertNotNull(
+            readTagFields(TagFixtures.all.getValue("20260821_132813"), a101).pack,
+            "fikstur degisti: 110 G okunmuyor",
+        )
+
+        writePack(db, "Cips", big.size, big.unit, at = now - 30 * day, id = "a")
+        writePack(db, "Cips", small.size, small.unit, at = now - day, id = "b")
+
+        // Gozlemler urun ADINDAN cozuldu; ayni satira dustuklerini once burasi
+        // soyluyor - bolunmus olsalardi ipucu sessizce `Single` olurdu.
+        assertEquals(2, db.priceObservationDao().allObservations(home).count { it.productId == product })
+
+        val hint = assertIs<PriceHint.PackChanged>(hintFor(db, trip, product))
+        assertEquals("125 gr", hint.fromPack)
+        assertEquals("110 gr", hint.toPack)
+    }
+
+    /** Gercek yazma yolu - fiyat sabit, degisen yalnizca ambalaj. */
+    private suspend fun writePack(
+        db: NeydiDatabase,
+        name: String,
+        size: Double,
+        unit: String,
+        at: Long,
+        id: String,
+    ) = writeTagObservation(
+        repo = ListRepository(
+            tripDao = db.tripDao(), tripLineDao = db.tripLineDao(),
+            productDao = db.productDao(), clock = { at }, newId = { "gen-$id" },
+        ),
+        catalogSeedDao = db.catalogSeedDao(),
+        priceObservationDao = db.priceObservationDao(),
+        householdId = home,
+        productName = name,
+        priceMinor = 6_450,
+        storeId = "s-bim",
+        brand = null,
+        packSize = size,
+        packUnit = unit,
+        at = at,
+        newId = { id },
+    )
 
     /**
      * AMBALAJ DEGISTIYSE TREND BASTIRILIYOR.

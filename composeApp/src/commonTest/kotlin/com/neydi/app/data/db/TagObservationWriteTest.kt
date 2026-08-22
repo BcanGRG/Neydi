@@ -31,6 +31,7 @@ class TagObservationWriteTest {
 
     private val home = DEFAULT_HOUSEHOLD_ID
     private val bim = chainKey("BİM")
+    private val a101 = chainKey("A101")
 
     private suspend fun ready(): NeydiDatabase {
         val db = Room.inMemoryDatabaseBuilder<NeydiDatabase>(
@@ -54,6 +55,8 @@ class TagObservationWriteTest {
         minor: Long,
         storeId: String? = null,
         brand: String? = null,
+        packSize: Double? = null,
+        packUnit: String? = null,
         at: Long = 1_000,
         id: String = "obs-$at",
     ): Boolean = writeTagObservation(
@@ -65,6 +68,8 @@ class TagObservationWriteTest {
         priceMinor = minor,
         storeId = storeId,
         brand = brand,
+        packSize = packSize,
+        packUnit = packUnit,
         at = at,
         newId = { id },
     )
@@ -187,6 +192,64 @@ class TagObservationWriteTest {
         assertEquals("s-bim", row.storeId)
         assertEquals("ŞAFAK", row.brand)
         assertEquals(77_000L, row.observedAt)
+    }
+
+    /**
+     * ETIKETTEN OKUNAN GRAMAJ VERITABANINA ULASIYOR - F5.7'nin tamami bu.
+     *
+     * Sema, sorgu ve `PriceHint.PackChanged` dali E16'dan beri hazirdi; eksik
+     * olan tek sey buydu. `readTagPack` gramaji okuyor, `TagCaptureViewModel`
+     * onu karta tasiyor, kart yazma yoluna veriyordu - HAYIR, vermiyordu:
+     * ViewModel'de `pack` kelimesi hic gecmiyordu ve iki kolon hep NULL
+     * kaliyordu, yani shrinkflation dali ASLA atesleyemezdi.
+     */
+    @Test
+    fun aRealTagsPackReachesTheDatabase() = runTest {
+        val db = ready()
+        val fields = readTagFields(TagFixtures.all.getValue("20260821_132811"), a101)
+        val pack = assertNotNull(fields.pack, "fikstur degisti: gramaj okunmuyor")
+        assertEquals(125.0, pack.size)
+        assertEquals("gr", pack.unit)
+
+        write(db, "Cips", 6_450, storeId = "s-a101", packSize = pack.size, packUnit = pack.unit)
+
+        val row = db.priceObservationDao().allObservations(home).single()
+        assertEquals(125.0, row.packSize)
+        assertEquals("gr", row.packUnit)
+    }
+
+    /**
+     * CELISKILI ETIKETTEN GRAMAJ DA YAZILMIYOR.
+     *
+     * `133411` kadrajinda IKI etiket var: manset alttaki SIGNAL'in (64,90),
+     * okunan birim fiyat satiri ustteki PARODONTAX'in (2.330,00/lt) ve gramaj
+     * yine ustekinin (50 ml). Ucu bir arada tutmuyor.
+     *
+     * Fiyat zaten dusuyordu. Gramajin da dusmesi F5.7 ile geldi ve gerekcesi
+     * ayni: hangi sayinin yanlis oldugunu bilmiyoruz. Yanlis bir gramaj yalnizca
+     * bir sayi degil, KALICI BIR IDDIA uretir - *"ambalaj kuculdu"*.
+     */
+    @Test
+    fun aContradictedTagWritesNoPack() = runTest {
+        val fields = readTagFields(TagFixtures.all.getValue("20260821_133411"), a101)
+        assertNull(fields.price, "capraz kontrol acik kalmis")
+        assertNull(fields.pack, "celiskili etiketten gramaj sizdi")
+    }
+
+    /**
+     * BOY VE BIRIM IKISI BIRLIKTE ya da HIC.
+     *
+     * Birimsiz bir `900` gram mi mililitre mi soylemiyor; sonraki gozlemle
+     * karsilastirildiginda "900 -> 900" tutar ama iki AYRI birim olabilir.
+     */
+    @Test
+    fun aPackSizeWithoutItsUnitIsNotWritten() = runTest {
+        val db = ready()
+        write(db, "Un", 13_500, storeId = "s1", packSize = 900.0, packUnit = "  ", at = 1_000, id = "a")
+
+        val row = db.priceObservationDao().allObservations(home).single()
+        assertNull(row.packSize)
+        assertNull(row.packUnit)
     }
 
     private suspend fun countRows(db: NeydiDatabase): Int =
