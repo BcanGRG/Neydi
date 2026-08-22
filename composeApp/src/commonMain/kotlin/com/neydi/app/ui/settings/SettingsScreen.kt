@@ -1,6 +1,7 @@
 package com.neydi.app.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -58,9 +60,10 @@ import org.koin.compose.viewmodel.koinViewModel
  * - **Magazalar**: yedi zincir tohumlanmis geliyor ve kullanici etiket
  *   cekerken market seciyor (tasarim karari 11, pivotla revize) - satir
  *   yokken bolum cizilmiyor.
- * - **Onerilmeyenler**: `suggestion_block` tablosu semada var (v3) ama hicbir
- *   yazan yok - F6.5 (bastirma) yazilinca dolacak; bolum o gune kadar
- *   cizilmiyor.
+ * - **Onerilmeyenler**: F6.5 ile ACILDI - Urun Detayi'ndaki *"Bunu onerme"*
+ *   anahtari yaziyor, bu bolum de tek dokunusla geri aliyor. Bos ise bolum
+ *   yine cizilmiyor, ama artik "yazan yok" diye degil "kullanici henuz kimseyi
+ *   reddetmedi" diye.
  * - **Katilma kodu**: `Household.joinCode` null; satir SOLUK ciziliyor ve
  *   "Faz 7'de acilyor" yaziyor (karar 24) - varligi ozelligin gelecegini,
  *   solukluğu henuz olmadigini soyluyor.
@@ -76,6 +79,7 @@ fun SettingsRoute(onBack: () -> Unit, onDeleteData: () -> Unit) {
         state = state,
         onBack = onBack,
         onRemoveStaple = vm::removeStaple,
+        onUnblock = vm::unblock,
         onDeleteData = onDeleteData,
     )
 }
@@ -85,6 +89,7 @@ fun SettingsScreen(
     state: SettingsState,
     onBack: () -> Unit,
     onRemoveStaple: (String) -> Unit,
+    onUnblock: (String) -> Unit,
     onDeleteData: () -> Unit = {},
 ) {
     val extras = LocalNeydiExtraColors.current
@@ -181,6 +186,25 @@ fun SettingsScreen(
                 } else {
                     state.staples.forEach { staple ->
                         StapleRowItem(staple) { onRemoveStaple(staple.productId) }
+                    }
+                }
+
+                // "ONERILMEYENLER" (F6.5) - YERI TASARIMDAN: "Her zamankiler"
+                // ile "Magazalar" ARASINDA.
+                //
+                // BOS ISE BOLUM HIC CIZILMIYOR ve bunun icin bir "bos hali"
+                // notu da YOK - sabitler bolumundekinin aksine. Fark gercek:
+                // bos sabit listesi kullanicinin YAPMADIGI bir sey, bos engel
+                // listesi kullanicinin YAPMASI GEREKMEYEN bir sey. Ikincisi
+                // icin aciklama yazmak, olmayan bir eksigi haber vermek olurdu.
+                //
+                // Bolumun VAR OLMASI ozelligin sarti: kalici bir reddin geri
+                // alinabilir oldugunu gosteren tek yuzey bu. Gorunmeseydi
+                // "Bunu onerme" bir kara delik olurdu.
+                if (state.blocked.isNotEmpty()) {
+                    SectionHeader("Önerilmeyenler")
+                    state.blocked.forEach { row ->
+                        BlockedRowItem(row) { onUnblock(row.productId) }
                     }
                 }
 
@@ -426,6 +450,66 @@ private fun StapleRowItem(staple: StapleRow, onRemove: () -> Unit) {
     }
 }
 
+/**
+ * Onerilmeyen urun satiri: ad + **"Geri al"** cipi (F6.5).
+ *
+ * ## Neden [StapleRowItem]'in ikizi degil
+ *
+ * Sabit satirinin sonunda `close` IKONU var, burada bir KELIME. Fark tasarimin
+ * kendi cizimi ve gerekcesi de saglam: "cikar" bir islem, "geri al" bir
+ * DUZELTME. Ayni gorunselle anlatilsalardi kullanici engeli kaldirmayi
+ * urunu silmekle karistirirdi - ve "bunu onerme" tam da geri alinabilir
+ * oldugu icin guvenle basilabilen bir anahtar.
+ *
+ * Cip 32dp gorunuyor ama dokunma hedefi 48dp: gorsel boy ile hedef boy ayri
+ * (karar 56).
+ */
+@Composable
+private fun BlockedRowItem(row: BlockedRow, onUndo: () -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = Sizes.minTapTarget),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = row.name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Box(
+                modifier = Modifier
+                    .clip(NeydiExtraShapes.pill)
+                    .pressable(onTap = onUndo)
+                    .heightIn(min = Sizes.minTapTarget)
+                    .padding(vertical = Spacing.xs),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(NeydiExtraShapes.pill)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .border(
+                            Sizes.hairline,
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                            NeydiExtraShapes.pill,
+                        )
+                        .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+                ) {
+                    Text(
+                        text = "Geri al",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        Hairline()
+    }
+}
+
 /** Bolum alti aciklama - is yaptirmaz, ne olacagini soyler. */
 @Composable
 private fun Note(text: String) {
@@ -500,6 +584,7 @@ private fun SettingsFilledPreview() = NeydiPreview {
         ),
         onBack = {},
         onRemoveStaple = {},
+        onUnblock = {},
     )
 }
 
@@ -526,5 +611,6 @@ private fun SettingsEmptyPreview() = NeydiPreview {
         ),
         onBack = {},
         onRemoveStaple = {},
+        onUnblock = {},
     )
 }

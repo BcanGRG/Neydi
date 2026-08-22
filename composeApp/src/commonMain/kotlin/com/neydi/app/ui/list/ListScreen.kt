@@ -271,6 +271,7 @@ fun ListScreen(
                 onDeleteObservation = vm::deleteObservation,
                 state = sheet,
                 onStapleChange = { vm.setStaple(sheet.productId, it) },
+                onBlockChange = { vm.setBlocked(sheet.productId, it) },
                 bottomPadding = bottomInset,
                 // Sheet kapaniyor VE satir siliniyor: serit sheet'in arkasinda
                 // dogar, kullanici kapatinca onu gorur ve geri alabilir.

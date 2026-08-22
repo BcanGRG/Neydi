@@ -60,6 +60,14 @@ data class ProductSheetState(
     val rowId: String? = null,
     val name: String,
     val isStaple: Boolean,
+    /**
+     * "Bunu onerme" anahtarinin hali (F6.5).
+     *
+     * [isStaple]'in tersi DEGIL ve olmasi da gerekmiyor: bir urun hem her
+     * zamanki hem onerilmeyen olabilir - kullanici onu her gezide kendisi
+     * yaziyor ama motorun hatirlatmasini istemiyor. Iki ayri beyan.
+     */
+    val isBlocked: Boolean = false,
     /** Fiyat bolumu (E17). Bos ise bolum HIC cizilmiyor. */
     val price: PriceSection = PriceSection(),
 )
@@ -88,14 +96,19 @@ data class ProductSheetState(
  *
  * F5.3 hala Canvas grafigini, min/ortalama referans cizgilerini ve aralik
  * secicisini ekleyecek.
- * F6.5 ikinci anahtari (*"Bunu onerme"*) baglayacak - bugun engelleme tablosu
- * var ama DAO'su yok, ve gorunup calismayan bir anahtar calismayan bir anahtardan
- * kotudur.
+ * F6.5 ikinci anahtari (*"Bunu onerme"*) BAGLADI. Tablo v5'ten beri vardi ama
+ * DAO'su yoktu; anahtari o hafta cizmek, gorunup calismayan bir anahtar
+ * uretirdi - calismayan bir anahtardan kotu olan tam olarak budur.
  */
 @Composable
 fun ProductSheetContent(
     state: ProductSheetState,
     onStapleChange: (Boolean) -> Unit,
+    /**
+     * "Bunu onerme" (F6.5). Varsayilani BOS: onizlemeler ve anahtari
+     * baglamayan cagiranlar icin - anahtar yine cizilir ama hicbir sey yazmaz.
+     */
+    onBlockChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
     bottomPadding: Dp = 0.dp,
     /**
@@ -214,6 +227,19 @@ fun ProductSheetContent(
             label = "Her zamankilere ekle",
             checked = state.isStaple,
             onCheckedChange = onStapleChange,
+        )
+        // IKINCI ANAHTAR (F6.5). Bu satirin yeri yorumla RESERVE EDILMISTI ve
+        // bir sure bos durdu: tablo v5'ten beri vardi ama DAO'su yoktu, ve
+        // *gorunup calismayan bir anahtar, olmayan bir anahtardan kotudur*.
+        // Artik calisiyor.
+        //
+        // ALT ACIKLAMA (`supporting`) YOK: tasarimin yedi ciziminin hicbirinde
+        // yok. Anahtarin acik halinin ne soyleyecegi de cizilmemis - tasarima
+        // soruldu (`docs/28`).
+        NeydiSwitch(
+            label = "Bunu önerme",
+            checked = state.isBlocked,
+            onCheckedChange = onBlockChange,
         )
 
         onRemoveFromList?.let { remove ->

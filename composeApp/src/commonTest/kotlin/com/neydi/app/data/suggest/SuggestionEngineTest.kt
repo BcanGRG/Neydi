@@ -124,7 +124,8 @@ class SuggestionEngineTest {
 
     private fun engine(db: NeydiDatabase) = SuggestionEngine(
         statsDao = db.productStatsDao(), productDao = db.productDao(),
-        tripDao = db.tripDao(), tripLineDao = db.tripLineDao(), clock = { now },
+        tripDao = db.tripDao(), tripLineDao = db.tripLineDao(),
+        blockDao = db.suggestionBlockDao(), clock = { now },
     )
 
     /** Uc alisverislik gecmis kurar: urun 0/10/20. gunlerde alinmis olur. */

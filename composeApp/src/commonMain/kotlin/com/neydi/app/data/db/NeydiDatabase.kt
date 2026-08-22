@@ -125,6 +125,7 @@ abstract class NeydiDatabase : RoomDatabase() {
     abstract fun appSettingsDao(): AppSettingsDao
     abstract fun priceObservationDao(): PriceObservationDao
     abstract fun productStatsDao(): ProductStatsDao
+    abstract fun suggestionBlockDao(): SuggestionBlockDao
 }
 
 /**

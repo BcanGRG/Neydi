@@ -6,11 +6,13 @@ import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.HouseholdDao
 import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
+import com.neydi.app.data.db.SuggestionBlockDao
 import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.Store
 import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.repo.STAPLE_LIMIT
 import com.neydi.app.ui.components.turkishInitials
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -59,7 +61,22 @@ data class SettingsState(
      * yasanir.
      */
     val stores: List<StoreRow> = emptyList(),
+    /**
+     * "Onerilmeyenler" (F6.5) - YENIDEN ESKIYE.
+     *
+     * Bos ise bolum HIC cizilmiyor; tasarim bunu ayrica yaziyor: *"henuz
+     * reddedilmis oneri yok. Bos bir bolum basligi, olmayan bir isi varmis
+     * gibi gosterir."*
+     *
+     * Listenin GORUNUR olmasi ozelligin sarti, susu degil: kalici bir reddin
+     * geri alinabilir oldugunu gosteren tek yuzey bu - yoksa "bunu onerme"
+     * bir kara delik olurdu.
+     */
+    val blocked: List<BlockedRow> = emptyList(),
 )
+
+/** Ayarlar'daki "Onerilmeyenler" satiri. */
+data class BlockedRow(val productId: String, val name: String)
 
 /**
  * Zincirleri Ayarlar satirlarina cevirir (tasarim karari 36).
@@ -89,12 +106,22 @@ class SettingsViewModel(
     private val productDao: ProductDao,
     storeDao: StoreDao,
     priceObservationDao: PriceObservationDao,
+    private val blockDao: SuggestionBlockDao,
     private val clock: () -> Long,
 ) : ViewModel() {
 
     private val household = DEFAULT_HOUSEHOLD_ID
 
-    val state: StateFlow<SettingsState> = combine(
+    /**
+     * BES AKIS, cunku `combine`in tipli asiri yuklemesi TAM BURADA bitiyor.
+     *
+     * Altincisi (engellenenler) asagida ikinci bir katmanda birlesiyor. Vararg
+     * surumunu kullanmak tek katmanda cozerdi ama her seyi `Any?` yapardi -
+     * yani tip guvenligi sessizce kaybolurdu ve altinci akisin `List<Blocked
+     * Product>` oldugu ancak calisma zamaninda anlasilirdi. Ayni gerekce
+     * `ListViewModel.header`de de yazili.
+     */
+    private val core: Flow<SettingsState> = combine(
         householdDao.observeActive(),
         memberDao.observeAll(household),
         productDao.observeStaples(household),
@@ -115,6 +142,13 @@ class SettingsViewModel(
             staples = staples.map { StapleRow(productId = it.id, name = it.name) },
             stores = storeRows(stores, observed),
         )
+    }
+
+    val state: StateFlow<SettingsState> = combine(
+        core,
+        blockDao.observeBlocked(household),
+    ) { base, blocked ->
+        base.copy(blocked = blocked.map { BlockedRow(productId = it.productId, name = it.name) })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsState())
 
     /**
@@ -126,5 +160,19 @@ class SettingsViewModel(
      */
     fun removeStaple(productId: String) {
         viewModelScope.launch { productDao.setStaple(productId, false, clock()) }
+    }
+
+    /**
+     * Engeli kaldirir - tasarimdaki "Geri al" cipi.
+     *
+     * IKON DEGIL METIN: sabit satirinin sonundaki `close` ikonunun aksine bu
+     * satir bir kelime tasiyor. Sebep tasarimda yazili - "geri al" bir
+     * DUZELTME, "cikar" bir islem; ikisi ayni gorunmemeli.
+     *
+     * Satiri SILMIYOR (`unblock`, `delete` degil): motor ayni urunu otomatik
+     * engellemeye kalkismadan once kullanicinin bu karari gorebilmeli.
+     */
+    fun unblock(productId: String) {
+        viewModelScope.launch { blockDao.unblock(household, productId, clock()) }
     }
 }

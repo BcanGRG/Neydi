@@ -448,12 +448,24 @@ göndermeleri bozulmasın diye korunuyor. Ayrıntıları arşivde.
       bağlandı. Takvim-günü tuzağı zaten `daysBetween`'de çözülmüştü.
 - [~] **F6.4 — Eksik Olabilir (Ekran 3).** "Son ödenen fiyat" kolonu artık
       gözlemden besleniyor.
-- [ ] **F6.5 — Sabit terfisi + bastırma.** "Bunu önerme" listesinin giriş
-      noktası; Ekran 5'e bağlı. *(Öncelik 1'de kalan tek kodlanacak madde.)*
-      ⚠ **Tasarımda çizili, kodda yok:** boş durum atlasının 05 karesi Ürün
-      Detayı'nda üç satır gösteriyor (*Her zamankilere ekle · Bunu önerme ·
-      Listeden çıkar*), kodda ikisi var. Cihazda doğrulandı — **tasarımın
-      söyleyip de yapmadığımız tek yüzey bu.**
+- [~] **F6.5 ✅ (bastırma yarısı) — Sabit terfisi + bastırma.**
+
+      **Yapıldı:** Ürün Detayı'ndaki *"Bunu önerme"* anahtarı, motorun
+      dördüncü kuralı (engelli ürün önerilmez — süzgeç **motorda**, yani her
+      iki yüzeyi birden susturuyor) ve Ayarlar'daki *"Önerilmeyenler · [Geri
+      al]"* bölümü. **Migrasyon gerekmedi:** `suggestion_block` v5'ten beri
+      şemadaydı, eksik olan yalnızca DAO'suydu. Cihazda uçtan uca doğrulandı.
+      *Tasarımın söyleyip de yapmadığımız son yüzey kapandı.*
+
+      **Kalan iki yarı, ikisi de ayrı iş:**
+      - **Üç-vuruş otomatik bastırma** — kaynağı `suggestion_event` ve o
+        tabloya **yazan tek satır kod yok** (DAO'su, `@Insert`'ü, accessor'ı
+        hiç yazılmamış). Ayrıca sorgusu `(householdId, productId, outcome)`
+        indeksi istiyor, tablonun `indices` listesi boş → **v6 bump'ı**
+        gerekiyor. Tablo boşken şema hatası bedava (bkz. Kalıcı kurallar).
+      - **Sabit terfisi** — tasarıma soruldu (`docs/28`). İki tasarım dosyası
+        çelişiyor ve kodun kendi KDoc'u otomatiği yasaklıyor: *"kullanıcı
+        işaretler, motor değil"*.
 
 ## Öncelik 2 — Dış veri
 
