@@ -482,3 +482,36 @@ aynı yirmi maddeyi taşıyor. Dosyanın kalanı için bkz. `OKU-BUNLAR-BAYAT.md
 
 **İkonografi** kontrol edildi ve **güncelmiş** — önceki turun "bayat" notu
 artık geçerli değil. **Boş Durumlar** bu turdan etkilenmedi.
+
+### Karar 74 — kırpım rehber bölgesinden; şerit 92dp ✅
+
+**Uygulandı.** Küçük kopya artık `cropToGuide` ile **rehberin (3:2) bölgesinden**
+kırpılıyor; şerit maketin **92dp**'sine döndü.
+
+**Eşleme `PreviewView` FILL_CENTER'in tersi** ve ortak/saf bir fonksiyonda
+(`GuideBox.inImage`) — yani test edilebilir:
+
+```
+ölçek   = max(vizörGenişlik / kareGenişlik, vizörYükseklik / kareYükseklik)
+görünen = vizör / ölçek
+pay     = (kare - görünen) / 2
+```
+
+Cihazda ölçülen: vizör 1080×2047, kare 3024×4032 → ölçek 0,5077, karenin
+**897 pikseli hiç görünmüyor** (her yandan 448). Rehber `left=22`'de başlasa
+bile karede ~491'de başlıyor.
+
+**Sıra zorunlu: önce yön, sonra kırpım, sonra ölçek.** Hesap `PreviewView`'in
+gösterdiği kareye göre yazıldı; kırpım yönden önce yapılsaydı dikdörtgen
+doksan derece yanlış yere düşerdi — ve bu **sessiz** bir hata olurdu, çünkü
+çıkan şerit yine bir şeyler gösterirdi.
+
+**Cihazda kanıtlandı:** kaynak kare 4032×3024 (oran 1,33), küçük kopya
+**720×480 = tam 3:2**. Merkez kırpımıyla oran 3:4 kalırdı.
+
+Kırpım başarısız olursa merkez kırpımına **düşülüyor** — yanlış yerden doğru
+bir şerit, boş şeritten iyi. iOS'ta `cropToGuide` bugün her zaman `false`
+dönüyor (Faz 9) ve orada şerit 92dp'de daha çok kesiyor; iOS kabuğu henüz yok,
+kabul edildi.
+
+**Onuncu tur kapandı: kararlar 70–74'ün beşi de kodda.**

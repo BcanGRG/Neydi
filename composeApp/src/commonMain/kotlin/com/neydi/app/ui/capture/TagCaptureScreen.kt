@@ -46,11 +46,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -65,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.neydi.app.data.formatChipMinor
 import com.neydi.app.data.db.Store
+import com.neydi.app.data.image.GuideBox
 import com.neydi.app.data.ocr.TagSkip
 import com.neydi.app.ui.components.NeydiIcon
 import com.neydi.app.ui.components.NeydiIcons
@@ -102,7 +106,7 @@ internal fun TagCaptureScreen(
     cameraDenied: Boolean,
     cameraPermanentlyDenied: Boolean,
     flashOn: Boolean,
-    onShutter: () -> Unit,
+    onShutter: (GuideBox) -> Unit,
     onSelectStore: (String) -> Unit,
     onPriceChange: (String) -> Unit,
     onOpenPicker: (TagPicker) -> Unit,
@@ -205,14 +209,14 @@ internal fun TagCaptureScreen(
                 ready = cameraReady && !cameraDenied,
                 flashOn = flashOn,
                 onToggleFlash = onToggleFlash,
-                onShutter = {
+                onShutter = { guide ->
                     // HAPTIK UC OLAYDA SAYILIYOR (sozlesme): isaretleme, CEKIM,
                     // kaydet. Cekim ve kaydet ayni darbeyi kullaniyor cunku
                     // ikisi de "bir sey yazildi" diyor; isaretleme listede
                     // daha hafif olani kullaniyor.
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     shutterCount++
-                    onShutter()
+                    onShutter(guide)
                 },
                 onOpenPicker = { onOpenPicker(TagPicker.STORE) },
                 onBack = onBack,
@@ -318,11 +322,19 @@ private fun BoxScope.CameraLayer(
     storeId: String?,
     ready: Boolean,
     flashOn: Boolean,
-    onShutter: () -> Unit,
+    onShutter: (GuideBox) -> Unit,
     onToggleFlash: () -> Unit,
     onOpenPicker: () -> Unit,
     onBack: () -> Unit,
 ) {
+    // REHBERIN OLCULEN YERI - kirpimin kaynagi (karar 74).
+    //
+    // Deklansora basilana kadar hicbir yere gitmiyor; olculmemisse cekim de
+    // OLMUYOR (`guideBox?.let`). Sebep: kirpimsiz bir kare seridi yine merkez
+    // kirpimla cizerdi ve karar 74 tam olarak onu birakiyor. Yerlesim
+    // olculmeden deklansorun etkin olmasi zaten mumkun degil - kamera hazir
+    // olduysa rehber cizilmis demektir.
+    var guideBox by remember { mutableStateOf<GuideBox?>(null) }
     Column(
         Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
@@ -379,6 +391,24 @@ private fun BoxScope.CameraLayer(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(3f / 2f)
+                    // REHBERIN YERI OLCULUYOR - kirpimin kaynagi (karar 74).
+                    //
+                    // Serit karenin MERKEZINDEN degil, kullanicinin kadraja
+                    // oturttugu yerden kirpilacak. Rehberin vizordeki yerini
+                    // yalnizca yerlesim biliyor; karenin ne kadar buyuk
+                    // oldugunu yalnizca kod cozucu. Ikisi `GuideBox`ta bulusuyor.
+                    .onGloballyPositioned { coords ->
+                        val root = coords.findRootCoordinates()
+                        val topLeft = root.localPositionOf(coords, Offset.Zero)
+                        guideBox = GuideBox(
+                            previewWidth = root.size.width,
+                            previewHeight = root.size.height,
+                            left = topLeft.x.toInt(),
+                            top = topLeft.y.toInt(),
+                            width = coords.size.width,
+                            height = coords.size.height,
+                        )
+                    }
                     .border(3.dp, Flow.amber, RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.BottomCenter,
             ) {
@@ -398,7 +428,7 @@ private fun BoxScope.CameraLayer(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Shutter(onShutter = onShutter, enabled = ready)
+            Shutter(onShutter = { guideBox?.let(onShutter) }, enabled = ready)
         }
     }
 
@@ -546,7 +576,7 @@ private fun BoxScope.ConfirmCardLayer(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // KIRPIM KARTIN BASINDA (karar 62) - "ne cektim"in tek cevabi.
-        TagThumbnail(photoPath = card.photoPath, collapsed = stripCollapsed)
+        TagThumbnail(photoPath = card.photoPath, collapsed = stripCollapsed, guide = card.guide)
 
         // DESTEKLENMEYEN ZINCIR CUMLESI kartin BASINDA, seridin YERINE
         // (karar 49). Amber serit bu halde hic cizilmiyor - cumle onun isini

@@ -87,7 +87,7 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
         flashOn = controller.torch,
         onToggleFlash = { controller.torch = !controller.torch },
         onOpenSettings = controller::openSettings,
-        onShutter = {
+        onShutter = { guide ->
             scope.launch {
                 // Ad CEKIM ANINDAN: iki kare ayni saniyede cekilse bile
                 // ViewModel'in `photoPath` karsilastirmasi onlari ayirabilmeli.
@@ -98,7 +98,7 @@ internal fun TagCaptureRoute(onBack: () -> Unit) {
                 // fiyati olabilir.
                 val yazildi = controller.capture(path) && jpegIsComplete(path)
                 if (yazildi) {
-                    vm.onCaptured(path)
+                    vm.onCaptured(path, guide)
                 } else {
                     deleteFileAt(path)
                     vm.captureFailed()
