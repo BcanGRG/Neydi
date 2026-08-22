@@ -9,7 +9,7 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 
 **Durum:** **Faz E bitti (19/19).** Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro bilinçli olarak ertelendi. Fikstür seti **99 gerçek
-etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **422 test yeşil**,
+etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu, **426 test yeşil**,
 **sıfır derleyici uyarısı**.
 
 Tasarım kararları **46–75** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı denetimin
@@ -26,7 +26,8 @@ Tasarım kararları **46–75** kodlandı (`11-tasarim-kararlari.md`); 56 ajanl�
 
 | # | İş | Neden şimdi | Kimi bekliyor |
 |---|---|---|---|
-| 1 | **A101'i cihazda doğrula** | Gramer 19 ölçülmüş etikette yeşil ama uygulamanın **kendi çekiminde** hiç denenmedi | A101'de bir çekim |
+| 1 | **F4.7'yi sahada doğrula** | Etiket metni → ürün eşlemesi bağlandı; ikinci çekimde ürünün kendiliğinden dolduğu görülmeli | aynı etiketten ikinci çekim |
+| 1b | **Marka okuma ölçümü** | Bugünkü turda marka bazen çöp geldi (`CE UZ`, `BAlkon`, `BILI BIL`); ölçüm dökümü **açık**, sonraki çekimler kaydedilecek | bir tur daha |
 | 2 | **Cihazda göz kontrolü** (67 · 68 · 69) | Trend manşeti, Geçmiş grafiği ve özet kartı kodlandı ama hiç görülmedi | 3 gözlemli ürün + 3 tutarlı gezi |
 | 3 | **F6.5 — sabit terfisi + bastırma** | "Bunu önerme" listesinin giriş noktası | — |
 

@@ -4,6 +4,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.bootstrap
+import com.neydi.app.data.matchKey
 import com.neydi.app.data.ocr.TagFixtures
 import com.neydi.app.data.ocr.readTagFields
 import com.neydi.app.data.repo.ListRepository
@@ -57,12 +58,15 @@ class TagObservationWriteTest {
         brand: String? = null,
         packSize: Double? = null,
         packUnit: String? = null,
+        tagText: String? = null,
+        chain: String? = null,
         at: Long = 1_000,
         id: String = "obs-$at",
     ): Boolean = writeTagObservation(
         repo = repoOf(db) { at },
         catalogSeedDao = db.catalogSeedDao(),
         priceObservationDao = db.priceObservationDao(),
+        productAliasDao = db.productAliasDao(),
         householdId = home,
         productName = name,
         priceMinor = minor,
@@ -70,6 +74,8 @@ class TagObservationWriteTest {
         brand = brand,
         packSize = packSize,
         packUnit = packUnit,
+        tagText = tagText,
+        chain = chain,
         at = at,
         newId = { id },
     )
@@ -251,6 +257,80 @@ class TagObservationWriteTest {
         assertNull(row.packSize)
         assertNull(row.packUnit)
     }
+
+    /**
+     * AYNI ETIKET METNI IKINCI KEZ SORULMUYOR - F4.7'nin tamami bu.
+     *
+     * Gezinme sozlesmesi dort ayri yerde soyluyor: *"Secim bu markette bu
+     * etiket metnine baglanir; ayni etiket bir daha sorulmaz."* Tablo, tekil
+     * indeks ve `find` sorgusu fis doneminden beri duruyordu ve HIC
+     * CAGRILMIYORDU - kullanici markette on cekimin onunda urunu elle sectii.
+     */
+    @Test
+    fun theTagTextIsBoundToTheChosenProduct() = runTest {
+        val db = ready()
+        write(db, "Yoğurt", 10_200, storeId = "s-bim", tagText = "DOST YARIM YAGLI YOGURT", chain = bim)
+
+        val found = db.productAliasDao().find(home, bim, matchKey("DOST YARIM YAGLI YOGURT"))
+        val product = db.productDao().byId(assertNotNull(found, "esleme yazilmadi").productId)
+        assertEquals("Yoğurt", assertNotNull(product).name)
+        assertNotNull(found.confirmedAt, "kullanici sectigi icin ONAYLI olmali")
+    }
+
+    /**
+     * ESLEME ZINCIR BAZINDA - ayni metin baska zincirde baska urun olabilir.
+     *
+     * `Shopping.kt`in kendi cumlesi: fiyat karsilastirmasi zincir bazinda
+     * anlamli, esleme de oyle. Global bir tablo BIM'in "SUT"unu A101'in
+     * "SUT"uyle karistirirdi.
+     */
+    @Test
+    fun theBindingIsPerChain() = runTest {
+        val db = ready()
+        write(db, "Süt", 6_250, storeId = "s-bim", tagText = "SUT 1 L", chain = bim, id = "a")
+        write(db, "Yoğurt", 4_900, storeId = "s-a101", tagText = "SUT 1 L", chain = a101, at = 90_000, id = "b")
+
+        val atBim = assertNotNull(db.productAliasDao().find(home, bim, matchKey("SUT 1 L")))
+        val atA101 = assertNotNull(db.productAliasDao().find(home, a101, matchKey("SUT 1 L")))
+        assertTrue(atBim.productId != atA101.productId, "iki zincir ayni urune baglandi")
+    }
+
+    /**
+     * DUZELTME KAZANIYOR - son karar eskisini eziyor.
+     *
+     * DAO `REPLACE` kullaniyor ve gerekcesi kendi KDoc'unda: `IGNORE` olsaydi
+     * kullanicinin ikinci karari sessizce yutulur, ayni metin her okundugunda
+     * ayni yanlis eslesmeyi uretirdi - ustelik kullanici duzeltmis oldugu icin
+     * bir daha bakmazdi.
+     */
+    @Test
+    fun aCorrectionOverwritesTheOldBinding() = runTest {
+        val db = ready()
+        write(db, "Süt", 6_250, storeId = "s-bim", tagText = "DST YGRT", chain = bim, id = "a")
+        write(db, "Yoğurt", 10_200, storeId = "s-bim", tagText = "DST YGRT", chain = bim, at = 90_000, id = "b")
+
+        val found = assertNotNull(db.productAliasDao().find(home, bim, matchKey("DST YGRT")))
+        assertEquals("Yoğurt", assertNotNull(db.productDao().byId(found.productId)).name)
+    }
+
+    /**
+     * ETIKET METNI OKUNAMADIYSA ESLEME YAZILMIYOR.
+     *
+     * Uydurma bir anahtar yazmak KALICI bir yanlis baglama uretirdi: bos ya da
+     * anlamsiz bir metin bir kez bir urune baglanirsa, sonraki her okunamayan
+     * etiket o urune duserdi.
+     */
+    @Test
+    fun nothingIsBoundWhenTheTagTextIsMissing() = runTest {
+        val db = ready()
+        write(db, "Süt", 6_250, storeId = "s-bim", tagText = null, chain = bim, id = "a")
+        write(db, "Çay", 39_900, storeId = "s-bim", tagText = "   ", chain = bim, at = 90_000, id = "b")
+
+        assertEquals(0, db.dataWipeDao().let { 0 } + countAliases(db), "esleme yazilmamaliydi")
+    }
+
+    private suspend fun countAliases(db: NeydiDatabase): Int =
+        listOf("", "   ").count { db.productAliasDao().find(home, bim, matchKey(it)) != null }
 
     private suspend fun countRows(db: NeydiDatabase): Int =
         db.priceObservationDao().allObservations(home).size

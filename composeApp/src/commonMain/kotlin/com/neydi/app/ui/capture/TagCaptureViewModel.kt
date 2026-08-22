@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.db.CatalogSeedDao
 import com.neydi.app.data.db.PriceObservationDao
+import com.neydi.app.data.db.ProductAliasDao
+import com.neydi.app.data.db.ProductDao
 import com.neydi.app.data.db.Store
 import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.matchKey as matchKeyOf
@@ -49,6 +51,8 @@ internal class TagCaptureViewModel(
     private val catalogSeedDao: CatalogSeedDao,
     private val storeDao: StoreDao,
     private val priceObservationDao: PriceObservationDao,
+    private val productAliasDao: ProductAliasDao,
+    private val productDao: ProductDao,
     private val clock: () -> Long,
     private val newId: () -> String,
     /** OCR ADIMI DISARIDAN: testler gercek bir fotograf olmadan fikstur verebilsin. */
@@ -152,7 +156,23 @@ internal class TagCaptureViewModel(
             // cekmis olabilir; geciken OCR sonucu yeni karti ezmemeli.
             val card = _state.value.card ?: return@launch
             if (card.photoPath != photoPath) return@launch
-            _state.value = _state.value.copy(card = card.readFrom(fields))
+            // ETIKET METNI DAHA ONCE ESLENDIYSE URUN SORULMUYOR (F4.7).
+            //
+            // Sozlesmenin degismezi: *"Ayni etiket metni daha once eslendiyse
+            // urun sorulmaz."* Tablo vardi, sorgu vardi, cagiran yoktu - ve
+            // kullanici markette bunun bedelini odedi: on cekimin onunda urunu
+            // elle sectii, ayni yogurdu ucuncu kez cekerken bile.
+            //
+            // ESLEME KIMLIGI DEGISTIRMIYOR: bulunan urunun ADI yaziliyor ve
+            // `save` onu yine `resolveProduct`tan geciriyor. Yani karar 51 hala
+            // gecerli - OCR metni urun adi olmuyor, KULLANICININ daha once
+            // sectigi urun geri geliyor.
+            val remembered = fields?.name?.name?.let { text ->
+                chain?.let { productAliasDao.find(household, it, matchKeyOf(text)) }
+            }?.let { productDao.byId(it.productId) }
+            _state.value = _state.value.copy(
+                card = card.readFrom(fields).copy(productName = remembered?.name ?: ""),
+            )
         }
     }
 
@@ -333,6 +353,7 @@ internal class TagCaptureViewModel(
                 repo = repo,
                 catalogSeedDao = catalogSeedDao,
                 priceObservationDao = priceObservationDao,
+                productAliasDao = productAliasDao,
                 householdId = household,
                 productName = card.productName,
                 priceMinor = minor,
@@ -340,6 +361,8 @@ internal class TagCaptureViewModel(
                 brand = card.brand,
                 packSize = card.packSize,
                 packUnit = card.packUnit,
+                tagText = card.tagText,
+                chain = currentChain(),
                 at = clock(),
                 newId = newId,
             )

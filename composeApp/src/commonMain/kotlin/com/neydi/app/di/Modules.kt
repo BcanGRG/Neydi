@@ -103,7 +103,8 @@ val dataModule = module {
     viewModel {
         TagCaptureViewModel(
             repo = get(), catalogSeedDao = get(), storeDao = get(),
-            priceObservationDao = get(), clock = ::now, newId = ::newUuid,
+            priceObservationDao = get(), productAliasDao = get(), productDao = get(),
+            clock = ::now, newId = ::newUuid,
         )
     }
 

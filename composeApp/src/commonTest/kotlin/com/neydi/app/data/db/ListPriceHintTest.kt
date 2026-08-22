@@ -213,6 +213,7 @@ class ListPriceHintTest {
         ),
         catalogSeedDao = db.catalogSeedDao(),
         priceObservationDao = db.priceObservationDao(),
+        productAliasDao = db.productAliasDao(),
         householdId = home,
         productName = name,
         priceMinor = 6_450,
@@ -220,6 +221,8 @@ class ListPriceHintTest {
         brand = null,
         packSize = size,
         packUnit = unit,
+        tagText = null,
+        chain = null,
         at = at,
         newId = { id },
     )
