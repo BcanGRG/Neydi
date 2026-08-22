@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.neydi.app.ui.components.CategoryTile
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiSwitch
 import com.neydi.app.ui.components.Sparkline
@@ -135,22 +136,14 @@ fun ProductSheetContent(
             modifier = Modifier.fillMaxWidth().padding(Spacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Iki-harf fallback: ikon sistemi yok ve urunlerin %80'i onu
-            // gosterecek. `turkishInitials` cunku locale'siz uppercase()
-            // "incir" -> "IN" verir, dogrusu "İN".
-            Box(
-                Modifier
-                    .size(44.dp)
-                    .clip(NeydiExtraShapes.categoryTile)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = turkishInitials(state.name),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            // KATEGORI KUTUCUGU BILESENDEN - elle cizilmiyordu ve kaymisti.
+            //
+            // Burada 44dp'lik kendi kutusu vardi; tasarim sisteminin olcusu
+            // 56dp (`Size.categoryTile`) ve `CategoryTile` bileseni tam da bu
+            // is icin yazilmis. Ayni gorsel ogenin iki yerde iki boyu olmasi,
+            // bilesen katmaninin vaadini bosa cikariyordu - kutucugun tipografisi
+            // de farkliydi (labelLarge yerine quantityBadge olmali).
+            CategoryTile(initials = turkishInitials(state.name))
             // MANSET, VARSA URUN ADININ YERINE GECER - yanina degil.
             //
             // Bolum basligi "okunacak sey grafik degil manset cumlesi" diyor ve
