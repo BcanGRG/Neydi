@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -27,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.runtime.mutableIntStateOf
@@ -460,6 +462,25 @@ private fun BoxScope.ConfirmCardLayer(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val scroll = rememberScrollState()
+    // KLAVYE ACIKKEN KART SIGMIYORDU - Kaydet ile Vazgec altta kaliyordu.
+    //
+    // CIHAZDA OLCULDU: kart icerigi 1669 px, klavyenin ustunde kalan alan
+    // 1198 px. Gezinme sozlesmesi *"Kart · fiyat bos"* halinde *"Klavye
+    // kendiliginden acilir"* ve *"Kaydet pasif; ilk rakamda etkinlesir"*
+    // diyor; ikinci cumlenin gozlemlenecek bir karsiligi olmasi icin Kaydet
+    // GORUNMEK zorunda.
+    //
+    // COZUM KAYDIRMA DEGIL, KIRPIMI TOPLAMAK ([TagThumbnail] `collapsed`).
+    // Once klavye acilinca kart sonuna kaydiriliyordu; Kaydet geliyordu ama
+    // bu sefer FIYAT ALANI yukaridan cikiyordu - kullanicinin tam o anda
+    // yazdigi alan. Kirpim toplanınca icerik 1148 px'e iniyor ve hicbir sey
+    // kaydirilmadan hepsi ayni anda goruluyor.
+    //
+    // `scroll` yine duruyor: yazi olcegi buyutulmus ya da kucuk bir ekranda
+    // kart hala tasabilir ve o zaman kaydirmak, bir dugmeyi ulasilmaz
+    // birakmaktan iyi.
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
     Column(
         Modifier
             .align(Alignment.BottomCenter)
@@ -482,13 +503,23 @@ private fun BoxScope.ConfirmCardLayer(
             // ya da kucuk ekranda kart tasabilir ve o zaman kaydirmak, bir
             // dugmeyi ulasilmaz birakmaktan iyi. Sigdiginda hic devreye
             // girmiyor.
-            .verticalScroll(rememberScrollState())
+            // SIRA ONEMLI: gorunum bosluklari KAYDIRMANIN DISINDA.
+            //
+            // Onceki sira `verticalScroll` -> `windowInsetsPadding` idi ve
+            // bosluk kaydirilan ICERIGIN parcasi oluyordu: klavye acilinca
+            // kart sonuna kadar kayiyor ve fiyat satiri DURUM CUBUGUNUN
+            // ALTINA giriyordu. Cihazda goruldu.
+            //
+            // Dogru sira: clip/background ekran kenarina YAPISIK kaliyor
+            // (kart "ekrana yapisik", karar 62), bosluk gorunum penceresini
+            // daraltiyor, kaydirma o pencerenin icinde kaliyor.
             .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(scroll)
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 30.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // KIRPIM KARTIN BASINDA (karar 62) - "ne cektim"in tek cevabi.
-        TagThumbnail(photoPath = card.photoPath)
+        TagThumbnail(photoPath = card.photoPath, collapsed = imeBottom > 0)
 
         // DESTEKLENMEYEN ZINCIR CUMLESI kartin BASINDA, seridin YERINE
         // (karar 49). Amber serit bu halde hic cizilmiyor - cumle onun isini

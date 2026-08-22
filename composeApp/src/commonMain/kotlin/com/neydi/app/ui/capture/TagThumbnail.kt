@@ -1,5 +1,7 @@
 package com.neydi.app.ui.capture
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,9 +85,32 @@ private val STRIP_HEIGHT = 128.dp
  * kullanici arka arkaya cekim yaparken. [downscaleForOcr] zaten elimizde ve
  * ayni isi yapiyor; kucuk kopya `.thumb` uzantisiyla ham karenin yanina
  * yaziliyor ve onunla birlikte siliniyor ([deleteCapture]).
+ *
+ * @param collapsed KLAVYE ACIKKEN serit toplaniyor - OLCULMUS bir zorunluluk.
+ *
+ * Cihazda olculdu: kart icerigi 1669 px, sayisal klavyenin ustunde kalan alan
+ * 1198 px. Serit (336 px + 12dp bosluk = 369 px) toplanmazsa Kaydet ile Vazgec
+ * klavyenin ALTINDA kaliyor ve gezinme sozlesmesinin *"Kaydet pasif; ilk
+ * rakamda etkinlesir"* cumlesinin gozlemlenecek bir karsiligi kalmiyor.
+ *
+ * Toplandiginda market secili kartta icerik 1148 px'e iniyor, yani HIC
+ * KAYDIRMA GEREKMIYOR - her sey ayni anda gorunuyor.
+ *
+ * Kirpimin isi karar 62'de *"ne cektim"* dogrulamasi ve o is kart ACILIRKEN
+ * yapiliyor; kullanici fiyati yazmaya basladiginda dogrulama bitmis oluyor.
+ * Klavye kapaninca serit geri geliyor - bitmap COZULMUS halde duruyor, yeniden
+ * okunmuyor.
+ *
+ * ⚠ Tasarim dikey duzende klavye-kart iliskisini YAZMAMIS (yalnizca yatay icin
+ * *"klavye kartı asla örtmez"* diyor). Bu davranis olcumden turetildi ve
+ * `docs/25`te tasarima soruldu.
  */
 @Composable
-internal fun TagThumbnail(photoPath: String, modifier: Modifier = Modifier) {
+internal fun TagThumbnail(
+    photoPath: String,
+    modifier: Modifier = Modifier,
+    collapsed: Boolean = false,
+) {
     val image by produceState<ImageBitmap?>(initialValue = null, photoPath) {
         value = runCatching {
             val thumbPath = thumbPathOf(photoPath)
@@ -97,10 +122,14 @@ internal fun TagThumbnail(photoPath: String, modifier: Modifier = Modifier) {
         }.getOrNull()
     }
 
+    // YUKSEKLIK ANIMASYONLU: serit aniden kaybolursa kartin tamami zipliyor ve
+    // kullanici neyin degistigini goremiyor. Sure kart acilisiyla ayni (260 ms,
+    // hareket sozlesmesi) - iki hareket ayni dilden konusuyor.
+    val height by animateDpAsState(if (collapsed) 0.dp else STRIP_HEIGHT, tween(CARD_MS))
     Box(
         modifier
             .fillMaxWidth()
-            .height(STRIP_HEIGHT)
+            .height(height)
             .clip(RoundedCornerShape(14.dp))
             .background(Flow.chipBackground)
             .border(1.dp, Flow.chipBorder, RoundedCornerShape(14.dp)),
@@ -130,3 +159,6 @@ internal suspend fun deleteCapture(photoPath: String) {
     deleteFileAt(photoPath)
     deleteFileAt(thumbPathOf(photoPath))
 }
+
+/** Serit toplanma/acilma suresi - kart acilisiyla ayni (hareket sozlesmesi). */
+private const val CARD_MS = 260

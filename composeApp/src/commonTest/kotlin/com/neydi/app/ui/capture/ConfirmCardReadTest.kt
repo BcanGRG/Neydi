@@ -89,6 +89,34 @@ class ConfirmCardReadTest {
         assertNull(card.tagText)
     }
 
+    /**
+     * KULLANICI FIYATI YAZINCA KURUS UYARISI SUSUYOR.
+     *
+     * CIHAZDA GORULDU (22 Agustos provasi): bos bir kartta `39,50` yazildi ve
+     * amber serit hala *"Kuruş okunamadı - kontrol et"* diyordu. Uyarinin isi
+     * kullaniciyi fiyata BAKTIRMAK; alani duzenledigi anda o is bitti.
+     */
+    @Test
+    fun typingThePriceSilencesTheKurusWarning() {
+        val read = cardFor("20260821_133411", a101)
+        assertEquals("Okunan fiyat etiketin birim fiyatıyla uyuşmuyor — doğrula", read.missingFieldMessage())
+
+        val typed = read.withPrice("39,50").copy(productName = "Süt")
+        assertNull(typed.missingFieldMessage(), "kullanici yazdiktan sonra uyari kalmamali")
+    }
+
+    /**
+     * KURUSSUZ YAZMAK DA BIR CEVAP - uyari yine susuyor.
+     *
+     * `39` yazan kullanici kurusu bos birakmadi, 39,00 SECTI. Metnin kurus
+     * tasiyip tasimadigina bakmak, cevaplanmis soruyu tekrar sormak olurdu.
+     */
+    @Test
+    fun aPriceTypedWithoutKurusIsStillAnAnswer() {
+        val typed = blank.readFrom(null).withPrice("39").copy(productName = "Süt")
+        assertNull(typed.missingFieldMessage())
+    }
+
     /** OCR metni urun adi OLMUYOR (karar 51) - kanit olarak ayri alanda. */
     @Test
     fun theTagTextNeverBecomesTheProductName() {
