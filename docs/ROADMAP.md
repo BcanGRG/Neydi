@@ -9,11 +9,11 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** Faz E'nin **on sekiz adımı kapandı**; açık kalan tek madde
-**E15'in yatay düzeni** (karar 61). Etiket okuyucusu **üç zincirde** çalışıyor
+**Durum:** **Faz E kapandı (19/19)** — son madde, E15'in yatay düzeni (karar
+61), 23 Ağustos'ta bağlandı. Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro ölçüldü ve bilinçli olarak ertelendi. Fikstür seti
 **99 gerçek etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu,
-**452 test yeşil**, **sıfır derleyici uyarısı**.
+**458 test yeşil**, **sıfır derleyici uyarısı**.
 
 Tasarım kararları **46–75** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı
 denetimin **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
@@ -220,9 +220,18 @@ Hiçbiri dış veriye bağlı değil; hepsi bugünkü şema ve bugünkü verinin
 yazılabilir.
 
 
-**Faz E'den kalan tek madde.** Etiket çekme ekranı bugün yalnızca dikey düzeni
-tanıyor; yatay düzen sözleşmede yazılı ama kodda karşılığı yok
-(`Gezinme Sozlesmesi:587`). Bu kutu kapandığında Faz E tamamen kapanır.
+**✅ Kapandı (23 Ağustos).** Kart yatayda sağ yarıda dikey panel (%58); yön
+`BoxWithConstraints`ten okunuyor, yani kural iOS'ta da geçerli olacak.
+
+⚠ **Kararın ikinci cümlesi uygulanamıyor:** *"klavye sol yarıyı örter, kartı
+asla örtmez"* — Android'de IME alttan ve tam genişlikte gelir. Dikeydeki çözüm
+(karar 70: şerit toplanır, kart kendi içinde kayar) yatayda da çalışıyor ama
+karar bunu söylemiyor. Tasarıma soruldu (`docs/32`).
+
+⚠ **Yatay vizör hiç tarif edilmemişti ve kırıktı:** `fillMaxWidth` + 3:2,
+2280px genişliği 1520px yüksekliğe çıkarıyordu (ekran 1080) — rehber taşıyor,
+ipucu metni ekranın altına düşüyordu. Kısa kenardan bağlandı; seçim bizim,
+`docs/32` S2'de soruldu.
 
 #### F6.5 — Sabit terfisi + bastırma <a id="f65"></a>
 
