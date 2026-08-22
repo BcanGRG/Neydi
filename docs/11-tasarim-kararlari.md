@@ -870,3 +870,42 @@ olurdu. `suggestion_event` bugün boş — boş tablonun şema değişikliği be
 **Cihazda doğrulandı** (`pm clear` YAPILMADAN): sürüm 5 → 6, dokuz tablonun
 satır sayısı birebir aynı (product 59, trip_line 118, price_observation 26…),
 damga düştü, indeks oluştu, uygulama açıldı.
+
+---
+
+## Karar 61 uygulandı — ve bir cümlesi Android'de uygulanamıyor
+
+**23 Ağustos 2026.** Faz E'nin son açık maddesi. Karar 61 birebir:
+
+> *"Kart yatayda sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü)
+> örter, kartı asla örtmez; amber şerit kartın içinde kalır."*
+
+**Birinci cümle yapıldı ve cihazda doğrulandı**: kart `CenterEnd`'e yapışık,
+tam yükseklik, sol köşeleri yuvarlak. Yön `BoxWithConstraints`ten okunuyor,
+platform yapılandırmasından değil — `commonMain`de çalışıyor, yani aynı kural
+iOS'ta da geçerli olacak ve bölünmüş ekranda doğru cevabı veriyor.
+
+Genişlik **yarım değil %58**. Tam yarım denendi ve sığmadı: kart iki sütunlu
+alan çifti ve Kaydet+Vazgeç ikilisi taşıyor; 360dp'lik bir cihazda kartın iç
+genişliği 148dp'ye düşüyor. Vizöre kalan %42, 3:2 rehberi çizmeye fazlasıyla
+yetiyor.
+
+### İkinci cümle uygulanamıyor
+
+Android'de IME **alttan ve tam genişlikte** gelir; bir yarıya hapsedilemez.
+Cihazda görüldü: yatayda klavye kartın alt yarısını örtüyor. Dikeyde bu sorunu
+karar 70 çözmüştü (şerit toplanır, kart kendi içinde kayar) ve aynı çözüm
+yatayda da çalışıyor — ama kararın cümlesi bunu söylemiyor. Tasarıma bildirildi
+(`docs/32`).
+
+### Yatay vizör hiç tarif edilmemiş — ve kırıktı
+
+Karar 61 yalnızca kartı anlatıyor. Vizörün yatay hâli hiçbir maketle
+karşılanmıyor ve dikey için yazılmış kural yatayda **bozuluyordu**:
+`fillMaxWidth().aspectRatio(3:2)` 2280px genişliği **1520px yüksekliğe**
+çıkarıyor, ekran 1080 — rehber taşıp yalnızca iki dikey kenarı görünüyor,
+içindeki *"Etiket kadraja otursun."* metni ekranın altına düşüyordu.
+
+Rehberi kısa kenardan bağladık (yatayda yükseklikten). Cihazda ipucu metni
+y=1051'den y=693'e çıktı, yani ekrana girdi. **Bu seçim bizim, tasarımın
+değil** — `docs/32`'de soruldu.

@@ -1,7 +1,7 @@
-# 31 — Tasarıma sorular (on beşinci tur): tasarımın çizip kodun kullanmadığı üç şey
+# 31 — Tasarıma sorular (on beşinci tur): tasarımın çizip kodun kullanmadığı dört şey
 
 **22 Ağustos 2026.** Bu tur kısa ve tek konulu: tasarım sisteminde **tanımlı**
-ama uygulamada **hiçbir yerden çağrılmayan** üç şey var. Silmek de bağlamak da
+ama uygulamada **hiçbir yerden çağrılmayan** dört şey var. Silmek de bağlamak da
 tasarımın kararı; ikisini de kendi başımıza yapmadık.
 
 Sebep: bunlar birer stil tercihi değil, birer **sözleşme**. Odak halkası
@@ -90,11 +90,40 @@ bekliyor.
 
 ---
 
+## S4 — Kategori tonları: kodun uydurduğu 12 renk kullanılsın mı, silinsin mi?
+
+**Bugünkü durum:** `CatalogSeedData` on iki kategori için birer ton taşıyor —
+`#6E8B3D` Meyve-Sebze, `#B07A3C` Fırın-Ekmek, `#4A7C8C` Süt-Kahvaltılık…
+Renkler veritabanına yazılıyor, `CategoryTile` bir `tint` parametresi
+taşıyor — ve **iki çağrı yerinin ikisi de tonsuz çağırıyor.** Palet
+veritabanında duruyor ve hiç çizilmiyor.
+
+Kutucuğun KDoc'u bunu bir borç olarak kaydetmiş:
+
+> *"Kategoriye özgü zemin tonu. **Tasarım sistemi kategori tonlarını verene
+> kadar** varsayılan `surfaceVariant`."*
+
+Ve haklı: tasarım dosyalarının hiçbirinde kategori tonu tanımlı değil. O on iki
+hex **kod tarafında uyduruldu**. Bağlamadık, çünkü bağlamak tasarlanmamış on iki
+rengi uygulamanın en çok tekrar eden görsel öğesine yaymak olurdu.
+
+**Soru:**
+
+- **(a)** Palet tasarımdan gelsin — on iki ton, ışık ve karanlık için.
+  (Kutucuk iki harf taşıyor, yani her tonun **metin kontrastı** da gerekiyor.)
+- **(b)** Kategori tonu diye bir şey olmasın — kutucuk her yerde
+  `surfaceVariant` kalsın, `tintArgb` kolonu ve parametresi silinsin.
+
+Bugünkü hâl ikisi de değil: renk var, kullanılmıyor, ve kimse hangisi olduğunu
+söylememiş.
+
+---
+
 ## Neden sizin kararınız
 
 Kodun kendi kuralı ölü kodu silmek yönünde ve bu turda `Placeholders.kt`,
 `formatDayMonthTime`, `NeydiExtraShapes.barTop` ve iki bağımlılık zaten
-silindi. Bu üçünü listeye alıp silmedik çünkü ötekilerin aksine bunların
+silindi. Bu dördünü listeye alıp silmedik çünkü ötekilerin aksine bunların
 **tasarımda bir gerekçesi** var — kullanılmamaları bir ihmal de olabilir,
 bilinçli bir vazgeçiş de. Aradaki farkı ancak siz söyleyebilirsiniz.
 

@@ -38,7 +38,6 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
 | 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(her market kararının ÖN KOŞULU)* | [→](#tahmin-carpimi) |
-| 4 | **E15 — yatay düzen** (karar 61) | `[ ]` | — *(Faz E'nin son maddesi)* | [→](#e15-yatay) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
 | 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
@@ -220,7 +219,6 @@ değil.
 Hiçbiri dış veriye bağlı değil; hepsi bugünkü şema ve bugünkü verinin üstünde
 yazılabilir.
 
-#### E15 — yatay düzen (karar 61) <a id="e15-yatay"></a>
 
 **Faz E'den kalan tek madde.** Etiket çekme ekranı bugün yalnızca dikey düzeni
 tanıyor; yatay düzen sözleşmede yazılı ama kodda karşılığı yok

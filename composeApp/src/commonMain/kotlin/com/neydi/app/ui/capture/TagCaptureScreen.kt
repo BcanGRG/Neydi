@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -157,7 +158,12 @@ internal fun TagCaptureScreen(
         flash.animateTo(0f, tween(FLASH_MS))
     }
 
-    Box(modifier.fillMaxSize().background(Flow.viewfinderInk)) {
+    // YON, EKRANIN KENDI OLCUSUNDEN - platform yapilandirmasindan DEGIL.
+    // `BoxWithConstraints` commonMain'de calisiyor, yani ayni kural iOS'ta da
+    // gecerli olacak; Android'in `Configuration.orientation`u expect/actual
+    // gerektirirdi ve bolunmus ekran gibi hallerde yanlis cevap verirdi.
+    BoxWithConstraints(modifier.fillMaxSize().background(Flow.viewfinderInk)) {
+        val landscape = maxWidth > maxHeight
         cameraContent()
 
         // IZIN REDDEDILDIYSE SESSIZ SIYAH KALMIYOR. `CaptureController.denied`
@@ -211,6 +217,7 @@ internal fun TagCaptureScreen(
 
         if (state.card == null) {
             CameraLayer(
+                landscape = landscape,
                 stores = state.stores,
                 storeId = state.storeId,
                 ready = cameraReady && !cameraDenied,
@@ -233,6 +240,7 @@ internal fun TagCaptureScreen(
             // kartin basindaki kirpim; arkadaki goruntunun isi bitmis oluyor.
             Box(Modifier.fillMaxSize().background(Flow.viewfinderInk.copy(alpha = 0.86f)))
             ConfirmCardLayer(
+                landscape = landscape,
                 card = state.card,
                 stores = state.stores,
                 storeId = state.storeId,
@@ -326,6 +334,8 @@ internal fun TagCaptureScreen(
 
 @Composable
 private fun BoxScope.CameraLayer(
+    /** Rehberin hangi kenardan baglanacagini belirliyor (bkz. rehber kutusu). */
+    landscape: Boolean,
     stores: List<Store>,
     storeId: String?,
     ready: Boolean,
@@ -397,7 +407,17 @@ private fun BoxScope.CameraLayer(
         ) {
             Box(
                 Modifier
-                    .fillMaxWidth()
+                    // REHBER KISA KENARDAN BAGLANIYOR.
+                    //
+                    // `fillMaxWidth().aspectRatio(3:2)` dikeyde dogru ama
+                    // yatayda 2280px'lik genisligi 1520px yukseklige cikariyor
+                    // ve ekran 1080 - rehber tasip yalnizca iki dikey kenari
+                    // gorunuyor, icindeki ipucu metni de ekranin altina
+                    // dusuyordu. Cihazda goruldu (2280x1080).
+                    //
+                    // Yatay vizor tasarimda HIC tarif edilmemis; bu secim
+                    // bizim ve tasarima bildirildi (`docs/32`).
+                    .then(if (landscape) Modifier.fillMaxHeight() else Modifier.fillMaxWidth())
                     .aspectRatio(3f / 2f)
                     // REHBERIN YERI OLCULUYOR - kirpimin kaynagi (karar 74).
                     //
@@ -498,6 +518,16 @@ private fun Shutter(onShutter: () -> Unit, enabled: Boolean) {
 
 @Composable
 private fun BoxScope.ConfirmCardLayer(
+    /**
+     * Yatayda kart SAG YARIDA dikey panel (karar 61).
+     *
+     * ⚠ Kararin ikinci cumlesi (*"sayisal klavye sol yariyi orter, karti asla
+     * ortmez"*) Android'de HARFIYEN uygulanamiyor: IME alttan ve tam
+     * genislikte gelir, bir yariya hapsedilemez. Uygulanan sey dikeydekiyle
+     * ayni: kart kendi icinde kayiyor ve kirpim seridi topluyor (karar 70).
+     * Fark tasarima bildirildi.
+     */
+    landscape: Boolean,
     card: ConfirmCard,
     stores: List<Store>,
     storeId: String?,
@@ -549,11 +579,26 @@ private fun BoxScope.ConfirmCardLayer(
     val stripCollapsed = imeBottom > 0 || awaitingIme
     Column(
         Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            // KART EKRANA YAPISIK ve yalnizca UST koseleri yuvarlak. Kod onu
+            // DIKEYDE ALTA, YATAYDA SAGA YAPISIK (karar 61). Yatayda etiket
+            // zaten yatay bir dikdortgen ve vizor genis olmali; kart alta
+            // yapissaydi vizoru ezer ve kullaniciya ne cektigini gosteremezdi.
+            .align(if (landscape) Alignment.CenterEnd else Alignment.BottomCenter)
+            .then(
+                if (landscape) {
+                    Modifier.fillMaxHeight().fillMaxWidth(LANDSCAPE_CARD_FRACTION)
+                } else {
+                    Modifier.fillMaxWidth()
+                },
+            )
+            // KART EKRANA YAPISIK ve yalnizca DIS koseleri yuvarlak. Kod onu
             // her yandan 16dp bosluklu yuzen bir kutu olarak ciziyordu.
-            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+            .clip(
+                if (landscape) {
+                    RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp)
+                } else {
+                    RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+                },
+            )
             .background(Flow.cardBackground)
             // KAYDIRMA VAR AMA YUKSEKLIK ZORLANMIYOR.
             //
@@ -1074,6 +1119,17 @@ private const val FLASH_MS = 120
 private val CARD_ACTION_HEIGHT = 52.dp
 
 /** Klavyenin gorunmesi icin beklenen en fazla sure - bkz. `stripCollapsed`. */
+/**
+ * Yatayda kartin ekran genisligindeki payi (karar 61: "sag yarida dikey panel").
+ *
+ * TAM YARIM DEGIL, biraz fazla. Kart iki sutunlu alan cifti ve Kaydet/Vazgec
+ * ikilisi tasiyor; tam 0.5'te 360dp'lik bir cihazda kartin ic genisligi
+ * 148dp'ye dusuyor ve "Ürün adı" alani ile "Kaydet" ayni satirda sigmiyor.
+ * Vizore kalan %42 ise 3:2 rehberi cizmeye fazlasiyla yetiyor - rehber
+ * yuksekligi degil GENISLIGI olcusunde ve yatayda yukseklik zaten bol.
+ */
+private const val LANDSCAPE_CARD_FRACTION = 0.58f
+
 private const val IME_WAIT_MS = 600L
 
 /** Kart satiri - tasarimin `min-height:56px`i. */
