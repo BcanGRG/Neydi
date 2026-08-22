@@ -624,7 +624,7 @@ class Component extends DCLogic {
           no: "73",
           title: "Fiyat alanı sağdan dolar",
           rule: "Serbest yazımda 39,50 niyetiyle yazılan '3950', 3.950,00 olarak sessizce kaydedildi — provada bizzat yaşanan yüz kat hata, hiçbir uyarı yok.",
-          decision: "Alan yazar kasa gibi sağdan dolar: 3 → 0,03 · 39 → 0,39 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler. Dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır — düzeltme yeniden yazmaktır, fiyat 3–5 tuş. Boşalan alan '— TL' hâline döner; Kaydet 'ilk rakamda' değil değer sıfırdan çıkınca etkinleşir. parseMinorInput kartın alanından çıkar; OCR metnini parseMinor okumaya devam eder.",
+          decision: "Alan yazar kasa gibi sağdan dolar: 3 → 0,03 · 39 → 0,39 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler. Dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır — düzeltme yeniden yazmaktır, fiyat 3–5 tuş. Boşalan alan '— TL' hâline döner; Kaydet 'ilk rakamda' değil değer sıfırdan çıkınca etkinleşir. parseMinorInput kartın alanından çıkar; OCR metnini parseMinor okumaya devam eder. (Karar 75 hane düzeltmesini açtı: dokunulan hane yerinde değiştirilebilir.)",
           why: "Etiketteki '39,50' okuma sırasıyla 3-9-5-0 tuşlanır — sağdan dolum bu doğal yazımı doğru sonuca, serbest yazım yüz kat hataya çevirir. Sessiz yanlış veri fiyat hafızasını zehirler; tam liralık etikete iki sıfır tuşlamak bunun yanında ucuz bedel. İmleç, seçim, ondalık ayracı — üç kural birden düşer.",
           where: "Ekran 4 · fiyat alanı",
           href: "Neydi - Ekranlar 2-4.dc.html"
@@ -636,6 +636,15 @@ class Component extends DCLogic {
           decision: "Asıl düzeltme onaylandı: küçük kopya rehber (3:2) bölgesinden kırpılır; o gün şerit maketin 92dp'sine döner. 128dp geçici yama — kalıcı olamaz, kartın dikey bütçesinden çalıyor (karar 70'in sebebi). Sözleşme oran değil kaynak: şeridin gösterdiği piksel, kullanıcının kadraja oturttuğu pikseldir.",
           why: "Yanlış kaynaktan alınan banda hiçbir yükseklik yetmez; doğru kaynaktan alınan bant kısa da olsa 'ne çektim'e cevap verir — fiyat etiketin merkezinde. 92dp'nin işi tanınabilirlik, belgeleme değil.",
           where: "Ekran 4 · kırpım şeridi",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "75",
+          title: "Fiyat alanında hane seçimi",
+          rule: "Kullanıcı: '450,99 yazınca 450 değil de 460 olmasını istediğimde 5'in oraya dokunup onu 6 yapabilmeliyim.' Karar 73 imleci düşürmüştü; düzeltme beş tuşluk yeniden yazımdı — kararın kendi kabul ettiği sınırın (3–5 tuş) tam ucu.",
+          decision: "Gevşetildi. Dokunuş en yakın haneye tek atımlık seçim koyar (hane altında 2dp outline); yazılan rakam yalnız o haneyi değiştirir, uzunluk sabit kalır, seçim düşer. Seçim ilerlemez — ikinci hane ikinci dokunuş. Seçim yokken her şey karar 73: sağdan dolum, dolu alanda ilk rakam sıfırlar, ayraç tuşları yok sayılır, ⌫ sağdan siler (ve varsa seçimi düşürür). İki kural çakışmaz, tetikleyicileri ayrık: sıfırlama yalnız seçimsiz ilk rakamda. Ayraç alanda sabit: taşınamaz, silinemez, ikincisi konamaz.",
+          why: "Yüz kat hata ayracın yokluğundan doğuyordu, haneye dokunmaktan değil — ayraç sabit kaldıkça karar 73'ün koruduğu şey bozulmuyor. Beş tuşluk yeniden yazım kendi yazım hatası riskini taşır; istenen düzeltme cerrahi. Seçimin tek atımlık olması ve ilerlememesi uçtaki hanede mod artığını ve ×10 kaymasını imkânsız kılar. 48dp ihlali yok: hedef alanın bütünü, hane çözümü metin imleci yerleşimi gibi (tnum hane konumlarını sabitliyor).",
+          where: "Ekran 4 · fiyat alanı",
           href: "Neydi - Ekranlar 2-4.dc.html"
         }
       ]

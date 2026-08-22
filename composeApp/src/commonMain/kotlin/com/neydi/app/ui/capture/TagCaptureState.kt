@@ -90,6 +90,21 @@ internal data class ConfirmCard(
      *   gelmiyor. Uyari yalnizca OCR degeri HIC ELLENMEDIYSE suruyor.
      */
     val priceTouched: Boolean = false,
+    /**
+     * SECILI HANENIN indeksi - `null` = secim yok (karar 75).
+     *
+     * Dokunus en yakin haneye TEK ATIMLIK secim koyuyor: yazilan rakam yalniz
+     * o haneyi degistiriyor, uzunluk sabit kaliyor ve secim dusuyor. Secim
+     * ILERLEMIYOR - ikinci hane ikinci dokunus ister.
+     *
+     * Karar 73 ile CAKISMIYOR cunku tetikleyicileri ayrik: "dolu alanda ilk
+     * rakam sifirlar" yalnizca SECIMSIZ yazimda gecerli. Secim varken sifirlama
+     * da, sagdan dolum da devrede degil.
+     *
+     * Indeks [priceDigits] uzerinde; alan degisince gecersiz kalabilecegi icin
+     * her kullanimda sinirlaniyor.
+     */
+    val priceSelection: Int? = null,
     val productName: String = "",
     /**
      * ETIKETTEN OKUNAN ad - KANIT, urun adi DEGIL (karar 51).
@@ -186,7 +201,30 @@ internal fun ConfirmCard.priceDigits(): String = if (priceMinor == 0L) "" else p
  */
 internal fun ConfirmCard.withPriceInput(raw: String): ConfirmCard {
     val typed = raw.filter { it.isDigit() }
-    val grew = typed.length > priceDigits().length
+    val current = priceDigits()
+    val grew = typed.length > current.length
+
+    // SECILI HANE VARSA YALNIZ O DEGISIYOR (karar 75).
+    //
+    // Uzunluk sabit kaliyor, secim dusuyor ve ILERLEMIYOR - ikinci hane ikinci
+    // dokunus ister. Ilerleseydi ustteki hanede bir tus fazlasi degeri on kat
+    // kaydirirdi; tek atimlik secim bunu imkansiz kiliyor.
+    //
+    // Sagdan dolum ve sifirlama bu dalda HIC calismiyor: iki kural ayni anda
+    // tanimli olamaz, tetikleyicileri ayrik.
+    val at = priceSelection
+    if (grew && at != null && at in current.indices) {
+        val digit = typed.lastOrNull { it.isDigit() } ?: return this
+        val replaced = current.replaceRange(at, at + 1, digit.toString())
+        // BASTAKI SIFIR ATILMIYOR: `450` -> `050` uzunlugu korumak zorunda,
+        // yoksa 50 olur ve kullanici tek hane degistirdigini sanirken deger
+        // on kata bolunur. `trimStart('0')` bu dalda BILEREK yok.
+        return copy(
+            priceMinor = replaced.toLongOrNull() ?: priceMinor,
+            priceTouched = true,
+            priceSelection = null,
+        )
+    }
     // SIFIRLAMA YALNIZCA **DOLU** ALANDA. Kural once bosa da uygulaniyordu ve
     // testi kirdi: bos alana tek seferde gelen `3950` son haneye inip `0`
     // oluyordu. Bos alanda sifirlanacak bir sey yok - tasarimin cumlesi de
@@ -196,7 +234,32 @@ internal fun ConfirmCard.withPriceInput(raw: String): ConfirmCard {
     val next = (if (restart) typed.takeLast(1) else typed)
         .trimStart('0')
         .takeLast(MAX_PRICE_DIGITS)
-    return copy(priceMinor = next.toLongOrNull() ?: 0L, priceTouched = true)
+    // SILME DE SECIMI DUSURUYOR (karar 75) - geri tusu bir hane secimi degil.
+    return copy(
+        priceMinor = next.toLongOrNull() ?: 0L,
+        priceTouched = true,
+        priceSelection = null,
+    )
+}
+
+/**
+ * Dokunulan haneyi seciyor - TEK ATIMLIK (karar 75).
+ *
+ * `450,99`da 5'e dokunup 6 yazmak 460,99 veriyor. Serbest yazim doneminde bu
+ * bes tusluk yeniden yazimdi ve kararin kendi kabul ettigi sinirin (3-5 tus)
+ * tam ucundaydi; kullanici cihazda bunu bildirdi.
+ *
+ * AYRAC SECILEMIYOR: alanda sabit duruyor, tasinamiyor, silinemiyor. Yuz kat
+ * hata onun YOKLUGUNDAN doguyordu, haneye dokunmaktan degil - bu yuzden karar
+ * 73'un korudugu sey bozulmuyor.
+ *
+ * @param index [priceDigits] uzerindeki hane; sinir disi ya da `null` ise
+ *   secim dusuyor.
+ */
+internal fun ConfirmCard.withPriceSelection(index: Int?): ConfirmCard {
+    val digits = priceDigits()
+    val valid = index?.takeIf { it in digits.indices }
+    return if (valid == priceSelection) this else copy(priceSelection = valid)
 }
 
 /**
