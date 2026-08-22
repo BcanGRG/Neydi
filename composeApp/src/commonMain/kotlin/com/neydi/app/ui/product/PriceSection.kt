@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 import com.neydi.app.data.db.ObservationRow
 import com.neydi.app.data.daysBetween
 import com.neydi.app.data.formatAge
-import com.neydi.app.data.formatDayMonth
 import com.neydi.app.data.formatDayMonthAblative
+import com.neydi.app.data.formatDayMonthShort
 import com.neydi.app.data.formatHeadlineMinor
 import com.neydi.app.data.formatMinor
 import com.neydi.app.di.now
@@ -166,7 +166,7 @@ internal fun List<ObservationRow>.toPriceSection(nowMillis: Long = now()): Price
             HistoryRow(
                 id = it.id,
                 observedAt = it.observedAt,
-                date = formatDayMonth(it.observedAt),
+                date = formatDayMonthShort(it.observedAt),
                 store = it.storeName ?: MARKET_YOK,
                 price = formatMinor(it.unitPriceMinor),
             )

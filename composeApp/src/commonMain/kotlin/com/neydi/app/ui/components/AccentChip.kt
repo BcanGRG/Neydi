@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.Sizes
@@ -98,6 +99,19 @@ fun CheaperChip(text: String, modifier: Modifier = Modifier) {
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.primary,
+            // CIP TEK SATIR, VE BU BIR SUSLEME KURALI DEGIL.
+            //
+            // Metnin uzunlugunu kullanici belirliyor: market adi serbest metin
+            // ("Tarım Kredi") ve fiyat dort haneli olabiliyor. Kilitsiz hali
+            // olculdu - "Tarım Kredi'de 1.234,56" 411dp'lik ekranda cipe
+            // ayrilan yeri asiyor, metin ikinci satira sariyor, satirin
+            // yuksekligi `Sizes.rowWithMeta`yi sessizce geciyor ve yanindaki
+            // meta metni sifir genislige dusup YOK OLUYOR.
+            //
+            // Kirpmak burada dogru cunku cipin tasidigi bilgi BASTAN okunuyor:
+            // "Tarım Kre..." bile hangi markete gidilecegini soyluyor.
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
