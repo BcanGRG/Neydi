@@ -1,5 +1,9 @@
 # 39 — 22. tur kodlandı: kodun tek başına verdiği üç karar ve iki ayna çelişkisi
 
+> **Design projesindeki adı:** `KODDAN-SORULAR-22-KOD-KARARLARI.md`
+> (24 Ağustos 2026'da gönderildi). Sıradaki numara: docs/37 → 20,
+> docs/38 → 21 *(dosya olarak yüklenmemişti)*, bu rapor → **22**.
+
 **24 Ağustos 2026.** Kararlar **121–126'nın altısı da** koda indi ve cihazda
 doğrulandı (R58N81SAZ1Y). 579 test yeşil, sıfır derleyici uyarısı, şema v8
 değişmedi.

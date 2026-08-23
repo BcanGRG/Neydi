@@ -51,7 +51,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 9 | ~~**docs/30 — markete göre tahmin**~~ ✅ | — | **Cevaplandı** (kararlar 117–119): beyan geldi, aritmetik gelmedi; karar 97 ertelenmiş kalıyor | [→](#tasarim) |
 | 9b | ~~**docs/38 — hedef market, altı açık madde**~~ ✅ | — | **Cevaplandı** — kararlar **121–126** (22. tur, 23 Ağu). Altı maddenin altısı da kapandı | [→](#d38) |
 | 9c | ~~**Kararlar 121–126 kodlanacak**~~ ✅ | — | **Kodlandı ve cihazda doğrulandı** (22. tur). Altısı da kapandı; üç kod kararı tasarıma sorulacak | [→](#d38) |
-| 9d | **`docs/39` — 22. turdan kalan üç soru** | `[ ]` | Tasarımı — rapor **yazıldı**, design projesine gönderilmedi | [→](#d38) |
+| 9d | **`docs/39` — 22. turdan kalan üç soru** | `[ ]` | **Yalnızca tasarımı** — rapor 24 Ağu'da `KODDAN-SORULAR-22-KOD-KARARLARI.md` olarak gönderildi | [→](#d38) |
 | 10 | **Ölü primitif sorusunu YAZ** | `[ ]` | — *(ölü primitif maddesi ona bağlı)* | [→](#olu-kod) |
 | 11 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 12 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
@@ -359,7 +359,9 @@ Alışveriş modundaki satırın kendi container'ı yok; plan modunun bileşeni
 > ısırma kanıtı ve cihaz notları `11-tasarim-kararlari.md`'nin 121–126
 > bölümünde. **579 test yeşil**, sıfır derleyici uyarısı.
 >
-> ⚠ **Tasarıma sorulacak üç kod kararı** — [`39-kararlar-121-126-kod-kararlari.md`](39-kararlar-121-126-kod-kararlari.md):
+> ⚠ **Tasarıma soruldu** (24 Ağu, design projesinde
+> `KODDAN-SORULAR-22-KOD-KARARLARI.md`) —
+> [`39-kararlar-121-126-kod-kararlari.md`](39-kararlar-121-126-kod-kararlari.md):
 > 1. **Hedef yokken *"Nereden alınacak"* satırı çizilmiyor** (126). Karar 117
 >    hedefi boş bırakmayı meşru kıldı, ama sapma kuralının ilk şartı hedefin
 >    varlığı — hedefsizken yazılan istisna hiçbir yerde görünmezdi.
