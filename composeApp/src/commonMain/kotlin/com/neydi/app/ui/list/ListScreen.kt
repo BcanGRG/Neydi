@@ -334,6 +334,7 @@ fun ListScreen(
                 onBlockChange = { vm.setBlocked(sheet.productId, it) },
                 onStepQuantity = vm::stepSheetQuantity,
                 onSetQuantity = vm::setSheetQuantity,
+                onSetPack = vm::setObservationPack,
                 onPickUnit = vm::pickSheetUnit,
                 bottomPadding = bottomInset,
                 // Sheet kapaniyor VE satir siliniyor: serit sheet'in arkasinda
@@ -555,6 +556,7 @@ internal fun ListContent(
                             amountMinor = estimate.amountMinor,
                             pricedCount = estimate.pricedCount,
                             totalCount = estimate.totalCount,
+                            chain = estimate.chain,
                         )
                     }
                 }

@@ -1263,9 +1263,90 @@ Cihazda v6 → v7 koşuldu, `pm clear` yapılmadan: dokuz tablo sayısı da ayn�
 böyle diyor"* ile *"kullanıcı böyle seçti"*yi ayıramıyor. Ve fark teorik değil:
 `CatalogSeeder` katalogu `INSERT OR REPLACE` ile yeniliyor.
 
+---
+
+## Kararlar 95–96 ve 111–115 — tahmin artık kör çarpmıyor
+
+Kullanıcının bildirdiği kusur: `3 kg Yoğurt`, bir 3 kg'lık kovanın 192,00 TL
+fiyatıyla çarpılıp **576,00 TL** yazıyordu.
+
+### Çarpan koşullu oldu (96, 111)
+
+| Satır | Katkı |
+|---|---|
+| gözlem yok | yok |
+| sayılan birim | `miktar × fiyat` |
+| tartılı, ambalaj biliniyor | `⌈miktar ÷ ambalaj⌉ × fiyat` |
+| tartılı, ambalaj bilinmiyor | **yok** — toplamdan düşer, **paydada kalır** |
+
+Kural *"adet ise 1"* değil **"tartılmıyorsa 1"** diye yazıldı: paket, kutu,
+demet ve şişe de sayılıyor ve katalogda gerçekten var.
+
+Düşen satır **sessiz değil**: meta yuvası *"3 kg · ambalaj bilinmiyor"* yazıyor,
+fiyat çipi yerinde kalıyor. **0,00 TL yazılmıyor** — düşen satırın tutarı yok,
+sıfır değil. Olguyu vermenin yeri Ürün Detayı'ndaki gözlem satırı: kesik
+konturlu bir *"ambalaj?"* alanı, altında *"Etiketten okunamadı. Yazarsan bu
+satır tahmine girer."* Liste satırına düğme konmadı — karar 110'un kapattığı
+iki yığılmış 48dp hedef geri gelmesin diye.
+
+### ⚠ Bir 1000× mayını bulundu ve karara girdi
+
+`trip_line.unit` ile `packUnit` **farklı kanonlar** konuşuyor ve bu bilinçliydi
+(`QuantityParser` KDoc, E2). Aktif listedeki **beş fiyatlı satırın sıfırında**
+ikisi aynı dizge — `L`/`lt`, `g`/`kg`.
+
+Kapalı bir gezide duran `2 g Çay` satırı, `1 kg`'lık ambalaja karşı ham bölmeyle
+**798,00 TL** verirdi (doğrusu 399,00); `500 g` olsaydı **199.500,00 TL**. Yani
+`⌈⌉` dalı bugünkü 3× hatayı ara sıra 1000× hataya çevirecekti.
+
+Karar 111 bunu kurala yazdı: **birimler aynı ölçeğe indirilemiyorsa bölme
+yapılmaz, satır ambalajsız sayılır.** Uzlaşma **okurken** oluyor — hiçbir satır
+yeniden yazılmıyor, E2'nin kuralı ayakta.
+
+### Satır kaynağını yazıyor (95, 113, 114)
+
+`Tahmini sepet ~624 TL` · `BİM fiyatlarıyla · 4/7`. Tek zincir → zincir adı;
+karışıksa *"son fiyatlarla"*. **Tek marketsiz gözlem zincir adını düşürür** —
+ve bu ayrı bir dal değil, aynı kuralın doğal sonucu: `null` da bir değer ve
+tekilliğe katılıyor. Etikete **yalnız toplama giren satırlar** oy veriyor.
+
+Zincir **anahtarla karşılaştırılıyor, adla yazılıyor**: `chain` normalize bir
+anahtar (`bim`) ve ekrana yazılınca küçük harfle çıkıyordu — cihazda görüldü.
+Dönüştürmek de yasak; doğru yol tablodaki adı okumak.
+
+### Eşik mutlak kaldı (112)
+
+Tasarım sistemi bir süre *"%60'ından azı → %40 opaklık ve `~`; %30'un altı →
+gizle"* diyordu, kod karar 53'ün mutlak üçünü kullanıyordu. Karar 96 **payı**
+düşürünce ikisi ilk kez çakıştı; karar 112 yüzde fıkralarının üçünü de düşürdü.
+Sayaç zaten kapsamı yazıyor. Eşiğin altında **sessizlik** — *"yeterli veri
+yok"* diye bir yüzey yazılmıyor.
+
+Eşik artık **toplama giren** satırı sayıyor, fiyatı olanı değil.
+
+### Hesap SQL'den Kotlin'e taşındı
+
+Zorunluydu: karar 96 payla paydanın **ayrışmasını** istiyor ve tek `GROUP BY`
+üzerindeki `SUM` + `COUNT` bunu ifade edemiyor — toplamdan çıkan satır sayıdan
+da çıkıyordu. Ayrıca `⌈⌉` ve birim dönüşümü bir `@Query` dizesinin içinde ne
+yazılabilir ne sınanabilirdi. Dosyanın kendi kuralı da bunu söylüyor: *"SQL
+veriyi getirir, iddiayı Kotlin kurar."*
+
+### Cihazda bulunan bir yalan daha
+
+`PackChanged` iki ambalaj **farklıysa** ateşleniyordu, yönüne bakmadan — ama
+metin her zaman *"ambalaj küçüldü"* yazıyordu. Kullanıcının kendi verisinde
+`1,5 kg → 3 kg` bir **büyüme** ve satır onu küçülme diye yazdı. Fiil artık
+ölçülen yöne bağlı; karar 67'nin shrinkflation uyarısı yalnızca gerçekten
+küçülen ambalajda çıkıyor.
+
 ### Açık kalan
 
-- **Tahmin hâlâ kör çarpıyor** (karar 95–96 uygulanmadı). Testte Çay bir an
-  100 adet olunca tahmin `~40.701 TL` yazdı — sayı yanlıştı ama hesap da
-  onu düzeltecek hiçbir şey bilmiyor.
+- **`priceUnit` hâlâ yazıcısız.** Karar 96'nın önkoşulu **değil** — formülü o
+  kolona bakmıyor — ama kapattığı delik ayrı ve açık: kilo fiyatı, adet birimli
+  satıra yazıldığında (`MigrosGrammar`'ın manav yolu) satır yine yanlış
+  çarpılıyor. Okuyucusu (`readTagUnitPrice`) zaten var ve normalize; eksik olan
+  bir alan, bir parametre ve bir atama.
+- **Karar 97 ertelenmiş kalıyor.** Bugüne kadar yalnız **iki** zincirde gözlem
+  var; ürün başına ortalama 1,0–1,4 zincir, eşik 1,5 (karar 115).
 - `docs/34`'ün add-path tablosu **beş** yol yazıyor; kodda **sekiz** var.

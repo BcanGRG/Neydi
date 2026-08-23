@@ -6,6 +6,9 @@ import com.neydi.app.data.DEFAULT_HOUSEHOLD_ID
 import com.neydi.app.data.bootstrap
 import com.neydi.app.data.formatEstimate
 import com.neydi.app.ui.list.shownMinor
+import com.neydi.app.data.EstimateLine
+import com.neydi.app.data.EstimateSource
+import com.neydi.app.data.foldBasket
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -40,7 +43,13 @@ class TripEstimateTest {
             ),
         )
 
-    private suspend fun line(db: NeydiDatabase, tripId: String, productId: String, qty: Double = 1.0) {
+    private suspend fun line(
+        db: NeydiDatabase,
+        tripId: String,
+        productId: String,
+        qty: Double = 1.0,
+        unit: String = "adet",
+    ) {
         db.productDao().insert(
             Product(
                 id = productId, householdId = home, name = productId, matchKey = productId,
@@ -50,18 +59,30 @@ class TripEstimateTest {
         db.tripLineDao().insert(
             TripLine(
                 id = "l-$tripId-$productId", householdId = home, tripId = tripId,
-                productId = productId, quantity = qty, unit = "adet",
+                productId = productId, quantity = qty, unit = unit,
                 addedByMemberId = "m1", createdAt = 0,
             ),
         )
     }
 
-    private suspend fun observe(db: NeydiDatabase, productId: String, minor: Long, at: Long, id: String) =
-        db.priceObservationDao().insert(
-            PriceObservation(
-                id = id, householdId = home, productId = productId, storeId = null,
-                unitPriceMinor = minor, observedAt = at, createdAt = at,
-            ),
+    private suspend fun observe(
+        db: NeydiDatabase,
+        productId: String,
+        minor: Long,
+        at: Long,
+        id: String,
+        storeId: String? = null,
+    ) = db.priceObservationDao().insert(
+        PriceObservation(
+            id = id, householdId = home, productId = productId, storeId = storeId,
+            unitPriceMinor = minor, observedAt = at, createdAt = at,
+        ),
+    )
+
+    /** Zincir testleri icin market - `chain` alani "bim" gibi normalize hali. */
+    private suspend fun store(db: NeydiDatabase, id: String, chain: String) =
+        db.storeDao().insert(
+            Store(id = id, householdId = home, name = chain, chain = chain, createdAt = 0),
         )
 
     private suspend fun estimate(db: NeydiDatabase, tripId: String): Long? =
@@ -195,6 +216,10 @@ class TripEstimateTest {
     // (`observeEstimate` / `observePricedCount` / `observeLineCount`) ve
     // hicbirinin testi yoktu - aktif sepette bir regresyon butun takimdan
     // sessizce gecerdi.
+    //
+    // UCU TEK SORGUYA INDI (karar 96): `observeEstimateLines` satirlari
+    // getiriyor, toplami `foldBasket` kuruyor. Asagidaki iddialar AYNI
+    // kaldi - degisen sey nerede hesaplandiklari.
 
     /** Miktar CARPILIYOR: "4x Makarna" dortle. */
     @Test
@@ -204,7 +229,48 @@ class TripEstimateTest {
         line(db, "t1", "Makarna", qty = 4.0)
         observe(db, "Makarna", 1_700, at = day, id = "o1")
 
-        assertEquals(6_800, db.priceObservationDao().observeEstimate("t1").first())
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
+        assertEquals(6_800, totals.amountMinor)
+    }
+
+    /**
+     * KULLANICININ BILDIRDIGI KUSUR, SORGUNUN UCUNDAN: `3 kg Yogurt` x
+     * 192,00 TL bir 3 kg'lik kovanin fiyati - carpilmiyor (karar 96, 111).
+     *
+     * Bu testin degeri saf kuralda degil BORUDA: sorgu `unit`i ve `packSize`i
+     * gercekten tasiyor mu. Kural `BasketEstimateRuleTest`te ayrica kilitli.
+     */
+    @Test
+    fun aWeighedLineWithNoPackDropsOutOfTheSum() = runTest {
+        val db = ready()
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Yoğurt", qty = 3.0, unit = "kg")
+        line(db, "t1", "Makarna"); line(db, "t1", "Süt"); line(db, "t1", "Çay")
+        observe(db, "Yoğurt", 19_200, at = day, id = "o1")
+        observe(db, "Makarna", 1_700, at = day, id = "o2")
+        observe(db, "Süt", 6_250, at = day, id = "o3")
+        observe(db, "Çay", 39_900, at = day, id = "o4")
+
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
+        // Yogurt toplamda YOK - eskiden 3 x 192,00 = 576,00 ekleniyordu.
+        assertEquals(47_850, totals.amountMinor)
+        // ...ama paydada var (karar 96: "toplamdan duser, PAYDA KALIR").
+        assertEquals(3, totals.pricedCount)
+        assertEquals(4, totals.totalCount)
+    }
+
+    /** Sorgu satirin KULLANICI SECTIGI birimini tasiyor (karar 108). */
+    @Test
+    fun theEstimateReadsTheUnitTheUserChose() = runTest {
+        val db = ready()
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Yoğurt", qty = 2.0, unit = "kg")
+        observe(db, "Yoğurt", 19_200, at = day, id = "o1")
+        // Kullanici bu satirda "adet" secti: artik tartili degil, sayilan.
+        db.tripLineDao().setQuantity("l-t1-Yoğurt", quantity = 2.0, unitOverride = "adet", at = day)
+
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
+        assertEquals(38_400, totals.amountMinor)
     }
 
     /**
@@ -221,10 +287,10 @@ class TripEstimateTest {
         observe(db, "Süt", 6_250, at = day, id = "o1")
         observe(db, "Çay", 39_900, at = day, id = "o2")
 
-        val dao = db.priceObservationDao()
-        assertEquals(46_150, dao.observeEstimate("t1").first())
-        assertEquals(2, dao.observePricedCount("t1").first())
-        assertEquals(3, dao.observeLineCount("t1").first())
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
+        assertEquals(46_150, totals.amountMinor)
+        assertEquals(2, totals.pricedCount)
+        assertEquals(3, totals.totalCount)
     }
 
     /**
@@ -246,10 +312,62 @@ class TripEstimateTest {
         // Urun silindi: ekranda satir cizilmiyor, ama liste satiri duruyor.
         db.productDao().softDelete("Çay", 2 * day)
 
-        val dao = db.priceObservationDao()
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
         assertTrue(
-            dao.observePricedCount("t1").first() <= dao.observeLineCount("t1").first(),
-            "pay paydayi asarsa satir 'hepsinin fiyatını biliyorum' diye yalan yazar",
+            totals.pricedCount <= totals.totalCount,
+            "pay paydayi asarsa sayac yalan yazar",
         )
     }
+
+    /** Sorgu her satirin gozleminin ZINCIRINI tasiyor (karar 95). */
+    @Test
+    fun theEstimateReadsTheChainOfEachPrice() = runTest {
+        val db = ready()
+        store(db, "s-bim", "BİM")
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Süt"); line(db, "t1", "Çay"); line(db, "t1", "Makarna")
+        observe(db, "Süt", 6_250, at = day, id = "o1", storeId = "s-bim")
+        observe(db, "Çay", 39_900, at = day, id = "o2", storeId = "s-bim")
+        observe(db, "Makarna", 1_700, at = day, id = "o3", storeId = "s-bim")
+
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
+        assertEquals(EstimateSource.Chain("BİM"), totals.source)
+    }
+
+    /**
+     * TEK MARKETSIZ GOZLEM ZINCIR ADINI DUSURUYOR - uctan uca (karar 113).
+     *
+     * `storeId` nullable ve marketsiz cekim mesru; bu test borunun `null`i
+     * gercekten `null` olarak tasidigini kilitliyor. Kural
+     * `BasketEstimateRuleTest`te ayrica var, ama `LEFT JOIN`in sessizce bos
+     * dizge dondurmesi burada yakalanir.
+     */
+    @Test
+    fun aStorelessObservationBreaksTheChainClaimEndToEnd() = runTest {
+        val db = ready()
+        store(db, "s-bim", "BİM")
+        trip(db, "t1", closedAt = null)
+        line(db, "t1", "Süt"); line(db, "t1", "Çay"); line(db, "t1", "Makarna")
+        observe(db, "Süt", 6_250, at = day, id = "o1", storeId = "s-bim")
+        observe(db, "Çay", 39_900, at = day, id = "o2", storeId = "s-bim")
+        observe(db, "Makarna", 1_700, at = day, id = "o3") // marketsiz
+
+        val totals = db.priceObservationDao().observeEstimateLines("t1").first().fold()
+        assertEquals(EstimateSource.Mixed, totals.source)
+    }
+
+    /** Satirlari kurala baglayan tek yer - testler de ayni yoldan geciyor. */
+    private fun List<EstimateRow>.fold() = foldBasket(
+        map {
+            EstimateLine(
+                quantity = it.quantity,
+                unit = it.unit,
+                unitPriceMinor = it.unitPriceMinor,
+                packSize = it.packSize,
+                packUnit = it.packUnit,
+                chain = it.chain,
+                storeName = it.storeName,
+            )
+        },
+    )
 }

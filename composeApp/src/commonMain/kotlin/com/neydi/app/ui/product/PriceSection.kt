@@ -89,6 +89,14 @@ data class HistoryRow(
 data class PriceSection(
     val headline: String? = null,
     val headlineSub: String? = null,
+    /**
+     * EN SON gozlemin ambalaji okunamadiysa onun kimligi (karar 111).
+     *
+     * `null` = sorulacak bir sey yok. Yalnizca EN SON gozlem soruluyor, cunku
+     * tahmini o besliyor; eski gozlemlerin ambalajini istemek, cevabi hicbir
+     * sayiyi degistirmeyen bir soru sormak olurdu.
+     */
+    val packPromptId: String? = null,
     val cheapest: List<CheapRow> = emptyList(),
     val history: List<HistoryRow> = emptyList(),
     val sparkline: List<Float> = emptyList(),
@@ -161,6 +169,9 @@ internal fun List<ObservationRow>.toPriceSection(nowMillis: Long = now()): Price
             formatAge(daysBetween(newest.observedAt, nowMillis)),
             packLabel(newest.packSize, newest.packUnit),
         ).joinToString(" · "),
+        // ISTEM YALNIZ AMBALAJ GERCEKTEN EKSIKSE: dolu bir ambalaji sormak,
+        // cevabi bilinen bir soruyu ekrana koymak olurdu.
+        packPromptId = newest.id.takeIf { newest.packSize == null },
         cheapest = cheapest,
         history = map {
             HistoryRow(

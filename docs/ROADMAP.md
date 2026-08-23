@@ -37,7 +37,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 |---|---|---|---|---|
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
-| 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(her market kararının ÖN KOŞULU; tahmin bugün **kör çarpıyor** — testte 100 adet Çay `~40.701 TL` yazdı)* | [→](#tahmin-carpimi) |
+| 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(karar 97 için ön koşul; karar 96 için **değil** — 96 uygulandı ve o kolona bakmıyor. Açık delik: kilo fiyatının adet satırına yazılması)* | [→](#tahmin-carpimi) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
 | 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
@@ -206,7 +206,10 @@ değişti, karşılaştırma yapmıyorum"* derken tahmin aynı iki sayıyı sess
 
 Somut vaka (kullanıcının kendi listesi): `3 kg Yoğurt`, son gözlem `192,00 TL`
 — bir **3 kg'lık kova**. Bugün 3 × 192,00 = **576,00 TL** hesaplanıyor;
-doğrusu 192,00.
+doğrusu **satırın toplama hiç girmemesi** (karar 111): 192,00 TL bir
+ambalajın fiyatı, 3 kg'ın değil. Bu satırın eski *"doğrusu 192,00"* cevabı
+tasarım tarafından **reddedildi** — kullanıcının yazdığı 3 kg'ı sessizce 1'e
+indiriyordu.
 
 `priceUnit` kolonu ayrıca **hiç yazılmıyor** — tanımı ve bir test yorumu
 dışında sıfır referansı var, oysa kendi KDoc'u *"bu kolon olmadan

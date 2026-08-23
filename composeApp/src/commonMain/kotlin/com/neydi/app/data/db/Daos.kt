@@ -607,34 +607,46 @@ interface PriceObservationDao {
      * ortalama almak zamla birlikte gercegin gerisinde kalir ve tahmin surekli
      * dusuk cikar.
      *
-     * Fiyati HIC bilinmeyen urunler toplama girmez - bu yuzden tahmin her zaman
-     * eksik yonde yanlis olabilir. Ekran bunu "en az su kadar" diye sunmali,
-     * kesin tutar gibi degil.
+     * ## SORGU TOPLAMIYOR, SATIR GETIRIYOR (karar 96)
+     *
+     * Once burada `SUM(tl.quantity * po.unitPriceMinor)` vardi ve iki seyi
+     * birden yapiyordu: hem carpiyor hem topluyordu. Karar 96 carpimi KOSULLU
+     * yapti - sayilan satirda miktar, tartilida `⌈miktar ÷ ambalaj⌉`,
+     * ambalaji bilinmeyende hic - ve karar 111 bolmeyi birim olcegine bagladi.
+     * Bunlar bir `@Query` dizesinin icinde ne yazilabilir ne sinanabilirdi.
+     *
+     * Ayrica pay ile paydanin AYRISMASI gerekiyor: dusen satir toplamdan
+     * cikiyor ama paydada kaliyor. Tek `GROUP BY` uzerindeki `SUM` + `COUNT`
+     * bunu yapisal olarak ifade edemiyor - toplamdan cikan satir sayidan da
+     * cikiyordu.
+     *
+     * Dosyanin kendi kurali da bunu soyluyor: *"SQL veriyi getirir, iddiayi
+     * Kotlin kurar."* Kural [com.neydi.app.data.foldBasket]'te.
      */
     @Query(
         """
-        SELECT COALESCE(SUM(tl.quantity * po.unitPriceMinor), 0)
+        SELECT
+            COALESCE(tl.unitOverride, tl.unit)  AS unit,
+            tl.quantity                         AS quantity,
+            po.unitPriceMinor                   AS unitPriceMinor,
+            po.packSize                         AS packSize,
+            po.packUnit                         AS packUnit,
+            s.chain                             AS chain,
+            s.name                              AS storeName
         FROM trip_line tl
-        JOIN price_observation po ON po.id = (
+        -- LEFT JOIN: gozlemi OLMAYAN satir da doner ve paydada kalir. Ic JOIN
+        -- olsaydi payda yalnizca fiyatli satirlari sayardi ve "4/7" hep "4/4"
+        -- gorunurdu.
+        LEFT JOIN price_observation po ON po.id = (
             SELECT id FROM price_observation
             WHERE productId = tl.productId AND deletedAt IS NULL
             ORDER BY observedAt DESC LIMIT 1
         )
+        LEFT JOIN store s ON s.id = po.storeId
         WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
         """,
     )
-    fun observeEstimate(tripId: String): Flow<Long>
-
-    /** Tahmine giren urun sayisi: kacinin fiyatini bildigimizi soylemek icin. */
-    @Query(
-        """
-        SELECT COUNT(*) FROM trip_line tl
-        WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
-          AND EXISTS (SELECT 1 FROM price_observation po
-                      WHERE po.productId = tl.productId AND po.deletedAt IS NULL)
-        """,
-    )
-    fun observePricedCount(tripId: String): Flow<Int>
+    fun observeEstimateLines(tripId: String): Flow<List<EstimateRow>>
 
     /**
      * Gezideki TOPLAM satir sayisi - "kacinin fiyatini biliyorum"un paydasi.
@@ -653,13 +665,27 @@ interface PriceObservationDao {
      * Pay ile paydanin ayni sorgu ailesinden gelmesi bunu yapisal olarak
      * imkansiz kiliyor: ikisi de `trip_line`i ayni kosullarla sayiyor.
      */
+    /**
+     * Gozlemin AMBALAJINI sonradan yazar (karar 111).
+     *
+     * ## Neden hedefli sorgu
+     *
+     * Gozlem satirinin geri kalani ETIKETTEN geldi ve dokunulmamali - fiyat,
+     * market, marka, tarih. Kullanicinin ekledigi tek olgu ambalaj; tam satiri
+     * geri yazmak, elde tutulan kopya bir saniye eski olsa bile otekileri
+     * ezerdi.
+     *
+     * `updatedAt` damgalaniyor: bu bir KULLANICI duzenlemesi ve Faz 7'nin
+     * birlestirmesi hangi tarafin daha yeni oldugunu bilmek zorunda.
+     */
     @Query(
         """
-        SELECT COUNT(*) FROM trip_line tl
-        WHERE tl.tripId = :tripId AND tl.deletedAt IS NULL
+        UPDATE price_observation
+        SET packSize = :packSize, packUnit = :packUnit, updatedAt = :at
+        WHERE id = :id
         """,
     )
-    fun observeLineCount(tripId: String): Flow<Int>
+    suspend fun setPack(id: String, packSize: Double, packUnit: String, at: Long)
 
     /**
      * TABLONUN ILK YAZANI. `price_observation` sema v1'den beri duruyordu ve

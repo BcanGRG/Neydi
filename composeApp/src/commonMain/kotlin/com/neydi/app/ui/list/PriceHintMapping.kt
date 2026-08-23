@@ -3,6 +3,7 @@ package com.neydi.app.ui.list
 import com.neydi.app.data.db.ListRowProjection
 import com.neydi.app.data.db.TripEstimate
 import com.neydi.app.data.formatChipMinor
+import com.neydi.app.data.convertMagnitude
 import com.neydi.app.ui.components.PriceHint
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -49,10 +50,18 @@ internal fun ListRowProjection.toPriceHint(now: Long, chipWins: Boolean = false)
     if (!comparablePack(prevPackSize, prevPackUnit, lastPackSize, lastPackUnit)) {
         // IKISI DE BILINIYOR VE FARKLI -> ambalaj degisimi (karar 67).
         if (fromPack != null && toPack != null) {
+            // YON OLCULEREK BULUNUYOR, etikete bakarak degil: "1,5 kg" ile
+            // "1500 gr" ayni sey ve dizge olarak farkli. Cevrilemiyorsa
+            // kuculme VARSAYILMIYOR - karar 67'nin uyarisi yalnizca gercekten
+            // kuculen ambalaj icin dogru.
+            val fromInLast = lastPackUnit?.let { u ->
+                prevPackSize?.let { convertMagnitude(it, prevPackUnit.orEmpty(), u) }
+            }
             return PriceHint.PackChanged(
                 fromPack = fromPack,
                 toPack = toPack,
                 note = formatChipMinor(last),
+                smaller = fromInLast != null && lastPackSize != null && lastPackSize < fromInLast,
             )
         }
         // TAM OLARAK BIRI BILINIYOR -> hicbir iddia (karar 76). Ne "zam" ne
