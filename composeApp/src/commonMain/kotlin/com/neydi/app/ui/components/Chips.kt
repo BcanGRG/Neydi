@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -66,7 +67,22 @@ fun PriceChip(
     // ayri ayri cizmis; hicbiri ciplak metin degil. Metin rengi de
     // `onSurfaceVariant` yerine `onSurface`: cip artik kendi zeminini
     // tasidigi icin metnin soluk olmasi gerekmiyor.
-    val base = modifier.heightIn(min = Sizes.minTapTarget)
+    // 92dp SABIT SUTUN, SAGA DAYALI (karar 81).
+    //
+    // `SizesExtra.priceColumn` OLU BIR SABITTI: tasarim sistemi ve alti maket
+    // kullanimi 92dp diyordu, Compose Spec `Modifier.width(92.dp) +
+    // TextAlign.End` diye yaziyordu, kodda ise hicbir yerde geçmiyordu.
+    // Sonuc: dort haneli fiyat 99,38dp'ye tasip fazlasini addan caliyordu.
+    //
+    // YUKSEKLIK ARTIK SATIRDAN (karar 85): cipin kendi 48dp hedefi fiyatli
+    // her satiri 56dp yerine 64dp yapiyordu ve "10-11 satir gorunur" hedefini
+    // dokuza dusuruyordu. Hedef bir GORSEL BOYUT degil bir isabet sozlesmesi;
+    // satir zaten 56dp isabet veriyor.
+    // HEDEF SATIR BOYUNCA UZUYOR (karar 85): gorsel hap 32dp kaliyor ama
+    // dokunulabilir alan satirin yuksekligini aliyor. `heightIn(48dp)`
+    // fiyatli her satiri 56dp yerine 64dp yapiyordu; `fillMaxHeight` ayni
+    // isabet garantisini satirin KENDI yuksekliginden aliyor.
+    val base = modifier.width(SizesExtra.priceColumn).fillMaxHeight()
     Box(
         modifier = if (onClick != null) base.pressable(onTap = onClick) else base,
         contentAlignment = Alignment.CenterEnd,

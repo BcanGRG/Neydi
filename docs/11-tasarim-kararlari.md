@@ -1015,3 +1015,71 @@ yapıştırılan bir liste **listeyi katlardı**.
 
 Sheet'in kutucukları yeşil "yapıldı" dolgusunda; sayaç dokunuşta vurguluyor;
 kök alandan eklenen satır yeşil yıkamayla beliriyor.
+
+---
+
+## Kararlar 80–85 kodlandı — satır bütçesi yazılı hâle geldi
+
+**23 Ağustos 2026.** Kodun kendi kuralı baştan beri *"ad kırpılması kabul
+edilemez — fiyat ipucu yardımcı bilgi, ad ise satırın varlık sebebi"* diyordu
+ve **tutmuyordu**: ölçüm 411dp'de ada %35, 360dp'de dokuz karakter kaldığını
+göstermişti.
+
+### Ad tabanı + feda sırası (80)
+
+`widthIn(min = 120dp)` (~13 karakter) ve yer yetmediğinde sıra:
+**sparkline → delta çipi → eş avatarı → raptiye → adet rozeti.** Fiyat çipi ve
+ad asla düşmez.
+
+Sıranın mantığı bilgi değeri: *"sparkline süs, delta özeti metada da yaşar,
+avatar bağlam, raptiye bölüm başlığının tekrarı; rozet ise miktar — yanlış
+adedin bedeli parayla ödenir."*
+
+Aritmetik **saf bir fonksiyona** çıkarıldı (`survivingElements`) çünkü karar
+80 bir yerleşim ayrıntısı değil bir **söz**: 360dp'lik bir cihazda adın 13
+karakterin altına inmemesi. Saf fonksiyon o sözü Compose kurmadan sınanabilir
+kılıyor ve maketin verdiği sayılar doğrudan test olarak yazılabiliyor.
+
+⚠ **Testi yazarken bir şey anlaşıldı:** `available` hesabından **fiyat çipini
+çıkarmak zorunlu**. Çip hiç düşmüyor, yani bütçenin konusu değil — çıkarmayı
+unutan ilk hesap 360dp'de *"hiçbir şey düşmesin"* diyordu, oysa maket üç
+öğenin birden düştüğünü yazıyor. Çip çıkarılınca maketin sayısı **birebir**
+çıktı: ad 192dp.
+
+### Delta + sparkline ana satıra (82)
+
+Maket ikisini baştan beri ana satırda çiziyordu; kod ikinci satırın içine
+koymuştu ve orada **ad sütununun** genişliğini paylaşıyorlardı — kaybeden hep
+cümle oluyordu (*"önce 1.234,56"* yerine *"önce…"*). Artık paylarını feda
+sırasından alıyorlar.
+
+### Güncel fiyat yalnız çipte (83) ve çip kendi satırında (84)
+
+İkinci satır **tek içerik ve tek satır** taşıyor: geçmiş metası **ya** ucuz
+çipi **ya** öneri gerekçesi. Birlikteliğin dışlanması yeni bir kısıt değil,
+var olan kuralların sonucu — çip varken trend bastırılıyor (karar 41) ve
+`PackChanged` çipi zaten imkânsız kılıyor. Kod bunu artık **veriyle değil
+kuralla** biliyor.
+
+`PackChanged` metni de değişti: *"900 g → 800 g · 45,00"* yerine
+**"ambalaj küçüldü: 900 g → 800 g"**. Güncel fiyat çipe taşındı.
+
+### 92dp fiyat sütunu ve binde kuruş (81, 85)
+
+`SizesExtra.priceColumn` **ölü bir sabitti**: tasarım sistemi, altı maket
+kullanımı ve Compose Spec 92dp diyordu, kodda hiçbir yerde geçmiyordu. Sonuç:
+dört haneli fiyat 99,38dp'ye taşıp fazlasını addan çalıyordu.
+
+1.000 TL ve üstünde kuruş yazılmıyor — bin liralık bir sepette 56 kuruş
+okunacak bir şey değil ve tam değeri Ürün Detayı'nda duruyor. **En yakın
+liraya**, aşağı değil: aşağı yuvarlamak bütün fiyatları sistematik olarak ucuz
+gösterirdi.
+
+Çipin 48dp'lik hedefi artık kendi kutusundan değil **satır yüksekliğinden**
+geliyor (karar 85). `heightIn(48dp)` fiyatlı her satırı 56dp yerine 64dp
+yapıyor ve *"10–11 satır görünür"* hedefini dokuza düşürüyordu.
+
+### Açık kalan iki şey
+
+`docs/33` ve `docs/34` tasarımda: satırın **yeniden çizilmesi** (feda sırası
+son hâl mi ara adım mı) ve **miktar düzenleme** (hiçbir yerde yok).
