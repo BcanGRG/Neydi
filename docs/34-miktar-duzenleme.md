@@ -1,3 +1,13 @@
+> **KAPANDI — kararlar 107-110, 23 Ağustos 2026.** Miktar üç yüzeyden de
+> düzenlenebiliyor: satırdaki rozet üç saniyelik sayacı açıyor, Ürün
+> Detayı'nın başında yazılabilir bir "Bu listedeki miktar" bloğu var, keşif
+> hücresinde uzun dokunuş sayacı hücrenin içinde açıyor. Üç ekleme yolu da
+> idempotent. Ayrıntı: docs/11.
+>
+> ⚠ Aşağıdaki tablo **beş** ekleme yolu yazıyor; denetim kodda **sekiz**
+> buldu. Hepsi tek bir `ListRepository.add` çağrısında birleşiyor, yani
+> davranış tekti - sayı yanlıştı.
+
 > **Ek — `KODDAN-SORULAR-17-SATIR.md` ile aynı turda okunmalı.** Satır yeniden
 > çiziliyorsa bu boşluk da o çizimin içinde kapanmalı; ayrı bir yüzey olarak
 > sonradan eklenirse satır bütçesi ikinci kez bozulur.
