@@ -303,7 +303,41 @@ class ListViewModel(
     private val _storePickerOpen = MutableStateFlow(false)
     val storePickerOpen: StateFlow<Boolean> = _storePickerOpen
 
-    fun openStorePicker() { _storePickerOpen.value = true }
+    /**
+     * Secicinin ACILISTA isaretli gelen cipi, gezinin hedefi yokken
+     * (karar 123).
+     *
+     * ## Yapiskanlik ayri bir olaydan besleniyor
+     *
+     * Etiket tarafindaki secici *"en son etiket cektigin market"*i hatirliyor
+     * (`lastUsedStoreId`); burasi *"en son gitmeye karar verdigin market"*i
+     * (`lastDeclaredStoreId`). Tasarimin uyarisi tam olarak buydu: tek degere
+     * baglamak, A101'de cekilen bir etiketin BIM gezisinin hedefini
+     * degistirmesi demekti.
+     *
+     * ## Bir ONERI, bir beyan DEGIL
+     *
+     * `trip.storeId` YAZILMIYOR - yalnizca cip isaretli geliyor ve kullanici
+     * dokunana kadar baslikta hicbir cumle cikmiyor. Otomatik yazsaydik
+     * uygulama, kullanicinin soylemedigi bir cumleyi ("BIM'e gidiyorsun")
+     * onun agzindan kurmus olurdu.
+     *
+     * ⚠ KOD KARARI: kullanici bu gezide "Belli degil"i sectiyse seciciyi
+     * yeniden actiginda oneri gene isaretli gelir - `trip.storeId` iki hali
+     * de `null` ile yaziyor ve ayirmak icin ucuncu bir alan gerekirdi.
+     * Tasarima sorulacak.
+     */
+    private val _declaredSuggestion = MutableStateFlow<String?>(null)
+    val declaredSuggestion: StateFlow<String?> = _declaredSuggestion
+
+    fun openStorePicker() {
+        _storePickerOpen.value = true
+        // ONERI ACILIS ANINDA OKUNUYOR, akista tutulmuyor: secici nadiren
+        // aciliyor ve deger her acilista taze olmali.
+        viewModelScope.launch {
+            _declaredSuggestion.value = repo.lastDeclaredStoreId(household)
+        }
+    }
 
     fun closeStorePicker() { _storePickerOpen.value = false }
 

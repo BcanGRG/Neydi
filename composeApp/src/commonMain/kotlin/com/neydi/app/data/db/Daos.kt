@@ -237,6 +237,71 @@ interface TripDao {
     suspend fun setStoreIfAbsent(id: String, storeId: String)
 
     /**
+     * Bu markete GIDEN satir sayisi - silme kapisinin ikinci sarti (karar 122).
+     *
+     * ## Neden satir sayiyor, gezi degil
+     *
+     * Engellenen uzun dokunusun yazdigi cumle *"Bu markete giden 3 satir
+     * var."* - yani kullaniciya kaybedecegi seyin BOYUNU soyluyor. Gezi
+     * sayisi ("2 gezi") o boyu vermez ve kullanicinin listede gordugu birim
+     * de satir.
+     *
+     * ## Iki yoldan "gidiyor"
+     *
+     * 1. **Satirin kendi istisnasi** (`trip_line.storeId`) - *"bunu A101'den
+     *    alacagim"*.
+     * 2. **Gezinin hedefi** (`trip.storeId`) ve satirin istisnasi YOK - satir
+     *    hedefi izliyor, yani o da bu markete gidiyor.
+     *
+     * Ikincisi olmadan kapi yarim kalirdi: hedefi BIM olan on sekiz satirlik
+     * bir liste varken BIM silinebilir olurdu ve `deviatesFrom`'un ilk sarti
+     * (hedef var) dusunce **butun sapma isaretleri** sessizce kaybolurdu -
+     * `docs/38` S2'nin tarif ettigi tam felaket.
+     *
+     * ## Neden `completedAt` sorulmuyor
+     *
+     * Kapanmis gezi de bu marketi gosteriyor. Silinirse Gecmis'teki o gezinin
+     * zinciri adsiz kalir - ayni sessiz hasar, sadece baska ekranda.
+     */
+    @Query(
+        """
+        SELECT COUNT(*) FROM trip_line l
+        JOIN trip t ON t.id = l.tripId
+        WHERE t.householdId = :householdId
+          AND t.deletedAt IS NULL
+          AND l.deletedAt IS NULL
+          AND (l.storeId = :storeId OR (l.storeId IS NULL AND t.storeId = :storeId))
+        """,
+    )
+    suspend fun linesHeadedTo(householdId: String, storeId: String): Int
+
+    /**
+     * En son BEYAN edilen zincir - beyan secicisinin yapiskanligi (karar 123).
+     *
+     * ## Neden `lastUsedStoreId` degil
+     *
+     * Karar 59'un yapiskanligi *"en son etiket cektigin market"*
+     * (`PriceObservationDao.lastUsedStoreId`, kaynagi `price_observation`);
+     * buradaki *"en son gitmeye karar verdigin market"*, kaynagi `trip`.
+     * Tasarimin uyarisi tam olarak buydu: tek degere baglamak, **A101'de
+     * cekilen bir etiketin BIM gezisinin hedefini degistirmesi** demekti.
+     *
+     * Iki soru farkli oldugu icin iki sorgu farkli tabloya bakiyor - ve
+     * ayni degeri saklayan ikinci bir kolon acmadan, cunku beyanin kendisi
+     * zaten `trip.storeId`'de yaziyor. Ikinci bir kolon ucuncu bir gercek
+     * kaynagi olurdu.
+     */
+    @Query(
+        """
+        SELECT storeId FROM trip
+        WHERE householdId = :householdId AND storeId IS NOT NULL AND deletedAt IS NULL
+        ORDER BY startedAt DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun lastDeclaredStoreId(householdId: String): String?
+
+    /**
      * KARSILASTIR-VE-YAZ ile kapatir. "TEK CIHAZ KAPATIR" kuralini ZORLAYAN yer.
      *
      * completedAt IS NULL sayesinde ikinci kapatma denemesi SIFIR satir

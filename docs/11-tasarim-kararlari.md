@@ -1626,3 +1626,91 @@ bir jest olurdu.
 |---|---|
 | `label()`'da `"· hedef"` düşürüldü | `aRowThatFollowsTheTargetSaysSoNextToTheTargetsName` + `theTargetItselfNeverArrivesAsAnException` |
 | `deviatesFrom` kendi gövdesini geri aldı (hedef şartı düştü) | `theSheetAndTheRowAskTheSameDeviationQuestion` + `aRowThatFollowsTheTargetCarriesNoMark` |
+
+### Karar 122 — beyanı olan market silinemez ✅
+
+`docs/38` S2'nin bildirdiği hasar **sessiz ve yıkıcıydı**. Karar 59'un silme
+kapısı yalnızca **gözleme** bakıyordu (`hasObservationsAt`) ve karar 117 tam
+o boşluğa yerleşti: kullanıcı hiç etiket çekmediği bir zincire *"bugün oraya
+gidiyorum"* diyebiliyor — *"2-3 tanesini A101'den alacağım"* cümlesi fiyat
+bilgisi gerektirmiyor.
+
+Zincir şuydu: etiket ekranında uzun dokunuş → `softDelete` → sorgudaki
+`deletedAt IS NULL` yüzünden ad `null` döner → satırdaki sapma işareti
+kaybolur, başlıktaki sayaç düşer, hedef silinmişse beyan hiç çizilmez. Yani
+**ilgisiz bir ekrandaki tek uzun dokunuş, kullanıcının yazdığı planı haber
+vermeden imha ediyordu.**
+
+**Tasarım (a)'yı seçti:** kapı `hasObservationsAt` **OR** `hasDeclarationsAt`.
+Uyarıp silmek (b) reddedildi — *"doğru soruyu yanlış yerde soruyordu"*:
+kullanıcı o an etiket işinde ve kaç satırın etkilendiğini görmüyor.
+
+**Sayım iki bacaklı** (`TripDao.linesHeadedTo`):
+
+1. **Satırın kendi istisnası** (`trip_line.storeId`) — *"bunu A101'den
+   alacağım"*.
+2. **Gezinin hedefi** (`trip.storeId`) ve satırın istisnası **yok** — satır
+   hedefi izliyor, yani o da bu markete gidiyor.
+
+⚠ İkincisi olmadan kapı yarım kalırdı ve hasarın **en büyüğü** oradan
+geçerdi: hedefi BİM olan on sekiz satırlık bir liste varken BİM silinebilir
+olurdu, `deviatesFrom`'un ilk şartı (hedef var) düşerdi ve listedeki **bütün**
+sapma işaretleri aynı anda kaybolurdu.
+
+`completedAt` **sorulmuyor**: kapanmış gezi de o marketi gösteriyor; silinirse
+Geçmiş'teki o gezinin zinciri adsız kalır — aynı sessiz hasar, başka ekranda.
+
+**Engel sebebini yazıyor**, *"silinemez"* demiyor: `blockedStoreDeleteMessage`
+→ **"Bu markete giden 3 satır var."** Sayı iki iş birden yapıyor —
+kaybedeceğinin boyunu söylüyor ve kapının nerede açılacağını ima ediyor.
+Cümle ViewModel'in dışında, `savedToast` ile aynı gerekçeyle: metin test
+edilebilir olmalı.
+
+### Karar 123 — iki yapışkanlık, iki ayrı olay ✅
+
+Seçicinin **ayrı bileşen** olması ve **bütün zincirleri** göstermesi zaten
+doğruydu (`StoreTargetPicker`, aramasız/eklemesiz/silmesiz, dokuz zincir
+cihazda görüldü). Kalan tek iş `lastDeclaredStoreId`'ydi.
+
+**Yeni kolon açılmadı.** Beyanın kendisi zaten `trip.storeId`'de yazılı;
+ikinci bir kolon **üçüncü bir gerçek kaynağı** olurdu ve gün gelir sapardı.
+Sorgu en son beyan edilen zinciri `trip` tablosundan okuyor — karar 59'un
+yapışkanlığı ise `price_observation`dan (`lastUsedStoreId`). Tasarımın
+uyarısı tam buydu: tek değere bağlamak, **A101'de çekilen bir etiketin BİM
+gezisinin hedefini değiştirmesi** demekti.
+
+**Yapışkanlık bir ÖNERİ, bir beyan değil:** `trip.storeId` yazılmıyor,
+yalnızca çip işaretli geliyor. Otomatik yazsaydık uygulama, kullanıcının
+söylemediği bir cümleyi (*"BİM'e gidiyorsun"*) onun ağzından kurmuş olurdu.
+
+⚠ **KOD KARARI — tasarıma sorulacak:** kullanıcı bu gezide *"Belli değil"*i
+seçtiyse seçiciyi yeniden açtığında öneri gene işaretli gelir. `trip.storeId`
+*"hiç seçilmedi"* ile *"belli değil seçildi"* hâllerinin ikisini de `null`
+ile yazıyor; ayırmak için üçüncü bir alan gerekirdi.
+
+### Karar 125 — değişiklik yok ✅
+
+Kodun **iki kararı da onaylandı**: cümlede tek zincirde ad kalır
+(*"3'ü A101'de"*), birden fazlasında ad düşer sayı kalır (*"3'ü başka
+marketlerde"*); bölümleme zincir başına, başlıkta storefront + `"A101'de"`.
+`storeDeclaration` ve `toSections` olduğu gibi duruyor.
+
+⚠ **Compose Spec'te bir tutarsızlık var ve kod maketi izliyor:** denetim
+satırı bölüm başlığını `"A101'de · 2"` diye yazıyor, karar 117-118'in satırı
+ise `"A101'de (2)"`. Kod bugün adı ve sayıyı `ListSection` üzerinden ayrı
+taşıyor; hangisinin çizileceği başlığın kendi bileşeninde. Tasarıma
+bildirilecek.
+
+### Isırma kanıtı — 122 ve 123
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| Sayımdan hedef bacağı (`OR l.storeId IS NULL AND t.storeId = ...`) | `linesThatFollowTheTargetCountTowardTheTarget` + `anExceptionLeavesTheTargetsCount` |
+| Sayımdan `l.deletedAt IS NULL` | `aRemovedLineStopsHoldingItsChainHostage` |
+| `ORDER BY startedAt DESC` → `ASC` | `theStickyChainComesFromTheLastDeclarationNotTheLastTag` |
+| Cümleden sayı düşürüldü | `engellenen silme kac satiri korudugunu yaziyor` |
+
+⚠ **Testin kendisi bir kez ısırılıp düzeltildi.** `lastDeclaredStoreId`
+testi önce **sabit saatle** yazılmıştı: iki gezi aynı `startedAt` damgasını
+taşıyordu, yani `DESC` → `ASC` ısırığı **hiçbir testi düşürmüyordu**. Sıralama
+iddiası ancak damgalar farklıyken korunuyor; saat ilerletildi.

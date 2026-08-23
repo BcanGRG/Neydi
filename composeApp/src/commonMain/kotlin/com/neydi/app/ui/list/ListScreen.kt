@@ -120,6 +120,7 @@ fun ListScreen(
     val summary by vm.summary.collectAsStateWithLifecycle()
     val productSheet by vm.productSheet.collectAsStateWithLifecycle()
     val storePickerOpen by vm.storePickerOpen.collectAsStateWithLifecycle()
+    val declaredSuggestion by vm.declaredSuggestion.collectAsStateWithLifecycle()
     val lineStorePicker by vm.lineStorePicker.collectAsStateWithLifecycle()
     val storeOptions by vm.storeOptions.collectAsStateWithLifecycle()
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
@@ -327,7 +328,10 @@ fun ListScreen(
             Column(Modifier.padding(bottom = bottomInset + Spacing.md)) {
                 StoreTargetPicker(
                     stores = storeOptions,
-                    selectedId = state.targetStoreId,
+                    // HEDEF VARSA O, YOKSA EN SON BEYAN (karar 123).
+                    // Yapiskanlik yalnizca CIZIMDE: `trip.storeId` dokunusa
+                    // kadar bos kaliyor ve baslikta hicbir cumle cikmiyor.
+                    selectedId = state.targetStoreId ?: declaredSuggestion,
                     onSelect = vm::setTargetStore,
                 )
             }
