@@ -1483,3 +1483,78 @@ Kullanıcının bildirdiği iki kusur, ikisi de commit `9b2bcd3` ile kapandı:
 4. **Test dosyasında `emptyList()` adlı bir test** standart `emptyList()`'i
    gölgeliyordu; hata *"beklenen `List<String>`, gelen `Unit`"* diye çıkıyor ve
    sebebi hiçbir yerde görünmüyordu.
+
+---
+
+## Kararlar 121–126 — istisnayı yazan jest bulundu *(23 Ağustos, 22. tur)*
+
+`docs/38`'in **altı maddesinin altısı da** cevaplandı. İki kod kararı
+onaylandı (125 ve 123'ün seçici yarısı), biri değiştirildi (121), üçü yeni iş.
+Karşılık tablosu `ROADMAP.md` §3.2'de.
+
+⚠ **Defterin kendi sayacı düzeltildi:** 97 değil **113 giriş**, 126'ya kadar
+numaralı.
+
+### Karar 121 — nokta grup içini bağlar, boşluk grupları ayırır ✅
+
+**Sorun `docs/38` S1'de yazılıydı ve cihazda görülmüştü:** ekonomi bandı tek
+akışta **iki zincir adı** taşıyordu ve aralarında tek bir `·` vardı —
+
+> 🏪 **A101** · BİM · bugün
+
+Biri **beyan** (*"burayı A101'den alacağım"*), öteki **gözlem** (*"fiyatı
+BİM'de gördük"*). Aynı noktalama ikisini birbirine bağlıyordu.
+
+**Tasarımın cevabı yeni bir yol:** aradaki nokta **silinir**, iki grup bandın
+kendi **8dp**'sine bırakılır, grup içi **4dp** yerinde kalır.
+
+```
+🏪 A101␣␣BİM · bugün
+   └─4dp┘  └─ 8dp ─┘
+```
+
+Gerekçe bandın kendi dilbilgisi: *"nokta grup içini bağlar, boşluk grupları
+ayırır"* — ve fiyat çipini de aynı 8dp ayırıyor.
+
+**Kodda ne değişti:** sapma işareti `DeviationMark` adıyla kendi bileşeni
+oldu ve bandın **kardeşi**; içerideki `Text("·")` ve `"· $text"` iç içeliği
+kalktı. Kırpılan taraf yine meta (`weight(1f)` onda), sapma `flex:none`
+karşılığı olarak ağırlıksız — yani asla kırpılmıyor.
+
+⚠ **Taze gözlemin zincir adını düşürmek (b seçeneği) REDDEDİLDİ.** İki ad
+birlikte bir **çelişki** gösteriyor — *"A101'den alacağım ama fiyatı BİM'de
+gördüm"* — ve karar 119 tam o sinyali koruyor. `EconomyBandTest` bu
+bilgisizliği kilitliyor: cümle sapmadan haberdar değil ve olmamalı.
+
+### 121 bir hatayı da görünür yaptı: delta bütçesi işareti saymıyordu
+
+Karar 118 işareti banda soktu ama **bütçe onu görmüyordu** — işaret
+`weight`li grubun *içindeydi* ve bant düzeyindeki hesap yalnızca fiyat çipini
+biliyordu:
+
+```kotlin
+val room = if (priceText != null) maxWidth - SizesExtra.priceColumn - 6.dp else maxWidth
+```
+
+İki grup kardeş olunca eksiklik görünür hâle geldi: aynı kısa cümle, aynı
+ekran, ama bandın **56dp**'si zaten işarete gitmiş oluyor ve delta yine de
+*"sığıyorum"* diyordu. Kırpılan şey **cümle** oluyordu — karar 104'ün tek
+yasağı.
+
+Hesap saf bir fonksiyona çıktı (`deltaBudget`) ve kural bir liste değil bir
+**çıkarma**: bandın düşmeyen her üyesi **kendi aralığıyla birlikte** bütçeden
+iner. `- 6.dp` de aynı ailedendi — bandın aralığı 21. turda 8dp'ye
+düzeltilmişti, bu satır 6dp'de kalmıştı.
+
+**Isırma kanıtı** (üç kural, üç ısırık, her biri tam kendi testini düşürdü):
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| `deltaBudget`'ten sapma bacağı | `theDeviationMarkAloneCanDropTheDelta` + `everyFixedMemberBringsItsOwnGap` |
+| Üyelerin kendi aralığı | `theChipAndItsGapAreWhatMakeTheBandOneHundredEightySix` + `everyFixedMemberBringsItsOwnGap` |
+| `DEVIATION_GAP` = 8dp (gruplar kaynaşır) | `spaceSeparatesTheGroupsAndTheDotOnlyBindsWithinThem` |
+
+⚠ **Cevapsız kalan tek kod kararı yerinde duruyor:** sapma varken *"başka
+markette ucuz"* çipi bastırılıyor. `docs/38` S1'in içinde geçiyordu ama karar
+121 yalnızca iki zincir adının ayrılmasını cevapladı; çipin kaderi hâlâ
+**kodun kararı**.

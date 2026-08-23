@@ -1,5 +1,6 @@
 package com.neydi.app.ui.components
 
+import androidx.compose.ui.unit.dp
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -72,6 +73,42 @@ class EconomyBandTest {
         )
         assertEquals("önce 324,00 TL", meta)
         assertFalse(meta.contains("369"), "guncel fiyat cumleye sizmis")
+    }
+
+    /**
+     * BOSLUK GRUPLARI AYIRIR, NOKTA GRUP ICINI BAGLAR (karar 121).
+     *
+     * Bant iki grup tasiyor - beyan (`storefront + A101`) ve gozlem
+     * (`BIM . bugun`) - ve aralarindaki orta nokta SILINDI. Silmenin bir
+     * anlami olmasinin tek sarti gruplar arasi araligin grup ici araliktan
+     * BUYUK olmasi: esitlenirlerse iki zincir adi yine tek bir dizi gibi
+     * okunur ve noktayi kaldirmak hicbir sey kazandirmamis olur.
+     *
+     * Iki sayi da maketten (`gap:8px` / `gap:4px`); test ikisini de yaziyor
+     * ama asil korudugu sey ARALARINDAKI SIRA.
+     */
+    @Test
+    fun spaceSeparatesTheGroupsAndTheDotOnlyBindsWithinThem() {
+        assertEquals(8.dp, ECONOMY_BAND_GAP, "gruplar arasi aralik maketin 8px'i degil")
+        assertEquals(4.dp, DEVIATION_GAP, "grup ici aralik maketin 4px'i degil")
+        assertTrue(
+            ECONOMY_BAND_GAP > DEVIATION_GAP,
+            "gruplar arasi aralik grup icinden buyuk degil - iki grup kaynasir",
+        )
+    }
+
+    /**
+     * TAZE GOZLEMIN ZINCIR ADI YERINDE DURUYOR.
+     *
+     * `docs/38` S1'in (b) secenegi sapma varken gozlemin zincir adini
+     * dusurmeyi oneriyordu; tasarim REDDETTI. Iki ad birlikte bir celiski
+     * gosteriyor - *"A101'den alacagim ama fiyati BIM'de gordum"* - ve
+     * karar 119 tam o sinyali koruyor. Cumle sapmadan haberdar degil ve
+     * olmamali; bu test o bilgisizligi kilitliyor.
+     */
+    @Test
+    fun theFreshSentenceKeepsItsChainNameEvenWhenTheRowDeviates() {
+        assertEquals("BİM · bugün", price(PriceHint.Single("24,90 TL", "BİM", 0)))
     }
 
     /** Gozlem yoksa bant hic cizilmez - "fiyat yok" da yazilmaz. */
