@@ -56,7 +56,7 @@ class UndoDeleteTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val elma = r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg")
-        val satir = r.add(home, trip.id, elma, memberId = "m1", count = 2.0)
+        val satir = r.add(home, trip.id, elma, memberId = "m1", count = 2.0).line
 
         r.remove(satir.id)
 
@@ -76,7 +76,7 @@ class UndoDeleteTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val elma = r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg")
-        val satir = r.add(home, trip.id, elma, memberId = "m1", count = 2.0)
+        val satir = r.add(home, trip.id, elma, memberId = "m1", count = 2.0).line
 
         r.remove(satir.id)
         r.undoRemove(satir.id)
@@ -91,7 +91,7 @@ class UndoDeleteTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val sut = r.findOrCreateProduct(home, "Süt", "sut-kahvaltilik", "adet")
-        val satir = r.add(home, trip.id, sut, memberId = "m1")
+        val satir = r.add(home, trip.id, sut, memberId = "m1").line
         r.toggleChecked(satir.id, true)
 
         r.remove(satir.id)
@@ -107,7 +107,7 @@ class UndoDeleteTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val cay = r.findOrCreateProduct(home, "Çay", "icecek", "adet")
-        val satir = r.add(home, trip.id, cay, memberId = "m2")
+        val satir = r.add(home, trip.id, cay, memberId = "m2").line
 
         r.remove(satir.id)
         r.undoRemove(satir.id)
@@ -122,7 +122,7 @@ class UndoDeleteTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val elma = r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg")
-        val satir = r.add(home, trip.id, elma, memberId = "m1")
+        val satir = r.add(home, trip.id, elma, memberId = "m1").line
 
         r.remove(satir.id)
         r.undoRemove(satir.id)
@@ -141,7 +141,7 @@ class UndoDeleteTest {
         val db = db(); prepare(db)
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
-        val elma = r.add(home, trip.id, r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg"), memberId = "m1")
+        val elma = r.add(home, trip.id, r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg"), memberId = "m1").line
         r.add(home, trip.id, r.findOrCreateProduct(home, "Süt", "sut-kahvaltilik", "adet"), memberId = "m1")
 
         r.remove(elma.id)
@@ -155,8 +155,8 @@ class UndoDeleteTest {
         val db = db(); prepare(db)
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
-        val elma = r.add(home, trip.id, r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg"), memberId = "m1")
-        val sut = r.add(home, trip.id, r.findOrCreateProduct(home, "Süt", "sut-kahvaltilik", "adet"), memberId = "m1")
+        val elma = r.add(home, trip.id, r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg"), memberId = "m1").line
+        val sut = r.add(home, trip.id, r.findOrCreateProduct(home, "Süt", "sut-kahvaltilik", "adet"), memberId = "m1").line
 
         r.remove(elma.id)
         r.remove(sut.id)
@@ -180,7 +180,7 @@ class UndoDeleteTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val elma = r.findOrCreateProduct(home, "Elma", "meyve-sebze", "kg")
-        val satir = r.add(home, trip.id, elma, memberId = "m1", count = 5.0)
+        val satir = r.add(home, trip.id, elma, memberId = "m1", count = 5.0).line
 
         r.remove(satir.id)
         r.add(home, trip.id, elma, memberId = "m1")

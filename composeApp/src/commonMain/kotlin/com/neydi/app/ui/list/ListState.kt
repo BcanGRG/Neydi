@@ -168,6 +168,22 @@ internal fun ListRowProjection.toUiRow(
 )
 
 /**
+ * Sheet'in "N urun eklendi" sayacinin bu eklemeden ne kadar artacagi.
+ *
+ * ## Neden saf bir fonksiyon
+ *
+ * Sayacin tek isi kullaniciya YALAN SOYLEMEMEK: sheet acikken liste
+ * gorunmuyor, yani rakamin dogrulugunu kontrol edecek baska bir sey yok.
+ * Karar 109 ikinci eklemeyi sessiz yapinca sayacin da susmasi gerekti -
+ * yoksa uc kez ayni urune dokunan biri *"3 ürün eklendi"* okurdu.
+ *
+ * Iki kosul da gerekli: sheet kapaliyken sayacin anlami yok (liste zaten
+ * gorunuyor), ve eklenmemis bir satir sayilmamali.
+ */
+internal fun sheetAddedDelta(sheetOpen: Boolean, wasNew: Boolean): Int =
+    if (sheetOpen && wasNew) 1 else 0
+
+/**
  * Satirlari bolumlere ayirir.
  *
  * ISARETLILER REYONDAN CIKAR: "Alindi" bolumune tasinirlar. Reyon icinde

@@ -65,12 +65,24 @@ class ListRepositoryTest {
     }
 
     /**
-     * ASIL DAVRANIS: es zaten ekmek eklemisse ikinci ekleme HATA VERMEMELI,
-     * adedi artirmali. UNIQUE(tripId, productId) ikinci satiri zaten
-     * engelliyor; kisita carpip "ekleyemedim" demek yanlis cevap olurdu.
+     * IKINCI EKLEME HICBIR SEY DEGISTIRMIYOR (karar 109).
+     *
+     * ## Bu iddia tam tersine cevrildi
+     *
+     * Eskiden *"adedi artirmali"* yaziyordu ve savunmasi makuldu: *"iki kisi
+     * ayni ekmegi istedi, iki ekmek degil."* Ama o cumle miktarin baska bir evi
+     * OLMADIGI dunyada yazilmisti - artirmak, adedi degistirmenin tek yoluydu.
+     *
+     * Uc ekleme yolu uc turlu davraniyordu: tek tek artiriyor, toplu atliyor
+     * (karar 91), sheet'te isaretli hucre pasif oldugu icin hicbir sey
+     * olmuyordu. Karar 109 ucunu birlestirdi.
+     *
+     * HATA HALA VERILMIYOR: kisita carpip *"ekleyemedim"* demek yine yanlis
+     * cevap - degisen tek sey, dogru cevabin artik "sessizce ayni kalmak"
+     * olmasi.
      */
     @Test
-    fun readdingSameProductIncrementsQuantity() = runTest {
+    fun readdingSameProductChangesNothing() = runTest {
         val db = db(); prepare(db)
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
@@ -81,9 +93,54 @@ class ListRepositoryTest {
 
         val rows = r.rows(home).first()
         assertEquals(1, rows.size, "ikinci ekleme yeni satir acti")
-        assertEquals(2.0, rows.single().quantity)
+        assertEquals(1.0, rows.single().quantity, "ikinci ekleme miktari degistirdi")
         // Ilk ekleyen korunuyor: "kim ekledi" bilgisi ezilmemeli.
         assertEquals("m1", rows.single().addedByMemberId)
+    }
+
+    /**
+     * IKINCI EKLEME SESSIZ AMA GORUNMEZ DEGIL: satir yine donuyor.
+     *
+     * Karar 89'un "az once eklendi" yikamasi bu satiri bulabilmek zorunda -
+     * kullanici bir sey ekledigini dusunuyor ve ekranin ona cevap vermesi
+     * gerekiyor. `wasNew` ise sayaclara *"bu bir ekleme degildi"* diyor:
+     * ikisini ayirmadan ya yikama kaybolur ya sayac yalan soyler.
+     */
+    @Test
+    fun aSecondAddStillReturnsTheRowSoTheWashCanRun() = runTest {
+        val db = db(); prepare(db)
+        val r = repo(db)
+        val trip = r.openOrGetActiveTrip(home, "m1")
+        val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
+
+        val first = r.add(home, trip.id, bread, memberId = "m1")
+        val second = r.add(home, trip.id, bread, memberId = "m1")
+
+        assertTrue(first.wasNew, "ilk ekleme yeni satir acmaliydi")
+        assertTrue(!second.wasNew, "ikinci ekleme yeni satir saymamali")
+        assertEquals(first.line.id, second.line.id, "yikamanin bakacagi satir ayni olmali")
+    }
+
+    /**
+     * SESSIZ CANLI HATA: otomatik eklenen sabit, elle eklenince ikiye cikiyordu.
+     *
+     * `seedStaples` her gezide sabitleri kendiliginden ekliyor. Kullanici
+     * "ekmek" yazip ekledigunde eski kural adedi 2 yapiyordu - kimse istemeden,
+     * ve kullanici sabitin zaten orada oldugunu bilmeden. Bu hatanin testi
+     * yoktu; kural degistigi icin artik yazilabiliyor.
+     */
+    @Test
+    fun anAutoSeededStapleIsNotDoubledByATypedAdd() = runTest {
+        val db = db(); prepare(db)
+        val r = repo(db)
+        val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
+        r.setStaple(bread.id, true)
+        // Sabit, gezi acilirken kendiliginden giriyor.
+        val trip = r.openOrGetActiveTrip(home, "m1")
+
+        r.add(home, trip.id, bread, memberId = "m1")
+
+        assertEquals(1.0, r.rows(home).first().single().quantity)
     }
 
     /** matchKey uzerinden bakiyor: "Ekmek" ile "EKMEK" ayri urun olmamali. */
@@ -104,7 +161,7 @@ class ListRepositoryTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
-        val row = r.add(home, trip.id, milk, memberId = "m1")
+        val row = r.add(home, trip.id, milk, memberId = "m1").line
 
         r.toggleChecked(row.id, true)
         val checked = r.rows(home).first().single()
@@ -130,11 +187,11 @@ class ListRepositoryTest {
         val r = repo(db)
         val trip = r.openOrGetActiveTrip(home, "m1")
         val product = r.findOrCreateProduct(home, "Yumurta", "sut-kahvalti", "adet")
-        val row = r.add(home, trip.id, product, memberId = "m1")
+        val row = r.add(home, trip.id, product, memberId = "m1").line
         r.remove(row.id)
 
         // Ayni urun tekrar eklenebilmeli - tombstone yeni eklemeyi engellememeli.
-        val again = r.add(home, trip.id, product, memberId = "m1")
+        val again = r.add(home, trip.id, product, memberId = "m1").line
         assertTrue(r.rows(home).first().size == 1)
         // Mezardan cikan satir adedi SIFIRDAN baslar, eski adedi tasimaz.
         assertEquals(1.0, again.quantity)
@@ -150,8 +207,8 @@ class ListRepositoryTest {
         val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
         val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
         val past = r.openOrGetActiveTrip(home, "m1")
-        val breadLine = r.add(home, past.id, bread, memberId = "m1")
-        val milkLine = r.add(home, past.id, milk, memberId = "m1")
+        val breadLine = r.add(home, past.id, bread, memberId = "m1").line
+        val milkLine = r.add(home, past.id, milk, memberId = "m1").line
         r.toggleChecked(breadLine.id, true)
         r.toggleChecked(milkLine.id, true)
         r.closeTrip(past.id, "m1")
@@ -180,7 +237,7 @@ class ListRepositoryTest {
         val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
         val milk = r.findOrCreateProduct(home, "Süt", "sut-kahvalti", "L")
         val past = r.openOrGetActiveTrip(home, "m1")
-        val breadLine = r.add(home, past.id, bread, memberId = "m1")
+        val breadLine = r.add(home, past.id, bread, memberId = "m1").line
         r.add(home, past.id, milk, memberId = "m1")
         r.toggleChecked(breadLine.id, true)
         r.closeTrip(past.id, "m1")
@@ -203,7 +260,7 @@ class ListRepositoryTest {
         val r = repo(db)
         val bread = r.findOrCreateProduct(home, "Ekmek", "firin-ekmek", "adet")
         val past = r.openOrGetActiveTrip(home, "m1")
-        val line = r.add(home, past.id, bread, memberId = "m1")
+        val line = r.add(home, past.id, bread, memberId = "m1").line
         r.toggleChecked(line.id, true)
         r.closeTrip(past.id, "m1")
 

@@ -21,6 +21,7 @@ import com.neydi.app.data.formatRelativeDay
 import com.neydi.app.data.matchKey
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
+import com.neydi.app.data.repo.AddResult
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
@@ -694,17 +695,24 @@ class ListViewModel(
         viewModelScope.launch {
             // MUKERRER SATIR ADET ARTIRMIYOR, ATLANIYOR (karar 91).
             //
-            // Tek tek eklemede ikinci dokunusun adedi artirmasi dogru - jest
-            // "bunu bir tane daha ekle" demek. Toplu yolda jest o degil:
-            // kazayla ikinci kez yapistirilan bir liste, listeyi KATLARDI.
+            // ⚠ Bu filtre karar 109'dan sonra DOGRULUK icin gerekli degil -
+            // `repo.add` zaten sessiz. Ama silinmiyor, cunku iki isi daha var:
+            // (1) ayni yapistirmanin ICINDE tekrar eden satirlari eliyor, ki
+            // repository bunu goremez - iki satir da ayni anda "yeni" olur;
+            // (2) gereksiz veritabani turunu bastan onluyor.
+            //
+            // SAYI ARTIK `wasNew`DEN geliyor, filtreden degil: filtre
+            // `listMatchKeys`e bakiyor ve o `WhileSubscribed(5_000)` bir akis,
+            // yani abonelikten hemen sonraki yapistirmada `emptySet()` olabilir.
+            // O halde filtre hicbir seyi elemez ve eski sayim "12 satır
+            // eklendi" derdi - on ikisi de zaten listedeyken.
             val before = listMatchKeys.value
             var added = 0
             rows.forEach { row ->
                 val m = parseQuantity(row)
                 if (m.name.isBlank()) return@forEach
                 if (matchKey(m.name) in before) return@forEach
-                addAndAwait(m.name, null, m.unit, m.count)
-                added++
+                if (addAndAwait(m.name, null, m.unit, m.count)) added++
             }
             _bulkToast.value = if (added > 0) "$added satır eklendi" else "Hepsi zaten listende"
         }
@@ -894,16 +902,21 @@ class ListViewModel(
      * bu hatanin tekrarini istemek olurdu.
      *
      * SAYAC DA TASINIYOR, yalnizca id DEGIL: ayni urunu ikinci kez eklemek yeni
-     * satir acmiyor, var olanin adedini artiriyor - yani id degismiyor.
+     * satir acmiyor - id degismiyor, ve karar 109'dan beri MIKTAR DA
+     * degismiyor. Yani ikinci eklemede satirda degisen tek sey bu sayac.
      * Yalnizca id'ye bakan bir ekran "ayni deger" gorup kipirdamazdi ve
      * kullanici tam da ikinci eklemede eklendi mi diye bakiyor olurdu.
+     *
+     * YIKAMA HER IKI HALDE DE CALISIYOR (karar 109): satir zaten listedeyse
+     * de kullaniciya bir sey soylenmeli, ve soylenecek sey *"bu zaten
+     * burada"*. Sessiz kalmak, dokunusun kaybolmasi demek olurdu.
      *
      * TOPLU EKLEMEDE (pano, "gecen sefer aldiklarini ekle") her satir sinyali
      * ezip gecer ve SONUNCUSU kazanir - dogrusu bu: yirmi satir eklenirken
      * yirmi kez kaydirmanin anlami yok.
      */
-    private fun signalAdded(line: TripLine) {
-        _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
+    private fun signalAdded(result: AddResult) {
+        _lastAdded.value = AddedRow(rowId = result.line.id, seq = ++addSeq)
         // SAYAC BURADA ARTIYOR, cagiranda DEGIL.
         //
         // Once iki cagiran (`addFromDiscovery`, `addFromSheet`) sayaci
@@ -916,7 +929,12 @@ class ListViewModel(
         // Burada artmasi ayrica kurali cagiranlardan bagimsiz kiliyor: yeni
         // bir ekleme yolu sheet'ten acilirsa sayaci ayrica artirmayi
         // unutmak diye bir sey kalmiyor.
-        if (_sheetOpen.value) _sheetAddedCount.value += 1
+        //
+        // ZATEN LISTEDE OLAN SAYILMIYOR (karar 109): eskiden ikinci ekleme
+        // adedi artirdigi icin "bir sey oldu" demek dogruydu. Artik hicbir sey
+        // olmuyor, ve sheet'in sayaci "3 ürün eklendi" derken ucunun de zaten
+        // listede olmasi mumkun olurdu.
+        _sheetAddedCount.value += sheetAddedDelta(_sheetOpen.value, result.wasNew)
     }
 
     /** Serbest metinden ekle: "2 kg elma" gibi. */
@@ -935,10 +953,15 @@ class ListViewModel(
      * ayri coroutine'e atsaydik ayni urunu iki kez iceren bir pano iki satir
      * acmayi deneyip UNIQUE kisitina carpardi.
      */
-    private suspend fun addAndAwait(name: String, categoryId: String?, unit: String?, count: Double) {
+    private suspend fun addAndAwait(
+        name: String,
+        categoryId: String?,
+        unit: String?,
+        count: Double,
+    ): Boolean {
         // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
         // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
-        val memberId = selfMemberId() ?: return
+        val memberId = selfMemberId() ?: return false
         val trip = repo.openOrGetActiveTrip(household, memberId)
 
         // Kategori/kanonik ad cozumlemesi ORTAK: etiket onayi da ayni
@@ -952,15 +975,15 @@ class ListViewModel(
             categoryId = categoryId,
             unit = unit,
         )
-        signalAdded(
-            repo.add(
-                householdId = household,
-                tripId = trip.id,
-                product = product,
-                memberId = memberId,
-                count = count,
-            ),
+        val result = repo.add(
+            householdId = household,
+            tripId = trip.id,
+            product = product,
+            memberId = memberId,
+            count = count,
         )
+        signalAdded(result)
+        return result.wasNew
     }
 
 }
