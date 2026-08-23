@@ -21,6 +21,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import com.neydi.app.ui.theme.Motion
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,11 +130,25 @@ fun AddSheetContent(
                 )
                 if (addedCount > 0) {
                     // "N urun eklendi" - sheet kapanmadigi icin kullanici
-                    // listeye bakamiyor; sayac tek geri bildirim.
+                    // listeye bakamiyor; sayac tek METIN geri bildirimi.
+                    //
+                    // DEGISIMDE 150 ms OLCEK VURGUSU (karar 89): animasyonsuz
+                    // artan bir rakam, ekranin karsi kosesinde, parmagin ve
+                    // gozun ortadaki izgarada oldugu bir anda hicbir sey
+                    // soylemiyordu. Ayni hareket adet rozetinde de var.
+                    val pulse = remember { Animatable(1f) }
+                    LaunchedEffect(addedCount) {
+                        pulse.snapTo(Motion.PULSE_SCALE)
+                        pulse.animateTo(1f, tween(Motion.PULSE_MS))
+                    }
                     Text(
                         text = "$addedCount ürün eklendi",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.graphicsLayer {
+                            scaleX = pulse.value
+                            scaleY = pulse.value
+                        },
                     )
                 }
             }
@@ -286,9 +306,20 @@ private fun DiscoveryTile(item: DiscoveryItem, inList: Boolean, onTap: () -> Uni
             .fillMaxWidth()
             .heightIn(min = GRID_TILE)
             .clip(NeydiShapes.large)
-            // ISARETLI KUTUCUK PASIF: ayni satiri iki kez eklemek bir is degil.
-            .pressable(enabled = !inList, onTap = onTap)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            // ISARETLI KUTUCUK PASIF ama SONMUYOR (karar 89).
+            //
+            // `pressable(enabled = false)` %38 opakliga dusuruyordu ve o
+            // "devre disi" sozlugunun rengi - yapilmis bir isi YAPILAMAZ is
+            // gibi gosteriyordu. Pasiflik dokunma tarafinda kaliyor, gorunum
+            // tarafinda "yapildi" diyor: successSurface dolgu + isaret.
+            .pressable(enabled = !inList, dimWhenDisabled = false, onTap = onTap)
+            .background(
+                if (inList) {
+                    LocalNeydiExtraColors.current.successSurface
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+            )
             .border(1.dp, LocalNeydiExtraColors.current.hairline, NeydiShapes.large)
             .padding(horizontal = 14.dp),
         verticalArrangement = Arrangement.Center,

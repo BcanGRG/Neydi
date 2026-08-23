@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import com.neydi.app.ui.theme.Motion
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -194,8 +200,20 @@ fun SuggestionChip(
  */
 @Composable
 fun QuantityBadge(text: String, modifier: Modifier = Modifier) {
+    // DEGISIMDE 150 ms OLCEK VURGUSU (karar 92).
+    //
+    // Rozet adet 1 iken HIC cizilmiyor, yani ikinci eklemede birdenbire
+    // beliriyordu - vurgu degil SICRAMA. Ayni hareket sheet sayacinda da var
+    // (karar 89); ikisi "bir sayi degisti" diyor ve ayni dili konusmalari
+    // tesadufi degil.
+    val pulse = remember { Animatable(1f) }
+    LaunchedEffect(text) {
+        pulse.snapTo(Motion.PULSE_SCALE)
+        pulse.animateTo(1f, tween(Motion.PULSE_MS))
+    }
     Box(
         modifier = modifier
+            .graphicsLayer { scaleX = pulse.value; scaleY = pulse.value }
             .defaultMinSize(minWidth = SizesExtra.qtyBadgeHeight)
             .heightIn(min = SizesExtra.qtyBadgeHeight)
             .clip(CircleShape)

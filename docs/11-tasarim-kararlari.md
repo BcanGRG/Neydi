@@ -960,3 +960,58 @@ yanlış cevap verirdi — testi de o vakayı kuruyor.
 80–86 (satır bütçesi), 87–88 (F6.5 metinleri), 89–92 (ekleme geri bildirimi),
 93–94 (focusRing + amber), 95–96 (tahmin), 98–100 (yatay), 101 (kategori tonu
 silinir — şema kolonu, v7 bump'ı gerekiyor). 97 yol haritasına yazıldı.
+
+---
+
+## Kararlar 89–92 kodlandı — ekleme artık "yapıldı" diyor
+
+**23 Ağustos 2026.** Kullanıcının *"eklenmiş hissi vermiyor"* şikâyetinin
+tasarım tarafı. Ölçüm on dört ekleme yolunun **on dördünde de** vurgu
+olmadığını göstermişti; sheet'te tek onay köşedeki gri sayaç ve kutucuğun
+**%38'e sönmesi**ydi — yani *pasiflik* dili, onay dili değil.
+
+### `successSurface` doğdu (karar 89)
+
+Yeni token: ışık `#E9EFE8`, koyu `#1D2E23`. **`success`ten ayrı**, çünkü
+`success` bir metin/ikon rengi (kontrast taşıyor), bu bir **zemin**; ikisini
+tek token yapmak yeşil zemine yeşil metin yazmaya davet ederdi.
+
+Maket eklenen satırı **amber-krem** (`#F6E7D2`) çiziyordu ve biz onu bilerek
+uygulamamıştık: karar 57 amberi *"eksik / emin değiliz"*e kilitlemişti. Tasarım
+bizi doğruladı ve rengi değiştirdi — **sayılar aynı kaldı**
+(`Motion.JUST_ADDED` onaylandı, KDoc'undaki *"tasarımdan değil"* notu düştü).
+
+Üç kanal:
+
+1. **Satır yıkaması** — 1.200 ms dolu, 400 ms sönme. Girişi ani (ekleme anının
+   kendisi zaten olay), çıkışı yumuşak.
+2. **Sayaç ve adet rozeti** — değişimde 150 ms ölçek vurgusu (1 → 1,12 → 1).
+   Rozet 1 adette hiç çizilmediği için ikinci eklemede *birdenbire* beliriyordu;
+   vurgu değil sıçramaydı.
+3. **İşaretli kutucuk sönmüyor** — `successSurface` dolgu + işaret.
+
+Sönmeyi kaldırmak `pressable`a bir parametre gerektirdi (`dimWhenDisabled`):
+dokunma tarafı **aynı** kalmalı (kutucuk yine tıklanamaz), yalnızca görünüm
+farklı konuşmalı. Ayrı bir modifier yazmak ikisini ayırırdı.
+
+### Haptik dördüncü olayı sayıyor (karar 90)
+
+Karar 55 üç olay saymıştı ve ölçütü karar 3'te yazılı: **sık tekrarlanan ve
+görsel onayı zayıf** eylem. Sheet'ten ekleme ölçütün tam içinde (oturumda 5–10
+kez, liste sheet'in arkasında görünmüyor). Kök alandan ekleme **haptik almıyor**
+— satır gözün önünde beliriyor ve yıkama onayı zaten veriyor.
+
+### Toplu ekleme sayısını söylüyor (karar 91)
+
+Toast'ın yedinci kullanımı. Pano ve *"geçen sefer aldıklarını ekle"* sayıyı
+hesaplayıp **atıyordu**. Ve sıfır hâli daha önemli: *"hiçbir şeyin olmadığı
+ekran, çalışmayan uygulamadan ayırt edilemez."*
+
+Toplu yolda mükerrer satır **adet artırmıyor, atlanıyor**: tek tek eklemede
+ikinci dokunuş "bir tane daha" demek, toplu yolda kazayla ikinci kez
+yapıştırılan bir liste **listeyi katlardı**.
+
+### Cihazda doğrulandı
+
+Sheet'in kutucukları yeşil "yapıldı" dolgusunda; sayaç dokunuşta vurguluyor;
+kök alandan eklenen satır yeşil yıkamayla beliriyor.

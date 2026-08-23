@@ -27,6 +27,20 @@ private val LightSecondary = Color(0xFF3F6B54)
 private val LightAccent = Color(0xFFE0A32E)
 private val LightAccentOutline = Color(0xFF8A5A00)
 private val LightOnAccent = Color(0xFF3A2600)
+/**
+ * "YAPILDI" ZEMINI (karar 89). Eklenen satirin yikamasi ve isaretli
+ * kutucugun dolgusu.
+ *
+ * AMBER DEGIL ve bu kararin kendisi: maket eklenen satiri amber-krem
+ * (#F6E7D2) ciziyordu ama karar 57 amberi tek anlama kilitledi - **eksik /
+ * emin degiliz**. Ekleme onayi tam tersini soyluyor, yani success'in isi.
+ *
+ * `success`ten AYRI bir token: success bir METIN/IKON rengi (2E6B45,
+ * kontrast tasiyor), bu bir ZEMIN. Ikisini tek token yapmak, yesil bir
+ * zemine yesil metin yazmaya davet ederdi.
+ */
+private val LightSuccessSurface = Color(0xFFE9EFE8)
+
 private val LightSuccess = Color(0xFF2E6B45)
 private val LightWarning = Color(0xFF96560A)
 private val LightError = Color(0xFFB3261E)
@@ -43,6 +57,9 @@ private val DarkOnPrimary = Color(0xFF3B1503)
 private val DarkSecondary = Color(0xFF8FC7A2)
 private val DarkAccent = Color(0xFFF2C14E)
 private val DarkOnAccent = Color(0xFF2A1D00)
+/** Karanlik mod "yapildi" zemini (karar 89). */
+private val DarkSuccessSurface = Color(0xFF1D2E23)
+
 private val DarkSuccess = Color(0xFF7FD1A0)
 private val DarkWarning = Color(0xFFF0B357)
 private val DarkError = Color(0xFFFF8A80)
@@ -125,6 +142,8 @@ data class NeydiExtraColors(
     val accentOutline: Color,
     val onAccent: Color,
     val success: Color,
+    /** "Yapildi" ZEMINI - eklenen satir yikamasi, isaretli kutucuk (karar 89). */
+    val successSurface: Color,
     val warning: Color,
     val hairline: Color,
     /**
@@ -156,6 +175,7 @@ val LightExtraColors = NeydiExtraColors(
     accentOutline = LightAccentOutline,
     onAccent = LightOnAccent,
     success = LightSuccess,
+    successSurface = LightSuccessSurface,
     warning = LightWarning,
     hairline = LightHairline,
     // Isik temasinda telafi yok: ikon ikincil metinle ayni renkte.
@@ -171,6 +191,7 @@ val DarkExtraColors = NeydiExtraColors(
     accentOutline = DarkAccent,
     onAccent = DarkOnAccent,
     success = DarkSuccess,
+    successSurface = DarkSuccessSurface,
     warning = DarkWarning,
     hairline = DarkHairline,
     iconMuted = DarkIconMuted,

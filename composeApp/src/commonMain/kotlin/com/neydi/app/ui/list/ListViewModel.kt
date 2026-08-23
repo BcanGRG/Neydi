@@ -343,7 +343,12 @@ class ListViewModel(
     fun addFromLastTrip() {
         viewModelScope.launch {
             val memberId = selfMemberId() ?: return@launch
-            repo.addFromLastTrip(household, memberId)
+            val added = repo.addFromLastTrip(household, memberId)
+            // SAYIYI SOYLUYOR (karar 91). Once donus degeri ATILIYORDU: on iki
+            // satir eklendiginde de sifir eklendiginde de ekranda hicbir sey
+            // yazmiyordu - ve sifir hali daha onemli, cunku hicbir seyin
+            // olmadigi ekran calismayan uygulamadan ayirt edilemiyor.
+            _bulkToast.value = if (added > 0) "$added satır eklendi" else "Hepsi zaten listende"
         }
     }
 
@@ -682,13 +687,41 @@ class ListViewModel(
      */
     fun addFromClipboard(text: String) {
         val rows = clipboardLines(text)
-        if (rows.isEmpty()) return
+        if (rows.isEmpty()) {
+            _bulkToast.value = "Panoda liste bulunamadı"
+            return
+        }
         viewModelScope.launch {
+            // MUKERRER SATIR ADET ARTIRMIYOR, ATLANIYOR (karar 91).
+            //
+            // Tek tek eklemede ikinci dokunusun adedi artirmasi dogru - jest
+            // "bunu bir tane daha ekle" demek. Toplu yolda jest o degil:
+            // kazayla ikinci kez yapistirilan bir liste, listeyi KATLARDI.
+            val before = listMatchKeys.value
+            var added = 0
             rows.forEach { row ->
                 val m = parseQuantity(row)
-                if (m.name.isNotBlank()) addAndAwait(m.name, null, m.unit, m.count)
+                if (m.name.isBlank()) return@forEach
+                if (matchKey(m.name) in before) return@forEach
+                addAndAwait(m.name, null, m.unit, m.count)
+                added++
             }
+            _bulkToast.value = if (added > 0) "$added satır eklendi" else "Hepsi zaten listende"
         }
+    }
+
+    /**
+     * Toplu eklemenin sonucu - toast'in yedinci kullanimi (karar 91).
+     *
+     * Toast'in kendi kurali bu vakayi zaten kapsiyordu: *"yalnizca «oldu bitti,
+     * dokunacak bir sey yok» olaylarinda"*. Pano yapistirma ve "gecen sefer
+     * aldiklarini ekle" tam olarak o - ve ikisi de sessizdi.
+     */
+    private val _bulkToast = MutableStateFlow<String?>(null)
+    val bulkToast: StateFlow<String?> = _bulkToast
+
+    fun onBulkToastShown() {
+        _bulkToast.value = null
     }
 
     private val _pendingDelete = MutableStateFlow<DeletedRow?>(null)

@@ -50,24 +50,32 @@ object Motion {
     const val ROW_DELETE_MS = 200
 
     /**
-     * AZ ONCE EKLENEN SATIRIN vurgusunun sonme suresi.
+     * AZ ONCE EKLENEN SATIRIN yikamasi - dolu kalma suresi (karar 89).
      *
-     * ⚠ **BU SAYI TASARIMDAN DEGIL.** Maket vurgunun KENDISINI ciziyor (Ekran
-     * 2 · "Hızlı yazma · kök": Enter'lanan satir `#F6E7D2` amber-krem dolgu
-     * tasiyor, komsulari tasimiyor) ama ne suresini ne egrisini ne de adini
-     * hicbir tasarim dosyasi yaziyor. Yani piksel onlarin, zamanlama bizim -
-     * ve bu sabit tam da o bosluga isaret ediyor.
+     * Maket vurgunun KENDISINI ciziyordu (Ekran 2, Enter'lanan satirda
+     * amber-krem dolgu) ama ne suresini ne egrisini yaziyordu; bu iki sabit o
+     * bosluga konmustu ve tasarima soruldu. **Onaylandi** - sayilar degismedi,
+     * yalnizca RENK degisti: amber degil [NeydiExtraColors.successSurface].
      *
-     * Secim gerekcesi: vurgu bir OLAY bildirimi, durum degil; toast'in 2 sn'si
-     * ile ayni sinifta ama ondan kisa olmali cunku ekranin merkezinde ve
-     * kullanicinin gozu zaten orada. Girisi ANI (ekleme ani), cikisi yumusak.
-     *
-     * Tasarima soruldu (`docs/29`); cevap gelince degisecek TEK yer burasi.
+     * Amber "eksik / emin degiliz" demek (karar 57); ekleme onayi tam tersini
+     * soyluyor.
      */
     const val JUST_ADDED_MS = 1_200
 
-    /** Vurgunun sonusu - girisi ani oldugu icin yalniz cikis egrisi var. */
+    /** Yikamanin sonusu (karar 89). Girisi ani - ekleme ANI zaten olayin kendisi. */
     const val JUST_ADDED_FADE_MS = 400
+
+    /**
+     * Sayac ve adet rozetinin degisim vurgusu: 1 -> 1,12 -> 1 (karar 89, 92).
+     *
+     * Rozet 1 adette HIC cizilmiyor, yani ikinci eklemede birden beliriyordu -
+     * vurgu degil sicrama. Sayac da animasyonsuz artan bir rakamdi ve ekranin
+     * karsi kosesindeydi.
+     */
+    const val PULSE_MS = 150
+
+    /** Vurgunun tepe olcegi (karar 89). */
+    const val PULSE_SCALE = 1.12f
 
     const val PRESSED_SCALE = 0.97f
     const val CHECK_SCALE_DIP = 0.96f
@@ -87,6 +95,18 @@ object Motion {
 fun Modifier.pressable(
     enabled: Boolean = true,
     onLongPress: (() -> Unit)? = null,
+    /**
+     * Pasif hal SOLUK cizilsin mi (karar 89).
+     *
+     * Varsayilan `true` ve oyle kalmali: %38 opaklik "devre disi" sozlugunun
+     * kendisi. Ama BIR yerde pasiflik "yapamazsin" degil **"yapildi"** demek -
+     * kesif sheet'inin isaretli kutucugu. Orada solmak, yapilmis bir isi
+     * yapilamaz is gibi gosteriyordu.
+     *
+     * Ayri bir modifier yerine parametre, cunku dokunma tarafi AYNI kalmali:
+     * kutucuk yine tiklanamaz olmali, yalnizca gorunumu farkli konusmali.
+     */
+    dimWhenDisabled: Boolean = true,
     onTap: () -> Unit,
 ): Modifier {
     val source = remember { MutableInteractionSource() }
@@ -101,7 +121,7 @@ fun Modifier.pressable(
     val indication = LocalIndication.current
     return this
         .graphicsLayer { scaleX = scale; scaleY = scale }
-        .alpha(if (enabled) 1f else Motion.DISABLED_ALPHA)
+        .alpha(if (enabled || !dimWhenDisabled) 1f else Motion.DISABLED_ALPHA)
         .combinedClickable(
             interactionSource = source,
             indication = indication,
