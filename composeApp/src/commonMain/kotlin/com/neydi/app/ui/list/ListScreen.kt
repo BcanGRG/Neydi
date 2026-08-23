@@ -120,7 +120,7 @@ fun ListScreen(
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
     val sheetQuery by vm.sheetQuery.collectAsStateWithLifecycle()
     val sheetResults by vm.sheetResults.collectAsStateWithLifecycle()
-    val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
+    val listQuantities by vm.listQuantities.collectAsStateWithLifecycle()
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
     val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
     val stepper by vm.stepper.collectAsStateWithLifecycle()
@@ -249,7 +249,8 @@ fun ListScreen(
                 query = sheetQuery,
                 onQueryChange = vm::onSheetQueryChanged,
                 results = sheetResults,
-                inList = listMatchKeys,
+                inList = listQuantities,
+                onPickWithQuantity = vm::addFromDiscovery,
                 // Inset SHEET DISINDA okunup duz bosluk olarak geciliyor.
                 // ModalBottomSheet'in kendi contentWindowInsets'i bu agacta
                 // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);
@@ -314,6 +315,17 @@ fun ListScreen(
             // Zemin rengi ACIKCA veriliyor: bu palet `surfaceContainer*` tonal
             // token'larini tanimlamiyor ve M3 kendi mor baseline'ina dusuyor.
             containerColor = MaterialTheme.colorScheme.surface,
+            // TAM ACILIYOR, YARIM DEGIL (kullanici bildirdi).
+            //
+            // M3'un varsayilani once YARI YUKSEKLIK ve sheet uzun: manset,
+            // miktar blogu, fiyat gecmisi, iki anahtar ve "Listeden cikar".
+            // Yarim acilinca hicbiri bir arada gorunmuyordu ve her acilista
+            // once kaydirmak gerekiyordu - yani sheet'i acmak iki jest
+            // oluyordu.
+            //
+            // Ekle sheet'i bunu bastan beri yapiyordu; ikisinin ayri
+            // davranmasi bir tercih degil, unutulmus bir satirdi.
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
             ProductSheetContent(
                 onDeleteObservation = vm::deleteObservation,

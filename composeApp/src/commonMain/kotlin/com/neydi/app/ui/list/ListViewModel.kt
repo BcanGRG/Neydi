@@ -22,6 +22,7 @@ import com.neydi.app.data.matchKey
 import com.neydi.app.data.incrementQuantity
 import com.neydi.app.data.decrementQuantity
 import com.neydi.app.data.stepFor
+import com.neydi.app.data.inListLabel
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.AddResult
@@ -576,12 +577,27 @@ class ListViewModel(
      * `matchKey` uzerinden, urun kimligi uzerinden DEGIL: katalog tohumu ile
      * kullanicinin kendi ekledigi urun ayri satirlar olabilir ama ayni seyi
      * anlatiyorlar - "Sut" iki kez isaretsiz gorunmemeli.
+     *
+     * MIKTARI DA TASIYOR (karar 109): isaretli hucre artik *"1 kg listede"*
+     * yaziyor. Sadece anahtar kumesi olsaydi hucre "burada bir sey var ama ne
+     * kadar bilmiyorsun" demis olurdu - ve karar 12'nin pasifligi tam da bu
+     * yuzden gerekcesiz kaliyordu.
      */
-    val listMatchKeys: StateFlow<Set<String>> =
+    val listQuantities: StateFlow<Map<String, String>> =
         repo.rows(household)
             .map { rows ->
-                rows.mapNotNull { productDao.byId(it.productId)?.matchKey }.toSet()
+                rows.mapNotNull { row ->
+                    productDao.byId(row.productId)?.matchKey?.let { key ->
+                        key to inListLabel(row.quantity, row.unitOverride ?: row.unit)
+                    }
+                }.toMap()
             }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Yalnizca "listede mi" sorusunu soran yerler icin - toplu ekleme filtresi. */
+    val listMatchKeys: StateFlow<Set<String>> =
+        listQuantities
+            .map { it.keys }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     /**
@@ -711,8 +727,8 @@ class ListViewModel(
      * ([DiscoveryItem]) ve `resolveProduct` zaten adi kanonik urune bagliyor -
      * ayni kapidan geciyorlar, ayni urunu iki farkli yazimla dogurmuyorlar.
      */
-    fun addFromDiscovery(item: DiscoveryItem) {
-        addInternal(item.name, categoryId = null, unit = item.unit, count = 1.0)
+    fun addFromDiscovery(item: DiscoveryItem, count: Double = 1.0) {
+        addInternal(item.name, categoryId = null, unit = item.unit, count = count)
     }
 
     /** Arama sonucundan ekleme: kategori ve birim katalogdan geliyor. */
