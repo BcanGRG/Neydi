@@ -1350,3 +1350,136 @@ küçülen ambalajda çıkıyor.
 - **Karar 97 ertelenmiş kalıyor.** Bugüne kadar yalnız **iki** zincirde gözlem
   var; ürün başına ortalama 1,0–1,4 zincir, eşik 1,5 (karar 115).
 - `docs/34`'ün add-path tablosu **beş** yol yazıyor; kodda **sekiz** var.
+
+---
+
+## Kararlar 116–120 — planlama bir plan oldu *(23 Ağustos, 21. tur)*
+
+Kullanıcının iki cümlesi, ikisi de aynı yere bakıyordu — **planlama modu ne
+için var** (`docs/37`):
+
+> *"Ben liste yaparken neden alındı/alınmadı var ki? Zaten alışverişe çıkıyorum
+> dediğimde orada işaretleme yapıyorum."*
+
+> *"BİM'e gidiyorumdur, 10 tane şeyi oradan almak için giderim, 2-3 tanesini de
+> A101'den alacağım diye işaretlerim."*
+
+### Karar 116 — planlamada işaretlenecek bir şey yok ✅
+
+Onay dairesi **yalnızca alışverişte** çiziliyor; planlamada satıra dokunmak
+Ürün Detayı'nı açıyor ve **"Alındı" bölümü planlamada yok.**
+
+Bedeli ölçüldü: cihaz testlerinde **yanlışlıkla yapılan her dokunuş** bir satırı
+"Alındı"ya taşıdı. Planlamada satırın *tamamı* işaretleme hedefiydi — yani
+ekranın en büyük hedefi, en az istenen işe bağlıydı.
+
+Daire (24dp + 10dp boşluk) düşünce kimlik bandı **34dp kazandı**: 360dp'de ada
+180dp yerine 214dp kalıyor.
+
+⚠ **Kod tasarımdan bir adım ileri gitti ve bu `docs/38` S4'te soruldu:** kural
+metni bölümün *"alışveriş ve sonrasında"* var olduğunu söylüyor ve maket onu
+çiziyor; kod **iki modda da** kaldırdı. Gerekçesi ölçülmüş: reyonda işaretlenen
+satırın yer değiştirmesi, hareket eden başparmağın altında yeniden sıralama
+demek. Aynı maket *"işaretli satır yerinde kalır"* da diyor — ikisi birlikte
+duramıyor.
+
+### Karar 117 — hedef gezide, istisna satırda ✅
+
+`trip.storeId` (zaten vardı, kullanılmıyordu) hedefi taşıyor; **şema v8**
+`trip_line.storeId`'yi ekledi — tek nullable kolon, otomatik migrasyon,
+`null` = *"hedefi izliyor"*.
+
+Başlığın alt satırı, bugün *"Son alışveriş: dün · ~1.505 TL"* yazan yuva,
+hedef seçiliyken **beyan cümlesine** dönüşüyor:
+
+> 🏪 **BİM'e gidiyorsun** · 2'si A101'de
+
+**Cümlenin kısa biçimi bir üslup değil ölçüm sonucu.** Tasarımın kendi hesabı:
+başlıkta dört hedef ve storefront glifinden sonra **108dp** kalıyor (390dp'de),
+cümle **72dp** — 360dp'de de sığıyor. Reddedilen `"2 satır A101'de"` **97dp**'ydi
+ve 360dp'de kırpılıyordu. Chevron (20dp) **çizilmiyor**; dokunma hedefi başlık
+bloğunun tamamı.
+
+Bu, koda **iki yeni Türkçe ek kuralı** getirdi ve ikisi de var olan
+`turkishLocative`'ten farklı:
+
+| Ek | Kural | Neden ayrı |
+|---|---|---|
+| **Yönelme** (`turkishDative`) | ünlü uyumu + **kaynaştırma `y`** | Ek tek ünlü; iki ünlü yan yana gelemez. Yedi tohum zincirinin **üçü** bunu istiyor: "File'ye", "CarrefourSA'ya", "Tarım Kredi'ye" |
+| **İyelik** (`possessiveSuffix`) | okunuşa göre **tablo** | Dokuz rakam **beş** ayrı ek üretiyor: `i, si, ü, sı, u`. İki eksenli bir bayrak bunları üretemez |
+
+Seçici (`"Nereye gidiyorsun?"`) çip tabanlı: h44, dolgu 0/16, yarıçap 999,
+aralık 8; seçili `inverseSurface`+`inverseOnSurface` 15sp/600, seçili olmayan
+`surfaceVariant` + 0.8dp hairline 15sp/500; ayırıcının altında `"Belli değil"`
+h48, 17sp/500 `onSurfaceVariant`.
+
+⚠ **İstisnayı yazan jest hiç tasarlanmadı** (`docs/38` S6). Kullanıcının
+cümlesindeki tek fiil — *"işaretlerim"* — karşılıksız: veri alanı var, gösterimi
+var, `setLineStore` hazır ve **çağransız**. Kod bir jest uydurmadı çünkü
+seçeneklerinin hepsi var olan bir kararı deliyor (38'in satır sırası, 110'un
+tek yığılmış hedefi, 116'nın "satır yüzeyi veri değiştirmez"i).
+
+### Karar 118 — işaret sapmadır ✅
+
+Ekonomi bandının **başında**: `storefront` 14dp `outline` + zincir adı
+13sp/600 `onSurface` + `·` + meta 13sp/400 `onSurfaceVariant`; grup içi 4dp,
+bandın kendisi 8dp. **Meta kırpılır, sapma kırpılmaz** — sapma kullanıcının
+yazdığı, meta bizim hatırlattığımız şey.
+
+Sapma **tek başına bandı var ediyor**: fiyatı, geçmişi, hiçbir şeyi olmayan bir
+satır da 56dp'den 72dp'ye çıkıyor.
+
+Alışverişte sapanlar reyonlarından çıkıp **zincir başına bir bölüme** iniyor,
+başlığında storefront + `"A101'de"`. Gerekçe reyon sırasının ne işe yaradığı:
+liste *"bu markette hangi sırayla yürüyeceksin"* diyor ve başka bir marketten
+alınacak satır o yürüyüşün içinde durursa her reyonda aranır, bulunamaz.
+
+Envanter **20 → 21**: `storefront` (Phosphor Regular 2.1.1, MIT).
+
+⚠ **Bant tek akışta iki zincir adı taşıyabiliyor** ve bu cihazda görüldü:
+`🏪 A101 · BİM · dün` — biri beyan, öteki gözlem (karar 105). Makette bu
+bileşim **bir kez bile** çizilmemiş (`docs/38` S1).
+
+⚠ **"Başka markette ucuz" çipi sapma varken bastırılıyor** — kod kararı,
+makette yok. Çip *"istersen A101'e uğra"* diyor, sapma ise *"zaten A101'den
+alacağım"*. Kapanmış bir soruyu yeniden sormak, üstelik 92dp'lik çipi 50dp'lik
+işaretin yanına koyup ikisini birden kırpmak pahasına.
+
+### Karar 119 — beyan organizasyon, aritmetik değil ✅
+
+Tahmin **değişmiyor**. Cihazda doğrulandı: hedef seçilmeden önce ve sonra
+`~609 TL · BİM fiyatlarıyla · 4/6`. Yapısal olarak da mümkün değil — tahmin
+`EstimateRow` üzerinden hesaplanıyor ve o projeksiyonda `storeId` **yok**.
+
+Maketin kendi cümlesi ikisinin **çelişmesini meşru** kılıyor:
+*"'BİM'e gidiyorsun' + 'Migros fiyatlarıyla · 15/18' ikilisi tahminin gittiğin
+marketten olmadığını söyler. İki tutar yazılmaz."*
+
+⚠ Kullanıcının cümlesinin ikinci yarısı — *"bu şekilde de tahmini sepet
+hesaplanabilir"* — maketin özetinde düşmüş ve karar o düşen yarıyı reddediyor
+(`docs/38` girişi). Karar 97 (markete göre tahmin) ertelenmiş kalıyor: eşik 1,5
+zincir/ürün, bugün 1,0–1,4.
+
+### Karar 120 — geriye dönük kayıt ✅
+
+Kullanıcının bildirdiği iki kusur, ikisi de commit `9b2bcd3` ile kapandı:
+
+1. **Ürün Detayı sheet'inin altı görünmüyordu** — içerik bir `Column`dı ve
+   kaydırması yoktu; sheet'ten uzun olan her şey sessizce kırpılıyordu.
+2. **Silme jesti yarım kalıyordu** — eşik açılan alanın %60'ıydı. Artık
+   **sonuna kadar çekmek** siliyor, daha azı kapanıyor.
+
+### Bu turda ölçülen ve düzeltilen — tasarım kaynaklı değil
+
+1. **Bölüm başlığı simetrikti** (8dp/8dp) ve cihazda **yanlış tarafa
+   yaslanıyordu**: üstünde 20,2dp, altında 24,4dp — her başlık bir önceki
+   bölümün kuyruğu gibi okunuyordu. Maketin ölçüsü **20dp/4dp**; uygulandıktan
+   sonra cihazda 33,1dp/20,6dp. Kullanıcı bunu *"listedeki itemlar çok iç içe
+   gibi duruyor, karışık gibi"* diye bildirdi ve **satırlar zaten doğruydu** —
+   düz olan tek yer başlığın çevresiydi.
+2. **Ekonomi bandının aralığı 6dp'ydi**, maket 8px diyor.
+3. **`inverseSurface`/`inverseOnSurface` tanımsızdı** — M3 baseline morunu
+   taşıyorlardı; onları kullanan ilk yüzey sessizce mor çizerdi.
+4. **Test dosyasında `emptyList()` adlı bir test** standart `emptyList()`'i
+   gölgeliyordu; hata *"beklenen `List<String>`, gelen `Unit`"* diye çıkıyor ve
+   sebebi hiçbir yerde görünmüyordu.
