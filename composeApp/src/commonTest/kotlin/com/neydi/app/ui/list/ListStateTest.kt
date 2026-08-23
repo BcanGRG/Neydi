@@ -490,6 +490,56 @@ class ListStateTest {
     }
 
     /**
+     * URUN DETAYI ILE LISTE SATIRI AYNI KURALI OKUYOR (karar 126).
+     *
+     * Sapma sorusu artik DORT yerde soruluyor: satirin isareti, alisveristeki
+     * bolumleme, beyan cumlesinin sayisi ve *"Nereden alinacak"* satiri. Ilk
+     * ucu bir [ListRowProjection] goruyor; dorduncusu gormuyor - Urun
+     * Detayi'nin elinde yalnizca hedefin ve satirin `storeId`'si var.
+     *
+     * Bu yuzden kural [deviantStoreName]'e indi ve [deviatesFrom] onun
+     * govdesine dondu. Test o esitligi yaziyor: ayrilirlarsa sheet "A101"
+     * derken bandin hicbir sey cizmedigi bir hal olusur ve hicbir sey
+     * sikayet etmez.
+     *
+     * ISIRMA NOKTASI: [deviatesFrom]'un govdesini eski dort sartla geri
+     * yazin ve sartlardan birini degistirin - bu test duser.
+     */
+    @Test
+    fun theSheetAndTheRowAskTheSameDeviationQuestion() {
+        val cases = listOf(
+            Triple("bim", "a101", "A101"),   // sapma
+            Triple("bim", "bim", "BİM"),     // hedefin kendisi - sapma degil
+            Triple("bim", null, null),       // satirin marketi yok
+            Triple(null, "a101", "A101"),    // hedef yok - kiyaslanacak kural yok
+            Triple("bim", "a101", null),     // market silinmis, adi bilinmiyor
+        )
+        for ((target, storeId, storeName) in cases) {
+            val projection = row("Elma", storeId = storeId, storeName = storeName)
+            assertEquals(
+                projection.deviatesFrom(target),
+                deviantStoreName(target, storeId, storeName) != null,
+                "hedef=$target satir=$storeId ad=$storeName icin iki okuma ayrildi",
+            )
+        }
+    }
+
+    /**
+     * DORT SARTIN DORDU DE AYRI AYRI YAZILI.
+     *
+     * Ustteki test yalnizca IKI OKUMANIN esitligini koruyor - ikisi birden
+     * yanlis olsa da yesil kalir. Bu test kuralin KENDISINI yaziyor.
+     */
+    @Test
+    fun theDeviationRuleNeedsATargetAnIdThatDiffersAndAName() {
+        assertEquals("A101", deviantStoreName("bim", "a101", "A101"))
+        assertNull(deviantStoreName(null, "a101", "A101"), "hedef yokken sapma olamaz")
+        assertNull(deviantStoreName("bim", null, null), "satirin marketi yok")
+        assertNull(deviantStoreName("bim", "bim", "BİM"), "hedefin kendisi sapma degil")
+        assertNull(deviantStoreName("bim", "a101", null), "adi bilinmeyen zincir cizilemez")
+    }
+
+    /**
      * SAPAN SATIR ZINCIRIN ADINI TASIYOR.
      *
      * Ad KIMLIK karsilastirmasindan sonra veriliyor: `storeId` farkli, ad

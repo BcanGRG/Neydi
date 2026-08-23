@@ -39,6 +39,7 @@ import com.neydi.app.data.stats.ProductStatsRebuilder
 import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.components.turkishInitials
+import com.neydi.app.ui.product.LineStore
 import com.neydi.app.ui.product.ProductSheetState
 import com.neydi.app.ui.product.RowQuantity
 import com.neydi.app.ui.product.toPriceSection
@@ -310,6 +311,35 @@ class ListViewModel(
     val productSheet: StateFlow<ProductSheetState?> = _productSheet
 
     /**
+     * *"Nereden alinacak"* satirinin actigi cip izgarasi (karar 126).
+     *
+     * ADAYLARI TASIMIYOR - hedef secicisiyle ayni sebeple: liste
+     * `storeOptions`'tan canli geliyor. Tasidigi sey SATIR ve o satirin O
+     * ANDAKI secimi; ikisi de acilis aninda okunuyor, cunku izgara sheet'in
+     * ustunde aciliyor ve arkadaki sheet bir kare eski olabilir.
+     */
+    private val _lineStorePicker = MutableStateFlow<LineStorePick?>(null)
+    val lineStorePicker: StateFlow<LineStorePick?> = _lineStorePicker
+
+    fun openLineStorePicker() {
+        val rowId = _productSheet.value?.rowId ?: return
+        viewModelScope.launch {
+            // SECILI CIP HEDEFE DUSUYOR istisna yokken: satir gercekten
+            // oradan alinacak, yani izgarada bos bir secim gostermek satirin
+            // durumunu gizlerdi. Hedef cipine dokunmak da "Hedefte al" ile
+            // ayni sonucu veriyor - `ListRepository.setLineStore` hedefin
+            // kendisini zaten istisna saymiyor.
+            val target = tripDao.activeOrNull(household)?.storeId
+            _lineStorePicker.value = LineStorePick(
+                rowId = rowId,
+                selectedId = repo.line(rowId)?.storeId ?: target,
+            )
+        }
+    }
+
+    fun closeLineStorePicker() { _lineStorePicker.value = null }
+
+    /**
      * @param rowId sheet'in acildigi SATIR - "Listeden cikar" bunu siliyor
      *   (tasarim karari 38). Urun kimligi yetmiyor: ayni urun baska bir gezide
      *   de olabilir ve silinecek olan bu gezideki satir.
@@ -339,6 +369,9 @@ class ListViewModel(
                         catalogUnit = product.defaultUnit,
                     )
                 },
+                // "NEREDEN ALINACAK" SATIRI (karar 126). Miktar blogu gibi
+                // bu da SATIRA ait, yani sheet urun gecmisinden acilirsa yok.
+                lineStore = lineStoreFor(rowId),
             )
             // FIYAT BOLUMU AYRI VE SONRA: sheet gozlemleri BEKLEMEDEN aciliyor.
             // Tek atisla beklenseydi dokunusla acilis arasinda bir sorgu
@@ -591,29 +624,66 @@ class ListViewModel(
     }
 
     /**
-     * Bir satirin market ISTISNASINI yazar (karar 117).
+     * Bir satirin market ISTISNASINI yazar (karar 117 + 126).
      *
-     * ⚠ HENUZ CAGRANI YOK - jesti TASARLANMADI (`docs/38` S6).
+     * ## Cagrani nihayet var
      *
-     * Karar 117 istisnanin nerede DURDUGUNU soyluyor, karar 118 nasil
-     * GORUNDUGUNU; ama onu YAZAN jest hicbir yerde cizilmemis. Karar 116
-     * planlamada satir yuzeyinin veri degistirmesini yasakliyor, Urun
-     * Detayi'nin satir sirasi karar 38'le sabit, satirda uzun dokunus zaten
-     * Urun Detayi'ni aciyor.
-     *
-     * Yol BURADA BIRAKILIYOR (silinmiyor) cunku sema, depo ve gosterim
-     * tamamlandi; eksik olan tek sey hangi karari delecegimiz - ve bunu kod
-     * secerse, hangi karari deldigini bilmeden delmis olur.
+     * Bu yol E-turunda yazildi ve bilerek CAGRANSIZ birakildi: sema, depo ve
+     * gosterim tamamdi, eksik olan tek sey jestin kendisiydi (`docs/38` S6).
+     * Kod bir jest uydurmadi cunku seceneklerinin hepsi var olan bir karari
+     * deliyordu. Karar 126 secimi yapti: Urun Detayi'nin eylem grubunun ilk
+     * satiri, ve karar 38'in sabit sirasi BU TEK EKLEME icin acildi.
      *
      * Hedef BURADA okunuyor, cagirandan gelmiyor: cizim tarafinin elindeki
      * hedef bir kare eski olabilir ve o kare icinde hedefi degistirmis bir
      * kullanici, istisnayi yanlis hedefe gore yazdirirdi.
      */
     fun setLineStore(rowId: String, storeId: String?) {
+        // IZGARA HEMEN KAPANIYOR, yazmayi BEKLEMEDEN - hedef secicisiyle ayni
+        // sebeple: secim tek dokunusluk ve geri donusu var ("Hedefte al").
+        _lineStorePicker.value = null
         viewModelScope.launch {
             val target = tripDao.activeOrNull(household)?.storeId
             repo.setLineStore(rowId = rowId, storeId = storeId, targetStoreId = target)
+            // SHEET KENDINI TAZELIYOR: `_productSheet` bir anlik goruntu,
+            // liste akisi degil. Tazelemeseydik kullanici izgarayi kapatinca
+            // satirin eski halini gorurdu ve yazmanin islemedigini sanirdi.
+            val next = lineStoreFor(rowId)
+            _productSheet.update { current ->
+                if (current?.rowId != rowId) current else current.copy(lineStore = next)
+            }
         }
+    }
+
+    /**
+     * *"Nereden alinacak"* satirinin verisi, satir cizilmeyecekse `null`.
+     *
+     * UC AYRI SEBEPLE NULL DONUYOR ve ucu de ayni cumleye cikiyor - *"bu
+     * yuzeyde soylenecek bir sey yok"*:
+     *
+     * 1. **Satir yok** (`rowId == null`) - sheet urun gecmisinden acilmis.
+     * 2. **Hedef yok** - istisnanin istisna olabilmesi icin bir kural
+     *    gerekiyor (bkz. [LineStore]). ⚠ Kod karari, tasarima sorulacak.
+     * 3. **Satir bulunamadi** - silinmis olabilir.
+     *
+     * Sapmanin adini [deviantStoreName] uretiyor, yani liste satirindaki
+     * isaretle AYNI kural: sheet "A101" derken bandin hicbir sey cizmedigi
+     * bir hal olusamiyor.
+     */
+    private suspend fun lineStoreFor(rowId: String?): LineStore? {
+        if (rowId == null) return null
+        val targetId = tripDao.activeOrNull(household)?.storeId ?: return null
+        val line = repo.line(rowId) ?: return null
+        val stores = storeDao.observeAll(household).first()
+        val targetName = stores.firstOrNull { it.id == targetId }?.name ?: return null
+        return LineStore(
+            targetName = targetName,
+            deviantName = deviantStoreName(
+                targetStoreId = targetId,
+                storeId = line.storeId,
+                storeName = stores.firstOrNull { it.id == line.storeId }?.name,
+            ),
+        )
     }
 
     fun toggleChecked(rowId: String, checked: Boolean) {

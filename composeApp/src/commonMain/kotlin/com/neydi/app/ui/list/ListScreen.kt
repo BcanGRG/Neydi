@@ -120,6 +120,7 @@ fun ListScreen(
     val summary by vm.summary.collectAsStateWithLifecycle()
     val productSheet by vm.productSheet.collectAsStateWithLifecycle()
     val storePickerOpen by vm.storePickerOpen.collectAsStateWithLifecycle()
+    val lineStorePicker by vm.lineStorePicker.collectAsStateWithLifecycle()
     val storeOptions by vm.storeOptions.collectAsStateWithLifecycle()
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
     val sheetQuery by vm.sheetQuery.collectAsStateWithLifecycle()
@@ -360,6 +361,7 @@ fun ListScreen(
                 onSetQuantity = vm::setSheetQuantity,
                 onSetPack = vm::setObservationPack,
                 onPickUnit = vm::pickSheetUnit,
+                onPickLineStore = vm::openLineStorePicker,
                 bottomPadding = bottomInset,
                 // Sheet kapaniyor VE satir siliniyor: serit sheet'in arkasinda
                 // dogar, kullanici kapatinca onu gorur ve geri alabilir.
@@ -370,6 +372,40 @@ fun ListScreen(
                     }
                 },
             )
+        }
+    }
+
+    // "NEREDEN ALINACAK" IZGARASI (karar 126).
+    //
+    // URUN DETAYI'NIN USTUNDE ACILIYOR, onun yerine gecmiyor: kullanici bir
+    // satirin sheet'indeydi ve secimden sonra oraya donmeli. Sheet'i kapatip
+    // izgarayi acsaydik, secim biter bitmez kullanici LISTEYE duserdi -
+    // yazdigi seyin satirda ne oldugunu goremeden.
+    //
+    // Bu yuzden iki sheet KARDES olarak yaziliyor, ic ice degil: ikisi de
+    // kendi penceresini aciyor ve ustteki dokunusu aliyor.
+    lineStorePicker?.let { pick ->
+        ModalBottomSheet(
+            onDismissRequest = vm::closeLineStorePicker,
+            containerColor = MaterialTheme.colorScheme.surface,
+            // Hedef secicisiyle ayni sebeple tam aciliyor: "Hedefte al"
+            // ayirici cizginin ALTINDA ve yarim acilista kaydirmadan
+            // gorunmezdi - yani istisnayi KALDIRMA yolu gizli kalirdi.
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(Modifier.padding(bottom = bottomInset + Spacing.md)) {
+                StoreTargetPicker(
+                    stores = storeOptions,
+                    selectedId = pick.selectedId,
+                    onSelect = { storeId -> vm.setLineStore(pick.rowId, storeId) },
+                    title = "Nereden alınacak?",
+                    // "BELLI DEGIL" DEGIL "HEDEFTE AL": burada secimi
+                    // kaldirmak bir bilinmezlik degil, satiri gezinin
+                    // hedefine geri vermek. Ayni kelimeyi kullanmak iki
+                    // farkli sonucu ayni gosterirdi.
+                    clearLabel = "Hedefte al",
+                )
+            }
         }
     }
 

@@ -1558,3 +1558,71 @@ düzeltilmişti, bu satır 6dp'de kalmıştı.
 markette ucuz"* çipi bastırılıyor. `docs/38` S1'in içinde geçiyordu ama karar
 121 yalnızca iki zincir adının ayrılmasını cevapladı; çipin kaderi hâlâ
 **kodun kararı**.
+
+### Karar 126 — istisnayı yazan jest bulundu ✅
+
+`docs/38` S6 **engelleyiciydi** ve sorusu tek cümlelikti: kullanıcının
+*"2-3 tanesini de A101'den alacağım diye **işaretlerim**"* cümlesindeki fiil
+hangi yüzeyde yaşıyor? Veri alanı vardı (şema v8), gösterimi vardı
+(karar 118), yazma yolu vardı (`setLineStore`) — ve **hiçbiri
+çağrılmıyordu**. Kod bir jest uydurmadı çünkü seçeneklerinin hepsi var olan
+bir kararı deliyordu.
+
+**Tasarım (a)'yı seçti:** Ürün Detayı'nın **eylem grubunun ilk satırı**.
+Karar 38'in sabit sırası **bu tek ekleme için** açıldı. Gerekçe maketin
+kendi notunda: *"eylem grubunun başında, çünkü satırın olgusu"* — anahtarlar
+**ürüne** ait ("her zamanki mi", "önerilsin mi"), bu satır **listedeki
+satıra**. Yıkıcı satır sonda kalıyor.
+
+Reddedilenler: çoklu işaretleme (b) *"kullanıcıya baktığı listeyi reyon
+bağlamı olmadan yeniden tanımlatıyordu"*, satırda yeni jest (d) karar 110'a
+dokunuyordu.
+
+**İki hal, iki ağırlık** (maketten ölçüldü, h56):
+
+| | Değer | Punto | Renk | İkon |
+|---|---|---|---|---|
+| Hedefteyken | `BİM · hedef` | 17sp/**500** | `onSurfaceVariant` | yok |
+| İstisnadayken | `A101` | 17sp/**600** | `onSurface` | storefront 18dp + `chevron_right` 22dp |
+
+Ayrım karar 118'in mantığının aynısı — *"işaret sapmadır"*: hedefteki
+satırın söyleyecek özel bir şeyi yok, o yüzden gösterişi de yok. Bütün satır
+dokunulabilir, chevron değil: chevron 22dp ve tek başına karar 56'nın 48dp
+tabanını karşılamaz.
+
+**Dokunuş beyanın çip ızgarasını açıyor** — `StoreTargetPicker`'ın kendisi,
+başlığı *"Nereden alınacak?"* ve temizleme satırı *"Hedefte al"*. İkinci bir
+bileşen yazmak aynı jesti iki yerde ayrı ayrı bozulabilir hâle getirirdi.
+Izgara Ürün Detayı'nın **üstünde** açılıyor, onun yerine geçmiyor: seçimden
+sonra kullanıcı satırın sheet'ine dönüyor ve yazdığının ne olduğunu görüyor.
+
+⚠ **Seçili çip istisna yokken HEDEFE düşüyor.** Satır gerçekten oradan
+alınacak; boş bir seçim göstermek satırın durumunu gizlerdi. Hedef çipine
+dokunmak da *"Hedefte al"* ile aynı sonucu veriyor —
+`ListRepository.setLineStore` hedefin kendisini zaten istisna saymıyor.
+
+### 126 aynı soruyu dördüncü kez sordurdu
+
+Sapma sorusu artık **dört** yerde soruluyor: satırın işareti, alışverişteki
+bölümleme, beyan cümlesinin sayısı ve *"Nereden alınacak"* satırı. İlk üçü
+bir `ListRowProjection` görüyor; dördüncüsü görmüyor — sheet'in elinde
+yalnızca hedefin ve satırın `storeId`'si var.
+
+Kural bu yüzden `deviantStoreName`'e indi ve `deviatesFrom` onun gövdesine
+döndü. Ayrılsalardı sheet *"A101"* derken bandın hiçbir şey çizmediği bir
+hâl oluşurdu ve **hiçbir şey şikâyet etmezdi**.
+
+⚠ **KOD KARARI — tasarıma sorulacak: hedef yokken satır çizilmiyor.**
+Karar 117 hedefi boş bırakmayı meşru kıldı ("Belli değil"), ama
+`deviantStoreName`'in ilk şartı hedefin **varlığı**: istisnanın istisna
+olabilmesi için bir kural gerekiyor. Hedef yokken satır çizilseydi dokunuşla
+yazılan istisna **hiçbir yerde** görünmezdi — ne bandın işaretinde, ne
+alışverişin bölümlemesinde, ne başlık cümlesinde. Yani jest, sonucu olmayan
+bir jest olurdu.
+
+**Isırma kanıtı:**
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| `label()`'da `"· hedef"` düşürüldü | `aRowThatFollowsTheTargetSaysSoNextToTheTargetsName` + `theTargetItselfNeverArrivesAsAnException` |
+| `deviatesFrom` kendi gövdesini geri aldı (hedef şartı düştü) | `theSheetAndTheRowAskTheSameDeviationQuestion` + `aRowThatFollowsTheTargetCarriesNoMark` |
