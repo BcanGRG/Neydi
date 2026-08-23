@@ -112,6 +112,14 @@ val NeydiLightColors = lightColorScheme(
     onSurfaceVariant = LightTextSecondary,
     outline = LightOutline,
     outlineVariant = LightHairline,
+    // TERS YUZEY: secili market cipinin zemini (karar 117).
+    //
+    // M3 bu ikisini tanimliyor ve biz TANIMLAMAMISTIK - yani bugune kadar
+    // baseline moru tasiyorlardi ve kullanan ilk yer sessizce mor cizerdi.
+    // Degerler temanin kendi uclarindan: isikta koyu metin rengi zemin,
+    // karanlik temanin metin rengi de uzeri.
+    inverseSurface = LightTextPrimary,
+    inverseOnSurface = DarkTextPrimary,
 )
 
 val NeydiDarkColors = darkColorScheme(
@@ -129,6 +137,9 @@ val NeydiDarkColors = darkColorScheme(
     onSurfaceVariant = DarkTextSecondary,
     outline = DarkOutline,
     outlineVariant = DarkHairline,
+    // Karanlikta cift TERS DONUYOR: zemin acik, uzeri koyu.
+    inverseSurface = DarkTextPrimary,
+    inverseOnSurface = LightTextPrimary,
 )
 
 /**

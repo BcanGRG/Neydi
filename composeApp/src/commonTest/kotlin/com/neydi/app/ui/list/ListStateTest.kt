@@ -1,6 +1,7 @@
 package com.neydi.app.ui.list
 
 import com.neydi.app.data.db.ListRowProjection
+import com.neydi.app.data.repo.STAPLE_LIMIT
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -24,6 +25,8 @@ class ListStateTest {
         unit: String = "adet",
         isStaple: Boolean = false,
         addedBy: String = "ben",
+        storeId: String? = null,
+        storeName: String? = null,
     ) = ListRowProjection(
         rowId = "s${++counter}",
         productId = "u$counter",
@@ -38,6 +41,8 @@ class ListStateTest {
         addedByMemberId = addedBy,
         takeOutcome = null,
         note = null,
+        storeId = storeId,
+        storeName = storeName,
     )
 
     // --- Rozetin dolgusu ----------------------------------------------------
@@ -197,8 +202,17 @@ class ListStateTest {
         assertTrue(state.isEmpty)
     }
 
+    /**
+     * BOS GIRDI BOS DURUM URETIYOR.
+     *
+     * ⚠ ADI ESKIDEN `emptyList` IDI ve bu test degil, dosyanin tamami icin
+     * bir tuzakti: ayni dosyadaki her `emptyList()` cagrisi tip argumani
+     * verilmedigi anda BU FONKSIYONA baglaniyordu ve hata "beklenen
+     * List<String>, gelen Unit" diye cikiyordu - sebebi hicbir yerde
+     * gorunmeden.
+     */
     @Test
-    fun emptyList() {
+    fun anEmptyInputProducesTheEmptyState() {
         val state = emptyList<ListRowProjection>().toSections(myMemberId = "ben", now = NOW)
         assertTrue(state.isEmpty)
         assertEquals(0, state.totalRows)
@@ -368,5 +382,207 @@ class ListStateTest {
             "Son alışveriş: az önce",
             lastTripSummary(LastTrip(closedAt = daysAgo(-2), totalMinor = null), now),
         )
+    }
+
+    // --- BEYAN CUMLESI (karar 117) -------------------------------------------
+
+    /**
+     * HEDEF YOKSA BEYAN DA YOK - baslik "Son alisveris"e geri duser.
+     *
+     * "Belli degil" bir HAL, bos bir dizgi degil: kullanici hedefi
+     * kaldirabiliyor ve o zaman satirlarin markete dair hicbir iddiasi
+     * kalmiyor. `null` dondurmek cagirani da bunu dusunmeye zorluyor -
+     * bos dizgi donseydi baslik bos bir satir cizerdi.
+     */
+    @Test
+    fun withoutATargetThereIsNoDeclaration() {
+        assertNull(storeDeclaration(targetName = null, deviantStoreNames = emptyList()))
+        assertNull(storeDeclaration(targetName = "  ", deviantStoreNames = listOf("A101")))
+    }
+
+    /**
+     * HEDEF VAR, SAPMA YOK: cumle tek parca ve ayirici cizilmiyor.
+     *
+     * `deviation`in `null` olmasi cizim tarafinin sozlesmesi - "·" ayiricisi
+     * o alan doluyken ciziliyor. Bos dizgi donseydi baslikta ortada asili
+     * bir nokta kalirdi.
+     */
+    @Test
+    fun aTargetWithNoExceptionsIsASingleClause() {
+        val d = storeDeclaration("BİM", emptyList())
+        assertEquals("BİM'e gidiyorsun", d?.target)
+        assertNull(d?.deviation)
+    }
+
+    /**
+     * TEK ZINCIRE SAPMA: maketin birebir cumlesi.
+     *
+     * *"BIM'e gidiyorsun · 2'si A101'de"* - hem yonelme (`BIM'e`) hem iyelik
+     * (`2'si`) hem bulunma (`A101'de`) ayni cumlede, yani uc ek kuralinin
+     * hepsi burada bulusuyor.
+     */
+    @Test
+    fun deviationsToOneChainNameThatChain() {
+        val d = storeDeclaration("BİM", listOf("A101", "A101"))
+        assertEquals("BİM'e gidiyorsun", d?.target)
+        assertEquals("2'si A101'de", d?.deviation)
+    }
+
+    /**
+     * IKI ZINCIRE SAPMA: ZINCIR ADI DUSUYOR, SAYI DUSMUYOR.
+     *
+     * ⚠ Makette bu hal yok; kod karari (bkz. `storeDeclaration` KDoc'u).
+     * Onemli olan sayinin DOGRU kalmasi: en buyuk zinciri yazip otekileri
+     * dusurmek "3'u A101'de" derdi ve kullanici A101'de iki satir bulurdu.
+     *
+     * Testte A101 iki, SOK bir satir: ayni girdi "en buyugu yaz" kuralini da
+     * calistirirdi, yani bu test iki davranisi birbirinden AYIRIYOR.
+     */
+    @Test
+    fun deviationsToSeveralChainsKeepTheCountAndDropTheName() {
+        val d = storeDeclaration("BİM", listOf("A101", "A101", "ŞOK"))
+        assertEquals("3'ü başka marketlerde", d?.deviation)
+    }
+
+    /**
+     * SAYININ EKI OKUNUSTAN: `1'i`, `3'ü`, `6'sı`.
+     *
+     * Tek bir ek ("i") secmek uc vakanin ikisini bozardi ve beyan cumlesi
+     * her acilista goruluyor - yanlis ek her gun okunur.
+     */
+    @Test
+    fun theDeviationCountCarriesItsOwnSuffix() {
+        assertEquals("1'i A101'de", storeDeclaration("BİM", listOf("A101"))?.deviation)
+        assertEquals(
+            "3'ü A101'de",
+            storeDeclaration("BİM", listOf("A101", "A101", "A101"))?.deviation,
+        )
+        assertEquals(
+            "6'sı A101'de",
+            storeDeclaration("BİM", listOf("A101", "A101", "A101", "A101", "A101", "A101"))?.deviation,
+        )
+    }
+
+    // --- SAPMA ISARETI VE MARKET BOLUMU (karar 118) --------------------------
+
+    /**
+     * HEDEFI IZLEYEN SATIRDA ISARET YOK.
+     *
+     * Uc hal ayni sonucu vermeli ve ucu de farkli sebeple: satirin marketi
+     * hic yazilmamis (`null`), hedefin KENDISI yazilmis (tekrar), ya da hedef
+     * hic yok. Ilk ikisini ayirmak onemli - "BIM'e gidiyorum" derken bir
+     * satira da "BIM" demek sapma degildir ve isaret cizmek kullaniciya
+     * yapmadigi bir beyani gosterirdi.
+     */
+    @Test
+    fun aRowThatFollowsTheTargetCarriesNoMark() {
+        val rows = listOf(
+            row("Domates"),
+            row("Elma", storeId = "bim", storeName = "BİM"),
+        )
+        val state = rows.toSections("ben", now = NOW, targetStoreId = "bim", targetStoreName = "BİM")
+        assertTrue(state.sections.flatMap { it.rows }.all { it.row.deviantStore == null })
+
+        // Hedef yokken de isaret yok - kiyaslanacak bir sey yok.
+        val noTarget = listOf(row("Elma", storeId = "bim", storeName = "BİM"))
+            .toSections("ben", now = NOW)
+        assertNull(noTarget.sections.single().rows.single().row.deviantStore)
+    }
+
+    /**
+     * SAPAN SATIR ZINCIRIN ADINI TASIYOR.
+     *
+     * Ad KIMLIK karsilastirmasindan sonra veriliyor: `storeId` farkli, ad
+     * ciziliyor. Adla karsilastirsaydik ayni adi tasiyan iki zincirde
+     * satir sessizce "hedefi izliyor" gorunurdu.
+     */
+    @Test
+    fun aDeviatingRowNamesItsChain() {
+        val state = listOf(row("Elma", storeId = "a101", storeName = "A101"))
+            .toSections("ben", now = NOW, targetStoreId = "bim", targetStoreName = "BİM")
+
+        assertEquals("A101", state.sections.single().rows.single().row.deviantStore)
+    }
+
+    /**
+     * PLANLAMADA SAPANLAR REYONUNDA KALIYOR, ALISVERISTE CIKIYOR.
+     *
+     * Iki modun isi farkli: planlamada liste kuruluyor ve reyon hala en
+     * yararli gruplama; reyonda ise liste "bu markette hangi sirayla
+     * yuruyeceksin" diyor ve baska bir marketten alinacak satir o yuruyusun
+     * icinde durursa her reyonda aranir, bulunamaz.
+     */
+    @Test
+    fun deviantsLeaveTheirAisleOnlyWhileShopping() {
+        val rows = listOf(
+            row("Domates"),
+            row("Elma", storeId = "a101", storeName = "A101"),
+        )
+
+        val planning = rows.toSections("ben", shoppingMode = false, now = NOW, targetStoreId = "bim")
+        assertEquals(1, planning.sections.size)
+        assertTrue(planning.sections.none { it.isStore })
+
+        val shopping = rows.toSections("ben", shoppingMode = true, now = NOW, targetStoreId = "bim")
+        assertEquals(listOf(false, true), shopping.sections.map { it.isStore })
+        assertEquals("A101'de", shopping.sections.last().title)
+        assertEquals(listOf("Elma"), shopping.sections.last().rows.map { it.row.name })
+    }
+
+    /**
+     * ZINCIR BASINA BIR BOLUM, hepsi tek bolumde DEGIL.
+     *
+     * Baslik zincirin adini yaziyor ("A101'de"); iki zinciri tek baslik
+     * altinda toplamak o adi yalan yapardi. Siralama ADA gore - eklenme
+     * sirasi listeyi her yeni satirda yeniden dizerdi.
+     */
+    @Test
+    fun eachDeviantChainGetsItsOwnSection() {
+        val state = listOf(
+            row("Elma", storeId = "sok", storeName = "ŞOK"),
+            row("Armut", storeId = "a101", storeName = "A101"),
+            row("Erik", storeId = "a101", storeName = "A101"),
+        ).toSections("ben", shoppingMode = true, now = NOW, targetStoreId = "bim")
+
+        val stores = state.sections.filter { it.isStore }
+        assertEquals(listOf("A101'de", "ŞOK'ta"), stores.map { it.title })
+        assertEquals(listOf(2, 1), stores.map { it.rows.size })
+    }
+
+    /**
+     * ADSIZ MARKET SAPMA SAYILMIYOR.
+     *
+     * Market silinmisse `storeName` null gelir. Satiri kendi reyonundan
+     * cikarip basligi olmayan bir bolume koymak, kullanicinin bulamayacagi
+     * bir yere koymak olurdu; beyan cumlesi de onu "1'i ?'de" diye yazamaz.
+     */
+    @Test
+    fun aDeviationToADeletedStoreIsIgnored() {
+        val state = listOf(row("Elma", storeId = "silinmis", storeName = null))
+            .toSections("ben", shoppingMode = true, now = NOW, targetStoreId = "bim", targetStoreName = "BİM")
+
+        assertTrue(state.sections.none { it.isStore })
+        assertNull(state.declaration?.deviation)
+    }
+
+    /**
+     * BEYAN CIZILMEYEN SATIRLARI DA SAYIYOR.
+     *
+     * Sabitler bolumu 12 satirla sinirli ve ustu CIZILMIYOR. Cizilmeyen bir
+     * satir da hedefinin disinda ve kullanici onu markette arayacak - cumle
+     * onu saymak zorunda. Bolumler uzerinden saysaydik on ucuncu sabit
+     * cumleden dusrdu.
+     */
+    @Test
+    fun theDeclarationCountsRowsThatAreNotDrawn() {
+        val rows = (1..13).map {
+            row("Sabit$it", isStaple = true, storeId = "a101", storeName = "A101")
+        }
+        val state = rows.toSections("ben", now = NOW, targetStoreId = "bim", targetStoreName = "BİM")
+
+        // On iki satir ciziliyor...
+        assertEquals(STAPLE_LIMIT, state.sections.single().rows.size)
+        // ...ama cumle on ucunu de sayiyor.
+        assertEquals("13'ü A101'de", state.declaration?.deviation)
     }
 }

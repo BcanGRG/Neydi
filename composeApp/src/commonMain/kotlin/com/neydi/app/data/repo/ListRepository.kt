@@ -205,6 +205,37 @@ class ListRepository(
         )
     }
 
+    /**
+     * Gezinin hedef marketini beyan eder (karar 117).
+     *
+     * ## Neden [openOrGetActiveTrip] uzerinden
+     *
+     * Kullanici hedefi LISTE BOSKEN de secebilir - *"bugun BIM'e gidiyorum"*
+     * cumlesi listeyi kurmadan once soylenebilen bir sey. Aktif gezi yoksa
+     * yalnizca return etseydik dokunus sessizce hicbir sey yapmazdi ve
+     * kullanici secicinin bozuk oldugunu dusunurdu.
+     *
+     * Gezi ACILMASI da dogru sonuc: sabitler zaten o an tohumlaniyor, yani
+     * hedefi secmekle liste de kurulmus oluyor.
+     */
+    suspend fun setTripStore(householdId: String, memberId: String, storeId: String?) {
+        val trip = openOrGetActiveTrip(householdId, memberId)
+        tripDao.setStore(id = trip.id, storeId = storeId, at = clock())
+    }
+
+    /**
+     * Satirin market ISTISNASINI yazar (karar 117).
+     *
+     * HEDEFIN KENDISI SECILIRSE ISTISNA SILINIYOR: "BIM'e gidiyorum" derken
+     * bir satira da "BIM" demek istisna degil, hedefin tekrari. Kayit olarak
+     * tutsaydik hedef degistigi gun o satir sessizce sapmaya donerdi -
+     * kullanici hicbir sey soylememisken.
+     */
+    suspend fun setLineStore(rowId: String, storeId: String?, targetStoreId: String?) {
+        val effective = storeId?.takeIf { it != targetStoreId }
+        tripLineDao.setStore(id = rowId, storeId = effective, at = clock())
+    }
+
     /** Bir satirin bugunku hali - sayacin uzerine ekleyecegi taban. */
     suspend fun line(rowId: String): TripLine? = tripLineDao.byId(rowId)
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.theme.Spacing
 import com.neydi.app.ui.theme.SpacingExtra
 
@@ -44,6 +45,14 @@ fun SectionHeader(
     title: String,
     count: Int,
     modifier: Modifier = Modifier,
+    /**
+     * MARKET bolumu mu (karar 118) - basliga storefront ikonu ekliyor.
+     *
+     * Ikon burada bir SUS degil ayrim: "A101'de" bir reyon adi gibi
+     * okunabilirdi ve liste zaten reyon adlariyla bolunmus. Ikon o iki
+     * bolumlemeyi birbirinden ayiran tek isaret.
+     */
+    isStore: Boolean = false,
 ) {
     Row(
         modifier = modifier
@@ -55,8 +64,21 @@ fun SectionHeader(
                 bottom = SpacingExtra.belowSectionHeader,
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        // 5dp MARKET BOLUMUNDE, 8dp reyonda - maketin iki olcusu. Ikonlu
+        // baslikta ikon ile ad arasi daha dar, cunku ikisi tek bir isim gibi
+        // okunmali.
+        horizontalArrangement = Arrangement.spacedBy(
+            if (isStore) STORE_ICON_GAP else Spacing.sm,
+        ),
     ) {
+        if (isStore) {
+            NeydiIcon(
+                icon = NeydiIcons.Storefront,
+                contentDescription = null,
+                size = STORE_ICON,
+                tint = MaterialTheme.colorScheme.outline,
+            )
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.labelMedium,
@@ -70,6 +92,12 @@ fun SectionHeader(
     }
 }
 
+/** Market bolumu basligindaki storefront - maketin olcusu. */
+private val STORE_ICON = 15.dp
+
+/** Ikon ile zincir adi arasi (maket: 5px). */
+private val STORE_ICON_GAP = 5.dp
+
 // --- Preview ---------------------------------------------------------------
 
 @PreviewLightDark
@@ -78,4 +106,5 @@ private fun SectionHeaderPreview() = NeydiPreview {
     SectionHeader("Fırın-Ekmek", 3)
     SectionHeader("Süt-Kahvaltılık", 5)
     SectionHeader("Temizlik", 12)
+    SectionHeader("A101'de", 2, isStore = true)
 }

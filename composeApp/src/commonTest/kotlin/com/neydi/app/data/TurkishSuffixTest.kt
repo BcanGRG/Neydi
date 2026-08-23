@@ -131,4 +131,38 @@ class TurkishSuffixTest {
         assertEquals("", possessiveSuffix(-3))
         assertEquals("", possessiveSuffix(100))
     }
+
+    /**
+     * YONELME HALI - beyan cumlesinin ilk yarisi: *"BIM'e gidiyorsun"*.
+     *
+     * YEDI ZINCIRIN UCU KAYNASTIRMA ISTIYOR (File, CarrefourSA, Tarim Kredi),
+     * yani `y`siz bir kural yedide ucunu bozardi - istisna degil, cogunluga
+     * yakin bir hal. Bu yuzden hepsi tek tek yaziliyor.
+     */
+    @Test
+    fun theSevenSeedChainsGetTheirCorrectDativeSuffix() {
+        assertEquals("BİM'e", turkishDative("BİM")) // ince, unsuz
+        assertEquals("ŞOK'a", turkishDative("ŞOK")) // kalin, unsuz
+        assertEquals("Migros'a", turkishDative("Migros")) // kalin, unsuz
+        assertEquals("A101'e", turkishDative("A101")) // "bir" -> ince, unsuz
+        assertEquals("File'ye", turkishDative("File")) // ince, UNLU
+        assertEquals("CarrefourSA'ya", turkishDative("CarrefourSA")) // kalin, UNLU
+        assertEquals("Tarım Kredi'ye", turkishDative("Tarım Kredi")) // ince, UNLU
+    }
+
+    /**
+     * RAKAMIN OKUNUSU KAYNASTIRMAYI DA BELIRLIYOR, harfin kendisi degil.
+     *
+     * "A102" -> *"iki"* -> unluyle bitiyor -> `y` giriyor. Rakama bakan bir
+     * kural burada "A102'e" yazardi; harfe bakan bir kural ise `2` unlu
+     * olmadigi icin yine "A102'e" yazardi. Ikisi de yanlis.
+     */
+    @Test
+    fun aDigitReadAsEndingInAVowelTakesTheBufferConsonant() {
+        assertEquals("A102'ye", turkishDative("A102")) // iki
+        assertEquals("A106'ya", turkishDative("A106")) // altı - kalin
+        assertEquals("A107'ye", turkishDative("A107")) // yedi
+        assertEquals("A103'e", turkishDative("A103")) // üç - unsuz
+        assertEquals("A109'a", turkishDative("A109")) // dokuz - kalin, unsuz
+    }
 }

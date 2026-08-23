@@ -51,6 +51,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -117,6 +119,8 @@ fun ListScreen(
     val sheetBody by vm.sheetBody.collectAsStateWithLifecycle()
     val summary by vm.summary.collectAsStateWithLifecycle()
     val productSheet by vm.productSheet.collectAsStateWithLifecycle()
+    val storePickerOpen by vm.storePickerOpen.collectAsStateWithLifecycle()
+    val storeOptions by vm.storeOptions.collectAsStateWithLifecycle()
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
     val sheetQuery by vm.sheetQuery.collectAsStateWithLifecycle()
     val sheetResults by vm.sheetResults.collectAsStateWithLifecycle()
@@ -179,6 +183,7 @@ fun ListScreen(
         onHistory = onHistory,
         onSettings = onSettings,
         onCapture = onCapture,
+        onPickStore = vm::openStorePicker,
         onAddFromLastTrip = vm::addFromLastTrip,
         // TOPLU EKLEME TOAST'I DISARIDAN GELENIN ONUNDE (karar 91): dogrudan
         // kullanicinin az onceki jestinin cevabi. Toast'in kuyrugu yok (karar
@@ -309,6 +314,25 @@ fun ListScreen(
         }
     }
 
+    if (storePickerOpen) {
+        ModalBottomSheet(
+            onDismissRequest = vm::closeStorePicker,
+            containerColor = MaterialTheme.colorScheme.surface,
+            // TAM ACILIYOR: sheet kisa (baslik + cipler + bir satir) ve yarim
+            // acilinca "Belli degil" ekranin disinda kalirdi - yani secimi
+            // KALDIRMA yolu kaydirmadan gorunmezdi.
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(Modifier.padding(bottom = bottomInset + Spacing.md)) {
+                StoreTargetPicker(
+                    stores = storeOptions,
+                    selectedId = state.targetStoreId,
+                    onSelect = vm::setTargetStore,
+                )
+            }
+        }
+    }
+
     productSheet?.let { sheet ->
         ModalBottomSheet(
             onDismissRequest = vm::closeProductSheet,
@@ -380,6 +404,8 @@ internal fun ListContent(
     onHistory: () -> Unit,
     onSettings: () -> Unit,
     onCapture: () -> Unit = {},
+    /** Hedef market secicisini acar (karar 117). */
+    onPickStore: () -> Unit = {},
     onAddFromLastTrip: () -> Unit = {},
     toast: String? = null,
     onToastShown: () -> Unit = {},
@@ -520,6 +546,10 @@ internal fun ListContent(
                         onSettings = onSettings,
                         onCapture = onCapture,
                         onLeaveShopping = { onShoppingMode(false) },
+                        // ALISVERIS MODUNDA SECICI YOK: hedef bir PLAN ve
+                        // reyondayken plan yapilmiyor - orada baslik zaten
+                        // ilerlemeyi ("12/18 alindi") yaziyor.
+                        onPickStore = if (state.shoppingMode) null else onPickStore,
                     )
                 }
 
@@ -602,6 +632,7 @@ internal fun ListContent(
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
+                            isStore = section.isStore,
                         )
                     }
                     items(section.rows, key = { it.id }) { row ->
@@ -811,6 +842,59 @@ internal fun ListContent(
  * cunku tek elle tutulan telefonda ust kenar en zor erisilen yer. IKINCIL
  * gezinme (reyonlardan ekle / gecmis / ayarlar) sag ustteki tasma menusunde.
  */
+/**
+ * Basligin alt satiri, hedef market seciliyken (karar 117).
+ *
+ * UC AYRI `Text` cunku uc ayri tipografi: hedef 14sp/600 `onSurface`
+ * (soylenen sey), ayirici ve sapma 14sp/400 `onSurfaceVariant` (yan bilgi).
+ * Tek bir `AnnotatedString` da olurdu ama parcalar arasindaki 4dp bosluk
+ * oradan cikmaz - yazi tipinin kendi bosluguna kalirdi.
+ *
+ * SAPMA KIRPILIR, HEDEF KIRPILMAZ: hedef cumlenin oznesi. Maketin olcusu de
+ * bunu destekliyor - cumle 390dp'de 72dp, pay 36dp; tasan tek sey sapma
+ * olabilir.
+ */
+@Composable
+private fun StoreDeclarationLine(declaration: StoreDeclaration) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DECLARATION_GAP),
+    ) {
+        NeydiIcon(
+            icon = NeydiIcons.Storefront,
+            contentDescription = null,
+            size = DECLARATION_ICON,
+            tint = MaterialTheme.colorScheme.outline,
+        )
+        Text(
+            text = declaration.target,
+            fontSize = DECLARATION_TEXT,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+        declaration.deviation?.let { deviation ->
+            Text(
+                text = "·",
+                fontSize = DECLARATION_TEXT,
+                color = MaterialTheme.colorScheme.outline,
+            )
+            Text(
+                text = deviation,
+                fontSize = DECLARATION_TEXT,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** Beyan cumlesinin olculeri - maketten. */
+private val DECLARATION_GAP = 4.dp
+private val DECLARATION_ICON = 15.dp
+private val DECLARATION_TEXT = 14.sp
+
 @Composable
 private fun ListHeader(
     state: ListState,
@@ -820,6 +904,8 @@ private fun ListHeader(
     onSettings: () -> Unit,
     onCapture: () -> Unit = {},
     onLeaveShopping: () -> Unit,
+    /** Hedef market secicisini acar (karar 117); alisveris modunda null. */
+    onPickStore: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
@@ -828,7 +914,27 @@ private fun ListHeader(
             .padding(horizontal = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
+        Column(
+            Modifier
+                .weight(1f)
+                // DOKUNMA HEDEFI BASLIK BLOGUNUN TAMAMI (karar 117).
+                //
+                // Maket chevron CIZMIYOR ve gerekcesi olculu: cumleden sonra
+                // 390dp'de 36dp pay kaliyor, chevron 20dp - yani chevron
+                // cizmek cumleyi 360dp'de kirpardi. Dokunulabilirligi isaret
+                // eden sey, alt satirin bir SORUYA cevap vermesi:
+                // "nereye gidiyorsun?" -> "BIM'e gidiyorsun".
+                //
+                // "Liste" mansetini de kapsiyor: 56dp'lik blogun ustunde ikinci
+                // bir hedef yok, yani calinan bir dokunus yok.
+                .then(
+                    if (onPickStore != null) {
+                        Modifier.pressable(onTap = onPickStore)
+                    } else {
+                        Modifier
+                    },
+                ),
+        ) {
             Text(
                 // BASLIK IKI MODDA DA "Liste". Alisveris modu maketlerinin
                 // ikisi de (Ekran 1 ve Ekranlar 2-4) manseti "Liste" yaziyor;
@@ -843,7 +949,10 @@ private fun ListHeader(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
-            Text(
+            val declaration = state.declaration.takeUnless { state.shoppingMode }
+            if (declaration != null) {
+                StoreDeclarationLine(declaration)
+            } else Text(
                 text = if (state.shoppingMode) {
                     // ILERLEME "ALINAN", "KALAN" DEGIL (maket: "12/18 alindi").
                     // Onceki "N kaldi" ters metrikti: toplami hic soylemiyordu,

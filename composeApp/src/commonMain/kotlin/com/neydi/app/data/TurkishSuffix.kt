@@ -133,6 +133,48 @@ private val TENS_POSSESSIVE = listOf(
     "u", // doksan
 )
 
+/**
+ * Turkce YONELME HALI eki: "BIM" -> "BIM'e", "File" -> "File'ye".
+ *
+ * Beyan cumlesinin ilk yarisi bunu kullaniyor: *"BIM'e gidiyorsun"* (karar 117).
+ *
+ * ## [turkishLocative]'ten farki: KAYNASTIRMA UNSUZU
+ *
+ * Bulunma halinde ek her zaman bir unsuzle basliyordu (`-de`/`-ta`), yani
+ * onceki harfin unlu olmasi sorun degildi. Yonelme eki ise TEK BIR UNLU
+ * (`-e`/`-a`) ve iki unlu yan yana gelemez - araya `y` giriyor:
+ * "File'ye", "CarrefourSA'ya", "Tarim Kredi'ye". Yedi tohum zincirinden
+ * UCU bu durumda, yani kural istisna degil.
+ *
+ * Sertlik/yumusaklik BURADA ROL OYNAMIYOR (ekte d/t yok) - bu yuzden
+ * [turkishLocative]'in iki ekseninden yalnizca biri, unlu uyumu, geciyor.
+ *
+ * Rakamla biten adlar yine OKUNUSTAN: "A101" -> *"yuz bir"* -> `r` ile
+ * bitiyor, ince -> **A101'e**. "A102" olsaydi *"iki"* unluyle biterdi ve
+ * kaynastirma gerekirdi -> "A102'ye".
+ */
+fun turkishDative(name: String): String {
+    val trimmed = name.trim()
+    if (trimmed.isEmpty()) return trimmed
+    val last = trimmed.last()
+    val (back, endsWithVowel) = if (last.isDigit()) {
+        digitEnding(last).first to (last in VOWEL_FINAL_DIGITS)
+    } else {
+        lastVowelIsBack(trimmed) to (last in BACK_VOWELS || last in FRONT_VOWELS)
+    }
+    val buffer = if (endsWithVowel) "y" else ""
+    val vowel = if (back) 'a' else 'e'
+    return "$trimmed'$buffer$vowel"
+}
+
+/**
+ * Okunusu UNLUYLE biten rakamlar: iki, alti, yedi.
+ *
+ * Otekiler unsuzle bitiyor (sifir/bir `r`, uc `c`, dort `t`, bes `s`,
+ * sekiz/dokuz `z`) ve kaynastirma istemiyor.
+ */
+private const val VOWEL_FINAL_DIGITS = "267"
+
 /** Kalin unluler, iki halde de. */
 private const val BACK_VOWELS = "aouıAOUI"
 

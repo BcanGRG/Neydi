@@ -2,6 +2,9 @@ package com.neydi.app.ui.list
 
 import com.neydi.app.data.EstimateLine
 import com.neydi.app.data.packIsMissing
+import com.neydi.app.data.possessiveSuffix
+import com.neydi.app.data.turkishDative
+import com.neydi.app.data.turkishLocative
 import com.neydi.app.data.quantityLabel
 
 import com.neydi.app.data.daysBetween
@@ -41,6 +44,19 @@ data class ListState(
     val selfInitials: String? = null,
     /** Hanede baska uye var mi - avatarin varlik noktasinin rengi. */
     val hasPartner: Boolean = false,
+    /**
+     * Hedef market beyani (karar 117). `null` = hedef yok ve baslik
+     * [lastTripSummary]'yi yaziyor.
+     */
+    val declaration: StoreDeclaration? = null,
+    /**
+     * Hedefin KIMLIGI - secicinin hangi cipi isaretli cizecegi (karar 117).
+     *
+     * [declaration] yalnizca METIN tasiyor ve secici metinle eslesemez: iki
+     * zincir ayni adi tasiyabilir, ustelik hedef silinmis bir markete isaret
+     * ediyorsa beyan hic kurulmuyor ama kimlik hala gecerli.
+     */
+    val targetStoreId: String? = null,
 ) {
     val isEmpty: Boolean get() = !loading && sections.isEmpty() && taken.isEmpty()
     val totalRows: Int get() = sections.sumOf { it.rows.size } + taken.size
@@ -97,6 +113,94 @@ internal fun lastTripSummary(lastTrip: LastTrip?, now: Long): String {
 }
 
 /**
+ * Basligin alt satiri, HEDEF MARKET seciliyken: *"BIM'e gidiyorsun · 2'si
+ * A101'de"* (karar 117).
+ *
+ * Iki parca AYRI tutuluyor cunku iki farkli tipografi tasiyorlar: hedef
+ * 14sp/600 `onSurface`, sapma 14sp/400 `onSurfaceVariant`. Tek dizgi
+ * dondurseydik cizim tarafi onu ayirmak icin ayirici karakteri aramak
+ * zorunda kalirdi - market adinda bir "·" gecmesi yeterdi.
+ *
+ * @property target hep dolu - beyan varsa hedef vardir.
+ * @property deviation sapan satir yoksa `null` ve ayirici da cizilmiyor.
+ */
+data class StoreDeclaration(
+    val target: String,
+    val deviation: String?,
+)
+
+/**
+ * Beyan cumlesini kurar; hedef yoksa `null` doner ve baslik
+ * [lastTripSummary]'ye geri duser.
+ *
+ * ## Cumle neden "gidiyorsun", "gidiyorum" degil
+ *
+ * Maketin metni birebir bu. Uygulama kullaniciya SESLENIYOR; birinci sahis
+ * ("gidiyorum") uygulamayi kullanicinin yerine konusturmus olurdu ve ayni
+ * baslikta "Son alisveris: dun" gibi tarafsiz bir cumleyle yan yana durunca
+ * ses tutarsiz olurdu.
+ *
+ * ## Birden fazla sapan zincir
+ *
+ * ⚠ MAKETTE YOK: tasarim yalnizca tek zincirli ornegi ciziyor
+ * (*"2'si A101'de"*). Iki zincire sapilmis bir listede secenekler
+ * "2'si A101'de · 1'i SOK'ta" (baslik butcesini asiyor) ya da en buyuk
+ * zinciri yazip otekileri SESSIZCE dusurmek (satir sayisini yalanlar) idi.
+ * Ucuncusu secildi: zincir adi birakilir, sayi DOGRU kalir.
+ *
+ * Bu bir kod karari ve tasarima bildirildi (`docs/38`).
+ *
+ * @param targetName gezinin hedef marketinin gorunen adi; `null` = "Belli degil".
+ * @param deviantStoreNames hedeften SAPAN satirlarin market adlari, satir
+ *   basina bir giris (yani tekrarli).
+ */
+internal fun storeDeclaration(
+    targetName: String?,
+    deviantStoreNames: List<String>,
+): StoreDeclaration? {
+    if (targetName.isNullOrBlank()) return null
+    val target = "${turkishDative(targetName)} gidiyorsun"
+    if (deviantStoreNames.isEmpty()) return StoreDeclaration(target, null)
+
+    val count = deviantStoreNames.size
+    val suffix = possessiveSuffix(count)
+    val head = if (suffix.isEmpty()) "$count" else "$count'$suffix"
+    val chains = deviantStoreNames.distinct()
+    val where = if (chains.size == 1) turkishLocative(chains.single()) else "başka marketlerde"
+    return StoreDeclaration(target, "$head $where")
+}
+
+/**
+ * Bu satir hedeften SAPIYOR mu (karar 117-118).
+ *
+ * ## Uc sart, ucu de ayri sebeple
+ *
+ * 1. **Hedef var** - "istisna"nin istisna olabilmesi icin bir kural gerekiyor.
+ *    Hedef "Belli degil"ken satirin markete dair bir IDDIASI yok; tasarimin
+ *    cumlesi de bunu soyluyor: *"hedef de yoksa liste hic bolunmuyor"*.
+ *    ⚠ Satirin verisi SILINMIYOR - hedef geri secilince isaret geri geliyor.
+ * 2. **Satirin marketi var** - `null` zaten "hedefi izliyor" demek.
+ * 3. **Hedefin KENDISI degil** - "BIM'e gidiyorum" derken bir satira da "BIM"
+ *    demek sapma degil, hedefin tekrari.
+ * 4. **Adi biliniyor** - market silinmisse satiri reyonundan cikarip basligi
+ *    olmayan bir bolume koymak, onu bulunamaz yapardi.
+ *
+ * ## Neden tek fonksiyon
+ *
+ * Ayni soru UC yerde soruluyor: satirin isareti, alisveristeki bolumleme, ve
+ * beyan cumlesinin sayisi. Ucu ayri yazilsaydi biri otekinden ayrilir ve
+ * cumle "2'si A101'de" derken listede uc satir isaretli gorunurdu.
+ *
+ * KIMLIKLE, ADLA DEGIL: iki zincir ayni adi tasiyabilir ve ad kullanicinin
+ * duzenledigi bir alan.
+ */
+internal fun ListRowProjection.deviatesFrom(targetStoreId: String?): Boolean =
+    targetStoreId != null &&
+        storeId != null &&
+        storeId != targetStoreId &&
+        storeName != null
+
+/**
  * Uc bos durum. Ayni metni ucune de gostermek en kotu secenek: ilk gun
  * "ne yapacagimi bilmiyorum", dongu ortasi ise "uygulama olmus mu" hissi verir.
  */
@@ -118,6 +222,14 @@ const val STAPLE_SECTION_TITLE = "Her zamankiler"
 data class ListSection(
     val title: String,
     val rows: List<UiRow>,
+    /**
+     * Bu bir MARKET bolumu mu - reyon degil (karar 118).
+     *
+     * Alisveris modunda hedeften sapan satirlar reyonlarindan cikip zincir
+     * basina tek bolumde topluyor ve o bolumun basligi storefront ikonu
+     * tasiyor. Bayrak basligin cizimini degistiriyor, siralamayi degil.
+     */
+    val isStore: Boolean = false,
 )
 
 /**
@@ -148,11 +260,15 @@ data class UiRow(
  *   ve hicbir sey soylemez.
  * @param cheaper "A101'de 36,00" - listenin ilk uc adayindan biriyse dolu.
  *   Doluysa trend BASTIRILIYOR (karar 41).
+ * @param targetStoreId gezinin hedef marketi. Satirin marketi BUNDAN farkliysa
+ *   sapma isareti ciziliyor; ayni ise satir yalnizca hedefi tekrar ediyor ve
+ *   isaret cizmek gurultu olurdu.
  */
 internal fun ListRowProjection.toUiRow(
     myMemberId: String?,
     now: Long,
     cheaper: String? = null,
+    targetStoreId: String? = null,
 ): UiRow = UiRow(
     id = rowId,
     productId = productId,
@@ -178,6 +294,9 @@ internal fun ListRowProjection.toUiRow(
             ),
         ),
         cheaperElsewhere = cheaper,
+        // TEK KURAL, UC OKUMA (bkz. `deviatesFrom`): isaret, bolumleme ve
+        // beyan cumlesinin sayisi ayni soruyu soruyor.
+        deviantStore = storeName.takeIf { deviatesFrom(targetStoreId) },
     ),
 )
 
@@ -238,6 +357,10 @@ internal fun List<ListRowProjection>.toSections(
      * vermeye mecbur ediyor.
      */
     now: Long,
+    /** Gezinin hedef marketi (karar 117); `null` = "Belli degil". */
+    targetStoreId: String? = null,
+    /** [targetStoreId]'nin gorunen adi - beyan cumlesi bunu yaziyor. */
+    targetStoreName: String? = null,
 ): ListState {
     // PLANLAMADA "ALINDI" BOLUMU YOK (karar 116).
     //
@@ -273,6 +396,21 @@ internal fun List<ListRowProjection>.toSections(
         remaining.partition { it.isStaple }
     }
 
+    // ALISVERISTE SAPANLAR REYONDAN CIKIYOR (karar 118).
+    //
+    // Gerekcesi reyon sirasinin ne ise yaradigi: liste "bu markette hangi
+    // sirayla yuruyeceksin" diyor. Baska bir marketten alinacak satir o
+    // yuruyusun icinde durursa, kullanici onu her reyonda arar ve bulamaz.
+    //
+    // PLANLAMADA AYRILMIYORLAR: orada liste kuruluyor ve satirin hangi
+    // reyondan geldigi hala en yararli gruplama. Isaret (karar 118'in ilk
+    // yarisi) planlamada satirin uzerinde zaten duruyor.
+    val (deviant, onTarget) = if (shoppingMode) {
+        others.partition { it.deviatesFrom(targetStoreId) }
+    } else {
+        emptyList<ListRowProjection>() to others
+    }
+
     // "BASKA MARKETTE UCUZ" ADAYLARI, ALINMAMIS SATIRLAR UZERINDEN (karar 41).
     //
     // Isaretli satir kapsam disi ve bu, "en fazla 3" sinirinin nereye
@@ -285,10 +423,13 @@ internal fun List<ListRowProjection>.toSections(
     // cizerdi.
     val chips = remaining.cheaperChips()
 
-    val categorySections = others
+    val categorySections = onTarget
         .groupBy { it.categoryName }
         .map { (title, rows) ->
-            ListSection(title, rows.map { it.toUiRow(myMemberId, now, chips[it.rowId]) })
+            ListSection(
+                title,
+                rows.map { it.toUiRow(myMemberId, now, chips[it.rowId], targetStoreId) },
+            )
         }
         .filter { it.rows.isNotEmpty() }
 
@@ -296,16 +437,48 @@ internal fun List<ListRowProjection>.toSections(
     // yazmadigi 20 satir gostermek olurdu.
     val stapleSection = staples
         .take(STAPLE_LIMIT)
-        .map { it.toUiRow(myMemberId, now, chips[it.rowId]) }
+        .map { it.toUiRow(myMemberId, now, chips[it.rowId], targetStoreId) }
         .takeIf { it.isNotEmpty() }
         ?.let { ListSection(STAPLE_SECTION_TITLE, it) }
 
-    val sections = listOfNotNull(stapleSection) + categorySections
+    // ZINCIR BASINA BIR BOLUM, hepsi tek bolumde DEGIL: baslik zincirin adini
+    // yaziyor ("A101'de") ve iki zinciri tek baslik altinda toplamak o adi
+    // yalan yapardi.
+    //
+    // SIRALAMA ADA GORE: reyon sirasi gibi bir "dogru sira" yok ve eklenme
+    // sirasi listeyi her yeni satirda yeniden dizerdi.
+    val storeSections = deviant
+        .groupBy { it.storeName!! }
+        .toSortedMap()
+        .map { (store, rows) ->
+            ListSection(
+                title = turkishLocative(store),
+                rows = rows.map { it.toUiRow(myMemberId, now, chips[it.rowId], targetStoreId) },
+                isStore = true,
+            )
+        }
+
+    // MARKET BOLUMLERI EN ALTTA: reyon sirasi bu marketin yuruyusu ve onu
+    // baska bir marketin satirlariyla bolmek yuruyusu bozardi.
+    val sections = listOfNotNull(stapleSection) + categorySections + storeSections
+
+    // BEYAN SAPAN SATIRLARI SAYIYOR, BOLUMLERI DEGIL.
+    //
+    // `sections` uzerinden saymak yanlis olurdu: sabitler bolumu 12 satirla
+    // sinirli ve ustu CIZILMIYOR. Cizilmeyen bir satir da hedefinin disinda
+    // ve kullanici onu markette arayacak - cumle onu saymak zorunda.
+    val deviants = filter { it.deviatesFrom(targetStoreId) }
+
     return ListState(
         sections = sections,
-        taken = alinan.map { it.toUiRow(myMemberId, now) },
+        taken = alinan.map { it.toUiRow(myMemberId, now, targetStoreId = targetStoreId) },
         loading = false,
         shoppingMode = shoppingMode,
         emptyKind = emptyKind,
+        targetStoreId = targetStoreId,
+        declaration = storeDeclaration(
+            targetName = targetStoreName,
+            deviantStoreNames = deviants.mapNotNull { it.storeName },
+        ),
     )
 }
