@@ -15,7 +15,10 @@ data class ListRowProjection(
     val productId: String,
     val name: String,
     val count: Double,
+    /** GECERLI birim: `COALESCE(unitOverride, unit)` - sorguda cozuluyor. */
     val unit: String,
+    /** Kullanici bu satir icin birim SECTI mi (karar 108). `null` = katalogu izliyor. */
+    val unitOverride: String? = null,
     val checked: Boolean,
     val isStaple: Boolean,
     val categoryId: String,

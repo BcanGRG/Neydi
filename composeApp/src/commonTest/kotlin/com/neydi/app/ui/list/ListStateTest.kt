@@ -3,6 +3,7 @@ package com.neydi.app.ui.list
 import com.neydi.app.data.db.ListRowProjection
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -38,6 +39,32 @@ class ListStateTest {
         takeOutcome = null,
         note = null,
     )
+
+    // --- Rozetin dolgusu ----------------------------------------------------
+
+    /** Varsayilan miktar: rozet KONTURLU - kimse dokunmamis. */
+    @Test
+    fun anUntouchedRowIsNotModified() {
+        assertFalse(isQuantityModified(1.0, unitOverride = null))
+    }
+
+    /** Sayi degistiyse dolgulu - ilk ve en acik hal. */
+    @Test
+    fun aChangedCountIsModified() {
+        assertTrue(isQuantityModified(4.0, unitOverride = null))
+    }
+
+    /**
+     * BIRIM DEGISTIYSE SAYI 1 KALSA BILE DOLGULU (karar 108).
+     *
+     * "1 kg Domates"i "1 adet Domates" yapan biri sayiya hic dokunmuyor. Kural
+     * yalnizca sayiya bakiyor olsaydi o satir KONTURLU cizilirdi - oysa
+     * miktarini gercekten kullanici secmis olurdu.
+     */
+    @Test
+    fun aUnitOverrideCountsAsModifiedEvenAtOne() {
+        assertTrue(isQuantityModified(1.0, unitOverride = "adet"))
+    }
 
     // --- Bolumleme ----------------------------------------------------------
 

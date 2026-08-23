@@ -157,7 +157,7 @@ internal fun ListRowProjection.toUiRow(
     row = ListRow(
         name = name,
         quantity = quantityLabel(count, unit),
-        quantityModified = count != 1.0,
+        quantityModified = isQuantityModified(count, unitOverride),
         checked = checked,
         isStaple = isStaple,
         addedByInitial = if (addedByMemberId != myMemberId) turkishInitials(name).take(1) else null,
@@ -166,6 +166,25 @@ internal fun ListRowProjection.toUiRow(
         cheaperElsewhere = cheaper,
     ),
 )
+
+/**
+ * Rozet DOLGULU mu cizilecek - yani kullanici bu satirin miktarina dokundu mu
+ * (karar 107).
+ *
+ * ## Neden birim de sayiliyor
+ *
+ * Once yalnizca `count != 1.0`di ve karar 108'e kadar yetiyordu: miktari
+ * degistirmenin tek yolu sayiyi degistirmekti. Birim de secilebilir olunca
+ * "1 kg Domates"i "1 adet Domates" yapan biri, sayiya dokunmadigi icin
+ * KONTURLU bir rozet gorurdu - oysa o satirin miktarini gercekten kendisi
+ * secmis olurdu.
+ *
+ * `unitOverride`a bakiliyor, `unit != katalogVarsayilani`ya DEGIL: katalog
+ * `INSERT OR REPLACE` ile yenileniyor ve karsilastirma yapsaydik, katalogun
+ * varsayilani degistigi gun kullanicinin secimi sessizce "varsayilan"a donerdi.
+ */
+internal fun isQuantityModified(count: Double, unitOverride: String?): Boolean =
+    count != 1.0 || unitOverride != null
 
 /**
  * Sheet'in "N urun eklendi" sayacinin bu eklemeden ne kadar artacagi.

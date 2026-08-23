@@ -176,6 +176,38 @@ class ListRepository(
         )
     }
 
+    /**
+     * Satirin miktarini (ve varsa birimini) MUTLAK olarak yazar - karar 107-109.
+     *
+     * ## Neden `add` degil
+     *
+     * `add` bir DELTA yoluydu ve karar 109'dan sonra artik o bile degil - ikinci
+     * ekleme hicbir sey degistirmiyor. Miktarin kendi evi burasi, ve mutlak
+     * olmasi sart: sayac "+ " ile "-" arasinda gidip geliyor, delta biriktiren
+     * bir yol kaybolan bir dokunusta sessizce yanlis sayiya oturur.
+     *
+     * ## Birim de burada, cunku ayni jestin parcasi
+     *
+     * Kullanici Urun Detayi'nda birimi degistirdiginde miktar da o birime ait
+     * hale geliyor. Ikisini ayri yazmak, arada bir okuma yapan ekranin "4 adet"
+     * yerine "4 kg" gormesi demekti.
+     *
+     * @param unitOverride `null` = katalog varsayilanini izle. Cagiran taraf
+     *   mevcut degeri KORUMAK istiyorsa onu okuyup geri vermeli - bu bir
+     *   yama degil, tam bir yazma.
+     */
+    suspend fun setQuantity(rowId: String, quantity: Double, unitOverride: String?) {
+        tripLineDao.setQuantity(
+            id = rowId,
+            quantity = quantity,
+            unitOverride = unitOverride,
+            at = clock(),
+        )
+    }
+
+    /** Bir satirin bugunku hali - sayacin uzerine ekleyecegi taban. */
+    suspend fun line(rowId: String): TripLine? = tripLineDao.byId(rowId)
+
     /** Bitir ekranindan geri alma: bu satir aslinda alinmadi. */
     suspend fun setTaken(lineId: String, taken: Boolean) {
         tripLineDao.setChecked(lineId, taken, if (taken) clock() else null)

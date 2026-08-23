@@ -19,6 +19,9 @@ import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.formatRelativeDay
 import com.neydi.app.data.matchKey
+import com.neydi.app.data.incrementQuantity
+import com.neydi.app.data.decrementQuantity
+import com.neydi.app.data.stepFor
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.AddResult
@@ -277,6 +280,59 @@ class ListViewModel(
 
     fun closeProductSheet() {
         _productSheet.value = null
+    }
+
+    /**
+     * Sayacin bir adimi (karar 107).
+     *
+     * ## Neden mevcut deger BURADA okunuyor
+     *
+     * Ekranin elindeki sayi bir cizim; iki hizli dokunus arasinda akis henuz
+     * yeni degeri yaymamis olabilir ve ekran ayni tabandan iki kez artirirdi -
+     * uc dokunusun ikiye sayilmasi. Taban her adimda tablodan okunuyor.
+     *
+     * BIRIM DEGISMIYOR: adim birime gore hesaplaniyor ama satirin birimi
+     * oldugu gibi geri yaziliyor. `setQuantity` bir yama degil TAM bir yazma,
+     * yani mevcut degeri gecirmeyi unutmak onu silmek olurdu.
+     */
+    fun stepQuantity(rowId: String, up: Boolean) {
+        viewModelScope.launch {
+            val line = repo.line(rowId) ?: return@launch
+            val unit = line.unitOverride ?: line.unit
+            val next = if (up) {
+                incrementQuantity(line.quantity, unit)
+            } else {
+                decrementQuantity(line.quantity, unit)
+            }
+            if (next == line.quantity) return@launch
+            repo.setQuantity(rowId, next, line.unitOverride)
+        }
+    }
+
+    /**
+     * Satira ozel birim secimi (karar 108).
+     *
+     * ## Sayi DONUSTURULMUYOR
+     *
+     * "1 kg" satirinda `g` secilirse sonuc "1 g" oluyor, "1000 g" degil.
+     * Donusturmek kullanicinin sectigi sayiyi sessizce yeniden yazmak olurdu
+     * ve tasarim bunu istemiyor - birim ciplerinin yanindaki sayac zaten
+     * oradaki, kullanici istedigi sayiya kendisi gotururu.
+     *
+     * Ama yeni birimin TABANINA oturtuluyor: `g`nin adimi 100 ve sayac
+     * sifira inemiyor (karar 109), yani 1 g bir sayacin ulasamayacagi bir
+     * deger olurdu - eksiye basildiginda birdenbire 100'e sicrardi.
+     */
+    fun setRowUnit(rowId: String, unit: String) {
+        viewModelScope.launch {
+            val line = repo.line(rowId) ?: return@launch
+            val floor = stepFor(unit)
+            repo.setQuantity(
+                rowId = rowId,
+                quantity = maxOf(line.quantity, floor),
+                unitOverride = unit,
+            )
+        }
     }
 
     /**
