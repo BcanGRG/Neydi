@@ -56,6 +56,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.neydi.app.ui.components.CategoryTile
+import com.neydi.app.ui.components.NeydiIcon
+import com.neydi.app.ui.components.NeydiIcons
 import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiSwitch
 import com.neydi.app.ui.components.Sparkline
@@ -96,7 +98,53 @@ data class ProductSheetState(
      * bir satir yoktur.
      */
     val quantity: RowQuantity? = null,
+    /**
+     * "Nereden alinacak" satirinin verisi (karar 126). `null` ise satir
+     * cizilmiyor - bkz. [LineStore].
+     */
+    val lineStore: LineStore? = null,
 )
+
+/**
+ * *"Nereden alinacak"* satirinin bildigi her sey (karar 126).
+ *
+ * ## Neden hedefin adi da tasiniyor
+ *
+ * Satirin sessiz hali hedefin ADINI yaziyor - *"BIM . hedef"* - yani satir
+ * istisna tasimasa bile gezinin beyanini tekrar ediyor. Yalnizca istisnayi
+ * tasisaydik o cumleyi yazacak veri olmazdi ve satir bos gorunurdu.
+ *
+ * ## Neden hedef yokken bu nesne hic dogmuyor
+ *
+ * Bu bir KOD KARARI ve tasarima sorulacak. Karar 117 hedefi bos birakmayi
+ * mesru kildi ("Belli degil"), ama `deviantStoreName`'in ilk sarti hedefin
+ * VARLIGI: hedef yokken satirin markete dair bir iddiasi olamaz, cunku
+ * istisnanin istisna olabilmesi icin bir kural gerekiyor. Hedef yokken satir
+ * cizilseydi dokunusla yazilan istisna HICBIR YERDE gorunmezdi - ne bandin
+ * isaretinde, ne alisverisin bolumlemesinde, ne baslik cumlesinde - yani
+ * jest, sonucu olmayan bir jest olurdu.
+ *
+ * @property targetName gezinin hedef marketinin adi.
+ * @property deviantName satirin istisnasi; `null` = satir hedefi izliyor.
+ *   Adi `deviantStoreName` uretiyor, yani listedeki isaretle AYNI kural.
+ */
+data class LineStore(
+    val targetName: String,
+    val deviantName: String? = null,
+)
+
+/**
+ * Satirin nereden alinacagi - satirin SAG tarafina yazilan cumle.
+ *
+ * Hedefteyken hedefin adi ve *"hedef"* kelimesi bir arada; aradaki nokta
+ * ikisini TEK BIR CUMLE yapiyor, cunku *"BIM"* tek basina bir istisna gibi
+ * okunurdu. Istisnadayken yalnizca zincir adi: orada soylenecek ikinci bir
+ * sey yok, satirin agirligi ve rengi zaten farkli.
+ */
+internal fun LineStore.label(): String = deviantName ?: "$targetName · hedef"
+
+/** Satir bir ISTISNA mi anlatiyor - punto, renk ve chevron buna bagli. */
+internal val LineStore.isException: Boolean get() = deviantName != null
 
 /**
  * Sheet'in miktar blogunun bildigi her sey (karar 108).
@@ -191,6 +239,12 @@ fun ProductSheetContent(
     onSetPack: (String, String) -> Unit = { _, _ -> },
     /** Birim cipi secildi - YALNIZ bu satiri degistirir, katalogu degil. */
     onPickUnit: (String) -> Unit = {},
+    /**
+     * *"Nereden alinacak"* satirina dokunuldu - beyanin cip izgarasini acar
+     * (karar 126). Varsayilani BOS: satir yine cizilir ama hicbir sey acmaz,
+     * onizlemeler icin.
+     */
+    onPickLineStore: () -> Unit = {},
 ) {
     val extras = LocalNeydiExtraColors.current
     Column(
@@ -318,6 +372,26 @@ fun ProductSheetContent(
         // carpiyor ve sheet bir ayar yuzeyi degil "sil" ekrani gibi okunuyordu.
         // Geri alinamaz is, listenin sonunda durur.
         Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
+        // KUYRUGUN ILK SATIRI "NEREDEN ALINACAK" (karar 126).
+        //
+        // Karar 38'in SABIT sirasi tam olarak bu tek ekleme icin acildi.
+        // Gerekcesi maketin notunda yazili: *"eylem grubunun basinda, cunku
+        // satirin olgusu"* - anahtarlar URUNE ait ("her zamanki mi",
+        // "onerilsin mi"), bu satir ise LISTEDEKI SATIRA. Yikici satir sonda
+        // kaliyor.
+        //
+        // Jest neden burada: karar 116 planlamada satir yuzeyinin veri
+        // degistirmesini yasakliyor, karar 110 satirda ikinci bir yigilmis
+        // hedefe yer birakmiyor - ve uzun dokunus zaten buraya geliyordu.
+        // Yeni bir jest icat etmek ucuncu bir karari delerdi.
+        state.lineStore?.let { lineStore ->
+            DestinationRow(lineStore, onPickLineStore)
+            // AYIRICI: maket eylem grubunun HER satirina bir ust cizgi
+            // veriyor. Bu satir olmasa "Nereden alinacak" ile "Her
+            // zamankilere ekle" tek blok gibi okunurdu - oysa biri satirin,
+            // oteki urunun.
+            Box(Modifier.fillMaxWidth().height(Sizes.hairline).background(extras.hairline))
+        }
         NeydiSwitch(
             label = "Her zamankilere ekle",
             checked = state.isStaple,
@@ -358,6 +432,91 @@ fun ProductSheetContent(
     }
 }
 
+
+/**
+ * *"Nereden alinacak"* - eylem grubunun ilk satiri (karar 126).
+ *
+ * ## Iki hal, iki agirlik
+ *
+ * Satir SESSIZ kaliyor hedefteyken (`17sp/500`, `onSurfaceVariant`, ikon ve
+ * chevron yok) ve YUKSELIYOR istisnadayken (`17sp/600`, `onSurface`,
+ * storefront + chevron). Ayrim karar 118'in mantiginin aynisi: *"isaret
+ * sapmadir"* - hedefteki satirin soyleyecek ozel bir seyi yok, o yuzden
+ * gosterisi de yok.
+ *
+ * Olculer maketten: h56, etiket `bodyLarge` (17sp/500), storefront 18dp,
+ * chevron 22dp, deger kumesinin ic araligi 4dp, etiket ile deger arasi 12dp.
+ * Yatay 16dp dolgu sheet govdesinin olcusu.
+ *
+ * BUTUN SATIR DOKUNULABILIR, chevron degil: chevron 22dp ve tek basina hicbir
+ * dokunma hedefi tabanini karsilamaz (karar 56).
+ */
+@Composable
+private fun DestinationRow(store: LineStore, onTap: () -> Unit) {
+    val exception = store.isException
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressable(onTap = onTap)
+            .padding(horizontal = Spacing.md)
+            .heightIn(min = DESTINATION_ROW_HEIGHT),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DESTINATION_LABEL_GAP),
+    ) {
+        Text(
+            text = "Nereden alınacak",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+        // KIRPILAN TARAF DEGER DEGIL ETIKET DE DEGIL: bosluk esner.
+        // "Nereden alinacak" sabit bir dize, zincir adi ise kisa - ikisi
+        // 360dp'de rahat siginiyor ve `weight` koymak uzun bir zincir adinda
+        // etiketi kirpardi.
+        Spacer(Modifier.weight(1f))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DESTINATION_VALUE_GAP),
+        ) {
+            if (exception) {
+                NeydiIcon(
+                    icon = NeydiIcons.Storefront,
+                    // Satirin etiketi zaten "Nereden alinacak" diyor.
+                    contentDescription = null,
+                    size = DESTINATION_ICON,
+                    tint = MaterialTheme.colorScheme.outline,
+                )
+            }
+            Text(
+                text = store.label(),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (exception) FontWeight.SemiBold else FontWeight.Medium,
+                color = if (exception) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (exception) {
+                NeydiIcon(
+                    icon = NeydiIcons.ChevronRight,
+                    contentDescription = null,
+                    size = DESTINATION_CHEVRON,
+                    tint = MaterialTheme.colorScheme.outline,
+                )
+            }
+        }
+    }
+}
+
+/** "Nereden alinacak" satirinin olculeri - maketten (karar 126). */
+private val DESTINATION_ROW_HEIGHT = 56.dp
+private val DESTINATION_ICON = 18.dp
+private val DESTINATION_CHEVRON = 22.dp
+private val DESTINATION_LABEL_GAP = 12.dp
+private val DESTINATION_VALUE_GAP = 4.dp
 
 /**
  * "Bu listedeki miktar" (karar 108).
@@ -871,6 +1030,39 @@ private val CHEAP_ROW_HEIGHT = 52.dp
 private val CHEAP_ROW_PADDING = 14.dp
 
 // --- Onizlemeler ------------------------------------------------------------
+
+/**
+ * "Nereden alinacak" satirinin IKI HALI yan yana (karar 126).
+ *
+ * Onizlemenin isi "cizildi mi" degil, iki halin GERCEKTEN ayrisip
+ * ayrismadigini gostermek: sessiz hal (500/`onSurfaceVariant`, ikonsuz,
+ * chevronsuz) ile yukselen hal (600/`onSurface`, storefront + chevron) ayni
+ * ekranda gorulmezse fark bir sayidan ibaret kalir.
+ */
+@PreviewLightDark
+@Composable
+private fun ProductSheetDestinationPreview() = NeydiPreview {
+    ProductSheetContent(
+        state = ProductSheetState(
+            productId = "p5",
+            rowId = "s5",
+            name = "Kaşar Peyniri 400 g",
+            isStaple = false,
+            lineStore = LineStore(targetName = "BİM"),
+        ),
+        onStapleChange = {},
+    )
+    ProductSheetContent(
+        state = ProductSheetState(
+            productId = "p6",
+            rowId = "s6",
+            name = "Süt 1 L",
+            isStaple = false,
+            lineStore = LineStore(targetName = "BİM", deviantName = "A101"),
+        ),
+        onStapleChange = {},
+    )
+}
 
 @PreviewLightDark
 @Composable

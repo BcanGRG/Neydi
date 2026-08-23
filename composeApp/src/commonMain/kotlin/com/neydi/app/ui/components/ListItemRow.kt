@@ -494,10 +494,23 @@ fun ListItemRow(
 /** Ekonomi bandinin taban yuksekligi - fiyatli ve fiyatsiz satir ayni hizada dursun diye. */
 private val ECONOMY_BAND_MIN = 28.dp
 
+/**
+ * Ekonomi bandinin GRUPLAR ARASI araligi - maketin `gap:8px`'i.
+ *
+ * Karar 121'in kurali bir sayi degil bir SIRALAMA: *"nokta grup icini baglar,
+ * bosluk gruplari ayirir."* Bu ancak [ECONOMY_BAND_GAP] [DEVIATION_GAP]'ten
+ * BUYUKKEN okunuyor - esitlenirlerse iki grup gorsel olarak kaynasir ve
+ * noktayi silmenin butun anlami gider. Ikisi de burada, yan yana, tam da bu
+ * yuzden.
+ */
+internal val ECONOMY_BAND_GAP = Spacing.sm
+
 /** Sapma isaretinin olculeri (karar 118) - maketten. */
 private val DEVIATION_ICON = 14.dp
 private val DEVIATION_TEXT = 13.sp
-private val DEVIATION_GAP = 4.dp
+
+/** Sapma grubunun GRUP ICI araligi (karar 121) - maketin `gap:4px`'i. */
+internal val DEVIATION_GAP = 4.dp
 
 /** En kucuk dokunma hedefi (karar 56): tek sayi, 48dp. */
 private val TOUCH_TARGET = 48.dp
@@ -634,6 +647,43 @@ private fun StaplePin() {
 }
 
 /**
+ * Sapma isareti: *"bu satiri hedeften baska bir yerden alacagim"* (karar 118).
+ *
+ * ## Neden kendi grubu
+ *
+ * Bandin ILK grubu ve tek basina bir grup (karar 121). Ikon ile zincir adi
+ * 4dp'yle bagli, cunku ikisi TEK BIR ISIM gibi okunmali; gruptan sonrasini
+ * bandin 8dp'si ayiriyor. Duz bir sirada tek aralik olsaydi ikon zincir
+ * adindan, zincir adi da metadan esit uzakta dururdu ve satir uc bagimsiz
+ * parca gibi okunurdu.
+ *
+ * `weight` YOK: isaret asla kirpilmiyor (maketin `flex:none`'i). Kullanicinin
+ * kendi beyani, bizim hatirlattigimiz bir sey degil.
+ */
+@Composable
+private fun DeviationMark(store: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DEVIATION_GAP),
+    ) {
+        NeydiIcon(
+            icon = NeydiIcons.Storefront,
+            // Bolum basligi ve beyan cumlesi ayni seyi zaten soyluyor.
+            contentDescription = null,
+            size = DEVIATION_ICON,
+            tint = MaterialTheme.colorScheme.outline,
+        )
+        Text(
+            text = store,
+            fontSize = DEVIATION_TEXT,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
+    }
+}
+
+/**
  * Ekonomi bandi - satirin *"ne biliyoruz"* kati (karar 104).
  *
  * Ucu de burada: gecmis metasi, delta cipi, fiyat cipi. Fiyat cipi cizim
@@ -677,11 +727,32 @@ private fun EconomyBand(
         val measurer = rememberTextMeasurer()
         val metaStyle = MaterialTheme.typography.bodySmall
         val deltaStyle = MaterialTheme.typography.labelSmall
+        // Sapma grubunun kendi stili: ayni punto, KALIN. Meta stiliyle
+        // olcseydik "A101" oldugundan dar cikardi ve butce yine yalan
+        // soylerdi - sadece daha az.
+        val deviationStyle = metaStyle.copy(
+            fontSize = DEVIATION_TEXT,
+            fontWeight = FontWeight.SemiBold,
+        )
         val density = LocalDensity.current
-        // CIPIN 92dp'SI BUTCEDEN DUSULUYOR: cip asla dusmuyor, yani butcenin
-        // konusu degil - sadece bir eksiltme. Unutulursa 360dp'lik cihazda
-        // hesap "delta rahat sigar" der, oysa cumle kirpilir.
-        val room = if (priceText != null) maxWidth - SizesExtra.priceColumn - 6.dp else maxWidth
+        // BUTCEDEN DUSMEYEN HER UYE DUSULUYOR: fiyat cipinin 92dp'si ve -
+        // karar 121'den beri - sapma isaretinin OLCULEN genisligi. Ikisi de
+        // asla dusmuyor, yani butcenin konusu degil, sadece bir eksiltme.
+        // Unutulursa 360dp'lik cihazda hesap "delta rahat sigar" der, oysa
+        // kirpilan cumle olur - tam da karar 104'un yasakladigi sey.
+        //
+        // ZINCIR ADI OLCULUYOR, TAHMIN EDILMIYOR: kullanicinin verisi ve
+        // "A101" ile "Tarim Kredi" arasinda kirk dp'ye yakin fark var.
+        val deviationWidth = deviantStore?.let { name ->
+            with(density) {
+                measurer.measure(name, deviationStyle).size.width.toDp()
+            } + DEVIATION_ICON + DEVIATION_GAP
+        }
+        val room = deltaBudget(
+            bandWidth = maxWidth,
+            priceColumn = SizesExtra.priceColumn.takeIf { priceText != null },
+            deviationMark = deviationWidth,
+        )
         val visibleTrend = trend?.takeIf {
             with(density) {
                 deltaSurvives(
@@ -706,7 +777,10 @@ private fun EconomyBand(
             // BANDIN ARALIGI 8dp - maketin olcusu (`gap:8px`). Kodda 6dp
             // yaziyordu ve bu, sapma isaretini olcerken yakalanan eski bir
             // sapmaydi; sapmasiz satirlari da ilgilendiriyor.
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            //
+            // Karar 121'den beri bu aralik bir olcu degil bir NOKTALAMA:
+            // beyan grubu ile gozlem grubunu ayiran tek sey o.
+            horizontalArrangement = Arrangement.spacedBy(ECONOMY_BAND_GAP),
         ) {
             // SAPMA ISARETI BANDIN BASINDA VE ASLA KIRPILMIYOR (karar 118).
             //
@@ -716,45 +790,34 @@ private fun EconomyBand(
             // ipucuyla yarisa sokmak, kullanicinin yazdigini uygulamanin
             // tahminine yenik dusurmek olurdu.
             //
-            // ISARET VE META TEK GRUP, 4dp icerideyken bant 8dp: maket bunu
-            // ic ice iki flex ile ciziyor. Duz bir sirada tek aralik
-            // olsaydi ikon zincir adindan, zincir adi da metadan esit uzakta
-            // dururdu - oysa ilk ikisi TEK BIR ISIM gibi okunmali.
+            // BEYAN ILE GOZLEM IKI AYRI GRUP, ARALARINDA AYIRICI YOK
+            // (karar 121).
+            //
+            // Once tek gruptular ve aralarina bir orta nokta giriyordu; satir
+            // *"storefront A101 . BIM . bugun"* diye okunuyordu, yani AYNI
+            // noktalama iki zincir adini birbirine bagliyordu - biri
+            // kullanicinin beyani, oteki bizim gozlemimiz. Tasarimin cumlesi:
+            // *"nokta grup icini baglar, bosluk gruplari ayirir."*
+            //
+            // Bu yuzden nokta silindi ve iki grubu bandin KENDI 8dp'si
+            // ayiriyor; grup icindeki 4dp yerinde duruyor. Kalan tek nokta
+            // gozlem grubunun ICINDE ("BIM . bugun") ve orada dogru isi
+            // yapiyor. Fiyat cipini de ayni 8dp ayiriyor - bandin dilbilgisi
+            // tek.
+            //
+            // TAZE GOZLEMIN ZINCIR ADI DUSURULMEDI (tasarim (b)'yi reddetti):
+            // iki ad birlikte celiskiyi gosteriyor - *"A101'den alacagim ama
+            // fiyati BIM'de gordum"* - ve karar 119 tam o sinyali koruyor.
             if (deviantStore != null) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DEVIATION_GAP),
-                ) {
-                    NeydiIcon(
-                        icon = NeydiIcons.Storefront,
-                        contentDescription = null,
-                        size = DEVIATION_ICON,
-                        tint = MaterialTheme.colorScheme.outline,
-                    )
-                    Text(
-                        text = deviantStore,
-                        fontSize = DEVIATION_TEXT,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                    )
-                    // AYIRICI YALNIZCA META VARSA: sapma tek basinaysa cumle
-                    // orada bitiyor ve asili bir nokta kalmamali. Maket iki
-                    // hali de ciziyor.
-                    if (text.isNotEmpty()) {
-                        Text(
-                            text = "·",
-                            fontSize = DEVIATION_TEXT,
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-                        // KIRPILAN TARAF META: `weight(1f)` onda, isarette
-                        // degil - beyan kullanicinin yazdigi, meta bizim
-                        // hatirlattigimiz sey.
-                        MetaText(text, muted, Modifier.weight(1f))
-                    } else {
-                        Spacer(Modifier.weight(1f))
-                    }
+                DeviationMark(deviantStore)
+                // KIRPILAN TARAF META: `weight(1f)` onda, isarette degil -
+                // beyan kullanicinin yazdigi, meta bizim hatirlattigimiz sey.
+                // Sapma tek basinaysa cumle orada bitiyor ve asili bir sey
+                // kalmiyor; maket iki hali de ciziyor.
+                if (text.isNotEmpty()) {
+                    MetaText(text, muted, Modifier.weight(1f))
+                } else {
+                    Spacer(Modifier.weight(1f))
                 }
             } else if (cheaper != null) {
                 // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA

@@ -2,6 +2,7 @@ package com.neydi.app.ui.components
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.neydi.app.ui.theme.Spacing
 
 /**
  * Ekonomi bandinin yer bulamadiginda DUSURDUGU tek oge (karar 104).
@@ -55,3 +56,36 @@ private val DELTA_GAP: Dp = 6.dp
  */
 fun deltaSurvives(available: Dp, metaWidth: Dp, deltaWidth: Dp): Boolean =
     available - deltaWidth - DELTA_GAP >= metaWidth
+
+/**
+ * Delta cipine kalan genislik - banttan **asla dusmeyen** her uye cikarilmis
+ * hali (karar 104 + 121).
+ *
+ * ## Neden ayri ve saf bir fonksiyon
+ *
+ * Bu hesap once cizim yerinde tek satirdi ve yalnizca fiyat cipini
+ * dusuyordu. Karar 121 banda IKINCI bir dusmeyen uye kazandirdi - sapma
+ * isareti bandin basinda kendi grubu oldu - ve o gun tek satirlik hesap
+ * sessizce yalan soylemeye basladi: 360dp'de *"delta rahat sigar"* derken
+ * bandin 50dp'si zaten isarete gitmis oluyordu ve kirpilan sey cumle
+ * oluyordu. Tam olarak karar 104'un yasakladigi sey.
+ *
+ * Kural bu yuzden bir liste degil bir CIKARMA: bandin dusmeyen her uyesi,
+ * KENDI ARALIGIYLA birlikte butceden iner. Araligi unutmak uyeyi saymanin
+ * yarisi kadar yanlis - [Spacing.sm] bandin kendi araligi, uye ile komsusu
+ * arasinda gercekten duruyor.
+ *
+ * @param bandWidth ekonomi bandinin ic genisligi.
+ * @param priceColumn fiyat cipinin sabit sutunu, cip yoksa `null`. Sutun
+ *   92dp ve icerigine bakmadan hep ayni - `null` olmasi cipin cizilmedigi
+ *   hal, dar cizildigi hal degil.
+ * @param deviationMark sapma isaretinin (ikon + aralik + zincir adi) olculen
+ *   genisligi, isaret yoksa `null`. Zincir adi kullanicinin verisi, yani
+ *   sabit bir sayi yok: OLCULMEK zorunda.
+ */
+fun deltaBudget(bandWidth: Dp, priceColumn: Dp?, deviationMark: Dp?): Dp {
+    var room = bandWidth
+    if (priceColumn != null) room -= priceColumn + Spacing.sm
+    if (deviationMark != null) room -= deviationMark + Spacing.sm
+    return room
+}

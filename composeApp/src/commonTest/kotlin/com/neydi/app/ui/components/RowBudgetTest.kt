@@ -2,6 +2,7 @@ package com.neydi.app.ui.components
 
 import androidx.compose.ui.unit.dp
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -32,6 +33,28 @@ class RowBudgetTest {
 
     /** *"Altta 30 karakterlik meta"* - ambalaj cumlesi bu uzunlukta. */
     private val longMeta = 170.dp
+
+    /**
+     * Bandin IC GENISLIGI 360dp'lik cihazda.
+     *
+     * [bandAt360] bunun fiyat cipi ve araligi dusulmus hali - yani
+     * `286 - 92 - 8 = 186`. Iki sayi ayni olcumun iki ucu; birini
+     * degistirip otekini birakmak testi kendi icinde yalanci yapar.
+     */
+    private val bandWidthAt360 = 286.dp
+
+    /** Fiyat cipinin sabit sutunu (karar 104). */
+    private val priceColumn = 92.dp
+
+    /**
+     * Sapma isaretinin olculen genisligi: `storefront 14 + 4 + "A101"`.
+     *
+     * "A101" 13sp/600'de yaklasik 30dp - yani isaret 48dp. Uzun zincir
+     * adlari ("Tarim Kredi") bunun cok uzerine cikiyor ve butce onlari da
+     * dogru saymak zorunda; test kisa olani seciyor cunku kural KISA adda
+     * bile kendini gosteriyor.
+     */
+    private val deviationMark = 48.dp
 
     /**
      * 360dp'DE KISA META ILE DELTA BIRLIKTE YASIYOR.
@@ -67,6 +90,84 @@ class RowBudgetTest {
     @Test
     fun anEmptyBandAlwaysKeepsTheDelta() {
         assertTrue(deltaSurvives(bandAt360, metaWidth = 0.dp, deltaWidth = delta))
+    }
+
+    /**
+     * BUTCEDEN DUSMEYEN HER UYE, KENDI ARALIGIYLA BIRLIKTE INIYOR.
+     *
+     * Araligi unutmak uyeyi hic saymamanin yarisi kadar yanlis: bandin
+     * `spacedBy(8dp)`'si o bosluklari GERCEKTEN ciziyor, yani meta onlari
+     * kullanamiyor. Uc hal de ayri yaziliyor cunku uc ayri toplama.
+     */
+    @Test
+    fun everyFixedMemberBringsItsOwnGap() {
+        assertEquals(
+            bandWidthAt360 - priceColumn - 8.dp,
+            deltaBudget(bandWidthAt360, priceColumn = priceColumn, deviationMark = null),
+        )
+        assertEquals(
+            bandWidthAt360 - deviationMark - 8.dp,
+            deltaBudget(bandWidthAt360, priceColumn = null, deviationMark = deviationMark),
+        )
+        assertEquals(
+            bandWidthAt360 - priceColumn - deviationMark - 16.dp,
+            deltaBudget(bandWidthAt360, priceColumn = priceColumn, deviationMark = deviationMark),
+        )
+    }
+
+    /** Dusmeyen uye yoksa bant genisligini oldugu gibi veriyor. */
+    @Test
+    fun aBandWithNoFixedMembersKeepsItsWholeWidth() {
+        assertEquals(
+            bandWidthAt360,
+            deltaBudget(bandWidthAt360, priceColumn = null, deviationMark = null),
+        )
+    }
+
+    /**
+     * BU DOSYANIN 186dp'SI DELTA BUTCESININ KENDISI.
+     *
+     * Asagidaki dort test o sayiyi elle yaziyor; burasi onu bandin gercek
+     * genisliginden TUReTIYOR. Ikisi ayrilirsa testler yesil kalir ve yine
+     * de yanlis seyi olcerler.
+     */
+    @Test
+    fun theChipAndItsGapAreWhatMakeTheBandOneHundredEightySix() {
+        assertEquals(
+            bandAt360,
+            deltaBudget(bandWidthAt360, priceColumn = priceColumn, deviationMark = null),
+        )
+    }
+
+    /**
+     * SAPMA ISARETI TEK BASINA DELTAYI DUSURUYOR (karar 121).
+     *
+     * Karar 118 isareti banda soktu ama butce onu SAYMIYORDU - isaret
+     * `weight`li grubun icindeydi ve bant duzeyindeki hesap yalnizca fiyat
+     * cipini biliyordu. Karar 121 iki grubu kardes yapinca eksiklik gorunur
+     * hale geldi: ayni kisa cumle, ayni ekran, ama bandin 56dp'si zaten
+     * gitmis oluyor ve delta yine de "sigiyorum" diyordu. Kirpilan sey
+     * cumleydi - karar 104'un tek yasagi.
+     *
+     * TESTIN ISIRDIGI YER: sapma bacagini [deltaBudget]'ten cikarin, ikinci
+     * iddia duser.
+     */
+    @Test
+    fun theDeviationMarkAloneCanDropTheDelta() {
+        val plain = deltaBudget(bandWidthAt360, priceColumn = priceColumn, deviationMark = null)
+        val deviant = deltaBudget(
+            bandWidthAt360,
+            priceColumn = priceColumn,
+            deviationMark = deviationMark,
+        )
+        assertTrue(
+            deltaSurvives(plain, metaWidth = shortMeta, deltaWidth = delta),
+            "isaretsiz satirda delta yasamaliydi",
+        )
+        assertFalse(
+            deltaSurvives(deviant, metaWidth = shortMeta, deltaWidth = delta),
+            "sapma isareti butceden dusulmemis - cumle kirpilacak",
+        )
     }
 
     /**

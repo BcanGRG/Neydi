@@ -24,7 +24,10 @@ data class ListState(
     val sections: List<ListSection> = emptyList(),
     /**
      * "Alindi" bolumu ayri: reyon gruplamasinin disinda, en altta.
-     * ALISVERIS MODUNDA HEP BOS - orada isaretli satirlar yerinde kalir.
+     *
+     * ALISVERIS MODUNDA HEP BOS (karar 124) - orada isaretli satirlar
+     * yerinde kaliyor ve blogun yerini genisleMEYEN bir sayac aliyor.
+     * Doluysa mod alisveris SONRASI demektir; bolum kapali aciliyor.
      */
     val taken: List<UiRow> = emptyList(),
     val loading: Boolean = true,
@@ -187,18 +190,43 @@ internal fun storeDeclaration(
  *
  * ## Neden tek fonksiyon
  *
- * Ayni soru UC yerde soruluyor: satirin isareti, alisveristeki bolumleme, ve
- * beyan cumlesinin sayisi. Ucu ayri yazilsaydi biri otekinden ayrilir ve
- * cumle "2'si A101'de" derken listede uc satir isaretli gorunurdu.
+ * Ayni soru DORT yerde soruluyor: satirin isareti, alisveristeki bolumleme,
+ * beyan cumlesinin sayisi, ve karar 126'dan beri Urun Detayi'ndaki *"Nereden
+ * alinacak"* satiri. Dordu ayri yazilsaydi biri otekinden ayrilir ve cumle
+ * "2'si A101'de" derken listede uc satir isaretli gorunurdu.
  *
  * KIMLIKLE, ADLA DEGIL: iki zincir ayni adi tasiyabilir ve ad kullanicinin
  * duzenledigi bir alan.
  */
 internal fun ListRowProjection.deviatesFrom(targetStoreId: String?): Boolean =
-    targetStoreId != null &&
-        storeId != null &&
-        storeId != targetStoreId &&
-        storeName != null
+    deviantStoreName(targetStoreId, storeId, storeName) != null
+
+/**
+ * *"Nereden alinacak"* izgarasinin acilis anindaki hali (karar 126).
+ *
+ * @property rowId istisnanin yazilacagi satir.
+ * @property selectedId o an isaretli cip - istisna varsa o, yoksa HEDEF.
+ */
+data class LineStorePick(val rowId: String, val selectedId: String?)
+
+/**
+ * Sapmanin CIZILECEK ADI, sapma yoksa `null` (karar 117-118).
+ *
+ * [deviatesFrom]'un govdesi. Ayri durmasinin tek sebebi Urun Detayi:
+ * o yuzey bir [ListRowProjection] gormuyor - elinde gezinin hedefi ve
+ * satirin kendi `storeId`'si var - ama AYNI soruyu soruyor. Kurali orada
+ * yeniden yazmak, karar 126'nin satirini bir gun listenin isaretiyle
+ * celisir hale getirirdi: sheet "A101" derken satir hicbir sey cizmezdi.
+ *
+ * Dort sart, dordu de [deviatesFrom]'un KDoc'unda gerekcesiyle yazili.
+ */
+internal fun deviantStoreName(
+    targetStoreId: String?,
+    storeId: String?,
+    storeName: String?,
+): String? = storeName?.takeIf {
+    targetStoreId != null && storeId != null && storeId != targetStoreId
+}
 
 /**
  * Uc bos durum. Ayni metni ucune de gostermek en kotu secenek: ilk gun
@@ -378,9 +406,27 @@ internal fun List<ListRowProjection>.toSections(
     // yapabilecegi en kotu hata - kullanici bir sonrakine dokunacakken liste
     // kayar ve yanlis urunu isaretler.
     //
-    // Sonuc: hicbir modda satir "Alindi"ya INMIYOR. Bolum yalnizca gecmis
-    // gezilerde anlamli kaliyor ve orasi Bitir ekraninin isi.
-    val (alinan, remaining) = emptyList<ListRowProjection>() to this
+    // AMA SONRASINDA INIYOR (karar 124).
+    //
+    // Bir tur boyunca kod bolumu UC modda birden kaldirmisti ve `docs/38` S4
+    // bunu tasarima sordu. Cevap ikisini ayirdi ve ayrimin ekseni PARMAK:
+    //
+    // - **Alisveriste** basparmak isaretliyor, yani satirin oynamasi yanlis
+    //   urunu isaretletir. Satir yerinde kalir; listenin sonunda yalnizca bir
+    //   SAYAC durur ("Alindi . 12/18", chevron yok).
+    // - **Sonrasinda** isaretlenecek bir sey kalmadi. Alinanlar artik
+    //   yapilacak is degil KAYIT ve listenin isi geriye kalani gostermek -
+    //   bolum kapali olarak en altta topluyor.
+    //
+    // UCUNCU MOD SAKLANMIYOR, TURETILIYOR: planlamada isaretlenecek bir sey
+    // YOK (karar 116 onay dairesini ve satirin onay hedefini kaldirdi), yani
+    // "isaretli satir var" cumlesi zaten "alisveris yapildi" demek. Ucuncu
+    // bir bayrak, ayni olguyu ikinci kez saklamak olurdu.
+    val (alinan, remaining) = if (shoppingMode) {
+        emptyList<ListRowProjection>() to this
+    } else {
+        partition { it.checked }
+    }
 
     // "HER ZAMANKILER" EN USTE, VE YALNIZCA PLANLAMA MODUNDA (F6.8).
     //

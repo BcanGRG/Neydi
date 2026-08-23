@@ -286,11 +286,41 @@ internal class TagCaptureViewModel(
         }
     }
 
-    /** Gozlemsiz markete uzun dokunus (karar 59); gozlemli market SILINMEZ. */
+    /**
+     * Markete uzun dokunus (karar 59) - IKI KAPIDAN gecerse siliniyor.
+     *
+     * ## Ikinci kapi ne zaman ve neden eklendi (karar 122)
+     *
+     * Karar 59'un kapisi yalnizca GOZLEME bakiyordu ve karar 117 tam o
+     * bosluga yerlesti: kullanici hic etiket cekmedigi bir zincire *"bugun
+     * oraya gidiyorum"* diyebiliyor - *"2-3 tanesini A101'den alacagim"*
+     * cumlesi fiyat bilgisi gerektirmiyor.
+     *
+     * Bugunku zincir sessiz ve yikiciydi: uzun dokunus -> `softDelete` ->
+     * sorgudaki `deletedAt IS NULL` yuzunden ad `null` doner -> satirdaki
+     * sapma isareti kaybolur, basliktaki sayac duser, hedef silinmisse beyan
+     * hic cizilmez. Yani **ilgisiz bir ekrandaki tek uzun dokunus,
+     * kullanicinin yazdigi plani haber vermeden imha ediyordu.**
+     *
+     * ## Neden "uyarip sil" degil
+     *
+     * Tasarim (b) secenegini reddetti: *"dogru soruyu yanlis yerde
+     * soruyordu"* - kullanici o an etiket isinde ve kac satirin etkilendigini
+     * GORMUYOR. Karar 122 kapiyi kapatti; beyan kaldirilinca silme yeniden
+     * aciliyor, yani yol kapali degil, sadece dogru yerden geciyor.
+     */
     fun deleteStore(storeId: String) {
         viewModelScope.launch {
             if (priceObservationDao.hasObservationsAt(household, storeId)) {
                 _state.value = _state.value.copy(failure = "Bu markette gözlem var, silinemez")
+                return@launch
+            }
+            // ENGEL SEBEBINI YAZIYOR, "silinemez" demiyor: sayi kullaniciya
+            // neyi kaybedecegini ve nerede geri alacagini soyluyor. Sebepsiz
+            // bir ret, kullaniciya uygulamanin bozuk oldugunu dusundururdu.
+            val headed = repo.linesHeadedTo(household, storeId)
+            if (headed > 0) {
+                _state.value = _state.value.copy(failure = blockedStoreDeleteMessage(headed))
                 return@launch
             }
             storeDao.softDelete(storeId, clock())
@@ -471,6 +501,29 @@ internal fun ConfirmCard.readFrom(fields: TagFields?): ConfirmCard = copy(
  * gercek bir Room veritabani ve Main dispatcher'i istiyor (bkz.
  * `writeTagObservation`in ayni gerekceyle ayrilmasi).
  */
+/**
+ * Engellenen silmenin SEBEBI (karar 122).
+ *
+ * ## Neden sayiyi yaziyor
+ *
+ * *"Silinemez"* demek kullaniciya uygulamanin bozuk oldugunu dusundururdu.
+ * Sayi iki isi birden yapiyor: kaybedecegi seyin BOYUNU soyluyor
+ * (*"3 satir"*) ve kapinin nerede acilacagini ima ediyor - o satirlarin
+ * beyani kaldirilinca silme yeniden calisiyor.
+ *
+ * ## Neden "market" ve "satir" kelimeleri
+ *
+ * Tasarimin verdigi cumle birebir bu. *"Zincir"* demiyor: kullanici bu
+ * ekranda bir MARKET secmis durumda ve karar 58'in "market = zincir"
+ * esitligi kullanicinin kelimesi degil, bizim modelimiz.
+ *
+ * VIEWMODEL'IN DISINDA, [savedToast] ile ayni gerekceyle: cumle test
+ * edilebilir olmali, ViewModel ise gercek bir Room veritabani ve Main
+ * dispatcher'i istiyor.
+ */
+internal fun blockedStoreDeleteMessage(headedLines: Int): String =
+    "Bu markete giden $headedLines satır var."
+
 internal fun savedToast(chain: String?, minor: Long): String {
     val money = formatMinor(minor)
     return if (chain == null) "Gözlem kaydedildi · $money" else "Gözlem kaydedildi · $chain · $money"

@@ -1483,3 +1483,313 @@ Kullanıcının bildirdiği iki kusur, ikisi de commit `9b2bcd3` ile kapandı:
 4. **Test dosyasında `emptyList()` adlı bir test** standart `emptyList()`'i
    gölgeliyordu; hata *"beklenen `List<String>`, gelen `Unit`"* diye çıkıyor ve
    sebebi hiçbir yerde görünmüyordu.
+
+---
+
+## Kararlar 121–126 — istisnayı yazan jest bulundu *(23 Ağustos, 22. tur)*
+
+`docs/38`'in **altı maddesinin altısı da** cevaplandı. İki kod kararı
+onaylandı (125 ve 123'ün seçici yarısı), biri değiştirildi (121), üçü yeni iş.
+Karşılık tablosu `ROADMAP.md` §3.2'de.
+
+⚠ **Defterin kendi sayacı düzeltildi:** 97 değil **113 giriş**, 126'ya kadar
+numaralı.
+
+### Karar 121 — nokta grup içini bağlar, boşluk grupları ayırır ✅
+
+**Sorun `docs/38` S1'de yazılıydı ve cihazda görülmüştü:** ekonomi bandı tek
+akışta **iki zincir adı** taşıyordu ve aralarında tek bir `·` vardı —
+
+> 🏪 **A101** · BİM · bugün
+
+Biri **beyan** (*"burayı A101'den alacağım"*), öteki **gözlem** (*"fiyatı
+BİM'de gördük"*). Aynı noktalama ikisini birbirine bağlıyordu.
+
+**Tasarımın cevabı yeni bir yol:** aradaki nokta **silinir**, iki grup bandın
+kendi **8dp**'sine bırakılır, grup içi **4dp** yerinde kalır.
+
+```
+🏪 A101␣␣BİM · bugün
+   └─4dp┘  └─ 8dp ─┘
+```
+
+Gerekçe bandın kendi dilbilgisi: *"nokta grup içini bağlar, boşluk grupları
+ayırır"* — ve fiyat çipini de aynı 8dp ayırıyor.
+
+**Kodda ne değişti:** sapma işareti `DeviationMark` adıyla kendi bileşeni
+oldu ve bandın **kardeşi**; içerideki `Text("·")` ve `"· $text"` iç içeliği
+kalktı. Kırpılan taraf yine meta (`weight(1f)` onda), sapma `flex:none`
+karşılığı olarak ağırlıksız — yani asla kırpılmıyor.
+
+⚠ **Taze gözlemin zincir adını düşürmek (b seçeneği) REDDEDİLDİ.** İki ad
+birlikte bir **çelişki** gösteriyor — *"A101'den alacağım ama fiyatı BİM'de
+gördüm"* — ve karar 119 tam o sinyali koruyor. `EconomyBandTest` bu
+bilgisizliği kilitliyor: cümle sapmadan haberdar değil ve olmamalı.
+
+### 121 bir hatayı da görünür yaptı: delta bütçesi işareti saymıyordu
+
+Karar 118 işareti banda soktu ama **bütçe onu görmüyordu** — işaret
+`weight`li grubun *içindeydi* ve bant düzeyindeki hesap yalnızca fiyat çipini
+biliyordu:
+
+```kotlin
+val room = if (priceText != null) maxWidth - SizesExtra.priceColumn - 6.dp else maxWidth
+```
+
+İki grup kardeş olunca eksiklik görünür hâle geldi: aynı kısa cümle, aynı
+ekran, ama bandın **56dp**'si zaten işarete gitmiş oluyor ve delta yine de
+*"sığıyorum"* diyordu. Kırpılan şey **cümle** oluyordu — karar 104'ün tek
+yasağı.
+
+Hesap saf bir fonksiyona çıktı (`deltaBudget`) ve kural bir liste değil bir
+**çıkarma**: bandın düşmeyen her üyesi **kendi aralığıyla birlikte** bütçeden
+iner. `- 6.dp` de aynı ailedendi — bandın aralığı 21. turda 8dp'ye
+düzeltilmişti, bu satır 6dp'de kalmıştı.
+
+**Isırma kanıtı** (üç kural, üç ısırık, her biri tam kendi testini düşürdü):
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| `deltaBudget`'ten sapma bacağı | `theDeviationMarkAloneCanDropTheDelta` + `everyFixedMemberBringsItsOwnGap` |
+| Üyelerin kendi aralığı | `theChipAndItsGapAreWhatMakeTheBandOneHundredEightySix` + `everyFixedMemberBringsItsOwnGap` |
+| `DEVIATION_GAP` = 8dp (gruplar kaynaşır) | `spaceSeparatesTheGroupsAndTheDotOnlyBindsWithinThem` |
+
+⚠ **Cevapsız kalan tek kod kararı yerinde duruyor:** sapma varken *"başka
+markette ucuz"* çipi bastırılıyor. `docs/38` S1'in içinde geçiyordu ama karar
+121 yalnızca iki zincir adının ayrılmasını cevapladı; çipin kaderi hâlâ
+**kodun kararı**.
+
+### Karar 126 — istisnayı yazan jest bulundu ✅
+
+`docs/38` S6 **engelleyiciydi** ve sorusu tek cümlelikti: kullanıcının
+*"2-3 tanesini de A101'den alacağım diye **işaretlerim**"* cümlesindeki fiil
+hangi yüzeyde yaşıyor? Veri alanı vardı (şema v8), gösterimi vardı
+(karar 118), yazma yolu vardı (`setLineStore`) — ve **hiçbiri
+çağrılmıyordu**. Kod bir jest uydurmadı çünkü seçeneklerinin hepsi var olan
+bir kararı deliyordu.
+
+**Tasarım (a)'yı seçti:** Ürün Detayı'nın **eylem grubunun ilk satırı**.
+Karar 38'in sabit sırası **bu tek ekleme için** açıldı. Gerekçe maketin
+kendi notunda: *"eylem grubunun başında, çünkü satırın olgusu"* — anahtarlar
+**ürüne** ait ("her zamanki mi", "önerilsin mi"), bu satır **listedeki
+satıra**. Yıkıcı satır sonda kalıyor.
+
+Reddedilenler: çoklu işaretleme (b) *"kullanıcıya baktığı listeyi reyon
+bağlamı olmadan yeniden tanımlatıyordu"*, satırda yeni jest (d) karar 110'a
+dokunuyordu.
+
+**İki hal, iki ağırlık** (maketten ölçüldü, h56):
+
+| | Değer | Punto | Renk | İkon |
+|---|---|---|---|---|
+| Hedefteyken | `BİM · hedef` | 17sp/**500** | `onSurfaceVariant` | yok |
+| İstisnadayken | `A101` | 17sp/**600** | `onSurface` | storefront 18dp + `chevron_right` 22dp |
+
+Ayrım karar 118'in mantığının aynısı — *"işaret sapmadır"*: hedefteki
+satırın söyleyecek özel bir şeyi yok, o yüzden gösterişi de yok. Bütün satır
+dokunulabilir, chevron değil: chevron 22dp ve tek başına karar 56'nın 48dp
+tabanını karşılamaz.
+
+**Dokunuş beyanın çip ızgarasını açıyor** — `StoreTargetPicker`'ın kendisi,
+başlığı *"Nereden alınacak?"* ve temizleme satırı *"Hedefte al"*. İkinci bir
+bileşen yazmak aynı jesti iki yerde ayrı ayrı bozulabilir hâle getirirdi.
+Izgara Ürün Detayı'nın **üstünde** açılıyor, onun yerine geçmiyor: seçimden
+sonra kullanıcı satırın sheet'ine dönüyor ve yazdığının ne olduğunu görüyor.
+
+⚠ **Seçili çip istisna yokken HEDEFE düşüyor.** Satır gerçekten oradan
+alınacak; boş bir seçim göstermek satırın durumunu gizlerdi. Hedef çipine
+dokunmak da *"Hedefte al"* ile aynı sonucu veriyor —
+`ListRepository.setLineStore` hedefin kendisini zaten istisna saymıyor.
+
+### 126 aynı soruyu dördüncü kez sordurdu
+
+Sapma sorusu artık **dört** yerde soruluyor: satırın işareti, alışverişteki
+bölümleme, beyan cümlesinin sayısı ve *"Nereden alınacak"* satırı. İlk üçü
+bir `ListRowProjection` görüyor; dördüncüsü görmüyor — sheet'in elinde
+yalnızca hedefin ve satırın `storeId`'si var.
+
+Kural bu yüzden `deviantStoreName`'e indi ve `deviatesFrom` onun gövdesine
+döndü. Ayrılsalardı sheet *"A101"* derken bandın hiçbir şey çizmediği bir
+hâl oluşurdu ve **hiçbir şey şikâyet etmezdi**.
+
+⚠ **KOD KARARI — tasarıma sorulacak: hedef yokken satır çizilmiyor.**
+Karar 117 hedefi boş bırakmayı meşru kıldı ("Belli değil"), ama
+`deviantStoreName`'in ilk şartı hedefin **varlığı**: istisnanın istisna
+olabilmesi için bir kural gerekiyor. Hedef yokken satır çizilseydi dokunuşla
+yazılan istisna **hiçbir yerde** görünmezdi — ne bandın işaretinde, ne
+alışverişin bölümlemesinde, ne başlık cümlesinde. Yani jest, sonucu olmayan
+bir jest olurdu.
+
+**Isırma kanıtı:**
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| `label()`'da `"· hedef"` düşürüldü | `aRowThatFollowsTheTargetSaysSoNextToTheTargetsName` + `theTargetItselfNeverArrivesAsAnException` |
+| `deviatesFrom` kendi gövdesini geri aldı (hedef şartı düştü) | `theSheetAndTheRowAskTheSameDeviationQuestion` + `aRowThatFollowsTheTargetCarriesNoMark` |
+
+### Karar 122 — beyanı olan market silinemez ✅
+
+`docs/38` S2'nin bildirdiği hasar **sessiz ve yıkıcıydı**. Karar 59'un silme
+kapısı yalnızca **gözleme** bakıyordu (`hasObservationsAt`) ve karar 117 tam
+o boşluğa yerleşti: kullanıcı hiç etiket çekmediği bir zincire *"bugün oraya
+gidiyorum"* diyebiliyor — *"2-3 tanesini A101'den alacağım"* cümlesi fiyat
+bilgisi gerektirmiyor.
+
+Zincir şuydu: etiket ekranında uzun dokunuş → `softDelete` → sorgudaki
+`deletedAt IS NULL` yüzünden ad `null` döner → satırdaki sapma işareti
+kaybolur, başlıktaki sayaç düşer, hedef silinmişse beyan hiç çizilmez. Yani
+**ilgisiz bir ekrandaki tek uzun dokunuş, kullanıcının yazdığı planı haber
+vermeden imha ediyordu.**
+
+**Tasarım (a)'yı seçti:** kapı `hasObservationsAt` **OR** `hasDeclarationsAt`.
+Uyarıp silmek (b) reddedildi — *"doğru soruyu yanlış yerde soruyordu"*:
+kullanıcı o an etiket işinde ve kaç satırın etkilendiğini görmüyor.
+
+**Sayım iki bacaklı** (`TripDao.linesHeadedTo`):
+
+1. **Satırın kendi istisnası** (`trip_line.storeId`) — *"bunu A101'den
+   alacağım"*.
+2. **Gezinin hedefi** (`trip.storeId`) ve satırın istisnası **yok** — satır
+   hedefi izliyor, yani o da bu markete gidiyor.
+
+⚠ İkincisi olmadan kapı yarım kalırdı ve hasarın **en büyüğü** oradan
+geçerdi: hedefi BİM olan on sekiz satırlık bir liste varken BİM silinebilir
+olurdu, `deviatesFrom`'un ilk şartı (hedef var) düşerdi ve listedeki **bütün**
+sapma işaretleri aynı anda kaybolurdu.
+
+`completedAt` **sorulmuyor**: kapanmış gezi de o marketi gösteriyor; silinirse
+Geçmiş'teki o gezinin zinciri adsız kalır — aynı sessiz hasar, başka ekranda.
+
+**Engel sebebini yazıyor**, *"silinemez"* demiyor: `blockedStoreDeleteMessage`
+→ **"Bu markete giden 3 satır var."** Sayı iki iş birden yapıyor —
+kaybedeceğinin boyunu söylüyor ve kapının nerede açılacağını ima ediyor.
+Cümle ViewModel'in dışında, `savedToast` ile aynı gerekçeyle: metin test
+edilebilir olmalı.
+
+### Karar 123 — iki yapışkanlık, iki ayrı olay ✅
+
+Seçicinin **ayrı bileşen** olması ve **bütün zincirleri** göstermesi zaten
+doğruydu (`StoreTargetPicker`, aramasız/eklemesiz/silmesiz, dokuz zincir
+cihazda görüldü). Kalan tek iş `lastDeclaredStoreId`'ydi.
+
+**Yeni kolon açılmadı.** Beyanın kendisi zaten `trip.storeId`'de yazılı;
+ikinci bir kolon **üçüncü bir gerçek kaynağı** olurdu ve gün gelir sapardı.
+Sorgu en son beyan edilen zinciri `trip` tablosundan okuyor — karar 59'un
+yapışkanlığı ise `price_observation`dan (`lastUsedStoreId`). Tasarımın
+uyarısı tam buydu: tek değere bağlamak, **A101'de çekilen bir etiketin BİM
+gezisinin hedefini değiştirmesi** demekti.
+
+**Yapışkanlık bir ÖNERİ, bir beyan değil:** `trip.storeId` yazılmıyor,
+yalnızca çip işaretli geliyor. Otomatik yazsaydık uygulama, kullanıcının
+söylemediği bir cümleyi (*"BİM'e gidiyorsun"*) onun ağzından kurmuş olurdu.
+
+⚠ **KOD KARARI — tasarıma sorulacak:** kullanıcı bu gezide *"Belli değil"*i
+seçtiyse seçiciyi yeniden açtığında öneri gene işaretli gelir. `trip.storeId`
+*"hiç seçilmedi"* ile *"belli değil seçildi"* hâllerinin ikisini de `null`
+ile yazıyor; ayırmak için üçüncü bir alan gerekirdi.
+
+### Karar 125 — değişiklik yok ✅
+
+Kodun **iki kararı da onaylandı**: cümlede tek zincirde ad kalır
+(*"3'ü A101'de"*), birden fazlasında ad düşer sayı kalır (*"3'ü başka
+marketlerde"*); bölümleme zincir başına, başlıkta storefront + `"A101'de"`.
+`storeDeclaration` ve `toSections` olduğu gibi duruyor.
+
+⚠ **Compose Spec'te bir tutarsızlık var ve kod maketi izliyor:** denetim
+satırı bölüm başlığını `"A101'de · 2"` diye yazıyor, karar 117-118'in satırı
+ise `"A101'de (2)"`. Kod bugün adı ve sayıyı `ListSection` üzerinden ayrı
+taşıyor; hangisinin çizileceği başlığın kendi bileşeninde. Tasarıma
+bildirilecek.
+
+### Isırma kanıtı — 122 ve 123
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| Sayımdan hedef bacağı (`OR l.storeId IS NULL AND t.storeId = ...`) | `linesThatFollowTheTargetCountTowardTheTarget` + `anExceptionLeavesTheTargetsCount` |
+| Sayımdan `l.deletedAt IS NULL` | `aRemovedLineStopsHoldingItsChainHostage` |
+| `ORDER BY startedAt DESC` → `ASC` | `theStickyChainComesFromTheLastDeclarationNotTheLastTag` |
+| Cümleden sayı düşürüldü | `engellenen silme kac satiri korudugunu yaziyor` |
+
+⚠ **Testin kendisi bir kez ısırılıp düzeltildi.** `lastDeclaredStoreId`
+testi önce **sabit saatle** yazılmıştı: iki gezi aynı `startedAt` damgasını
+taşıyordu, yani `DESC` → `ASC` ısırığı **hiçbir testi düşürmüyordu**. Sıralama
+iddiası ancak damgalar farklıyken korunuyor; saat ilerletildi.
+
+### Karar 124 — aynı blok, iki mod, iki farklı vaat ✅
+
+`docs/38` S4 **engelleyiciydi** ve iki doğru cümle birbirini kesiyordu:
+
+- Karar 116 *"Alındı"* bölümünü **alışverişte istiyordu** ve maket onu
+  çiziyordu (`Alındı (12)` + `expand_more`).
+- Kod bölümü **kaldırmıştı** ve gerekçesi ölçülmüştü: alışverişte işaretlenen
+  satırın yer değiştirmesi *"hareket eden başparmağın altında yeniden
+  sıralama"* demek — kullanıcı bir sonrakine dokunacakken liste kayar ve
+  **yanlış ürünü işaretler**.
+
+⚠ Üstelik karar 118'in sapanlar bölümü *"Alındı'nın üstünde"* diye
+konumlandırılmıştı; Alındı yoksa **çapa da yoktu**.
+
+**Tasarım (b)'yi seçti ve kodun ölçülmüş gerekçesini kabul etti.** Ayrımın
+ekseni **parmak**:
+
+| Mod | Satır | Blok |
+|---|---|---|
+| **SHOPPING** | yerinde kalır | genişleMEYEN sayaç: `Alındı · 12/18`, **chevron yok** |
+| **POST_SHOPPING** | bölüme iner | katlanabilir bölüm: `Alındı 12` + `expand_more`, **kapalı açılır** |
+
+Alışverişte başparmak işaretliyor, yani satırın oynaması yanlış ürünü
+işaretletir. Sonrasında işaretlenecek bir şey kalmadı: alınanlar artık
+yapılacak iş değil **kayıt**, ve listenin işi geriye kalanı göstermek.
+
+**Chevron çizilmiyor ve bu bir süsleme kararı değil:** chevron bir **vaattir**
+— *"dokun, açılır"*. Alışverişte açılacak bir şey yok, satırlar zaten
+listenin içinde. Çizilseydi dokunan kullanıcı hiçbir şey olmadığını görürdü.
+
+**Karar 118'in çapası yeniden yazılmadan yerini buldu:** sapan zincir
+bölümleri `sections` içinde, blok bütün bölümlerden sonra — yani *"Alındı'nın
+üstünde"* cümlesi iki modda da doğru. Cihazda görüldü: `🏪 A101'de 2` bölümü,
+altında `Alındı · 0/6`.
+
+### 124 üçüncü bir mod doğurdu — ve saklanmıyor
+
+`shoppingMode` bir `Boolean`; POST_SHOPPING'i ayırmak için üçüncü bir bayrak
+gerekmiyor. **Planlamada işaretlenecek bir şey yok** (karar 116 onay dairesini
+ve satırın onay hedefini kaldırdı), yani *"işaretli satır var"* cümlesi zaten
+*"alışveriş yapıldı"* demek. Üçüncü bir alan, aynı olguyu ikinci kez saklamak
+olurdu.
+
+⚠ **Bu tur üç testi tersine çevirdi ve gerekçesi yazılı.** Dosya bir tur
+boyunca *"işaretli satır HER İKİ MODDA yerinde kalır"* diyordu; o cümle
+yazıldığında mod **sayısı ikiydi**. Kullanıcının şikâyeti (*"liste yaparken
+neden alındı/alınmadı var ki?"*) **yerinde duruyor**: planlamada bölüm
+hiçbir zaman doğmuyor, çünkü orada işaretlenecek bir şey yok —
+`planningHasNoTakenSection` tam olarak bunu tutuyor.
+
+⚠ **KOD KARARI — okuma tasarıma bildirilecek:** POST_SHOPPING'i *"listenin
+alışveriş sonrası hâli"* diye okudum. Dayanağı Compose Spec'in kendi cümlesi:
+*"sapan zincir bölümleri **her iki modda** bu bloğun üstünde"* — sapan zincir
+bölümleri yalnızca **listede** var, dolayısıyla POST_SHOPPING bir liste modu.
+Bitir ekranı okunsaydı o cümle anlamsız kalırdı.
+
+⚠ **MAKET BU MADDEDE BAYAT:** Ekran 1'in alışveriş çizimleri hâlâ
+`Alındı (12)` + `expand_more` gösteriyor. Karar metni (github.md ve Compose
+Spec denetim satırı) `Alındı · 12/18` + chevron yok diyor. Kod **karar
+metnini** izledi; maketin alışveriş paneli güncellenmemiş.
+
+### Isırma kanıtı — 124
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| Alınanlar alışverişte de bölüme insin | `aCheckedRowStaysInPlaceWhileShopping` + `aCheckedStapleStaysInPlaceWhileShopping` |
+| Sonrasında da inmesin (124 öncesi hâl) | `afterShoppingTheTakenRowsCollectAtTheBottom` + `aCheckedStapleLeavesTheStapleSectionAfterShopping` |
+| Sayaç tek sayı yazsın | `TakenBlockTest`in **dördü birden** |
+
+### 22. turun kapanışı — cihazda görülenler
+
+| Karar | Cihazda |
+|---|---|
+| **121** | Yumurta satırı: `🏪 A101␣␣BİM · dün`. Ölçüldü: `A101` 172px'de bitiyor, `BİM · dün` 193px'de başlıyor → **21px = 8,0dp**; ikon ile ad arası 4dp |
+| **122** | Gimat'a uzun dokunuş: **"Bu markete giden 1 satır var."** (gözlemi yok, bir istisnası var). A101'de birinci kapı: *"Bu markette gözlem var, silinemez"* |
+| **123** | Seçici dokuz zincirin hepsini çiziyor. ⚠ Yapışkanlık **cihazda gösterilemedi**: `trip.storeId` v8'de doğdu, kapanmış hiçbir gezi beyan taşımıyor — sorgu doğru olarak `null` dönüyor. Kanıtı `StoreDeleteGateTest` |
+| **124** | Alışverişte `Alındı · 0/6` → iki satır işaretlendi → `Alındı · 2/6`, **satırlar yerinden oynamadı**; `🏪 A101'de 2` bölümü bloğun üstünde. Bırakınca `Alındı 2` + chevron, **kapalı**; dokununca açıldı ve chevron döndü |
+| **126** | `Nereden alınacak → 🏪 A101 ›` → çip ızgarası → *"Hedefte al"* → satır `BİM · hedef`'e döndü ve **başlık aynı anda** `2'si A101'de` → `1'i A101'de` oldu |

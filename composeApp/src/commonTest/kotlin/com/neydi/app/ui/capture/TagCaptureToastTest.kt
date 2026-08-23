@@ -27,4 +27,18 @@ class TagCaptureToastTest {
     fun `binlik ayiriciyi para bicimi getiriyor`() {
         assertEquals("Gözlem kaydedildi · Migros · 1.512,84 TL", savedToast("Migros", 151284))
     }
+
+    /**
+     * ENGELLENEN SILMENIN CUMLESI SAYIYI TASIYOR (karar 122).
+     *
+     * Tasarimin verdigi metin birebir bu. *"Silinemez"* demiyor: sebepsiz bir
+     * ret kullaniciya uygulamanin bozuk oldugunu dusundururdu, oysa yol
+     * kapali degil - beyan kaldirilinca silme yeniden aciliyor. Sayi
+     * kullaniciya kaybedecegi seyin BOYUNU soyluyor.
+     */
+    @Test
+    fun `engellenen silme kac satiri korudugunu yaziyor`() {
+        assertEquals("Bu markete giden 3 satır var.", blockedStoreDeleteMessage(3))
+        assertEquals("Bu markete giden 1 satır var.", blockedStoreDeleteMessage(1))
+    }
 }

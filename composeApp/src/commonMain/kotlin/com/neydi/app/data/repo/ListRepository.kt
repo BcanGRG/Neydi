@@ -239,6 +239,20 @@ class ListRepository(
     /** Bir satirin bugunku hali - sayacin uzerine ekleyecegi taban. */
     suspend fun line(rowId: String): TripLine? = tripLineDao.byId(rowId)
 
+    /**
+     * Bu markete giden satir sayisi - silme kapisi icin (karar 122).
+     *
+     * Depoda, cunku cagiran ETIKET tarafinda: `TagCaptureViewModel` liste
+     * tablolarini tanimiyor ve tanimamali. Sorunun kendisi de listenin
+     * sorusu - *"bu marketi silersem planimdan ne gider"*.
+     */
+    suspend fun linesHeadedTo(householdId: String, storeId: String): Int =
+        tripDao.linesHeadedTo(householdId, storeId)
+
+    /** En son beyan edilen zincir - beyan secicisinin yapiskanligi (karar 123). */
+    suspend fun lastDeclaredStoreId(householdId: String): String? =
+        tripDao.lastDeclaredStoreId(householdId)
+
     /** Bitir ekranindan geri alma: bu satir aslinda alinmadi. */
     suspend fun setTaken(lineId: String, taken: Boolean) {
         tripLineDao.setChecked(lineId, taken, if (taken) clock() else null)

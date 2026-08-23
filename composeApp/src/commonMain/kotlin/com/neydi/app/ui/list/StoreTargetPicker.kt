@@ -48,6 +48,19 @@ import com.neydi.app.ui.theme.Spacing
  * Ayirici cizginin altinda, cip degil satir olarak duruyor - cunku bir marketi
  * secmiyor, secimi KALDIRIYOR. Cip yapsaydik "Belli degil" adinda sekizinci
  * bir market gibi okunurdu.
+ *
+ * ## Ayni izgara iki soruyu soruyor (karar 126)
+ *
+ * Urun Detayi'ndaki *"Nereden alinacak"* satiri de BU izgarayi aciyor -
+ * tasarimin cumlesi *"dokunus beyanin cip izgarasini acar"*. Degisen tek sey
+ * baslik ve temizleme satirinin metni: orada soru *"bu satir nereden"* ve
+ * temizleme *"Hedefte al"*, yani secimi kaldirmak satiri hedefe geri
+ * veriyor. Ikinci bir bilesen yazmak, ayni jesti iki yerde ayri ayri
+ * bozulabilir hale getirirdi.
+ *
+ * @param title sheet'in basligi.
+ * @param clearLabel secimi KALDIRAN satirin metni. Ikisi de varsayilanini
+ *   beyandan aliyor cunku bilesen once onun icin yazildi.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -55,6 +68,8 @@ internal fun StoreTargetPicker(
     stores: List<StoreOption>,
     selectedId: String?,
     onSelect: (String?) -> Unit,
+    title: String = "Nereye gidiyorsun?",
+    clearLabel: String = "Belli değil",
 ) {
     val extras = LocalNeydiExtraColors.current
     Column(
@@ -62,7 +77,7 @@ internal fun StoreTargetPicker(
         verticalArrangement = Arrangement.spacedBy(SHEET_GAP),
     ) {
         Text(
-            text = "Nereye gidiyorsun?",
+            text = title,
             // 20sp/700 - maketin olcusu. `titleLarge` 22sp ve bu sheet'in
             // basligi ekranin mansetinden kucuk olmali.
             fontSize = 20.sp,
@@ -135,7 +150,7 @@ internal fun StoreTargetPicker(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Belli değil",
+                text = clearLabel,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 // IKINCIL RENK: bu bir secim degil, secimin KALDIRILMASI.
