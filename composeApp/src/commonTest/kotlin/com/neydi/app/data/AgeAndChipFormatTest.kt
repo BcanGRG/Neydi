@@ -73,12 +73,34 @@ class AgeAndChipFormatTest {
         assertEquals("159,90", formatChipMinor(15_990))
     }
 
-    /** Binlik ayirici ve kurus ANA BICIMLE AYNI - duşen tek sey TL. */
+    /** Bin liranin ALTINDA kurus duruyor; duşen tek sey TL. */
     @Test
-    fun chipKeepsTurkishGroupingAndKurus() {
-        assertEquals("1.289,90", formatChipMinor(128_990))
+    fun chipKeepsTurkishGroupingAndKurusBelowAThousand() {
         assertEquals("289,00 TL", formatMinor(28_900))
         assertEquals("289,00", formatChipMinor(28_900))
+        assertEquals("999,99", formatChipMinor(99_999))
+    }
+
+    /**
+     * 1.000 TL VE USTUNDE KURUS YAZILMIYOR (karar 81).
+     *
+     * BEKLENTI DEGISTI ve degismesi dogru cozumdu. Once "1.289,90" bekliyordu;
+     * o metin 92dp'lik fiyat sutununa SIGMIYOR - olculdu, 99,38dp istiyor - ve
+     * fazlasini dogrudan AD sutunundan caliyordu.
+     *
+     * Kurusu dusurmek bilgi kaybi degil: bin liralik bir sepette 56 kurus
+     * okunacak bir sey degil ve tam degeri Urun Detayi'nda duruyor. Ayni ilke
+     * karar 67'de manset icin zaten yaziliydi; karar 81 onu satira tasidi.
+     *
+     * EN YAKIN LIRAYA, asagi degil - asagi yuvarlamak butun fiyatlari
+     * sistematik olarak ucuz gosterirdi.
+     */
+    @Test
+    fun theChipDropsKurusFromAThousandUp() {
+        assertEquals("1.290", formatChipMinor(128_990))
+        assertEquals("1.000", formatChipMinor(100_000))
+        // 1.234,56 -> asagi degil EN YAKINA: 1.235
+        assertEquals("1.235", formatChipMinor(123_456))
     }
 
     /**

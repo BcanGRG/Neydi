@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -304,7 +305,7 @@ fun ListItemRow(
             if (row.isStaple) StaplePin()
             if (row.quantity != null) QuantityBadge(row.quantity)
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f).widthIn(min = NAME_FLOOR)) {
                 Text(
                     text = row.name,
                     style = if (shoppingMode) styles.itemNameShopping else styles.itemName,
@@ -316,8 +317,24 @@ fun ListItemRow(
                 // Alisveris modunda ikincil metadata katlanir: reyonda 10-11 degil
                 // 7-8 satir gorunmeli, ve gerekli olan tek bilgi urun adi.
                 if (hasSecondLine && !shoppingMode) {
-                    SecondLineContent(second, cheaper, extras.priceUp, extras.priceDown)
+                    SecondLineContent(second, cheaper)
                 }
+            }
+
+            // DELTA + SPARKLINE ANA SATIRDA (karar 82), `flex:none`.
+            //
+            // Maket ikisini bastan beri burada ciziyordu; kod onlari ikinci
+            // satirin icine koymustu ve orada AD SUTUNUNUN genisligini
+            // paylasiyorlardi - kaybeden hep cumle oluyordu. Burada paylarini
+            // feda sirasindan aliyorlar: dar ekranda once sus duser, cumle
+            // kalir.
+            val trend = (row.priceHint as? PriceHint.Trend)?.takeIf { !shoppingMode }
+            if (trend != null && cheaper == null) {
+                DeltaChip(trend.deltaPercent, trend.rising)
+                // SPARKLINE NOTR: butun maketler outline ciziyor - yaninda
+                // kirmizi bir delta cipi olan orneklerde bile. Cizgi TARIHI
+                // gosteriyor, YARGIYI degil; yargiyi cip zaten tasiyor.
+                Sparkline(values = trend.history, color = MaterialTheme.colorScheme.outline)
             }
         }
 
@@ -423,10 +440,19 @@ private fun StaplePin() {
 private fun SecondLineContent(
     second: SecondLine,
     cheaper: String?,
-    priceUp: Color,
-    priceDown: Color,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    // IKINCI SATIR TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz
+    // cipi YA oneri gerekcesi - asla ikisi.
+    //
+    // Birlikteligin dislanmasi YENI BIR KISIT DEGIL, var olan kurallarin
+    // sonucu: cip varken trend bastiriliyor (karar 41) ve `PackChanged` cipi
+    // zaten imkansiz kiliyor (kanitli ayni ambalaj sarti). Kod bunu artik
+    // veriyle degil KURALLA biliyor.
+    if (cheaper != null) {
+        CheaperChip(cheaper)
+        return
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -444,33 +470,25 @@ private fun SecondLineContent(
                     // fark tam da kullanicinin baktigi sey.
                     MetaText("${h.store} · ${formatAge(h.daysAgo)}", muted, Modifier.weight(1f, false))
 
-                is PriceHint.Trend -> {
+                // DELTA VE SPARKLINE ARTIK ANA SATIRDA (karar 82): burada
+                // yalnizca CUMLE var. Ikisi burada dururken cumleye 44dp
+                // kaliyordu - "önce 1.234,56" yerine "önce…" ciziliyordu, yani
+                // sus kaliyor bilgi gidiyordu.
+                is PriceHint.Trend ->
                     MetaText("önce ${h.from}", muted, Modifier.weight(1f, false))
-                    DeltaChip(h.deltaPercent, h.rising)
-                    // SPARKLINE NOTR: butun maketler `stroke="#8A7666"`
-                    // yani outline ciziyor - yaninda kirmizi bir delta cipi
-                    // olan orneklerde bile. Cizgi TARIHI gosteriyor, YARGIYI
-                    // degil; yargiyi cip zaten tasiyor ve ikisini birden
-                    // renklendirmek ayni sinyali iki kez veriyordu.
-                    Sparkline(
-                        values = h.history,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                }
-                // Ambalaj degismisse TREND YOK. 900g -> 800g ayni fiyata satiliyorsa
-                // bu bir fiyat dususu degil; yesil ok cikarsa yalan soylemis oluruz.
+
+                // GUNCEL FIYAT YAZMIYOR (karar 83): meta GECMISI anlatir,
+                // guncel fiyat her zaman ve yalniz fiyat cipindedir. Bu dal
+                // eskiden iki fiyati birden yaziyordu ve satirda fiyat cipi de
+                // olmadigi icin kural dal basina degisiyordu.
                 is PriceHint.PackChanged ->
                     MetaText(
-                        "${h.fromPack} → ${h.toPack} · ${h.note}",
+                        "ambalaj küçüldü: ${h.fromPack} → ${h.toPack}",
                         muted,
                         Modifier.weight(1f, false),
                     )
             }
         }
-
-        // KIREMIT, AMBER DEGIL (karar 57): ayni oturumda amber "doldur" diye
-        // ogrenilirse listede "ucuz" diye okunamaz.
-        if (cheaper != null) CheaperChip(cheaper)
     }
 }
 

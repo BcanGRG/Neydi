@@ -101,7 +101,31 @@ private fun groupThousands(value: Long): String = buildString {
  * bilmiyor ve bir gun cumle icinde de oyle cagirir. Ad, kuralin kendisini
  * cagri yerine tasiyor.
  */
-fun formatChipMinor(minor: Long): String = formatMinor(minor, currency = "")
+/**
+ * 24dp'lik FIYAT CIPININ metni - ve 1.000 TL ustunde KURUS YAZMIYOR (karar 81).
+ *
+ * ## Neden esik var
+ *
+ * Cip 92dp'lik sabit bir sutun (tasarim sistemi, alti maket kullanimi) ve
+ * "1.234,56 TL" o sutuna sigmiyor - olculdu, 99,38dp istiyor. Fazlasini
+ * dogrudan AD sutunundan caliyordu.
+ *
+ * Kurusu dusurmek sigdirmanin en ucuz yolu ve bilgi kaybi degil: bin liralik
+ * bir sepette 56 kurus okunacak bir sey degil, ve kurusun tam degeri Urun
+ * Detayi'nda duruyor. Ayni ilke karar 67'de manset icin zaten yaziliydi;
+ * karar 81 onu satira tasidi.
+ *
+ * EN YAKIN LIRAYA, asagi degil: asagi yuvarlamak butun fiyatlari sistematik
+ * olarak ucuz gosterirdi.
+ */
+fun formatChipMinor(minor: Long): String {
+    val whole = kotlin.math.abs(minor) >= CHIP_KURUS_LIMIT
+    val value = if (whole) (minor + 50) / 100 * 100 else minor
+    return formatMinor(value, currency = "").let { if (whole) it.substringBefore(',') else it }
+}
+
+/** Karar 81: bu tutardan itibaren cip kurus yazmiyor (1.000 TL). */
+private const val CHIP_KURUS_LIMIT = 100_000L
 
 /**
  * OCR metnindeki tutari kurusa cevirir: "*106.00" / "x484,58" / "1.234,56".
