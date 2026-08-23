@@ -32,6 +32,7 @@ import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.product.ProductSheetState
+import com.neydi.app.ui.product.RowQuantity
 import com.neydi.app.ui.product.toPriceSection
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -264,6 +265,16 @@ class ListViewModel(
                 // bir anahtarin oynamasi, uygulamanin kendi kendine ayar
                 // degistirdigi izlenimi verir.
                 isBlocked = blockDao.isBlocked(household, product.id),
+                // MIKTAR BLOGU YALNIZ SATIRDAN ACILDIGINDA VAR (karar 108):
+                // duzenlenecek miktar bir SATIRA ait, urune degil. Sheet urun
+                // gecmisinden acilirsa `rowId` yok ve blok da cizilmiyor.
+                quantity = rowId?.let { repo.line(it) }?.let { line ->
+                    RowQuantity(
+                        count = line.quantity,
+                        unit = line.unitOverride ?: line.unit,
+                        catalogUnit = product.defaultUnit,
+                    )
+                },
             )
             // FIYAT BOLUMU AYRI VE SONRA: sheet gozlemleri BEKLEMEDEN aciliyor.
             // Tek atisla beklenseydi dokunusla acilis arasinda bir sorgu
@@ -280,6 +291,58 @@ class ListViewModel(
 
     fun closeProductSheet() {
         _productSheet.value = null
+    }
+
+    /**
+     * Urun Detayi'ndaki miktar blogunun bir adimi (karar 108).
+     *
+     * Sheet'in kendi state'i de ANINDA guncelleniyor - `setStaple` ile ayni
+     * gerekce: yazmanin veritabanindan geri okunmasini beklemek, parmak
+     * kalkinca sayinin bir kare eski halinde durmasi demek. Listedeki satir
+     * zaten akistan tazeleniyor.
+     */
+    fun stepSheetQuantity(up: Boolean) {
+        val sheet = _productSheet.value ?: return
+        val rowId = sheet.rowId ?: return
+        val q = sheet.quantity ?: return
+        val next = if (up) incrementQuantity(q.count, q.unit) else decrementQuantity(q.count, q.unit)
+        if (next == q.count) return
+        _productSheet.update { it?.copy(quantity = q.copy(count = next)) }
+        viewModelScope.launch {
+            // MEVCUT ORTULUK OKUNUP GERI YAZILIYOR: `setQuantity` bir yama
+            // degil TAM bir yazma, yani gecirmemek onu silmek olurdu.
+            val line = repo.line(rowId) ?: return@launch
+            repo.setQuantity(rowId, next, line.unitOverride)
+        }
+    }
+
+    /**
+     * Birim cipi secildi (karar 108).
+     *
+     * SAYI DONUSTURULMUYOR, yalnizca yeni birimin tabanina oturuyor - "1 kg"
+     * satirinda `g` secilirse sonuc "1 g" degil "100 g" olur, cunku `g`nin
+     * adimi 100 ve sayac sifira inemiyor (karar 109). Donusturmek (1 kg ->
+     * 1000 g) kullanicinin sectigi sayiyi sessizce yeniden yazmak olurdu.
+     */
+    fun pickSheetUnit(unit: String) {
+        val sheet = _productSheet.value ?: return
+        val rowId = sheet.rowId ?: return
+        val q = sheet.quantity ?: return
+        if (unit == q.unit) return
+        // KATALOGUN BIRIMI SECILIRSE ORTULUK SILINIYOR: satir katalogu izlemeye
+        // doner ve rozet yeniden konturlu cizilir. "Geri al" icin ikinci bir yol
+        // acmak, geri almanin ne demek oldugunu ikinci kez tanimlamak olurdu.
+        //
+        // ⚠ BU DEGER `null` OLABILIR VE `null`IN KENDISI BIR EMIR. Once ortak
+        // bir yardimci vardi ve `override ?: current.unitOverride` yaziyordu -
+        // yani "sil" ile "dokunma" ayni sey sayiliyordu ve secim HIC
+        // silinemiyordu. Cihazda goruldu; iki cagri yeri artik kendi niyetini
+        // acikca yaziyor.
+        val override = unit.takeUnless { it == q.catalogUnit }
+        _productSheet.update { it?.copy(quantity = q.copy(unit = unit)) }
+        viewModelScope.launch {
+            repo.setQuantity(rowId = rowId, quantity = q.count, unitOverride = override)
+        }
     }
 
     private val _stepper = MutableStateFlow<OpenStepper?>(null)
@@ -343,19 +406,15 @@ class ListViewModel(
      * ve tasarim bunu istemiyor - birim ciplerinin yanindaki sayac zaten
      * oradaki, kullanici istedigi sayiya kendisi gotururu.
      *
-     * Ama yeni birimin TABANINA oturtuluyor: `g`nin adimi 100 ve sayac
-     * sifira inemiyor (karar 109), yani 1 g bir sayacin ulasamayacagi bir
-     * deger olurdu - eksiye basildiginda birdenbire 100'e sicrardi.
+     * TABANA DA OTURTULMUYOR. Bir ara oturtuluyordu ("1 kg" -> `g` secilince
+     * 100 g) ve gerekcesi eksi tusunun 1 g'yi 100 g'ye CIKARMASIYDI - ama o
+     * gercek bir hataydi ve [decrementQuantity] icinde duzeltildi. Kalan tek
+     * dogru davranis sayiya dokunmamak.
      */
     fun setRowUnit(rowId: String, unit: String) {
         viewModelScope.launch {
             val line = repo.line(rowId) ?: return@launch
-            val floor = stepFor(unit)
-            repo.setQuantity(
-                rowId = rowId,
-                quantity = maxOf(line.quantity, floor),
-                unitOverride = unit,
-            )
+            repo.setQuantity(rowId = rowId, quantity = line.quantity, unitOverride = unit)
         }
     }
 

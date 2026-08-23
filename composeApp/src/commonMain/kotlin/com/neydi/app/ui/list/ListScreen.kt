@@ -320,6 +320,8 @@ fun ListScreen(
                 state = sheet,
                 onStapleChange = { vm.setStaple(sheet.productId, it) },
                 onBlockChange = { vm.setBlocked(sheet.productId, it) },
+                onStepQuantity = vm::stepSheetQuantity,
+                onPickUnit = vm::pickSheetUnit,
                 bottomPadding = bottomInset,
                 // Sheet kapaniyor VE satir siliniyor: serit sheet'in arkasinda
                 // dogar, kullanici kapatinca onu gorur ve geri alabilir.

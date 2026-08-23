@@ -35,7 +35,14 @@ fun stepFor(unit: String): Double = when (unit) {
 fun decrementQuantity(count: Double, unit: String): Double {
     val step = stepFor(unit)
     val next = count - step
-    return if (next < step) step else next
+    if (next >= step) return next
+    // EKSI TUSU ASLA ARTIRMAZ.
+    //
+    // Once burada duz `step` donuyordu ve tabanin ALTINDA bir deger varsa -
+    // "1 g" gibi, ki katalogda gercekten var - eksiye basmak sayiyi 1'den
+    // 100'e CIKARIYORDU. Cihazda goruldu. Tabanin isi asagi inmeyi durdurmak,
+    // yukari itmek degil; zaten altta olan bir deger yerinde kaliyor.
+    return minOf(count, step)
 }
 
 /** Sayacin ust siniri yok - kimse "20 kg domates alamazsin" demiyor. */

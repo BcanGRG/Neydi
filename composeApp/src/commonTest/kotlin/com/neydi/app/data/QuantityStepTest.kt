@@ -68,14 +68,23 @@ class QuantityStepTest {
     }
 
     /**
-     * TARTIDAN GELEN KUSURATLI DEGER DE TABANA OTURUYOR.
+     * EKSI TUSU ASLA ARTIRMAZ - taban altindaki deger YERINDE KALIR.
      *
-     * Etiketten "0,182 kg" gibi bir deger gelebiliyor. Duz cikarma bunu
-     * negatife goturdugu icin taban devreye giriyor - ve sonuc sifir degil,
-     * bir adim.
+     * Bu kural cihazda bulundu. Once taban duz donuyordu, yani zaten tabanin
+     * altinda olan bir deger eksiye basildiginda YUKARI cikiyordu: katalogda
+     * "1 g" Cay var ve eksi tusu onu 100 g yapiyordu. Tabanin isi asagi
+     * inmeyi durdurmak, yukari itmek degil.
      */
     @Test
-    fun anOddWeighedValueLandsOnTheFloorNotBelowIt() {
-        assertEquals(0.5, decrementQuantity(0.182, "kg"))
+    fun minusNeverIncreases() {
+        assertEquals(1.0, decrementQuantity(1.0, "g"), "eksi tusu sayiyi artirdi")
+        assertEquals(0.182, decrementQuantity(0.182, "kg"), "eksi tusu sayiyi artirdi")
+    }
+
+    /** Taban USTUNDEKI deger yine tabana iniyor - iki adim atlamadan. */
+    @Test
+    fun aValueAboveTheFloorStillLandsOnIt() {
+        assertEquals(100.0, decrementQuantity(150.0, "g"))
+        assertEquals(0.5, decrementQuantity(0.9, "kg"))
     }
 }
