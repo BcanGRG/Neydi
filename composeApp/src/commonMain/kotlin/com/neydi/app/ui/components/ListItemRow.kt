@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -88,6 +90,16 @@ fun ListItemRow(
     row: ListRow,
     modifier: Modifier = Modifier,
     shoppingMode: Boolean = false,
+    /**
+     * Bu satir AZ ONCE mi eklendi (karar 89) - ve KACINCI ekleme oldugu.
+     *
+     * Sayi bir sira degil TETIKLEYICI: ayni urun ikinci kez eklendiginde satir
+     * kimligi degismiyor (adet artiyor, karar 92) ve ekranin bunu yeni bir
+     * olay olarak gorebilmesinin tek yolu bu.
+     *
+     * `null` = bu satir az once eklenmedi.
+     */
+    justAddedSeq: Long? = null,
     onToggle: () -> Unit = {},
     /**
      * Uzun basma - Urun Detayi sheet'ini aciyor.
@@ -115,6 +127,22 @@ fun ListItemRow(
 ) {
     val styles = LocalNeydiTextStyles.current
     val extras = LocalNeydiExtraColors.current
+
+    // "YAPILDI" YIKAMASI (karar 89): 1.200 ms dolu, 400 ms sonme.
+    //
+    // GIRISI ANI, cikisi yumusak. Ekleme aninin kendisi zaten olay; yikamanin
+    // yavas belirmesi olayi gecmise iterdi. Cikis yumusak cunku bitisin bir ani
+    // yok - vurgu isini bitirip cekiliyor.
+    //
+    // RENK AMBER DEGIL: maket amber-krem ciziyordu ama karar 57 amberi
+    // "eksik / emin degiliz"e kilitledi ve ekleme onayi tam tersini soyluyor.
+    val wash = remember { Animatable(0f) }
+    LaunchedEffect(justAddedSeq) {
+        if (justAddedSeq == null) return@LaunchedEffect
+        wash.snapTo(1f)
+        delay(Motion.JUST_ADDED_MS.toLong())
+        wash.animateTo(0f, tween(Motion.JUST_ADDED_FADE_MS))
+    }
     val second = row.secondLine()
     // Ucuz-alternatif cipi de ikinci satirin sakini: ana satirda kardes olursa
     // yatay genisligi calar ve URUN ADINI kirpar. Ad kirpilmasi kabul edilemez -
@@ -220,6 +248,14 @@ fun ListItemRow(
             .fillMaxWidth()
             .heightIn(min = height)
             .clip(NeydiShapes.large)
+            // "YAPILDI" YIKAMASI, satirin KENDI zemininin ustunde ve butun
+            // icerigin ALTINDA - metnin okunurlugu degismiyor, yalnizca zemin
+            // bir sure yesile caliyor.
+            .then(
+                if (wash.value > 0f) {
+                    Modifier.background(extras.successSurface.copy(alpha = wash.value))
+                } else Modifier,
+            )
             .then(
                 // ALISVERIS SATIRININ DOLGUSU - YALNIZCA KARANLIKTA.
                 //

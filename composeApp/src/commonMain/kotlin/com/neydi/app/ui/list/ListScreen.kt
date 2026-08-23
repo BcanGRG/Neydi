@@ -126,11 +126,16 @@ fun ListScreen(
     val pendingObservationDelete by vm.pendingObservationDelete.collectAsStateWithLifecycle()
     val input by vm.input.collectAsStateWithLifecycle()
     val suggestions by vm.suggestions.collectAsStateWithLifecycle()
+    val bulkToast by vm.bulkToast.collectAsStateWithLifecycle()
 
     // KOK ALANIN ODAGI EKRANDA TUTULUYOR: kesif sheet'indeki "Kendim yazayım"
     // sheet'i kapatip BU alani aciyor (karar 64) - iki yol birbirine bagli ve
     // baglayan sey bu tutamak.
     val quickAddFocus = remember { FocusRequester() }
+
+    // Sheet'ten ekleme haptik veriyor (karar 90) - burada okunuyor cunku
+    // sheet'in cagri yeri bu fonksiyon.
+    val haptics = LocalHapticFeedback.current
 
     // Sheet'lere verilecek alt bosluk: BURADA okunuyor, sheet icinde degil.
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -173,8 +178,12 @@ fun ListScreen(
         onSettings = onSettings,
         onCapture = onCapture,
         onAddFromLastTrip = vm::addFromLastTrip,
-        toast = toast,
-        onToastShown = onToastShown,
+        // TOPLU EKLEME TOAST'I DISARIDAN GELENIN ONUNDE (karar 91): dogrudan
+        // kullanicinin az onceki jestinin cevabi. Toast'in kuyrugu yok (karar
+        // 8) - cakisirlarsa ikincisi hic cizilmez, o yuzden sira acikca
+        // yaziliyor, tesadufe birakilmiyor.
+        toast = bulkToast ?: toast,
+        onToastShown = { if (bulkToast != null) vm.onBulkToastShown() else onToastShown() },
         lastAdded = lastAdded,
         onDeleteRow = vm::remove,
         pendingDelete = pendingDelete,
@@ -246,8 +255,24 @@ fun ListScreen(
                 selected = sheetCategory,
                 body = sheetBody,
                 onFilter = vm::toggleSheetFilter,
-                onPick = vm::addFromDiscovery,
-                onPickResult = vm::addFromSheet,
+                // HAPTIK DORDUNCU OLAY (karar 90): LISTEYI GORMEDEN ekleme.
+                //
+                // Karar 55 uc olay saymisti (isaretleme, cekim, kaydet) ve
+                // olcutu karar 3'te yazili: sik tekrarlanan ve gorsel onayi
+                // zayif eylem. Sheet'ten ekleme olcutun tam icinde - oturumda
+                // 5-10 kez oluyor ve liste sheet'in arkasinda GORUNMUYOR.
+                //
+                // Kok alandan ekleme haptik ALMIYOR: satir gozun onunde
+                // beliriyor ve yikama onayi zaten veriyor. Haptigi her yola
+                // vermek onu ucretsizlestirirdi.
+                onPick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    vm.addFromDiscovery(it)
+                },
+                onPickResult = {
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    vm.addFromSheet(it)
+                },
                 // ALT SATIR IKI AYRI IS YAPIYOR ve etiketi bunu zaten
                 // soyluyor (`AddSheet` icinde `query.isNotBlank()` dallanmasi):
                 //
@@ -266,6 +291,8 @@ fun ListScreen(
                 // ve HIC cagrilmiyordu.
                 onFreeText = {
                     if (sheetQuery.isNotBlank()) {
+                        // Bu satir da bir EKLEME yolu ve listeyi gormuyor.
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         vm.addSheetQuery()
                     } else {
                         vm.closeSheet()
@@ -531,6 +558,11 @@ internal fun ListContent(
                     }
                     items(section.rows, key = { it.id }) { row ->
                         ListItemRow(
+                            // "YAPILDI" YIKAMASI (karar 89) - yalniz az once
+                            // eklenen satirda. `seq` tetikleyici: ayni urun
+                            // ikinci kez eklendiginde satir kimligi ayni kaliyor
+                            // (adet artiyor) ve yikama yine calismali (karar 92).
+                            justAddedSeq = lastAdded?.takeIf { it.rowId == row.id }?.seq,
                             // JEST YALNIZ PLAN MODUNDA (karar 37). Alisveris
                             // modunda reyondasin: yanlislikla silmenin bedeli
                             // yuksek ve geri alma penceresi bes saniye.
@@ -582,6 +614,7 @@ internal fun ListContent(
                     }
                     items(state.taken, key = { it.id }) { row ->
                         ListItemRow(
+                            justAddedSeq = lastAdded?.takeIf { it.rowId == row.id }?.seq,
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
