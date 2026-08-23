@@ -79,4 +79,30 @@ class EconomyBandTest {
     fun noObservationWritesNothing() {
         assertEquals("", price(PriceHint.None))
     }
+
+    /**
+     * AMBALAJ BUYUDUYSE CUMLE "BUYUDU" DIYOR.
+     *
+     * Cihazda yakalandi: dal iki ambalaj FARKLIYSA atesleniyor, yonune
+     * bakmadan - ama metin her zaman *"kuculdu"* yaziyordu. Kullanicinin
+     * kendi verisinde `1,5 kg → 3 kg` bir buyume ve satir onu kuculme diye
+     * yazdi. Satirin isi dogruyu soylemek; bir fiil yuzunden yalan soyluyordu.
+     */
+    @Test
+    fun aGrownPackIsNotCalledShrunk() {
+        val meta = price(PriceHint.PackChanged("1,5 kg", "3 kg", "192,00 TL", smaller = false))
+        assertEquals("ambalaj büyüdü: 1,5 kg → 3 kg", meta)
+    }
+
+    /**
+     * KUCULME HALI YERINDE DURUYOR - karar 67'nin uyarisi silinmedi.
+     *
+     * Shrinkflation bir fiyat dususu DEGILDIR ve satirin bunu soylemesi
+     * gerekiyor; degisen tek sey, fiilin dogru yone baglanmasi.
+     */
+    @Test
+    fun aShrunkPackStillSaysShrunk() {
+        val meta = price(PriceHint.PackChanged("900 g", "800 g", "45,00 TL", smaller = true))
+        assertEquals("ambalaj küçüldü: 900 g → 800 g", meta)
+    }
 }

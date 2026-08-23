@@ -1,5 +1,7 @@
 package com.neydi.app.ui.list
 
+import com.neydi.app.data.EstimateLine
+import com.neydi.app.data.packIsMissing
 import com.neydi.app.data.quantityLabel
 
 import com.neydi.app.data.daysBetween
@@ -163,6 +165,18 @@ internal fun ListRowProjection.toUiRow(
         addedByInitial = if (addedByMemberId != myMemberId) turkishInitials(name).take(1) else null,
         note = note,
         priceHint = toPriceHint(now, chipWins = cheaper != null),
+        // AYNI KURAL, IKI YERDE OKUNUYOR: tahmin toplarken de satir cizerken
+        // de `packIsMissing`. Ikisi ayri yazilsaydi biri digerinden ayrilir ve
+        // satir "ambalaj bilinmiyor" derken toplam onu yine sayabilirdi.
+        packUnknown = packIsMissing(
+            EstimateLine(
+                quantity = count,
+                unit = unit,
+                unitPriceMinor = lastPriceMinor,
+                packSize = lastPackSize,
+                packUnit = lastPackUnit,
+            ),
+        ),
         cheaperElsewhere = cheaper,
     ),
 )

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -196,6 +197,31 @@ class ListPriceHintTest {
         val hint = assertIs<PriceHint.PackChanged>(hintFor(db, trip, product))
         assertEquals("125 gr", hint.fromPack)
         assertEquals("110 gr", hint.toPack)
+        assertTrue(hint.smaller, "125 gr -> 110 gr bir kuculme")
+    }
+
+    /**
+     * AMBALAJ BUYUDUYSE YON DE OYLE OKUNUYOR (cihazda bulunan yalan).
+     *
+     * Dal iki ambalaj FARKLIYSA atesleniyor, yonune bakmadan - ama cumle her
+     * zaman *"kuculdu"* yaziyordu. Kullanicinin kendi verisinde `1,5 kg → 3 kg`
+     * bir buyume ve satir onu kuculme diye yazdi.
+     *
+     * YON OLCULEREK bulunuyor, etikete bakarak degil: "1,5 kg" ile "1500 gr"
+     * ayni sey ve dizge olarak farkli.
+     */
+    @Test
+    fun aGrownPackIsReadAsGrown() = runTest {
+        val (db, trip) = setup()
+        // Sade bir ad: `lineFor` `name.lowercase()` yaziyor, `writeTagObservation`
+        // ise `matchKey` - Turkce harfte ikisi ayrisiyor ve gozlemler baska bir
+        // urune duserdi. Iddia edilen sey YON, ad degil.
+        val p = lineFor(db, trip, "Kasar")
+        writePack(db, "Kasar", 1500.0, "gr", at = now - 30 * day, id = "a")
+        writePack(db, "Kasar", 3.0, "kg", at = now - day, id = "b")
+
+        val hint = assertIs<PriceHint.PackChanged>(hintFor(db, trip, p))
+        assertFalse(hint.smaller, "1500 gr -> 3 kg bir buyume, satir kuculme yaziyor")
     }
 
     /** Gercek yazma yolu - fiyat sabit, degisen yalnizca ambalaj. */

@@ -69,6 +69,26 @@ data class ListRowProjection(
 
 )
 
+/**
+ * Tahmin hesabinin tek satirlik girdisi (kararlar 95-96, 111-114).
+ *
+ * Sorgu bunlari GETIRIYOR, yorumu [com.neydi.app.data.foldBasket] yapiyor.
+ * [unitPriceMinor] `null` ise satirin gozlemi yok - satir yine de doner ve
+ * paydada kalir.
+ */
+data class EstimateRow(
+    val quantity: Double,
+    /** GECERLI birim: `COALESCE(unitOverride, unit)` (karar 108). */
+    val unit: String,
+    val unitPriceMinor: Long? = null,
+    val packSize: Double? = null,
+    val packUnit: String? = null,
+    /** Gozlemin zinciri; marketsiz cekimde `null` ve `null` bir anlam tasiyor (karar 113). */
+    val chain: String? = null,
+    /** Marketin ekranda yazilan adi - kimlik [chain], gorunen bu. */
+    val storeName: String? = null,
+)
+
 /** Gezi basina satir sayisi (Gecmis ekrani). */
 data class TripLineCount(
     val tripId: String,

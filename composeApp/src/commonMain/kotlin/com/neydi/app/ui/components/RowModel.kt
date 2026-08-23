@@ -48,7 +48,24 @@ sealed interface PriceHint {
      * trend olarak gosterilseydi yesil ok cikardi ve yalan olurdu.
      */
     @Immutable
-    data class PackChanged(val fromPack: String, val toPack: String, val note: String) : PriceHint
+    data class PackChanged(
+        val fromPack: String,
+        val toPack: String,
+        val note: String,
+        /**
+         * Ambalaj KUCULDU mu - cumlenin fiili buradan.
+         *
+         * ⚠ Bu alan cihazda yakalanan bir YALANDAN dogdu: dal iki ambalaj
+         * FARKLIYSA atesleniyordu, yonune bakmadan, ama metin her zaman
+         * *"ambalaj kuculdu"* yaziyordu. Kullanicinin kendi verisinde
+         * `1,5 kg → 3 kg` bir buyume ve satir onu kuculme diye yazdi.
+         *
+         * Kuculme hali hala ayri bir sey soyluyor (karar 67: shrinkflation
+         * bir fiyat dususu DEGILDIR), o yuzden fiil silinmedi - dogru yone
+         * baglandi.
+         */
+        val smaller: Boolean = true,
+    ) : PriceHint
 }
 
 @Immutable
@@ -75,6 +92,13 @@ data class ListRow(
     /** Yalnizca ES ekledigunde dolu. Kendi ekledigimizde ASLA gosterilmez. */
     val addedByInitial: String? = null,
     val priceHint: PriceHint = PriceHint.None,
+    /**
+     * Satir tahmine GIRMIYOR, cunku ambalaji bilinmiyor (karar 111).
+     *
+     * Fiyat cipi yerinde kaliyor - okunan sey bir AMBALAJIN fiyati ve dogru.
+     * Yanlis olan sey onu miktarla carpmakti. Meta yuvasi eksikligi yaziyor.
+     */
+    val packUnknown: Boolean = false,
     /** Satir bir oneriden geldiyse gerekcesi: "12 gundur almadin". */
     val suggestionReason: String? = null,
     val note: String? = null,
@@ -95,6 +119,16 @@ data class ListRow(
 
 /** Satirin ikinci satirinda ne yazacagi. Ayni anda yalnizca BIRI. */
 internal sealed interface SecondLine {
+    /**
+     * *"3 kg · ambalaj bilinmiyor"* (karar 111) - fiyat ipucunun ONUNDE.
+     *
+     * Once geliyor, cunku bu satirda okunacak en onemli sey artik fiyatin
+     * nereden geldigi degil, tahmine NEDEN girmedigi. Yeni bir oge de degil:
+     * ayni meta yuvasi, farkli cumle - karar 83'un "tek icerik" kurali
+     * duruyor.
+     */
+    data class PackUnknown(val text: String) : SecondLine
+
     data class Price(val hint: PriceHint) : SecondLine
     data class Reason(val text: String) : SecondLine
     data class Note(val text: String) : SecondLine
@@ -106,6 +140,7 @@ internal sealed interface SecondLine {
  * Asla iki satir metadata olmaz - bu yuzden secim tek bir yerde yapiliyor.
  */
 internal fun ListRow.secondLine(): SecondLine = when {
+    packUnknown -> SecondLine.PackUnknown("$quantity · ambalaj bilinmiyor")
     priceHint !is PriceHint.None -> SecondLine.Price(priceHint)
     suggestionReason != null -> SecondLine.Reason(suggestionReason)
     note != null -> SecondLine.Note(note)
@@ -141,6 +176,7 @@ const val FRESH_DAYS: Int = 7
  * kurmadan sinanabilir kiliyor.
  */
 internal fun SecondLine.metaText(): String = when (this) {
+    is SecondLine.PackUnknown -> text
     is SecondLine.Reason -> text
     is SecondLine.Note -> text
     SecondLine.Empty -> ""
@@ -164,7 +200,8 @@ internal fun SecondLine.metaText(): String = when (this) {
         // GUNCEL FIYAT YAZMIYOR (karar 83): meta GECMISI anlatir, guncel fiyat
         // her zaman ve yalniz fiyat cipindedir.
         is PriceHint.Trend -> "önce ${h.from}"
-        is PriceHint.PackChanged -> "ambalaj küçüldü: ${h.fromPack} → ${h.toPack}"
+        is PriceHint.PackChanged ->
+            "${if (h.smaller) "ambalaj küçüldü" else "ambalaj büyüdü"}: ${h.fromPack} → ${h.toPack}"
     }
 }
 

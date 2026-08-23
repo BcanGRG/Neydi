@@ -14,6 +14,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import com.neydi.app.data.basketIsShown
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -55,12 +57,20 @@ internal fun EstimatedBasket(
     pricedCount: Int,
     totalCount: Int,
     modifier: Modifier = Modifier,
+    /** Butun katkilar tek zincirdense o zincir; aksi halde `null` (karar 95). */
+    chain: String? = null,
 ) {
-    // ESIK UC FIYATLI URUN (gezinme sozlesmesi · thresholds). Tek ya da iki
-    // fiyat bilinen bir sepette tahmin, tahminden cok yanilgi uretiyor:
-    // "~40 TL" yazan bir satir, on sekiz urunluk bir sepetin yaninda yanlis
-    // bir guven veriyor. Altinda satir HIC gorunmuyor.
-    if (pricedCount < MIN_PRICED_ITEMS) return
+    // ESIK UC SATIR VE MUTLAK (karar 53, karar 112 ile teyit edildi).
+    //
+    // Tek ya da iki fiyat bilinen bir sepette tahmin, tahminden cok yanilgi
+    // uretiyor: "~40 TL" yazan bir satir, on sekiz urunluk bir sepetin
+    // yaninda yanlis bir guven veriyor. Altinda satir HIC gorunmuyor - ve
+    // yerine "yeterli veri yok" gibi bir yuzey de yazilmiyor.
+    //
+    // SAYDIGI SEY ARTIK TOPLAMA GIREN SATIR (karar 112): ambalaji bilinmeyen
+    // tartili satir fiyati OLMASINA ragmen toplama girmiyor, yani esigi de
+    // dolduramaz. Eskiden "fiyati var mi" diye sayiliyordu.
+    if (!basketIsShown(pricedCount)) return
 
     Row(
         modifier = modifier
@@ -72,41 +82,32 @@ internal fun EstimatedBasket(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // SOL SUTUN ESNEK, SAG SUTUN KILITLI.
+        // SOL TUTAR, SAG KAYNAK - TEK SATIR (karar 95).
         //
-        // Ikisi de kilitsizdi ve cihazda tasti: *"8 üründen 5 tanesini
-        // biliyorum"* uzayinca tutar (`en az ~1.200 TL`) IKI SATIRA bolundu ve
-        // satirin yuksekligi buyudu. Okunacak sey tutar; kirpilacak sey
-        // aciklama. Gecmis satirindaki tarih sutunuyla ayni kural: genisligi
-        // paylasan her metnin sarmaya karsi kilidi olmali.
-        Column(Modifier.weight(1f, fill = false)) {
-            Text(
-                text = "Tahmini sepet",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                // Kacinin fiyatini bildigimiz ACIKCA yaziyor: eksik bilgiyi
-                // gizlemek tahmini guvenilir gosterir, ki degil.
-                text = if (pricedCount < totalCount) {
-                    "$totalCount üründen $pricedCount tanesini biliyorum"
-                } else {
-                    "hepsinin fiyatını biliyorum"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        // Once iki katliydi: solda "Tahmini sepet" + *"8 üründen 5 tanesini
+        // biliyorum"*, sagda *"en az ~1.200 TL"*. Karar 95 ikisini de emekli
+        // etti ve sebebi ayni cumleyi iki kez soylemeleri: sayac (`4/7`) zaten
+        // kapsamı yaziyor, `~` zaten "kesin degil" diyor. `en az` oneki
+        // ucuncu kez ayni seyi soyluyordu.
         Text(
-            text = if (pricedCount < totalCount) {
-                "en az ${formatEstimate(amountMinor)}"
-            } else {
-                formatEstimate(amountMinor)
-            },
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            text = "Tahmini sepet ${formatEstimate(amountMinor)}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        // KAYNAK CUMLESI: hepsi tek zincirdense zincir adi, aksi halde "son
+        // fiyatlarla" (karar 95, 113-114). Sayac PAY/PAYDA: pay toplama giren
+        // satir, payda listedeki her satir - ambalaji bilinmeyen tartili satir
+        // aradaki farkta duruyor (karar 96).
+        Text(
+            text = "${chain?.let { "$it fiyatlarıyla" } ?: "son fiyatlarla"} · $pricedCount/$totalCount",
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.outline,
             maxLines = 1,
             modifier = Modifier.padding(start = Spacing.sm),
         )

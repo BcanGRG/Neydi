@@ -23,6 +23,12 @@ import com.neydi.app.data.incrementQuantity
 import com.neydi.app.data.decrementQuantity
 import com.neydi.app.data.stepFor
 import com.neydi.app.data.inListLabel
+import com.neydi.app.data.EstimateLine
+import com.neydi.app.data.EstimateSource
+import com.neydi.app.data.basketIsShown
+import com.neydi.app.data.foldBasket
+import com.neydi.app.data.db.EstimateRow
+import com.neydi.app.data.parsePack
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
 import com.neydi.app.data.repo.AddResult
@@ -342,6 +348,21 @@ class ListViewModel(
         viewModelScope.launch {
             val line = repo.line(rowId) ?: return@launch
             repo.setQuantity(rowId, count, line.unitOverride)
+        }
+    }
+
+    /**
+     * Gozlemin eksik ambalajini yazar (karar 111).
+     *
+     * COZUMLENEMEYEN METIN SESSIZCE YOK SAYILIYOR: yanlis bir ambalaj, hic
+     * ambalaj olmamasindan kotu - cunku satiri toplama SOKAR ve yanlis bir
+     * sayi uretir. Alan yazarken dolduruluyor, yani kullanici "3 k" yazdigi
+     * anda bir sey kaydedilmemeli.
+     */
+    fun setObservationPack(observationId: String, text: String) {
+        val (size, unit) = parsePack(text) ?: return
+        viewModelScope.launch {
+            priceObservationDao.setPack(observationId, size, unit, clock())
         }
     }
 
@@ -744,11 +765,14 @@ class ListViewModel(
             if (trip == null) {
                 flowOf(BasketEstimate())
             } else {
-                combine(
-                    priceObservationDao.observeEstimate(trip.id),
-                    priceObservationDao.observePricedCount(trip.id),
-                    priceObservationDao.observeLineCount(trip.id),
-                ) { amount, fiyatli, toplam -> BasketEstimate(amount, fiyatli, toplam) }
+                // UC SORGU TEK SORGUYA INDI (karar 96).
+                //
+                // Tutar, pay ve payda ayri ayri sayiliyordu ve karar 96 ucunun
+                // AYNI satir kumesinden turemesini zorunlu kildi: dusen satir
+                // toplamdan cikiyor ama paydada kaliyor. Uc ayri sorgu bunu
+                // ancak tesadufen tutturabilirdi.
+                priceObservationDao.observeEstimateLines(trip.id)
+                    .map { rows -> rows.toBasketEstimate() }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BasketEstimate())
 
@@ -772,8 +796,8 @@ class ListViewModel(
             // `observeTripEstimates` onu gormuyor - o sorgu `completedAt`
             // dolu geziler icin. Aktif sepetin kendi tahmini zaten var ve
             // dogru olan da o: kart kapanmadan once cizilecek.
-            val estimate = priceObservationDao.observeEstimate(trip.id).first()
-            val priced = priceObservationDao.observePricedCount(trip.id).first()
+            val totals = priceObservationDao.observeEstimateLines(trip.id).first()
+                .let { rows -> foldBasket(rows.map(EstimateRow::toEstimateLine)) }
             // TUTAR YOKSA KART HIC ACILMIYOR (karar 45).
             //
             // Once yalnizca TUTAR null'laniyordu ve kart yine aciliyordu:
@@ -786,7 +810,7 @@ class ListViewModel(
             // ROADMAP bunu F11.23 diye tasiyordu ve ertelenme gerekcesi
             // "E18 ile ayni PR'da olmali, yoksa kart tamamen kaybolur"di.
             // E18 kapandi; erteleme gerekcesi de kapandi.
-            val amount = estimate.takeIf { priced >= MIN_PRICED_ITEMS }
+            val amount = totals.amountMinor.takeIf { basketIsShown(totals.pricedCount) }
             // ONCEKI GEZI: maketin alt satiri "Geçen sefer ~601 TL (18 gün
             // önce)". Kaynagi kapanmis gezilerin tahminleri - ve BU gezi
             // henuz kapanmadigi icin listenin ilki gercekten "gecen sefer".
@@ -1190,8 +1214,37 @@ data class DeletedRow(val rowId: String, val name: String, val seq: Long)
  */
 data class BasketEstimate(
     val amountMinor: Long = 0,
+    /** TOPLAMA GIREN satir sayisi - fiyati olan degil (karar 112). */
     val pricedCount: Int = 0,
     val totalCount: Int = 0,
+    /** Satirin sagindaki cumlenin kaynagi (karar 95, 113-114). */
+    val chain: String? = null,
+)
+
+/**
+ * Sorgudan gelen satirlari ekranin okudugu ozete katlar.
+ *
+ * Kural [foldBasket]'te ve saf; burasi yalnizca iki tipi birbirine ceviriyor.
+ * Ayrimin sebebi sinanabilirlik: kural Room olmadan kosuyor.
+ */
+internal fun List<EstimateRow>.toBasketEstimate(): BasketEstimate {
+    val totals = foldBasket(map(EstimateRow::toEstimateLine))
+    return BasketEstimate(
+        amountMinor = totals.amountMinor,
+        pricedCount = totals.pricedCount,
+        totalCount = totals.totalCount,
+        chain = (totals.source as? EstimateSource.Chain)?.name,
+    )
+}
+
+private fun EstimateRow.toEstimateLine() = EstimateLine(
+    quantity = quantity,
+    unit = unit,
+    unitPriceMinor = unitPriceMinor,
+    packSize = packSize,
+    packUnit = packUnit,
+    chain = chain,
+    storeName = storeName,
 )
 
 /**

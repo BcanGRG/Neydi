@@ -4,6 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.SolidColor
@@ -11,6 +15,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.unit.sp
+import com.neydi.app.data.parsePack
 import com.neydi.app.data.quantityLabel
 import com.neydi.app.data.sanitizeDecimal
 import com.neydi.app.data.unitOptionsFor
@@ -180,6 +185,8 @@ fun ProductSheetContent(
     onStepQuantity: (Boolean) -> Unit = {},
     /** Alana yazilan miktar - "buyuk atlamalar" bu yoldan (karar 108). */
     onSetQuantity: (Double) -> Unit = {},
+    /** Gozlemin eksik ambalaji yazildi: `(gozlemId, "3 kg")` (karar 111). */
+    onSetPack: (String, String) -> Unit = { _, _ -> },
     /** Birim cipi secildi - YALNIZ bu satiri degistirir, katalogu degil. */
     onPickUnit: (String) -> Unit = {},
 ) {
@@ -261,6 +268,17 @@ fun ProductSheetContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = Spacing.md),
             )
+        }
+
+        // AMBALAJ ISTEMI (karar 111): tahmine giremeyen satirin eksik olgusu
+        // BURADA veriliyor, liste satirinda degil.
+        //
+        // Sebebi karar 110: satirda ikinci bir 48dp hedef 72dp'ye sigmiyor ve
+        // rozet o tek hedefi zaten aldi. Ambalaj da zaten GOZLEMIN ozelligi,
+        // satirin degil - o yuzden gozlemin yaninda duruyor. Yol yeni de
+        // degil: uzun dokunus satirdan buraya zaten geliyordu (karar 38).
+        state.price.packPromptId?.let { observationId ->
+            PackPrompt(onSubmit = { text -> onSetPack(observationId, text) })
         }
 
         if (state.price.isEmpty) {
@@ -417,6 +435,107 @@ private fun QuantityBlock(
                 )
             }
         }
+    }
+}
+
+/**
+ * KESIK kontur - "burasi bos ve bir olgu bekliyor".
+ *
+ * Miktar alani DUZ konturlu ve dolu bir deger tasiyor; bu alan bos. Ikisi ayni
+ * cizilseydi, biri "su an su" digeri "burasi eksik" derken ayni seyi soyluyor
+ * gorunurlerdi. Compose'un `border`i kesik cizgi bilmiyor, o yuzden elle.
+ */
+private fun Modifier.dashedBorder(color: Color): Modifier = drawBehind {
+    val stroke = Stroke(
+        width = 1.dp.toPx(),
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+    )
+    drawRoundRect(
+        color = color,
+        style = stroke,
+        cornerRadius = CornerRadius(14.dp.toPx()),
+    )
+}
+
+/**
+ * Eksik ambalajin soruldugu alan (karar 111).
+ *
+ * ## Neden KESIK kontur
+ *
+ * Miktar alani duz konturlu ve DOLU bir deger tasiyor; bu alan bos ve bir
+ * OLGU BEKLIYOR. Kesik cizgi ikisini birbirinden ayiriyor - maket de boyle
+ * ciziyor. Ayni sekilde cizilselerdi, biri "su an su" digeri "burasi eksik"
+ * derken ayni seyi soyluyor gorunurlerdi.
+ *
+ * ## Neden serbest metin
+ *
+ * "3 kg" tek bir sey: sayi ve birim birlikte anlamli. Iki ayri kontrole
+ * bolmek (sayac + cip) bir olguyu iki jeste yayardi, oysa kullanici onu tek
+ * nefeste biliyor. [parsePack] cozumleyemezse hicbir sey yazilmiyor - yanlis
+ * bir ambalaj, hic ambalaj olmamasindan kotu, cunku toplama GIRER.
+ */
+@Composable
+private fun PackPrompt(onSubmit: (String) -> Unit) {
+    var text by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = "Ambalaj",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            BasicTextField(
+                value = text,
+                onValueChange = { raw ->
+                    text = raw
+                    // YAZARKEN YAZILIYOR, ayri bir "kaydet" yok: cozumlenen
+                    // her hal gecerli bir cevap ve satir aninda tahmine
+                    // giriyor. Onay dugmesi, tek olgu icin ikinci bir jest
+                    // olurdu.
+                    parsePack(raw)?.let { onSubmit(raw) }
+                },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                singleLine = true,
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp)
+                    .clip(NeydiShapes.medium)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .dashedBorder(MaterialTheme.colorScheme.outline)
+                    .padding(horizontal = 12.dp),
+                decorationBox = { inner ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (text.isEmpty()) {
+                            Text(
+                                text = "ambalaj?",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                        inner()
+                    }
+                },
+            )
+        }
+        Text(
+            text = "Etiketten okunamadı. Yazarsan bu satır tahmine girer.",
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.outline,
+        )
     }
 }
 
