@@ -465,6 +465,9 @@ fun ListItemRow(
     }
 }
 
+/** Ekonomi bandinin taban yuksekligi - fiyatli ve fiyatsiz satir ayni hizada dursun diye. */
+private val ECONOMY_BAND_MIN = 28.dp
+
 /** En kucuk dokunma hedefi (karar 56): tek sayi, 48dp. */
 private val TOUCH_TARGET = 48.dp
 
@@ -660,6 +663,13 @@ private fun EconomyBand(
         }
 
         Row(
+            // 28dp TABAN (karar 110 turunda eklendi).
+            //
+            // Bandin en uzun uyesi fiyat cipi (26dp) ve meta tek basina
+            // kaldiginda bant 17dp'ye dusuyordu - yani ayni satirin ekonomi
+            // kati, fiyat olup olmamasina gore iki farkli yukseklikte
+            // ciziliyordu. Taban ikisini ayni hizaya oturtuyor.
+            modifier = Modifier.heightIn(min = ECONOMY_BAND_MIN),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
