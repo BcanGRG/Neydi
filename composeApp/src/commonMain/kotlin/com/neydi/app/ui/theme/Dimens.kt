@@ -15,6 +15,16 @@ import androidx.compose.ui.unit.dp
 
 /** Spacing'de olmayan tek adim: onay kutusu ile urun adi arasi. */
 object SpacingExtra {
+    /**
+     * Bolum basliginin USTUNDEKI bosluk (maket: 14px dolgu + 6px margin).
+     *
+     * Altindakinden bes kat buyuk olmasi kasitli: baslik kendi satirlarina
+     * yapisik, onceki bolumden uzak. Bkz. `SectionHeader`.
+     */
+    val aboveSectionHeader = 20.dp
+
+    /** Bolum basliginin ALTINDAKI bosluk (maket: 4px). */
+    val belowSectionHeader = 4.dp
     // 10dp - maketin kendi olcusu (kimlik bandinin sol boslugu).
     val betweenCheckboxAndName = 10.dp
     val emptyStateBlock = 48.dp

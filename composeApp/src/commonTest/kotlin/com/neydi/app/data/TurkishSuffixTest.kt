@@ -77,4 +77,58 @@ class TurkishSuffixTest {
         assertEquals("", turkishLocative("   "))
         assertEquals("BİM'de", turkishLocative("  BİM  "))
     }
+
+    /**
+     * IYELIK EKI: BEYAN CUMLESININ IKINCI YARISI (karar 117).
+     *
+     * *"BİM'e gidiyorsun · 2'si A101'de"* - buradaki `2'si`. Birler
+     * basamaginin okunusu eki belirliyor ve dokuz rakamin uretttigi ek
+     * BES AYRI: `i`, `si`, `ü`, `sı`, `u`. Tek ek secmek (hep `i`) dokuz
+     * vakanin altisinda yanlis olurdu, yani bu test tabloyu tek tek tutuyor.
+     */
+    @Test
+    fun everySingleDigitGetsItsOwnPossessiveSuffix() {
+        assertEquals("i", possessiveSuffix(1)) // bir
+        assertEquals("si", possessiveSuffix(2)) // iki
+        assertEquals("ü", possessiveSuffix(3)) // üç
+        assertEquals("ü", possessiveSuffix(4)) // dört
+        assertEquals("i", possessiveSuffix(5)) // beş
+        assertEquals("sı", possessiveSuffix(6)) // altı
+        assertEquals("si", possessiveSuffix(7)) // yedi
+        assertEquals("i", possessiveSuffix(8)) // sekiz
+        assertEquals("u", possessiveSuffix(9)) // dokuz
+    }
+
+    /**
+     * EK SON KELIMEYI IZLIYOR, sayinin tamamini degil.
+     *
+     * "yirmi bir" -> `bir` -> `i`, yani `21'i`. Onluga BAKAN bir kural
+     * (`21` -> yirmi -> `si`) burada yanlis cevap verirdi ve fark yalnizca
+     * birler basamagi sifirdan farkliyken goruluyor - bu yuzden ikisi de
+     * ayni testte.
+     */
+    @Test
+    fun theSuffixFollowsTheLastSpokenWord() {
+        assertEquals("u", possessiveSuffix(10)) // on
+        assertEquals("i", possessiveSuffix(11)) // on bir
+        assertEquals("si", possessiveSuffix(20)) // yirmi
+        assertEquals("si", possessiveSuffix(22)) // yirmi iki
+        assertEquals("u", possessiveSuffix(30)) // otuz
+        assertEquals("ı", possessiveSuffix(40)) // kırk
+        assertEquals("u", possessiveSuffix(99)) // doksan dokuz
+    }
+
+    /**
+     * SINIR DISINDA EK YAZILMIYOR - cumle eksiz de okunuyor ("100 A101'de").
+     *
+     * Sifir ve negatif hic cizilmiyor (sapan satir yoksa cumlenin o yarisi
+     * kurulmuyor), ama fonksiyon yine de bos donmeli: cagiran tarafta bir
+     * hata olursa ekranda `null` ya da cop bir ek degil, hicbir sey cikar.
+     */
+    @Test
+    fun outOfRangeCountsGetNoSuffix() {
+        assertEquals("", possessiveSuffix(0))
+        assertEquals("", possessiveSuffix(-3))
+        assertEquals("", possessiveSuffix(100))
+    }
 }

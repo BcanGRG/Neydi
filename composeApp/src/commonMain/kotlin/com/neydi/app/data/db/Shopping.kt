@@ -137,6 +137,25 @@ data class TripLine(
      * Gecerli birim = `unitOverride ?: unit`.
      */
     val unitOverride: String? = null,
+    /**
+     * Bu satir HEDEF MARKETTEN BASKA bir yerden alinacaksa orasi (karar 117).
+     *
+     * ## Neden satirda yalnizca ISTISNA duruyor
+     *
+     * Hedef gezide (`trip.storeId`): *"bugun BIM'e gidiyorum"*. On satirin
+     * onunu tek tek isaretletmek planlamayi yine satir dokunmaya cevirirdi -
+     * ki karar 116 tam da onu kaldirdi. Satir yalnizca *"bu, BIM'den degil"*
+     * diyor.
+     *
+     * `null` = hedefi izliyor. Hedef de yoksa ("Belli degil") satirin markete
+     * dair hicbir iddiasi yok ve liste hic bolunmuyor.
+     *
+     * ⚠ TAHMINE GIRMIYOR (karar 119): beyan aritmetigi degistirmiyor, hesap
+     * son fiyatlarla kaliyor. 1,0-1,4 zincir/urun ile hedefe gore suzmek payi
+     * dusururdu ve karar 112 uc satirin altinda tahmini hic cizmiyor - yani
+     * beyan tahmini SUSTURABILIRDI.
+     */
+    val storeId: String? = null,
     val checked: Boolean = false,
     val checkedAt: Long? = null,
     /** Kim ekledi - satirdaki es avatari bundan cikiyor. */

@@ -74,6 +74,65 @@ private fun digitEnding(digit: Char): Pair<Boolean, Boolean> = when (digit) {
     else -> true to false // dokuz - u, z yumusak
 }
 
+/**
+ * Sayiya IYELIK EKI: `2` -> `"2'si"`, `3` -> `"3'ü"` (karar 117).
+ *
+ * Beyan cumlesinin ikinci yarisi bunu kullaniyor: *"2'si A101'de"*.
+ *
+ * ## Neden bir tablo, [turkishLocative] gibi iki kural degil
+ *
+ * Bulunma halinde ek iki degiskenden (kalinlik, sertlik) tureiyordu ve dort
+ * ihtimali vardi. Iyelik ekinde ise unlunun kendisi ekin icine giriyor -
+ * "iki" -> `si`, "uc" -> `ü`, "dokuz" -> `u`, "alti" -> `sı` - yani dort
+ * degil yedi ayri sonuc var ve hicbir ikili bayrak bunlari uretmiyor.
+ * Okunuslar zaten sabit, dolayisiyla tablo kuraldan daha durust.
+ *
+ * Tek ek secmek ("2'i", "3'i") coğu sayida yanlis olurdu ve yanlis ek
+ * cumleyi cevrilmis gibi okutur - uygulamanin dili Turkce.
+ *
+ * ## Neden yalnizca 1-99
+ *
+ * Ek, sayinin SON kelimesini izliyor: "yirmi bir" -> `bir` -> `i`. Yuzun
+ * ustunde de ayni kural islerdi ama bir alisveris listesinde sapan satir
+ * sayisi iki haneyi gecmiyor; ustu gelirse ek yazilmiyor ve cumle yine
+ * okunuyor ("100 A101'de").
+ */
+fun possessiveSuffix(n: Int): String {
+    if (n <= 0 || n > 99) return ""
+    // ONCE BIRLER: "yirmi" ile "yirmi bir" farkli bitiyor, yani birler
+    // basamagi varsa ek ONU izliyor.
+    val ones = n % 10
+    return if (ones != 0) ONES_POSSESSIVE[ones] else TENS_POSSESSIVE[n / 10]
+}
+
+/** Birler basamaginin okunusuna gore iyelik eki. */
+private val ONES_POSSESSIVE = listOf(
+    "", // -
+    "i", // bir
+    "si", // iki
+    "ü", // üç
+    "ü", // dört
+    "i", // beş
+    "sı", // altı
+    "si", // yedi
+    "i", // sekiz
+    "u", // dokuz
+)
+
+/** Tam onluklarin okunusuna gore iyelik eki. */
+private val TENS_POSSESSIVE = listOf(
+    "", // -
+    "u", // on
+    "si", // yirmi
+    "u", // otuz
+    "ı", // kırk
+    "si", // elli
+    "sı", // altmış
+    "si", // yetmiş
+    "i", // seksen
+    "u", // doksan
+)
+
 /** Kalin unluler, iki halde de. */
 private const val BACK_VOWELS = "aouıAOUI"
 
