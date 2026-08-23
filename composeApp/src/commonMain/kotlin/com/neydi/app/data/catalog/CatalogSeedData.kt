@@ -18,7 +18,6 @@ internal data class SeedCategory(
     /** MARKET GEZME sirasi, alfabetik DEGIL. Alfabetik siralamak insani
      *  markette ileri geri yurutur. */
     val order: Int,
-    val tintArgb: Long,
 )
 
 internal data class SeedProduct(
@@ -30,18 +29,18 @@ internal data class SeedProduct(
 
 /** 12 kategori, market gezme sirasinda. */
 internal val SEED_CATEGORIES: List<SeedCategory> = listOf(
-    SeedCategory("meyve-sebze", "Meyve-Sebze", 0, 0xFF6E8B3DL),
-    SeedCategory("firin-ekmek", "Fırın-Ekmek", 1, 0xFFB07A3CL),
-    SeedCategory("sut-kahvalti", "Süt-Kahvaltılık", 2, 0xFF4A7C8CL),
-    SeedCategory("et-tavuk", "Et-Tavuk-Balık", 3, 0xFFA3453BL),
-    SeedCategory("sarkuteri", "Şarküteri", 4, 0xFF8C5A6BL),
-    SeedCategory("dondurulmus", "Dondurulmuş", 5, 0xFF5B7FA6L),
-    SeedCategory("temel-gida", "Temel Gıda", 6, 0xFF8A6D3BL),
-    SeedCategory("konserve", "Konserve-Salça", 7, 0xFF9C5A2EL),
-    SeedCategory("atistirmalik", "Atıştırmalık", 8, 0xFF7A5C9EL),
-    SeedCategory("icecek", "İçecek", 9, 0xFF3F6B8CL),
-    SeedCategory("temizlik", "Temizlik", 10, 0xFF4F7A6BL),
-    SeedCategory("bakim", "Kişisel Bakım", 11, 0xFF7C6A8AL),
+    SeedCategory("meyve-sebze", "Meyve-Sebze", 0),
+    SeedCategory("firin-ekmek", "Fırın-Ekmek", 1),
+    SeedCategory("sut-kahvalti", "Süt-Kahvaltılık", 2),
+    SeedCategory("et-tavuk", "Et-Tavuk-Balık", 3),
+    SeedCategory("sarkuteri", "Şarküteri", 4),
+    SeedCategory("dondurulmus", "Dondurulmuş", 5),
+    SeedCategory("temel-gida", "Temel Gıda", 6),
+    SeedCategory("konserve", "Konserve-Salça", 7),
+    SeedCategory("atistirmalik", "Atıştırmalık", 8),
+    SeedCategory("icecek", "İçecek", 9),
+    SeedCategory("temizlik", "Temizlik", 10),
+    SeedCategory("bakim", "Kişisel Bakım", 11),
 )
 
 /** 245 urun. matchKey KAYDEDILMIYOR - ekleme aninda matchKey() ile

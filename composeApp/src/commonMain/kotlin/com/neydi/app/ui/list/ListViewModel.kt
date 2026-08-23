@@ -19,8 +19,13 @@ import com.neydi.app.data.db.TripLineDao
 import com.neydi.app.data.db.TripStatus
 import com.neydi.app.data.formatRelativeDay
 import com.neydi.app.data.matchKey
+import com.neydi.app.data.incrementQuantity
+import com.neydi.app.data.decrementQuantity
+import com.neydi.app.data.stepFor
+import com.neydi.app.data.inListLabel
 import com.neydi.app.data.parseQuantity
 import com.neydi.app.data.clipboardLines
+import com.neydi.app.data.repo.AddResult
 import com.neydi.app.data.repo.ListRepository
 import com.neydi.app.data.repo.resolveProduct
 import com.neydi.app.data.stats.ProductStatsRebuilder
@@ -28,6 +33,7 @@ import com.neydi.app.data.suggest.Suggestion
 import com.neydi.app.data.suggest.SuggestionEngine
 import com.neydi.app.ui.components.turkishInitials
 import com.neydi.app.ui.product.ProductSheetState
+import com.neydi.app.ui.product.RowQuantity
 import com.neydi.app.ui.product.toPriceSection
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -260,6 +266,16 @@ class ListViewModel(
                 // bir anahtarin oynamasi, uygulamanin kendi kendine ayar
                 // degistirdigi izlenimi verir.
                 isBlocked = blockDao.isBlocked(household, product.id),
+                // MIKTAR BLOGU YALNIZ SATIRDAN ACILDIGINDA VAR (karar 108):
+                // duzenlenecek miktar bir SATIRA ait, urune degil. Sheet urun
+                // gecmisinden acilirsa `rowId` yok ve blok da cizilmiyor.
+                quantity = rowId?.let { repo.line(it) }?.let { line ->
+                    RowQuantity(
+                        count = line.quantity,
+                        unit = line.unitOverride ?: line.unit,
+                        catalogUnit = product.defaultUnit,
+                    )
+                },
             )
             // FIYAT BOLUMU AYRI VE SONRA: sheet gozlemleri BEKLEMEDEN aciliyor.
             // Tek atisla beklenseydi dokunusla acilis arasinda bir sorgu
@@ -276,6 +292,151 @@ class ListViewModel(
 
     fun closeProductSheet() {
         _productSheet.value = null
+    }
+
+    /**
+     * Urun Detayi'ndaki miktar blogunun bir adimi (karar 108).
+     *
+     * Sheet'in kendi state'i de ANINDA guncelleniyor - `setStaple` ile ayni
+     * gerekce: yazmanin veritabanindan geri okunmasini beklemek, parmak
+     * kalkinca sayinin bir kare eski halinde durmasi demek. Listedeki satir
+     * zaten akistan tazeleniyor.
+     */
+    fun stepSheetQuantity(up: Boolean) {
+        val sheet = _productSheet.value ?: return
+        val rowId = sheet.rowId ?: return
+        val q = sheet.quantity ?: return
+        val next = if (up) incrementQuantity(q.count, q.unit) else decrementQuantity(q.count, q.unit)
+        if (next == q.count) return
+        _productSheet.update { it?.copy(quantity = q.copy(count = next)) }
+        viewModelScope.launch {
+            // MEVCUT ORTULUK OKUNUP GERI YAZILIYOR: `setQuantity` bir yama
+            // degil TAM bir yazma, yani gecirmemek onu silmek olurdu.
+            val line = repo.line(rowId) ?: return@launch
+            repo.setQuantity(rowId, next, line.unitOverride)
+        }
+    }
+
+    /**
+     * Birim cipi secildi (karar 108).
+     *
+     * SAYI DONUSTURULMUYOR, yalnizca yeni birimin tabanina oturuyor - "1 kg"
+     * satirinda `g` secilirse sonuc "1 g" degil "100 g" olur, cunku `g`nin
+     * adimi 100 ve sayac sifira inemiyor (karar 109). Donusturmek (1 kg ->
+     * 1000 g) kullanicinin sectigi sayiyi sessizce yeniden yazmak olurdu.
+     */
+    /**
+     * Alana YAZILAN miktar (karar 108) - "buyuk atlamalar" yolu.
+     *
+     * Sayaci taklit etmiyor: adim hesabi yok, gelen deger oldugu gibi
+     * yaziliyor. Alanin kendisi sifiri zaten eliyor (karar 109), yani taban
+     * kontrolu burada tekrarlanmiyor - iki yerde olsaydi biri digerinden
+     * ayrilirdi.
+     */
+    fun setSheetQuantity(count: Double) {
+        val sheet = _productSheet.value ?: return
+        val rowId = sheet.rowId ?: return
+        val q = sheet.quantity ?: return
+        if (count == q.count) return
+        _productSheet.update { it?.copy(quantity = q.copy(count = count)) }
+        viewModelScope.launch {
+            val line = repo.line(rowId) ?: return@launch
+            repo.setQuantity(rowId, count, line.unitOverride)
+        }
+    }
+
+    fun pickSheetUnit(unit: String) {
+        val sheet = _productSheet.value ?: return
+        val rowId = sheet.rowId ?: return
+        val q = sheet.quantity ?: return
+        if (unit == q.unit) return
+        // KATALOGUN BIRIMI SECILIRSE ORTULUK SILINIYOR: satir katalogu izlemeye
+        // doner ve rozet yeniden konturlu cizilir. "Geri al" icin ikinci bir yol
+        // acmak, geri almanin ne demek oldugunu ikinci kez tanimlamak olurdu.
+        //
+        // ⚠ BU DEGER `null` OLABILIR VE `null`IN KENDISI BIR EMIR. Once ortak
+        // bir yardimci vardi ve `override ?: current.unitOverride` yaziyordu -
+        // yani "sil" ile "dokunma" ayni sey sayiliyordu ve secim HIC
+        // silinemiyordu. Cihazda goruldu; iki cagri yeri artik kendi niyetini
+        // acikca yaziyor.
+        val override = unit.takeUnless { it == q.catalogUnit }
+        _productSheet.update { it?.copy(quantity = q.copy(unit = unit)) }
+        viewModelScope.launch {
+            repo.setQuantity(rowId = rowId, quantity = q.count, unitOverride = override)
+        }
+    }
+
+    private val _stepper = MutableStateFlow<OpenStepper?>(null)
+
+    /**
+     * Acik olan miktar sayaci (karar 107).
+     *
+     * SAHIP BURASI, SATIR DEGIL: `LazyColumn` gorunmeyen satiri geri
+     * donusturuyor ve satir-yerel bir `remember` kaydirmada olurdu. Kaydirmanin
+     * YAPMASI GEREKEN sey sayaci kapatmak - ama gorunur bir kapanma olarak,
+     * satirla birlikte yok olarak degil. Ve tek sahip olmadan "yalniz bir satir
+     * acik kalir" kurali yazilamazdi.
+     */
+    val stepper: StateFlow<OpenStepper?> = _stepper
+
+    private var stepperSeq = 0L
+
+    /** Sayacin butun gecisleri tek kapidan - kural [reduceStepper]'da. */
+    fun onStepperEvent(event: StepperEvent) {
+        _stepper.value = reduceStepper(_stepper.value, event, ++stepperSeq)
+    }
+
+    /**
+     * Sayacin bir adimi (karar 107).
+     *
+     * ## Neden mevcut deger BURADA okunuyor
+     *
+     * Ekranin elindeki sayi bir cizim; iki hizli dokunus arasinda akis henuz
+     * yeni degeri yaymamis olabilir ve ekran ayni tabandan iki kez artirirdi -
+     * uc dokunusun ikiye sayilmasi. Taban her adimda tablodan okunuyor.
+     *
+     * BIRIM DEGISMIYOR: adim birime gore hesaplaniyor ama satirin birimi
+     * oldugu gibi geri yaziliyor. `setQuantity` bir yama degil TAM bir yazma,
+     * yani mevcut degeri gecirmeyi unutmak onu silmek olurdu.
+     */
+    fun stepQuantity(rowId: String, up: Boolean) {
+        // SUREYI BURADA UZATIYORUZ, cagiranda degil: "her dokunus sayaci
+        // yeniden kurar" kurali cagiran taraflara birakilsaydi, yeni bir sayac
+        // yuzeyi (Urun Detayi, kesif hucresi) onu ayrica yazmayi unutabilirdi.
+        onStepperEvent(StepperEvent.Step(rowId))
+        viewModelScope.launch {
+            val line = repo.line(rowId) ?: return@launch
+            val unit = line.unitOverride ?: line.unit
+            val next = if (up) {
+                incrementQuantity(line.quantity, unit)
+            } else {
+                decrementQuantity(line.quantity, unit)
+            }
+            if (next == line.quantity) return@launch
+            repo.setQuantity(rowId, next, line.unitOverride)
+        }
+    }
+
+    /**
+     * Satira ozel birim secimi (karar 108).
+     *
+     * ## Sayi DONUSTURULMUYOR
+     *
+     * "1 kg" satirinda `g` secilirse sonuc "1 g" oluyor, "1000 g" degil.
+     * Donusturmek kullanicinin sectigi sayiyi sessizce yeniden yazmak olurdu
+     * ve tasarim bunu istemiyor - birim ciplerinin yanindaki sayac zaten
+     * oradaki, kullanici istedigi sayiya kendisi gotururu.
+     *
+     * TABANA DA OTURTULMUYOR. Bir ara oturtuluyordu ("1 kg" -> `g` secilince
+     * 100 g) ve gerekcesi eksi tusunun 1 g'yi 100 g'ye CIKARMASIYDI - ama o
+     * gercek bir hataydi ve [decrementQuantity] icinde duzeltildi. Kalan tek
+     * dogru davranis sayiya dokunmamak.
+     */
+    fun setRowUnit(rowId: String, unit: String) {
+        viewModelScope.launch {
+            val line = repo.line(rowId) ?: return@launch
+            repo.setQuantity(rowId = rowId, quantity = line.quantity, unitOverride = unit)
+        }
     }
 
     /**
@@ -367,7 +528,7 @@ class ListViewModel(
     /**
      * Bos durumdaki bir reyona dokunus - kesif sheet'ini O REYON SECILI acar.
      *
-     * Karar 64 sheet'in ic yapisini degistirdi (kutucuk izgarasi olduу, yerine
+     * Karar 64 sheet'in ic yapisini degistirdi (kutucuk izgarasi oldu, yerine
      * yatay filtre cipi geldi) ama bu giris noktasinin isi ayni: kullanici bir
      * reyon soylemis, sheet o filtreyle acilmali.
      */
@@ -416,12 +577,27 @@ class ListViewModel(
      * `matchKey` uzerinden, urun kimligi uzerinden DEGIL: katalog tohumu ile
      * kullanicinin kendi ekledigi urun ayri satirlar olabilir ama ayni seyi
      * anlatiyorlar - "Sut" iki kez isaretsiz gorunmemeli.
+     *
+     * MIKTARI DA TASIYOR (karar 109): isaretli hucre artik *"1 kg listede"*
+     * yaziyor. Sadece anahtar kumesi olsaydi hucre "burada bir sey var ama ne
+     * kadar bilmiyorsun" demis olurdu - ve karar 12'nin pasifligi tam da bu
+     * yuzden gerekcesiz kaliyordu.
      */
-    val listMatchKeys: StateFlow<Set<String>> =
+    val listQuantities: StateFlow<Map<String, String>> =
         repo.rows(household)
             .map { rows ->
-                rows.mapNotNull { productDao.byId(it.productId)?.matchKey }.toSet()
+                rows.mapNotNull { row ->
+                    productDao.byId(row.productId)?.matchKey?.let { key ->
+                        key to inListLabel(row.quantity, row.unitOverride ?: row.unit)
+                    }
+                }.toMap()
             }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Yalnizca "listede mi" sorusunu soran yerler icin - toplu ekleme filtresi. */
+    val listMatchKeys: StateFlow<Set<String>> =
+        listQuantities
+            .map { it.keys }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
     /**
@@ -551,8 +727,8 @@ class ListViewModel(
      * ([DiscoveryItem]) ve `resolveProduct` zaten adi kanonik urune bagliyor -
      * ayni kapidan geciyorlar, ayni urunu iki farkli yazimla dogurmuyorlar.
      */
-    fun addFromDiscovery(item: DiscoveryItem) {
-        addInternal(item.name, categoryId = null, unit = item.unit, count = 1.0)
+    fun addFromDiscovery(item: DiscoveryItem, count: Double = 1.0) {
+        addInternal(item.name, categoryId = null, unit = item.unit, count = count)
     }
 
     /** Arama sonucundan ekleme: kategori ve birim katalogdan geliyor. */
@@ -694,17 +870,24 @@ class ListViewModel(
         viewModelScope.launch {
             // MUKERRER SATIR ADET ARTIRMIYOR, ATLANIYOR (karar 91).
             //
-            // Tek tek eklemede ikinci dokunusun adedi artirmasi dogru - jest
-            // "bunu bir tane daha ekle" demek. Toplu yolda jest o degil:
-            // kazayla ikinci kez yapistirilan bir liste, listeyi KATLARDI.
+            // ⚠ Bu filtre karar 109'dan sonra DOGRULUK icin gerekli degil -
+            // `repo.add` zaten sessiz. Ama silinmiyor, cunku iki isi daha var:
+            // (1) ayni yapistirmanin ICINDE tekrar eden satirlari eliyor, ki
+            // repository bunu goremez - iki satir da ayni anda "yeni" olur;
+            // (2) gereksiz veritabani turunu bastan onluyor.
+            //
+            // SAYI ARTIK `wasNew`DEN geliyor, filtreden degil: filtre
+            // `listMatchKeys`e bakiyor ve o `WhileSubscribed(5_000)` bir akis,
+            // yani abonelikten hemen sonraki yapistirmada `emptySet()` olabilir.
+            // O halde filtre hicbir seyi elemez ve eski sayim "12 satır
+            // eklendi" derdi - on ikisi de zaten listedeyken.
             val before = listMatchKeys.value
             var added = 0
             rows.forEach { row ->
                 val m = parseQuantity(row)
                 if (m.name.isBlank()) return@forEach
                 if (matchKey(m.name) in before) return@forEach
-                addAndAwait(m.name, null, m.unit, m.count)
-                added++
+                if (addAndAwait(m.name, null, m.unit, m.count)) added++
             }
             _bulkToast.value = if (added > 0) "$added satır eklendi" else "Hepsi zaten listende"
         }
@@ -894,16 +1077,21 @@ class ListViewModel(
      * bu hatanin tekrarini istemek olurdu.
      *
      * SAYAC DA TASINIYOR, yalnizca id DEGIL: ayni urunu ikinci kez eklemek yeni
-     * satir acmiyor, var olanin adedini artiriyor - yani id degismiyor.
+     * satir acmiyor - id degismiyor, ve karar 109'dan beri MIKTAR DA
+     * degismiyor. Yani ikinci eklemede satirda degisen tek sey bu sayac.
      * Yalnizca id'ye bakan bir ekran "ayni deger" gorup kipirdamazdi ve
      * kullanici tam da ikinci eklemede eklendi mi diye bakiyor olurdu.
+     *
+     * YIKAMA HER IKI HALDE DE CALISIYOR (karar 109): satir zaten listedeyse
+     * de kullaniciya bir sey soylenmeli, ve soylenecek sey *"bu zaten
+     * burada"*. Sessiz kalmak, dokunusun kaybolmasi demek olurdu.
      *
      * TOPLU EKLEMEDE (pano, "gecen sefer aldiklarini ekle") her satir sinyali
      * ezip gecer ve SONUNCUSU kazanir - dogrusu bu: yirmi satir eklenirken
      * yirmi kez kaydirmanin anlami yok.
      */
-    private fun signalAdded(line: TripLine) {
-        _lastAdded.value = AddedRow(rowId = line.id, seq = ++addSeq)
+    private fun signalAdded(result: AddResult) {
+        _lastAdded.value = AddedRow(rowId = result.line.id, seq = ++addSeq)
         // SAYAC BURADA ARTIYOR, cagiranda DEGIL.
         //
         // Once iki cagiran (`addFromDiscovery`, `addFromSheet`) sayaci
@@ -916,7 +1104,12 @@ class ListViewModel(
         // Burada artmasi ayrica kurali cagiranlardan bagimsiz kiliyor: yeni
         // bir ekleme yolu sheet'ten acilirsa sayaci ayrica artirmayi
         // unutmak diye bir sey kalmiyor.
-        if (_sheetOpen.value) _sheetAddedCount.value += 1
+        //
+        // ZATEN LISTEDE OLAN SAYILMIYOR (karar 109): eskiden ikinci ekleme
+        // adedi artirdigi icin "bir sey oldu" demek dogruydu. Artik hicbir sey
+        // olmuyor, ve sheet'in sayaci "3 ürün eklendi" derken ucunun de zaten
+        // listede olmasi mumkun olurdu.
+        _sheetAddedCount.value += sheetAddedDelta(_sheetOpen.value, result.wasNew)
     }
 
     /** Serbest metinden ekle: "2 kg elma" gibi. */
@@ -935,10 +1128,15 @@ class ListViewModel(
      * ayri coroutine'e atsaydik ayni urunu iki kez iceren bir pano iki satir
      * acmayi deneyip UNIQUE kisitina carpardi.
      */
-    private suspend fun addAndAwait(name: String, categoryId: String?, unit: String?, count: Double) {
+    private suspend fun addAndAwait(
+        name: String,
+        categoryId: String?,
+        unit: String?,
+        count: Double,
+    ): Boolean {
         // Flow henuz yayin yapmadiysa DOGRUDAN oku. Sessizce vazgecmek
         // kullanicinin yazdigi seyin kaybolmasi demek olurdu.
-        val memberId = selfMemberId() ?: return
+        val memberId = selfMemberId() ?: return false
         val trip = repo.openOrGetActiveTrip(household, memberId)
 
         // Kategori/kanonik ad cozumlemesi ORTAK: etiket onayi da ayni
@@ -952,15 +1150,15 @@ class ListViewModel(
             categoryId = categoryId,
             unit = unit,
         )
-        signalAdded(
-            repo.add(
-                householdId = household,
-                tripId = trip.id,
-                product = product,
-                memberId = memberId,
-                count = count,
-            ),
+        val result = repo.add(
+            householdId = household,
+            tripId = trip.id,
+            product = product,
+            memberId = memberId,
+            count = count,
         )
+        signalAdded(result)
+        return result.wasNew
     }
 
 }

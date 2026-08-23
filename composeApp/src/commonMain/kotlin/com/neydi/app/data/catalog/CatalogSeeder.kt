@@ -92,13 +92,12 @@ suspend fun NeydiDatabase.seedCatalog(
     useWriterConnection { transactor ->
         transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
             usePrepared(
-                "INSERT OR REPLACE INTO category (id, name, sortOrder, tintArgb) VALUES (?, ?, ?, ?)",
+                "INSERT OR REPLACE INTO category (id, name, sortOrder) VALUES (?, ?, ?)",
             ) { st ->
                 SEED_CATEGORIES.forEach { k ->
                     st.bindText(1, k.id)
                     st.bindText(2, k.name)
                     st.bindInt(3, k.order)
-                    st.bindLong(4, k.tintArgb)
                     st.step()
                     st.reset()
                 }

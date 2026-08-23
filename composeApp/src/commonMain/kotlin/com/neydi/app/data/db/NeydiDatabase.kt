@@ -41,7 +41,7 @@ import androidx.room3.migration.AutoMigrationSpec
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
     // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
     //
@@ -122,6 +122,22 @@ import androidx.room3.migration.AutoMigrationSpec
         // ve `suggestion_event` bugun BOS - bos tablonun sema degisikligi
         // bedava (yol haritasi, sema kurali).
         AutoMigration(from = 5, to = 6),
+        // v6 -> v7: BIR EKLEME, BIR SILME, TEK CIHAZ DANSI.
+        //
+        // (1) `trip_line.unitOverride` - kullanicinin O SATIR icin sectigi
+        //     birim (karar 108). Nullable, cunku `null`in kendisi bir anlam
+        //     tasiyor: "katalogu izliyor". Varsayilan gerekmiyor.
+        //
+        // (2) `category.tintArgb` DUSUYOR (karar 101). On iki kategori tonu
+        //     tohumlaniyordu ve hicbiri cizilmiyordu - `CategoryTile` her
+        //     cagri yerinde varsayilan `surfaceVariant`i aliyordu. Yani kolon
+        //     bir sure once gorsel olarak olmustu, yapisal olarak duruyordu.
+        //
+        // IKISI AYNI BUMP'TA ve bu bir tercih degil: her bump bir elle cihaz
+        // dansi (v6 kur -> veri ekle -> v7 kur, `pm clear` YAPMADAN). Karar
+        // 101'in borcu v5 -> v6 turunda odenmemisti; ikinci bir bump acmak
+        // ayni dansi iki kez yapmak olurdu.
+        AutoMigration(from = 6, to = 7, spec = Migration6To7Spec::class),
     ],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)
@@ -161,5 +177,15 @@ expect object NeydiDatabaseConstructor : RoomDatabaseConstructor<NeydiDatabase> 
 @DeleteColumn(tableName = "price_observation", columnName = "receiptLineId")
 @DeleteColumn(tableName = "trip", columnName = "totalMinor")
 class Migration4To5Spec : AutoMigrationSpec
+
+/**
+ * v6 -> v7 silme listesi (karar 101).
+ *
+ * Govdesi BOS: hicbir veri tasinmiyor, yalnizca birakiliyor. Eklenen
+ * `trip_line.unitOverride` burada YAZILI DEGIL - nullable kolon eklemek spec
+ * istemiyor, Room onu diff'ten kendisi cikariyor.
+ */
+@DeleteColumn(tableName = "category", columnName = "tintArgb")
+class Migration6To7Spec : AutoMigrationSpec
 
 internal const val NEYDI_DB_FILE = "neydi.db"

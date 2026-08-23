@@ -60,7 +60,17 @@ object Motion {
      * Amber "eksik / emin degiliz" demek (karar 57); ekleme onayi tam tersini
      * soyluyor.
      */
-    const val JUST_ADDED_MS = 1_200
+    /**
+ * Satirdaki miktar sayacinin ekranda kalma suresi (karar 107).
+ *
+ * Uc saniye, cunku sayac EKONOMI BANDINI ISGAL EDIYOR: acikken meta ve fiyat
+ * gizli. Kalici olsaydi satir kendi bilgisini gostermeyi birakir, kullanici da
+ * kapatmayi ogrenmek zorunda kalirdi. Her dokunus sureyi yeniden kuruyor, yani
+ * uc saniye "isini bitirme suresi" degil "elini cektikten sonraki sure".
+ */
+const val QTY_STEPPER_MS = 3_000
+
+const val JUST_ADDED_MS = 1_200
 
     /** Yikamanin sonusu (karar 89). Girisi ani - ekleme ANI zaten olayin kendisi. */
     const val JUST_ADDED_FADE_MS = 400

@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import kotlin.time.Clock
@@ -119,9 +120,10 @@ fun ListScreen(
     val sheetAddedCount by vm.sheetAddedCount.collectAsStateWithLifecycle()
     val sheetQuery by vm.sheetQuery.collectAsStateWithLifecycle()
     val sheetResults by vm.sheetResults.collectAsStateWithLifecycle()
-    val listMatchKeys by vm.listMatchKeys.collectAsStateWithLifecycle()
+    val listQuantities by vm.listQuantities.collectAsStateWithLifecycle()
     val starters by vm.starterProducts.collectAsStateWithLifecycle()
     val lastAdded by vm.lastAdded.collectAsStateWithLifecycle()
+    val stepper by vm.stepper.collectAsStateWithLifecycle()
     val pendingDelete by vm.pendingDelete.collectAsStateWithLifecycle()
     val pendingObservationDelete by vm.pendingObservationDelete.collectAsStateWithLifecycle()
     val input by vm.input.collectAsStateWithLifecycle()
@@ -185,6 +187,9 @@ fun ListScreen(
         toast = bulkToast ?: toast,
         onToastShown = { if (bulkToast != null) vm.onBulkToastShown() else onToastShown() },
         lastAdded = lastAdded,
+        stepper = stepper,
+        onStepperEvent = vm::onStepperEvent,
+        onStepQuantity = vm::stepQuantity,
         onDeleteRow = vm::remove,
         pendingDelete = pendingDelete,
         summary = summary,
@@ -244,7 +249,8 @@ fun ListScreen(
                 query = sheetQuery,
                 onQueryChange = vm::onSheetQueryChanged,
                 results = sheetResults,
-                inList = listMatchKeys,
+                inList = listQuantities,
+                onPickWithQuantity = vm::addFromDiscovery,
                 // Inset SHEET DISINDA okunup duz bosluk olarak geciliyor.
                 // ModalBottomSheet'in kendi contentWindowInsets'i bu agacta
                 // etki etmedi (uc farkli deneme, ucu de cihazda kontrol edildi);
@@ -309,12 +315,26 @@ fun ListScreen(
             // Zemin rengi ACIKCA veriliyor: bu palet `surfaceContainer*` tonal
             // token'larini tanimlamiyor ve M3 kendi mor baseline'ina dusuyor.
             containerColor = MaterialTheme.colorScheme.surface,
+            // TAM ACILIYOR, YARIM DEGIL (kullanici bildirdi).
+            //
+            // M3'un varsayilani once YARI YUKSEKLIK ve sheet uzun: manset,
+            // miktar blogu, fiyat gecmisi, iki anahtar ve "Listeden cikar".
+            // Yarim acilinca hicbiri bir arada gorunmuyordu ve her acilista
+            // once kaydirmak gerekiyordu - yani sheet'i acmak iki jest
+            // oluyordu.
+            //
+            // Ekle sheet'i bunu bastan beri yapiyordu; ikisinin ayri
+            // davranmasi bir tercih degil, unutulmus bir satirdi.
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
             ProductSheetContent(
                 onDeleteObservation = vm::deleteObservation,
                 state = sheet,
                 onStapleChange = { vm.setStaple(sheet.productId, it) },
                 onBlockChange = { vm.setBlocked(sheet.productId, it) },
+                onStepQuantity = vm::stepSheetQuantity,
+                onSetQuantity = vm::setSheetQuantity,
+                onPickUnit = vm::pickSheetUnit,
                 bottomPadding = bottomInset,
                 // Sheet kapaniyor VE satir siliniyor: serit sheet'in arkasinda
                 // dogar, kullanici kapatinca onu gorur ve geri alabilir.
@@ -364,6 +384,10 @@ internal fun ListContent(
     onToastShown: () -> Unit = {},
     /** En son eklenen satir; gorunur degilse listeye kaydiriliyor. Bkz. [AddedRow]. */
     lastAdded: AddedRow? = null,
+    /** Acik miktar sayaci (karar 107) - ayni anda en fazla bir satirda. */
+    stepper: OpenStepper? = null,
+    onStepperEvent: (StepperEvent) -> Unit = {},
+    onStepQuantity: (String, Boolean) -> Unit = { _, _ -> },
     /** Satiri siler (tasarim karari 37). Ad da geciyor - serit onu yaziyor. */
     onDeleteRow: (String, String) -> Unit = { _, _ -> },
     /** En son silinen satir; varsa geri alma seridi ciziliyor. */
@@ -395,6 +419,28 @@ internal fun ListContent(
     val haptics = LocalHapticFeedback.current
 
     val listState = rememberLazyListState()
+
+    // SAYAC UC SANIYE SONRA KAPANIYOR (karar 107).
+    //
+    // `LaunchedEffect` anahtari SAYACIN KIMLIGI: her dokunus yeni bir kimlik
+    // uretiyor, yani efekt iptal edilip yeniden basliyor. "Her dokunus sayaci
+    // yeniden kurar" kurali bu sekilde tek satirda karsilaniyor - elle bir
+    // zamanlayici tutmak, iptal etmeyi unutmaya davet olurdu.
+    LaunchedEffect(stepper) {
+        val open = stepper ?: return@LaunchedEffect
+        delay(Motion.QTY_STEPPER_MS.toLong())
+        onStepperEvent(StepperEvent.Timeout(open.seq))
+    }
+
+    // KAYDIRMA ANINDA KAPATIYOR (karar 107).
+    //
+    // Sayac ekonomi bandini isgal ediyor; kaydiran kullanici artik o satira
+    // bakmiyor ve arkasinda acik kalan bir kontrol, gormedigi bir yerde
+    // miktarini degistirebilecegi anlamina gelirdi.
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (listState.isScrollInProgress) onStepperEvent(StepperEvent.Scroll)
+    }
+
     val showsClipboardChip = clipboardText != null && !state.shoppingMode && !state.isEmpty
 
     // EKLENEN SATIR GORUNUR KILINIYOR (kullanici bildirdi).
@@ -586,7 +632,26 @@ internal fun ListContent(
                             ),
                             row = row.row,
                             shoppingMode = state.shoppingMode,
+                            stepperOpen = stepper?.rowId == row.id,
+                            // Reyonda rozet OKUNAN bir sey, duzenlenen degil -
+                            // hedef de baglanmiyor ki gorunmez bir dokunma
+                            // alani satiri isaretlemekten calmasin.
+                            onBadgeTap = if (state.shoppingMode) {
+                                null
+                            } else {
+                                { onStepperEvent(StepperEvent.BadgeTap(row.id)) }
+                            },
+                            onStep = { up -> onStepQuantity(row.id, up) },
                             onToggle = {
+                                // SAYAC ACIKKEN GOVDEYE DOKUNMAK ISARETLEMIYOR,
+                                // KAPATIYOR (karar 107): *"baska yere dokunma
+                                // aninda kapatir"*. Isaretleseydi kullanici
+                                // miktari duzenlerken kazara satiri alinmis
+                                // yapardi - ve reyonda bunun bedeli yuksek.
+                                if (stepper != null) {
+                                    onStepperEvent(StepperEvent.TapElsewhere)
+                                    return@ListItemRow
+                                }
                                 // Haptik onay: reyonda goz listede degil rafta.
                                 // Dokunusun islendigini parmak soyluyor.
                                 // SNACKBAR YOK - bir gezide 20 isaretleme var,

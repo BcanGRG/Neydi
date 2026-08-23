@@ -23,6 +23,23 @@ import kotlinx.coroutines.flow.flowOf
  * saf kalir ve testte deterministik olur - `Clock.System.now()` cagiran bir
  * repository "gecen sefer ne zaman aldik" mantigini test edilemez yapar.
  */
+/**
+ * [ListRepository.add]'in sonucu.
+ *
+ * ## Neden sadece satir donmuyor
+ *
+ * Karar 109 ikinci eklemeyi sessiz bir islem yapinca cagiran taraflarin
+ * "kac tane eklendi" sorusuna verecek cevabi kalmadi: `add` her iki halde de
+ * bir satir donuyor ve ikisi ayirt edilemiyor. Sayaci satir sayisindan
+ * turetmek de calismaz - toplu yapistirmada on iki satirin onu zaten listede
+ * olabilir ve toast *"12 urun eklendi"* derdi.
+ *
+ * @property wasNew satir GERCEKTEN acildi mi (ya da mezardan mi cikti).
+ *   Canli bir satira yapilan ikinci eklemede false - ve o halde tabloya
+ *   hicbir yazma yapilmamis olur.
+ */
+data class AddResult(val line: TripLine, val wasNew: Boolean)
+
 /** "Her zamankiler" bolumunun tasarimdaki ust siniri. */
 const val STAPLE_LIMIT = 12
 
@@ -159,17 +176,71 @@ class ListRepository(
         )
     }
 
+    /**
+     * Satirin miktarini (ve varsa birimini) MUTLAK olarak yazar - karar 107-109.
+     *
+     * ## Neden `add` degil
+     *
+     * `add` bir DELTA yoluydu ve karar 109'dan sonra artik o bile degil - ikinci
+     * ekleme hicbir sey degistirmiyor. Miktarin kendi evi burasi, ve mutlak
+     * olmasi sart: sayac "+ " ile "-" arasinda gidip geliyor, delta biriktiren
+     * bir yol kaybolan bir dokunusta sessizce yanlis sayiya oturur.
+     *
+     * ## Birim de burada, cunku ayni jestin parcasi
+     *
+     * Kullanici Urun Detayi'nda birimi degistirdiginde miktar da o birime ait
+     * hale geliyor. Ikisini ayri yazmak, arada bir okuma yapan ekranin "4 adet"
+     * yerine "4 kg" gormesi demekti.
+     *
+     * @param unitOverride `null` = katalog varsayilanini izle. Cagiran taraf
+     *   mevcut degeri KORUMAK istiyorsa onu okuyup geri vermeli - bu bir
+     *   yama degil, tam bir yazma.
+     */
+    suspend fun setQuantity(rowId: String, quantity: Double, unitOverride: String?) {
+        tripLineDao.setQuantity(
+            id = rowId,
+            quantity = quantity,
+            unitOverride = unitOverride,
+            at = clock(),
+        )
+    }
+
+    /** Bir satirin bugunku hali - sayacin uzerine ekleyecegi taban. */
+    suspend fun line(rowId: String): TripLine? = tripLineDao.byId(rowId)
+
     /** Bitir ekranindan geri alma: bu satir aslinda alinmadi. */
     suspend fun setTaken(lineId: String, taken: Boolean) {
         tripLineDao.setChecked(lineId, taken, if (taken) clock() else null)
     }
 
     /**
-     * Urunu listeye ekler. ZATEN VARSA adet artirir, ikinci satir ACMAZ.
+     * Urunu listeye ekler. ZATEN VARSA HICBIR SEY DEGISTIRMEZ (karar 109).
      *
-     * UNIQUE(tripId, productId) bunu zaten engelliyor ama kisita carpip hata
-     * almak kullaniciya "ekleyemedim" demek olurdu. Dogru davranis: es zaten
-     * eklemisse adedi artir - iki kisi ayni ekmegi istedi, iki ekmek degil.
+     * ## Bu kural tersine cevrildi ve gerekcesi olculdu
+     *
+     * Eskiden ikinci ekleme adedi ARTIRIYORDU ve savunmasi makuldu: *"iki kisi
+     * ayni ekmegi istedi, iki ekmek degil."* Ama o cumle miktarin baska bir evi
+     * OLMADIGI dunyada yazilmisti - artirmak, adedi degistirmenin tek yoluydu.
+     *
+     * O dunyada davranis uc yolda uc turluydu: tek tek ekleme artiriyordu,
+     * toplu ekleme atliyordu (karar 91), kesif sheet'inde ise isaretli hucre
+     * pasif oldugu icin hicbir sey olmuyordu. Ayni jest ayni sonucu vermiyordu.
+     *
+     * Ve sessiz bir hata uretiyordu: sabitler her gezide otomatik ekleniyor
+     * (`seedStaples`), kullanici "ekmek" yazip ekledigunde adet 2 oluyordu -
+     * kimse istemeden.
+     *
+     * Karar 109 ucunu tek davranista birlestirdi: *"miktar yalniz miktar
+     * kontrolunden degisir."* Ikinci ekleme artik yalnizca "az once eklendi"
+     * yikamasini tetikliyor - satir zaten listede oldugu icin kullaniciya
+     * soylenecek sey de bu.
+     *
+     * UNIQUE(tripId, productId) ikinci satiri zaten engelliyor; buradaki
+     * kontrol kisita carpip *"ekleyemedim"* demeyi onluyor.
+     *
+     * @return [AddResult] - `wasNew` yalnizca satir GERCEKTEN acildiginda
+     *   (ya da mezardan ciktiginda) true. Cagiran taraflarin sayaci buna
+     *   bakiyor; yoksa "3 urun eklendi" derken hicbiri eklenmemis olabilir.
      */
     suspend fun add(
         householdId: String,
@@ -178,7 +249,7 @@ class ListRepository(
         memberId: String,
         count: Double = 1.0,
         isFromSuggestion: Boolean = false,
-    ): TripLine {
+    ): AddResult {
         // SILINMISLERE DE bakiyoruz: tombstone satiri tabloda kaliyor ve
         // UNIQUE(tripId, productId) deletedAt'i bilmiyor. Yalnizca canli
         // satirlara baksaydik "cikardim, geri ekledim" akisi kisita carpip
@@ -199,11 +270,17 @@ class ListRepository(
                     createdAt = clock(),
                 )
             } else {
-                // Es zaten eklemis: adedi artir, "kim ekledi"yi EZME.
-                existing.copy(quantity = existing.quantity + count)
+                // CANLI SATIR: hicbir sey yazilmiyor - ne miktar, ne "kim
+                // ekledi", ne damga. Satirin kendisi donuyor ki cagiran taraf
+                // yikamayi yine calistirabilsin.
+                //
+                // `update` CAGRILMIYOR ve bu bilincli: bos bir yazma bile
+                // `updatedAt`i tazeleyip Faz 7'nin LWW birlestirmesinde bu
+                // cihazi haksiz yere "daha yeni" yapardi.
+                return AddResult(existing, wasNew = false)
             }
             tripLineDao.update(current)
-            return current
+            return AddResult(current, wasNew = true)
         }
         val row = TripLine(
             id = newId(),
@@ -217,7 +294,7 @@ class ListRepository(
             createdAt = clock(),
         )
         tripLineDao.insert(row)
-        return row
+        return AddResult(row, wasNew = true)
     }
 
     /**

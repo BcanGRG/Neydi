@@ -1167,10 +1167,105 @@ birbirinden ayrılsın. En yakın token `hairline` (`#E7DACB`) kullanıldı; far
 gözle seçilmiyor ve karar 101'in az önce sildiği renk çoğalmasını geri
 getirmek istemedik.
 
+---
+
+## Kararlar 107–110 — miktar düzenlenebilir oldu
+
+Kullanıcının cümlesi turun başındaydı:
+
+> *"Kategoriden domates ekliyorum, 1 kg ekleniyor. Ama sonra bunu 4–5 yapmak
+> istediğimde ya tekrardan yazmam gerekiyor ya da katalogdan sürekli ekle-ekle
+> yapmam lazım."*
+
+Denetim beş değil **sekiz** ekleme yolu buldu; hiçbirinde miktar
+düzenlenemiyordu. Tek yol ürünü tekrar eklemekti ve o da **birer birer**
+artırıyordu.
+
+### Üç yol tek davranışa indi (109)
+
+`ListRepository.add` ikinci eklemede adedi **artırıyordu** ve savunması
+makuldü: *"iki kişi aynı ekmeği istedi, iki ekmek değil."* Ama o cümle
+miktarın **başka bir evi olmadığı** dünyada yazılmıştı — artırmak, adedi
+değiştirmenin tek yoluydu.
+
+O dünyada aynı jest üç farklı şey yapıyordu: tek tek ekleme artırıyor, toplu
+ekleme atlıyor (karar 91), keşif sheet'inde işaretli hücre pasif olduğu için
+hiçbir şey olmuyordu.
+
+Ve **sessiz bir hata** üretiyordu: sabitler her gezide otomatik ekleniyor,
+kullanıcı "ekmek" yazıp eklediğinde adet 2 oluyordu — kimse istemeden. Bu
+hatanın testi yoktu; kural değişince yazılabildi.
+
+İkinci ekleme artık yalnızca yıkamayı çalıştırıyor. `AddResult` ikisini
+ayırıyor: yıkamanın satıra ihtiyacı var, sayaçların ise *"bu bir ekleme
+değildi"* bilgisine. Ve o dalda tabloya **hiçbir şey yazılmıyor** — boş bir
+yazma bile `updatedAt`i tazeleyip Faz 7'nin LWW birleştirmesinde bu cihazı
+haksız yere "daha yeni" yapardı.
+
+### Miktarın kendi yazma yolu (107–108)
+
+`setQuantity` **mutlak** yazıyor, `add` gibi delta değil: sayaç yukarı aşağı
+gidiyor ve delta biriktiren bir yol, kaybolan tek bir dokunuşta sessizce
+yanlış sayıya oturur. Hedefli `UPDATE`, `@Update` değil — aynı satıra
+`setChecked`, `setOutcome` ve `softDelete` de yazıyor.
+
+Üç yüzey, tek aritmetik ve tek bileşen:
+
+| Yüzey | Ölçü | Nereden |
+|---|---|---|
+| Satır | dügme 44×32, ikon 20 | karar 107 |
+| Ürün Detayı | 48×48, ikon 22, yazılabilir değer | karar 108 |
+| Keşif hücresi | 26×26, ikon 15 | karar 109 |
+
+Adım birime bağlı ve kural *"adet ise 1"* değil **"tartılmıyorsa 1"** diye
+yazıldı — paket, kutu, demet ve şişe de sayılıyor.
+
+### Karar 110 — bir satırda bir yığılmış hedef
+
+`docs/35`'te sorduğumuz soruyu tasarım **yeniden çerçeveledi**: sorun çipin
+26dp olması değil, *"72dp satırda İKİ yığılmış 48dp hedef istenmesi (rozet +
+çip; 2 × 48 = 96)"*.
+
+- **Fiyat çipi dokunulabilir değil**; ekonomi bandının tamamı bilgi.
+- Satırın tek yığılmış hedefi **adet rozeti**.
+- Karar 84'ün *"çip dokunuşu Ürün Detayı açar"* fıkrası **geri çekildi** —
+  uzun dokunuş zaten aynı şeyi yapıyordu.
+
+Rozetin 48dp hedefi `docs/35`'in kaydettiği iki başarısız yoldan sonra
+**üçüncü yolla** verildi: hedef dar bandın dışına, satırın kök kutusuna
+konuluyor ve konumu ölçümden geliyor. Cihazda doğrulandı.
+
+### Cihazda bulunan dört hata
+
+Hiçbiri derlemeyle ya da testle yakalanmazdı:
+
+1. **Eksi tuşu artırabiliyordu.** Taban düz dönüyordu; katalogda gerçekten
+   "1 g" Çay var ve eksiye basmak onu 100 g yapıyordu.
+2. **Birim seçimi hiç silinemiyordu.** Ortak yardımcı `override ?:
+   current.unitOverride` yazıyordu — "null = dokunma" ile "null = sil" aynı
+   sayılmıştı.
+3. **Yazarken alan sıçrıyordu.** Yerel metin sayıya bağlı hatırlanıyordu;
+   "2,5"i silip "1" yazmak "11" üretti.
+4. **Sayaç alışveriş modunda da açılıyordu.** Ekonomi bandının kendi
+   `!shoppingMode` koruması zaten gerekçeyi taşıyordu.
+
+Ayrıca kullanıcı bildirdi: **Ürün Detayı yarım açılıyordu** ve her seferinde
+kaydırmak gerekiyordu. Ekle sheet'i baştan beri `skipPartiallyExpanded`
+kullanıyordu; ikisinin ayrı davranması bir tercih değil, unutulmuş bir satırdı.
+
+### Şema v7
+
+`trip_line.unitOverride` (nullable) ve karar 101'in borcu olan
+`category.tintArgb` **aynı bump'a** bindi — her bump bir elle cihaz dansı.
+Cihazda v6 → v7 koşuldu, `pm clear` yapılmadan: dokuz tablo sayısı da aynı.
+
+`unitOverride` ayrı bir kolon, çünkü `tl.unit` zaten satıra özel ama *"katalog
+böyle diyor"* ile *"kullanıcı böyle seçti"*yi ayıramıyor. Ve fark teorik değil:
+`CatalogSeeder` katalogu `INSERT OR REPLACE` ile yeniliyor.
+
 ### Açık kalan
 
-- **Fiyat çipinin 48dp hedefi** sağlanamıyor — `docs/35`. Maketin kendi
-  geometrisinde ekonomi bandı 26dp ve iki standart Compose yolu da cihazda
-  başarısız oldu. Görünüm birebir, eksik olan yalnızca hedef.
-- `docs/34`'ün asıl cevabı olan **miktar düzenleme** (107–109) bu turda
-  uygulanmadı — kendi turunda gelecek.
+- **Tahmin hâlâ kör çarpıyor** (karar 95–96 uygulanmadı). Testte Çay bir an
+  100 adet olunca tahmin `~40.701 TL` yazdı — sayı yanlıştı ama hesap da
+  onu düzeltecek hiçbir şey bilmiyor.
+- `docs/34`'ün add-path tablosu **beş** yol yazıyor; kodda **sekiz** var.

@@ -53,11 +53,13 @@ import com.neydi.app.ui.theme.Spacing
  * MIT lisansli. viewBox 256x256, tek `path`, dolgu ile cizilmis konturlar -
  * `Icon` zaten tinting yaptigi icin dolgunun rengi onemsiz.
  *
- * ## Envanter: 19 (tasarim karari 34, uzerine karar 64)
+ * ## Envanter: 20 (tasarim karari 34, uzerine karar 64 ve 107)
  *
  * Bu baslik "17" diyordu - karar 34'un sayisiydi ve karar 64'e kadar dogruydu.
  * 64 ekleme akisini iki yola ayirinca envanter iki ikon buyudu: [GridView]
- * kesif yolunun kapisi, [Keyboard] o yoldan yazma yoluna donus.
+ * kesif yolunun kapisi, [Keyboard] o yoldan yazma yoluna donus. Karar 107
+ * miktar sayacini getirince [Remove] eklendi - [Add] tek basina bir sayaci
+ * ifade edemiyor, azaltmanin da bir isareti olmali.
  *
  * `check` ile `check_circle` AYRI kaliyor ve bu kasitli: ciplak `check` satirda
  * *"isaretlendi"*, `check_circle` ise cipte/secicide *"secili"* demek. Ikisini
@@ -76,6 +78,19 @@ object NeydiIcons {
     val Add: ImageVector = phosphor(
         "Add",
         "M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z",
+    )
+
+    /**
+     * Miktar sayacinin `-` dugmesi (karar 107).
+     *
+     * [Add]'in AYNI cizimi, dikey kolu olmayani - Phosphor'un `minus`u zaten
+     * `plus`in ayni gridden turemis hali. Iki dugme yan yana durdugu icin bu
+     * onemli: farkli kalinlikta ya da farkli uzunlukta iki cizgi, ayni
+     * kontrolun iki yarisi gibi okunmazdi.
+     */
+    val Remove: ImageVector = phosphor(
+        "Remove",
+        "M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z",
     )
 
     /** Etiket cekimi - tasarimda `photo_camera`. */

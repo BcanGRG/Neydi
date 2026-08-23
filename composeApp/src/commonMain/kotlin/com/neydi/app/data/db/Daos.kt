@@ -312,7 +312,14 @@ interface TripLineDao {
             p.id             AS productId,
             p.name           AS name,
             tl.quantity      AS count,
-            tl.unit          AS unit,
+            -- GECERLI BIRIM SORGUDA COZULUYOR (karar 108): kullanicinin bu
+            -- satir icin sectigi birim varsa o, yoksa katalogdan kopyalanmis
+            -- olan. Iki alani yukari tasiyip her cizim yerinde `?:` yazmak,
+            -- bir yerde unutmaya davet olurdu.
+            COALESCE(tl.unitOverride, tl.unit) AS unit,
+            -- HAM DEGER DE GEREKLI: "kullanici sectí mi" sorusunun cevabi bu
+            -- ve rozetin dolgulu mu konturlu mu cizilecegini o belirliyor.
+            tl.unitOverride  AS unitOverride,
             tl.checked       AS checked,
             p.isStaple       AS isStaple,
             c.id             AS categoryId,
@@ -541,6 +548,33 @@ interface TripLineDao {
 
     @Query("UPDATE trip_line SET checked = :checked, checkedAt = :at WHERE id = :id")
     suspend fun setChecked(id: String, checked: Boolean, at: Long?)
+
+    /** Tek satiri id ile getirir - miktar sayacinin okumasi gereken sey. */
+    @Query("SELECT * FROM trip_line WHERE id = :id AND deletedAt IS NULL LIMIT 1")
+    suspend fun byId(id: String): TripLine?
+
+    /**
+     * Miktari (ve varsa satira ozel birimi) yazar - karar 107-109.
+     *
+     * ## Neden hedefli sorgu, `@Update` degil
+     *
+     * `@Update` BUTUN satiri yaziyor. Miktar sayaci acikken kullanici uc kez
+     * dokunabiliyor ve ayni satira baska yazmalar da geliyor - `setChecked`
+     * (reyonda isaretleme), `setOutcome` (Bitir ekrani), `softDelete`. Elde
+     * tuttugumuz kopya bir saniye eski olsa bile tam satiri geri yazmak o
+     * yazmalari EZERDI: kullanicinin isaretledigi satir yeniden isaretsiz
+     * gorunurdu. Hedefli sorgu yalnizca iki kolona dokunuyor.
+     *
+     * `updatedAt` de yaziliyor: LWW'nin karsilastiracagi damga olmadan senkron
+     * bu yazmayi kaybedebilirdi - ve miktar tam da esler arasinda cakisan sey.
+     */
+    @Query(
+        """
+        UPDATE trip_line SET quantity = :quantity, unitOverride = :unitOverride, updatedAt = :at
+        WHERE id = :id
+        """,
+    )
+    suspend fun setQuantity(id: String, quantity: Double, unitOverride: String?, at: Long)
 
     @Query("UPDATE trip_line SET deletedAt = :at WHERE id = :id")
     suspend fun softDelete(id: String, at: Long)

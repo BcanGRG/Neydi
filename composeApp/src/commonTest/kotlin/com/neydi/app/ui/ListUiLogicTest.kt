@@ -3,6 +3,7 @@ package com.neydi.app.ui
 import com.neydi.app.data.db.Trip
 import com.neydi.app.data.parseMinorInput
 import com.neydi.app.ui.history.combineTrips
+import com.neydi.app.ui.list.sheetAddedDelta
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -107,5 +108,25 @@ class ListUiLogicTest {
     fun fallsBackToStartedAtWhenCompletedAtMissing() {
         val out = combineTrips(trips = listOf(trip("t1", null)))
         assertEquals(1_000, out[0].closedAt)
+    }
+
+    /**
+     * SHEET SAYACI YALAN SOYLEMIYOR (karar 109).
+     *
+     * Sheet acikken liste GORUNMUYOR - rakamin dogrulugunu kontrol edecek baska
+     * bir sey yok. Ikinci ekleme artik hicbir sey degistirmedigi icin sayacin
+     * da susmasi gerekiyor; yoksa ayni urune uc kez dokunan biri "3 ürün
+     * eklendi" okurdu ve listeye dondugunde tek satir bulurdu.
+     */
+    @Test
+    fun theSheetCounterOnlyCountsRealAdds() {
+        assertEquals(1, sheetAddedDelta(sheetOpen = true, wasNew = true))
+        assertEquals(0, sheetAddedDelta(sheetOpen = true, wasNew = false))
+    }
+
+    /** Sheet kapaliyken sayacin anlami yok - liste zaten gorunuyor. */
+    @Test
+    fun theCounterIsSilentWhileTheSheetIsClosed() {
+        assertEquals(0, sheetAddedDelta(sheetOpen = false, wasNew = true))
     }
 }

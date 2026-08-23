@@ -1,5 +1,7 @@
 package com.neydi.app.ui.list
 
+import com.neydi.app.data.quantityLabel
+
 import com.neydi.app.data.daysBetween
 import com.neydi.app.data.db.ListRowProjection
 import com.neydi.app.data.formatEstimate
@@ -155,7 +157,7 @@ internal fun ListRowProjection.toUiRow(
     row = ListRow(
         name = name,
         quantity = quantityLabel(count, unit),
-        quantityModified = count != 1.0,
+        quantityModified = isQuantityModified(count, unitOverride),
         checked = checked,
         isStaple = isStaple,
         addedByInitial = if (addedByMemberId != myMemberId) turkishInitials(name).take(1) else null,
@@ -166,37 +168,39 @@ internal fun ListRowProjection.toUiRow(
 )
 
 /**
- * "2x", "1,5 kg", ya da yalin "1" - rozet ARTIK HER SATIRDA (karar 103).
+ * Rozet DOLGULU mu cizilecek - yani kullanici bu satirin miktarina dokundu mu
+ * (karar 107).
  *
- * ## Neden bos donmuyor
+ * ## Neden birim de sayiliyor
  *
- * Eskiden adet 1 + birim "adet" ise `null` donuyordu, gerekcesi *"her satira
- * 1x yazmak gurultu"*du ve dogruydu - rozet o zaman yalnizca OKUNAN bir seydi.
- * Karar 107 onu DUZENLENEN yer yapti: dokununca miktar sayaci aciliyor.
- * Cizilmeyen rozet, duzenlenemeyen miktar demek olurdu ve kullanicinin sikayeti
- * tam buydu - *"4-5 yapmak istedigimde ya tekrardan yazmam gerekiyor ya da
- * katalogdan surekli ekle-ekle yapmam lazim."*
+ * Once yalnizca `count != 1.0`di ve karar 108'e kadar yetiyordu: miktari
+ * degistirmenin tek yolu sayiyi degistirmekti. Birim de secilebilir olunca
+ * "1 kg Domates"i "1 adet Domates" yapan biri, sayiya dokunmadigi icin
+ * KONTURLU bir rozet gorurdu - oysa o satirin miktarini gercekten kendisi
+ * secmis olurdu.
  *
- * Gurultu itirazi da cozuldu, susturarak degil KUCULTEREK: varsayilan miktarli
- * rozet dolgusuz ve yalin sayi yaziyor ("1", "1x" degil), degistirilmis olan
- * dolgulaniyor. Yani satir hala hangi miktarin elle secildigini tek bakista
- * soyluyor.
- *
- * Ondalik AYIRICI VIRGUL: Turkce'de 1.5 kg diye yazilmaz. Kotlin'in
- * varsayilan toString'i nokta uretir, o yuzden elle degistiriliyor.
+ * `unitOverride`a bakiliyor, `unit != katalogVarsayilani`ya DEGIL: katalog
+ * `INSERT OR REPLACE` ile yenileniyor ve karsilastirma yapsaydik, katalogun
+ * varsayilani degistigi gun kullanicinin secimi sessizce "varsayilan"a donerdi.
  */
-internal fun quantityLabel(count: Double, unit: String): String {
-    // YALIN "1": adet birimli varsayilan satirda carpi isareti bir sey
-    // soylemiyor - "1x elma" diye konusulmuyor. Tasarimin maketi de bu hali
-    // "yalniz konturlu 1" diye ciziyor.
-    if (count == 1.0 && unit == "adet") return "1"
-    val number = if (count % 1.0 == 0.0) {
-        count.toInt().toString()
-    } else {
-        count.toString().replace('.', ',')
-    }
-    return if (unit == "adet") "${number}x" else "$number $unit"
-}
+internal fun isQuantityModified(count: Double, unitOverride: String?): Boolean =
+    count != 1.0 || unitOverride != null
+
+/**
+ * Sheet'in "N urun eklendi" sayacinin bu eklemeden ne kadar artacagi.
+ *
+ * ## Neden saf bir fonksiyon
+ *
+ * Sayacin tek isi kullaniciya YALAN SOYLEMEMEK: sheet acikken liste
+ * gorunmuyor, yani rakamin dogrulugunu kontrol edecek baska bir sey yok.
+ * Karar 109 ikinci eklemeyi sessiz yapinca sayacin da susmasi gerekti -
+ * yoksa uc kez ayni urune dokunan biri *"3 ürün eklendi"* okurdu.
+ *
+ * Iki kosul da gerekli: sheet kapaliyken sayacin anlami yok (liste zaten
+ * gorunuyor), ve eklenmemis bir satir sayilmamali.
+ */
+internal fun sheetAddedDelta(sheetOpen: Boolean, wasNew: Boolean): Int =
+    if (sheetOpen && wasNew) 1 else 0
 
 /**
  * Satirlari bolumlere ayirir.

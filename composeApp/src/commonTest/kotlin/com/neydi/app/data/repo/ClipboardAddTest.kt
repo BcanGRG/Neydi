@@ -75,12 +75,19 @@ class ClipboardAddTest {
     }
 
     /**
-     * AYNI URUN IKI KEZ GECEN PANO. Kopyalanan listelerde sik olur ve
-     * UNIQUE(tripId, productId) ikinci satiri reddeder - repository adedi
-     * artirarak bunu dogru cozmeli, hata vermemeli.
+     * AYNI URUN IKI KEZ GECEN PANO: ikinci gecis SESSIZ (karar 109).
+     *
+     * Kopyalanan listelerde sik olur ve UNIQUE(tripId, productId) ikinci satiri
+     * reddeder - hata vermemek hala sart. Degisen sey dogru cevabin ne oldugu:
+     * eskiden adedi artiriyordu, artik hicbir sey yapmiyor.
+     *
+     * Bu, karar 91'in toplu yol icin zaten soyledigi seydi - *"mukerrer satir
+     * adet artirmaz, atlanir"*. Yani pano yolu bugune kadar iki kuralin
+     * arasinda kalmisti: cagiran taraf filtreliyordu ama repository yine de
+     * artiriyordu.
      */
     @Test
-    fun repeatedLineIncrementsQuantity() = runTest {
+    fun aRepeatedLineIsANoOp() = runTest {
         val db = db()
         db.householdDao().upsert(Household(id = home, name = "Bizim ev", createdAt = 0))
         val r = repo(db)
@@ -91,7 +98,7 @@ class ClipboardAddTest {
         val rows = r.rows(home).first()
         assertEquals(2, rows.size, "tekrar eden satir ikinci kez eklendi")
         val bread = rows.first { it.productId == r.findOrCreateProduct(home, "ekmek", "temel-gida", "adet").id }
-        assertEquals(2.0, bread.quantity)
+        assertEquals(1.0, bread.quantity, "tekrar eden satir adedi artirdi")
     }
 
     /** Buyuk/kucuk harf farki ayri urun uretmemeli - matchKey ayni. */

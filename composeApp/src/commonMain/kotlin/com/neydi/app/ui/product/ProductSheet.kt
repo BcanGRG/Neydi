@@ -5,6 +5,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.unit.sp
+import com.neydi.app.data.quantityLabel
+import com.neydi.app.data.sanitizeDecimal
+import com.neydi.app.data.unitOptionsFor
+import com.neydi.app.ui.components.QuantityStepper
+import com.neydi.app.ui.components.StepperMetrics
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -70,6 +83,31 @@ data class ProductSheetState(
     val isBlocked: Boolean = false,
     /** Fiyat bolumu (E17). Bos ise bolum HIC cizilmiyor. */
     val price: PriceSection = PriceSection(),
+    /**
+     * "Bu listedeki miktar" blogunun verisi (karar 108). `null` ise blok
+     * cizilmiyor - sheet satirdan bagimsiz acilmis demektir ve duzenlenecek
+     * bir satir yoktur.
+     */
+    val quantity: RowQuantity? = null,
+)
+
+/**
+ * Sheet'in miktar blogunun bildigi her sey (karar 108).
+ *
+ * ## Neden katalogun birimi de tasiniyor
+ *
+ * Blok ciplerin altina *"katalog: kg"* yaziyor ve o cumle secimin SATIRA OZEL
+ * oldugunu soyluyor - kullanici birimi degistirdiginde katalogun ne dedigi
+ * gorunur kaliyor. Yalnizca gecerli birimi tasisaydik, o cumleyi yazacak veri
+ * olmazdi ve secim geri alinamaz gibi gorunurdu.
+ *
+ * @property unit GECERLI birim: `unitOverride ?: unit`.
+ * @property catalogUnit urunun kendi varsayilani - DEGISMIYOR.
+ */
+data class RowQuantity(
+    val count: Double,
+    val unit: String,
+    val catalogUnit: String,
 )
 
 /**
@@ -138,6 +176,12 @@ fun ProductSheetContent(
      * gecmis satiri hic cizmiyor, dolayisiyla hicbir zaman cagrilmiyor.
      */
     onDeleteObservation: (String) -> Unit = {},
+    /** Miktar sayacinin bir adimi - `true` artir (karar 108). */
+    onStepQuantity: (Boolean) -> Unit = {},
+    /** Alana yazilan miktar - "buyuk atlamalar" bu yoldan (karar 108). */
+    onSetQuantity: (Double) -> Unit = {},
+    /** Birim cipi secildi - YALNIZ bu satiri degistirir, katalogu degil. */
+    onPickUnit: (String) -> Unit = {},
 ) {
     val extras = LocalNeydiExtraColors.current
     Column(
@@ -189,6 +233,25 @@ fun ProductSheetContent(
                     modifier = Modifier.padding(start = Spacing.sm),
                 )
             }
+        }
+
+        // MIKTAR BLOGU KUYRUGUN USTUNDE, AYRILMIS BIR ZEMINDE (karar 108).
+        //
+        // Karar 38 kuyrugun sirasini sabitlemisti ve bu blok o sirayi
+        // BOZMUYOR: 38'in sabitledigi sira URUNE ait satirlarin sirasi
+        // ("Her zamankilere ekle", "Bunu onerme", "Listeden cikar"). Miktar
+        // urune degil UZUN DOKUNULAN SATIRA ait - basligi da bunu soyluyor.
+        //
+        // Kendi zemini var, cunku sheet'in geri kalani urun hakkinda ve bu
+        // blok listedeki tek bir satir hakkinda; ayni duz zeminde dursaydi
+        // ikisi ayni seyin devami gibi okunurdu.
+        state.quantity?.let { q ->
+            QuantityBlock(
+                quantity = q,
+                onStep = onStepQuantity,
+                onSetCount = onSetQuantity,
+                onPickUnit = onPickUnit,
+            )
         }
 
         state.price.headlineSub?.let { sub ->
@@ -263,6 +326,207 @@ fun ProductSheetContent(
     }
 }
 
+
+/**
+ * "Bu listedeki miktar" (karar 108).
+ *
+ * Olculer maketten okundu: zemin `surfaceVariant`, 14dp dolgu, 18dp kose,
+ * 10dp aralik; baslik 13sp/600; sayac 48x48 ve deger alani 22sp/700, 16dp
+ * kose, konturlu; cipler 34dp, yanlarda 14dp dolgu, secili olan kiremit
+ * dolgulu.
+ */
+@Composable
+private fun QuantityBlock(
+    quantity: RowQuantity,
+    onStep: (Boolean) -> Unit,
+    onSetCount: (Double) -> Unit,
+    onPickUnit: (String) -> Unit,
+) {
+    val options = unitOptionsFor(quantity.catalogUnit)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.md)
+            .clip(NeydiShapes.large)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        // BASLIK "BU LISTEDEKI" DIYOR ve bu bir uslup tercihi degil: sheet'in
+        // geri kalani URUN hakkinda, blok ise uzun dokunulan SATIR hakkinda.
+        // "Miktar" tek basina, katalogun varsayilanini degistirdigini
+        // dusundurebilirdi.
+        Text(
+            text = "Bu listedeki miktar",
+            style = MaterialTheme.typography.labelMedium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        QuantityStepper(
+            metrics = StepperMetrics.Detail,
+            onDecrement = { onStep(false) },
+            onIncrement = { onStep(true) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            // DEGER ALANI YAZILABILIR - ve blogun asil sebebi bu.
+            //
+            // Satirdaki sayac tek adim atiyor; 1'den 20'ye gitmek orada on
+            // dokuz dokunus demek. Karar 108 *"buyuk atlamalar"*i buraya
+            // koyuyor ve yazmadan buyuk atlama olmuyor. Kullanicinin sikayeti
+            // de zaten buydu: *"4-5 yapmak istedigimde ya tekrardan yazmam
+            // gerekiyor ya da katalogdan surekli ekle-ekle yapmam lazim."*
+            //
+            // ALAN YALNIZ SAYIYI TASIYOR, birimi DEGIL: birimi hemen altindaki
+            // cipler soyluyor ve maket de alanda birim yazisi olmadan "4"
+            // ciziyor. Ikisini birlikte yazdirmak, kullanicidan ayristirilacak
+            // bir metin beklemek olurdu.
+            QuantityField(
+                count = quantity.count,
+                onCommit = onSetCount,
+                modifier = Modifier.weight(1f),
+            )
+        }
+
+        // TEK SECENEK VARSA CIP SERIDI HIC CIZILMIYOR: yumurta katalogda
+        // `adet` ve tartiya cevrilmiyor, yani secilecek bir sey yok. Tek uyeli
+        // bir secici, secim varmis gibi gorunup olmayan bir sey vaat ederdi.
+        if (options.size > 1) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                options.forEach { unit ->
+                    UnitChip(
+                        unit = unit,
+                        selected = unit == quantity.unit,
+                        onClick = { onPickUnit(unit) },
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                // KATALOGUN DEDIGI GORUNUR KALIYOR: secim satira ozel ve bu
+                // cumle onu soyluyor - "degistirdigin sey yalnizca bu satir".
+                Text(
+                    text = "katalog: ${quantity.catalogUnit}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.outline,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Miktarin yazilabilir alani (karar 108).
+ *
+ * ## Neden yerel bir metin hali var
+ *
+ * Kullanici yazarken alan gecerli bir sayi TUTMAYABILIR - "1," ara bir hal ve
+ * sayiya cevrilemiyor. Her tusa basista veriye yazsaydik ya yaziyi silerdik ya
+ * da yarim sayiyi kaydederdik. Yerel hal yazmaya izin veriyor, veriye
+ * yalnizca cozumlenebilen degerler gidiyor.
+ *
+ * DISARIDAN GELEN DEGISIM DE IZLENIYOR (`remember(count)`): arti ve eksi
+ * dugmeleri ayni sayiyi degistiriyor ve alan onlari gormezse iki kontrol
+ * birbirinden ayrilirdi.
+ *
+ * SIFIR KABUL EDILMIYOR (karar 109): silme ayri bir eylem. Yazilan sifir
+ * sessizce yok sayiliyor - hata gostermek olmayan bir yanlisi varmis gibi
+ * yapmak olurdu; silmek isteyen zaten satiri kaydiriyor.
+ */
+@Composable
+private fun QuantityField(
+    count: Double,
+    onCommit: (Double) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var text by remember { mutableStateOf(decimalText(count)) }
+    // DISARIDAN GELEN DEGISIM IZLENIYOR - AMA YAZARKEN ARAYA GIRMEDEN.
+    //
+    // Ilk hali `remember(count)` idi, yani sayi her degistiginde metin
+    // sifirlaniyordu. Kullanici yazarken sayi ZATEN her tusta degisiyor ve
+    // sifirlama imlecin altindan metni cekiyordu: cihazda "2,5"i silip "1"
+    // yazmak "11" uretti.
+    //
+    // Kosul metnin COZUMLENEBILIR olmasi: yarim bir hal ("", "1,") sayiya
+    // cevrilemiyor ve o anda disaridan gelen bir degeri yazmak, kullanicinin
+    // yazmakta oldugu seyi ezmek olurdu. Cozumlenebiliyor ve farkliysa
+    // degisim disaridan gelmis demektir - arti/eksi dugmelerinden.
+    LaunchedEffect(count) {
+        val local = text.replace(',', '.').toDoubleOrNull()
+        if (local != null && local != count) text = decimalText(count)
+    }
+    BasicTextField(
+        value = text,
+        onValueChange = { raw ->
+            val cleaned = sanitizeDecimal(raw)
+            text = cleaned
+            cleaned.replace(',', '.').toDoubleOrNull()
+                ?.takeIf { it > 0.0 }
+                ?.let(onCommit)
+        },
+        textStyle = MaterialTheme.typography.titleLarge.copy(
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        ),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = modifier
+            .height(StepperMetrics.Detail.buttonHeight)
+            .clip(NeydiShapes.medium)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, NeydiShapes.medium),
+        decorationBox = { inner -> Box(contentAlignment = Alignment.Center) { inner() } },
+    )
+}
+
+/** "1,5" / "4" - rozetin bicimiyle ayni ondalik, birimsiz. */
+private fun decimalText(count: Double): String =
+    if (count % 1.0 == 0.0) count.toInt().toString() else count.toString().replace('.', ',')
+
+/** Birim cipi: secili olan kiremit dolgulu, otekiler konturlu (maketin olcusu). */
+@Composable
+private fun UnitChip(unit: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .height(34.dp)
+            .clip(CircleShape)
+            .background(
+                if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surface
+                },
+            )
+            .border(
+                width = if (selected) 0.dp else 1.dp,
+                color = if (selected) Color.Transparent else MaterialTheme.colorScheme.outline,
+                shape = CircleShape,
+            )
+            .pressable(onTap = onClick)
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = unit,
+            style = MaterialTheme.typography.labelLarge,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (selected) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+        )
+    }
+}
 
 /**
  * Fiyat bolumu: "Nerede ucuz" + alim gecmisi (E17).

@@ -5,6 +5,16 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import com.neydi.app.ui.components.StepperMetrics
+import com.neydi.app.ui.components.QuantityStepper
+import com.neydi.app.data.quantityLabel
+import com.neydi.app.data.decrementQuantity
+import com.neydi.app.data.incrementQuantity
+import kotlinx.coroutines.delay
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -104,10 +114,47 @@ fun AddSheetContent(
     onQueryChange: (String) -> Unit = {},
     results: List<CatalogSeed> = emptyList(),
     onPickResult: (CatalogSeed) -> Unit = {},
-    /** Zaten listede olan urunlerin `matchKey`leri (tasarim karari 12). */
-    inList: Set<String> = emptySet(),
+    /**
+     * Zaten listede olan urunler: `matchKey` -> miktar etiketi ("1 kg").
+     *
+     * ONCE YALNIZ ANAHTAR KUMESIYDI (karar 12: isaretli hucre pasif). Karar
+     * 109 hucreye miktari da yazdiriyor - *"1 kg listede"* - cunku pasiflik
+     * artik bir gerekceye kavustu: hucre pasif, cunku miktarin kendi evi var.
+     * Miktari yazmadan pasiflik hala "burada bir sey var ama ne kadar
+     * bilmiyorsun" demek olurdu.
+     */
+    inList: Map<String, String> = emptyMap(),
+    /** Uzun dokunusla secilen miktarla ekleme (karar 109). */
+    onPickWithQuantity: (DiscoveryItem, Double) -> Unit = { _, _ -> },
 ) {
     val extras = LocalNeydiExtraColors.current
+
+    // HUCRE SAYACININ SAHIBI SHEET, KUTUCUK DEGIL (karar 109).
+    //
+    // `LazyVerticalGrid` gorunmeyen kutucugu geri donusturuyor; kutucuk-yerel
+    // bir `remember` kaydirmada olurdu ve kullanicinin sectigi miktar hic
+    // eklenmeden kaybolurdu. Ayrica tek sahip olmadan "yalniz bir hucre acik"
+    // kurali yazilamaz.
+    var openCell by remember { mutableStateOf<CellStepper?>(null) }
+    var cellSeq by remember { mutableStateOf(0L) }
+
+    // "BIRAKINCA O MIKTARLA EKLENIR" - ve birakmak UC SANIYE SUSMAK demek.
+    //
+    // Tasarimin cumlesi harfiyen "parmagini kaldirinca" gibi okunuyor ama o
+    // imkansiz: sayacin `+` ve `-` dugmeleri var, yani parmak zaten kalkmis
+    // olmali. Kalan tek anlam "elini cektiginde" - satirdaki sayacin ayni
+    // uc saniyesi (karar 107). Iki yuzey ayni sureyi paylasiyor.
+    LaunchedEffect(openCell) {
+        val open = openCell ?: return@LaunchedEffect
+        delay(Motion.QTY_STEPPER_MS.toLong())
+        onPickWithQuantity(open.item, open.count)
+        openCell = null
+    }
+
+    fun commitCell() {
+        openCell?.let { onPickWithQuantity(it.item, it.count) }
+        openCell = null
+    }
 
     Column(modifier = modifier.fillMaxWidth().padding(bottom = bottomPadding)) {
         // BASLIK BLOGU SABIT: arama ve sayac kaydirmayla kaybolmamali.
@@ -197,8 +244,24 @@ fun AddSheetContent(
                             val item = body.frequent[i]
                             DiscoveryTile(
                                 item = item,
-                                inList = item.matchKey in inList,
-                                onTap = { onPick(item) },
+                                inListLabel = inList[item.matchKey],
+                                stepper = openCell?.takeIf { it.item.matchKey == item.matchKey },
+                                onTap = { if (openCell != null) commitCell() else onPick(item) },
+                                onLongPress = {
+                                    openCell = CellStepper(item, 1.0, ++cellSeq)
+                                },
+                                onStep = { up ->
+                                    openCell = openCell?.let { open ->
+                                        open.copy(
+                                            count = if (up) {
+                                                incrementQuantity(open.count, item.unit)
+                                            } else {
+                                                decrementQuantity(open.count, item.unit)
+                                            },
+                                            seq = ++cellSeq,
+                                        )
+                                    }
+                                },
                             )
                         }
                     }
@@ -298,12 +361,32 @@ private fun FilterChip(text: String, selected: Boolean, onTap: () -> Unit) {
     }
 }
 
-/** Izgara kutucugu: ad (listede varsa dolu check_circle ile) + birim. */
+/**
+ * Acik olan hucre sayaci (karar 109) - hangi urun, kac tane, kacinci dokunus.
+ *
+ * [seq] satirdaki sayacla ayni isi yapiyor: her dokunus uc saniyeyi yeniden
+ * kuruyor ve bunun tek yolu eski zamanlayicinin kendini gecersiz bilmesi.
+ */
+private data class CellStepper(val item: DiscoveryItem, val count: Double, val seq: Long)
+
+/** Izgara kutucugu: ad (listede varsa dolu check_circle ile) + birim ya da sayac. */
 @Composable
-private fun DiscoveryTile(item: DiscoveryItem, inList: Boolean, onTap: () -> Unit) {
+private fun DiscoveryTile(
+    item: DiscoveryItem,
+    inListLabel: String?,
+    stepper: CellStepper?,
+    onTap: () -> Unit,
+    onLongPress: () -> Unit,
+    onStep: (Boolean) -> Unit,
+) {
+    val inList = inListLabel != null
     Column(
         Modifier
             .fillMaxWidth()
+            // IZGARA RITMI VE HUCRE BOYU DEGISMIYOR (karar 109): sayac
+            // acildiginda kutucuk buyurse butun izgara zipliyor ve
+            // kullanicinin parmaginin altindaki hedef kayiyor. Sayac ikinci
+            // satirin YERINE geciyor, altina degil.
             .heightIn(min = GRID_TILE)
             .clip(NeydiShapes.large)
             // ISARETLI KUTUCUK PASIF ama SONMUYOR (karar 89).
@@ -312,15 +395,44 @@ private fun DiscoveryTile(item: DiscoveryItem, inList: Boolean, onTap: () -> Uni
             // "devre disi" sozlugunun rengi - yapilmis bir isi YAPILAMAZ is
             // gibi gosteriyordu. Pasiflik dokunma tarafinda kaliyor, gorunum
             // tarafinda "yapildi" diyor: successSurface dolgu + isaret.
-            .pressable(enabled = !inList, dimWhenDisabled = false, onTap = onTap)
+            // ISARETLI HUCRE HER IKI JESTE DE PASIF (karar 12 + 109).
+            //
+            // Bir ara uzun dokunusu acik birakmistim - "miktari buradan da
+            // secebilsin" diye. Yanlisti ve karar 109'un kendi cumlesi
+            // soyluyor: *"hucre pasif, cunku miktarin kendi evi var."*
+            // Listedeki bir urunun miktari satirdan ya da Urun Detayi'ndan
+            // degisiyor; sheet'ten degistirmek ucuncu bir ev acmak olurdu.
+            //
+            // Ve calismazdi: ekleme artik idempotent (karar 109), yani zaten
+            // listede olan bir urune secilen miktarla "eklemek" hicbir sey
+            // yapmazdi. Kullanici sayaci cevirir, birakir, hicbir sey olmaz.
+            .pressable(
+                enabled = !inList,
+                dimWhenDisabled = false,
+                onLongPress = onLongPress,
+                onTap = onTap,
+            )
             .background(
-                if (inList) {
+                if (stepper != null) {
+                    MaterialTheme.colorScheme.surfaceVariant
+                } else if (inList) {
                     LocalNeydiExtraColors.current.successSurface
                 } else {
                     MaterialTheme.colorScheme.surfaceVariant
                 },
             )
-            .border(1.dp, LocalNeydiExtraColors.current.hairline, NeydiShapes.large)
+            .border(
+                1.dp,
+                // ACIK SAYAC KENDINI ISARETLIYOR: maket kiremit kenarlik
+                // ciziyor ve sebebi jestin kendisi - uc saniyelik bir kontrol,
+                // hangi hucreye ait oldugunu kendisi soylemek zorunda.
+                if (stepper != null) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    LocalNeydiExtraColors.current.hairline
+                },
+                NeydiShapes.large,
+            )
             .padding(horizontal = 14.dp),
         verticalArrangement = Arrangement.Center,
     ) {
@@ -343,11 +455,42 @@ private fun DiscoveryTile(item: DiscoveryItem, inList: Boolean, onTap: () -> Uni
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        Text(
-            text = item.unit,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // ALT SATIR UC HALDEN BIRI: sayac, "1 kg listede", ya da birim.
+        //
+        // Karar 66 alt satiri BIRIME ayirmisti ve o kural sadeceki hal icin
+        // hala gecerli; karar 109 ustune iki hal daha ekledi ve ucu de AYNI
+        // satirda duruyor - kutucugun boyu degismesin diye.
+        when {
+            stepper != null -> QuantityStepper(
+                metrics = StepperMetrics.Cell,
+                onDecrement = { onStep(false) },
+                onIncrement = { onStep(true) },
+            ) {
+                Text(
+                    text = quantityLabel(stepper.count, item.unit),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                )
+            }
+
+            inListLabel != null -> Text(
+                text = inListLabel,
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = LocalNeydiExtraColors.current.success,
+                maxLines = 1,
+            )
+
+            else -> Text(
+                text = item.unit,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -452,7 +595,7 @@ private const val RARE_LIMIT = 24
 
 // --- Preview ---------------------------------------------------------------
 
-private fun k(id: String, name: String) = Category(id, name, 0, 0xFF6E8B3D)
+private fun k(id: String, name: String) = Category(id, name, 0)
 private fun d(id: String, name: String, unit: String) = DiscoveryItem(id, name, unit, name.lowercase())
 
 @PreviewLightDark
@@ -471,6 +614,6 @@ private fun AddSheetPreview() = NeydiPreview {
         ),
         onFilter = {}, onPick = {}, onFreeText = {},
         addedCount = 3,
-        inList = setOf("süt"),
+        inList = mapOf("süt" to "1 L listede"),
     )
 }

@@ -37,7 +37,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 |---|---|---|---|---|
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
-| 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(her market kararının ÖN KOŞULU)* | [→](#tahmin-carpimi) |
+| 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(her market kararının ÖN KOŞULU; tahmin bugün **kör çarpıyor** — testte 100 adet Çay `~40.701 TL` yazdı)* | [→](#tahmin-carpimi) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
 | 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
@@ -530,7 +530,7 @@ yeni NOT NULL kolon `@ColumnInfo(defaultValue = …)` taşır, gerisi nullable.
 Tablo/kolon **silmek** de otomatik: `@DeleteTable` / `@DeleteColumn` birer
 annotasyon, içlerinde SQL yok (`Migration4To5Spec` örneği).
 
-**Nöbetçi:** `SchemaBaselineTest` v1–v5 identityHash'lerini kilitliyor ve
+**Nöbetçi:** `SchemaBaselineTest` v1–v7 identityHash'lerini kilitliyor ve
 `<n>.json` varlığını arıyor. Şema değişince aynı commit'te yeni hash girer.
 
 **Boş tablonun şema hatası bedavadır** — bump, ilk yazandan önce gelir.
