@@ -561,11 +561,16 @@
                 <div style="width:20px;height:20px;flex:none;border-radius:50%;background:#3F6B54;display:flex;align-items:center;justify-content:center;font:700 10px/1 'Plus Jakarta Sans';color:#fff">E</div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;min-height:28px">
-                <div style="flex:1;min-width:0;display:flex;align-items:center;gap:4px;font:400 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums;overflow:hidden">
-                  <span style="font-family:'Material Symbols Rounded';font-size:14px;color:#8A7666;flex:none">storefront</span>
-                  <span style="font-weight:600;color:#221A14;flex:none">A101</span>
-                  <span style="color:#8A7666;flex:none">·</span>
-                  <span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">önce 158,00 TL</span>
+                <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;font:400 13px/1.3 'Plus Jakarta Sans';color:#5C4F45;font-variant-numeric:tabular-nums;overflow:hidden">
+                  <div style="display:flex;align-items:center;gap:4px;flex:none">
+                    <span style="font-family:'Material Symbols Rounded';font-size:14px;color:#8A7666">storefront</span>
+                    <span style="font-weight:600;color:#221A14">A101</span>
+                  </div>
+                  <div style="min-width:0;display:flex;align-items:center;gap:4px;overflow:hidden">
+                    <span style="flex:none">BİM</span>
+                    <span style="color:#8A7666;flex:none">·</span>
+                    <span style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">bugün</span>
+                  </div>
                 </div>
                 <div style="width:92px;flex:none;display:flex;justify-content:flex-end"><div style="height:26px;padding:0 10px;border-radius:999px;background:#F1E7DB;display:flex;align-items:center;font:600 14px/1 'Plus Jakarta Sans';font-variant-numeric:tabular-nums">164,00 TL</div></div>
               </div>
@@ -663,7 +668,8 @@
         <div style="font:700 15px/1.3 'Plus Jakarta Sans'">Kurallar <span style="font-weight:500;color:#5C4F45">(karar 116–120)</span></div>
         <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">Planlamada onay yok:</span> daire çizilmez, satır dokunuşu Ürün Detayı'nı açar, "Alındı" bölümü yalnız alışveriş ve sonrasında var. İşaretlilik geziye ait — gezi yokken hiçbir satır işaretli değil. Miktar rozetten (karar 107), silme çekişten; satır yüzeyi planlamada veri değiştirmez.</div>
         <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">Hedef beyan, satır istisna:</span> hedef gezide (<span style="font-family:ui-monospace,monospace;font-size:12px">trip.storeId</span>, boş kalabilir), istisna satırda (<span style="font-family:ui-monospace,monospace;font-size:12px">trip_line.storeId</span>, boş = hedef). Cümlenin bütçesi ölçülü: başlıkta dört hedef ve storefront glifinden sonra 108dp kalıyor (390dp), "BİM'e gidiyorsun · 2'si A101'de" 72dp — 360dp'de de sığar. "2 satır A101'de" 97dp'ydi ve 360dp'de kırpılıyordu; chevron (20dp) çizilmiyor. On satırı tek tek işaretletmek planlamayı yine satır dokunmaya çevirirdi.</div>
-        <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">İşaret sapmadır:</span> ekonomi bandının başında storefront + zincir adı; üçüncü bir çip biçimi eklenmiyor, sapma bir ekonomi bilgisi. Market ikinci bir bölümleme getirmiyor — reyon başlıklarını ikiye katlamak 13 satır için ona yakın başlık demekti.</div>
+        <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">İşaret sapmadır:</span> ekonomi bandının başında storefront + zincir adı; üçüncü bir çip biçimi eklenmiyor, sapma bir ekonomi bilgisi. Market ikinci bir bölümleme getirmiyor — reyon başlıklarını ikiye katlamak 13 satır için ona yakın başlık demekti. <span style="font-weight:600;color:#221A14">Beyan ile gözlem arasına · girmez</span> (karar 121): nokta grup içini bağlar, 8dp boşluk grupları ayırır — "🏪 A101&nbsp;&nbsp;BİM · bugün". İki zincire sapılırsa cümlede ad düşer sayı kalır ("3'ü başka marketlerde"), bölüm zincir başına açılır (karar 125).</div>
+        <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">İstisnayı Ürün Detayı yazar</span> (karar 126): sheet'in eylem grubunun başında "Nereden alınacak" satırı — hedefteyken "BİM · hedef", istisnadayken zincir adı; dokunuş beyanın çip ızgarasını açar, "Hedefte al" ile geri döner. Beyan seçicisi karar 59'un seçicisi değil (karar 123): aramasız, eklemesiz, silmesiz, uzun dokunuşsuz — ama bilinen bütün zincirleri gösterir. Beyanı olan market silinemez (karar 122).</div>
         <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">Tahmin değişmez:</span> hesap son fiyatlarla. Etiket kaynağı yazmaya devam eder ve hedefle çelişmesi kusur değil — "BİM'e gidiyorsun" + "Migros fiyatlarıyla · 15/18" ikilisi tahminin gittiğin marketten olmadığını söyler. İki tutar yazılmaz.</div>
         <div style="font:400 14px/1.6 'Plus Jakarta Sans';color:#5C4F45"><span style="font-weight:600;color:#221A14">Silme:</span> sonuna kadar çekiş siler, daha azı kapanır. Açılan 100dp'lik alan ve "Sil" sözcüğü hedef değil, çekişin nereye vardığını söyleyen geri bildirim — karar 37 bu okumayla düzeltildi, güvenlik ağı geri almada.</div>
         <div style="height:1px;background:#E7DACB"></div>

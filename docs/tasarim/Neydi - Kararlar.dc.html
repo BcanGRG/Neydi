@@ -23,7 +23,7 @@
 
   <div style="display:flex;flex-direction:column;gap:12px;max-width:900px">
     <div style="font:600 14px/1.3 'Plus Jakarta Sans';color:#8A5A00">23 Ağustos 2026 · karar defteri</div>
-    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Seksen yedi geçerli karar</div>
+    <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:44px;line-height:1.1;letter-spacing:-0.01em">Yüz on üç geçerli karar</div>
     <div style="font:400 17px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:70ch">İlk turda kodun ölçtüğü yirmi altı yer tasarımın iki kuralının çeliştiği ya da tasarımın yazıldığı tarihte bilinmeyen bir gerçeğin karşılığı olmayan yerlerdi. Uygulama hiçbirini tahmin etmedi. Aşağıda her maddenin kararı, gerekçesi ve nerede çizildiği var. Defter yalnızca bugün geçerli olan kararları taşıyor: ürün raf etiketi okuyor, önceki döneme ait kararlar tamamen çıkarıldı.</div>
     <div style="font:500 14px/1.45 'Plus Jakarta Sans';color:#5C4F45">Diğer dosyalar: <a href="Neydi - Tasarim Sistemi.dc.html">Tasarım sistemi</a> · <a href="Neydi - Gezinme Sozlesmesi.dc.html">Gezinme sözleşmesi</a> · <a href="Neydi - Ekran 1 Liste.dc.html">Ekran 1</a> · <a href="Neydi - Ekranlar 2-4.dc.html">Ekran 2–4</a> · <a href="Neydi - Ekranlar 5-8.dc.html">Ekran 5–8</a></div>
   </div>
@@ -32,7 +32,7 @@
     <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #C9B9A5;padding-bottom:12px">
       <div style="font:700 14px/1.3 'Plus Jakarta Sans';color:#8A7666">01</div>
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Karar defteri</div>
-      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Seksen yedi karar, 100'e kadar numaralı. Her biri bugünkü üründe geçerli.</div>
+      <div style="font:500 14px/1.4 'Plus Jakarta Sans';color:#5C4F45">Yüz on üç karar, 126'ya kadar numaralı. Her biri bugünkü üründe geçerli.</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:20px;max-width:1400px">
@@ -71,7 +71,7 @@
   <sc-if value="{{ showOpen }}" hint-placeholder-val="{{ true }}">
     <div style="background:#F1E7DB;border:1px solid #C9B9A5;border-radius:32px;padding:32px;display:flex;flex-direction:column;gap:12px;max-width:1400px">
       <div style="font-family:Fraunces;font-variation-settings:'opsz' 72,'SOFT' 30,'WONK' 0;font-weight:600;font-size:28px;line-height:1.2">Defterin bugünkü hâli</div>
-      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde seksen yedi karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
+      <div style="font:400 15px/1.45 'Plus Jakarta Sans';color:#5C4F45;max-width:80ch">Defterde yüz on üç karar var ve hepsi bugünkü üründe geçerli. Ortak ders şu: boş bırakılan yer yanlış doldurulan yerden ucuz — ve doldurulacağı zaman cevap hep daha az iş yapan taraftan geldi. İkinci ders daha pahalıya öğrenildi: bir kararın dayandığı ölçüm çürükse, karar ne kadar iyi yazılmış olursa olsun onunla birlikte düşer.</div>
     </div>
   </sc-if>
 </div>
@@ -871,6 +871,240 @@ class Component extends DCLogic {
           why: "Alternatif (yarım genişlik + tek sütuna inen çiftler) kartı uzatıp karar 98'in çözdüğü taşmayı geri getirirdi. Ölçülen sayı kuraldan iyi: %58, sığan en dar kart.",
           where: "Gezinme sözleşmesi · rotasyon",
           href: "Neydi - Gezinme Sozlesmesi.dc.html"
+        },
+        {
+          no: "101",
+          title: "Kategori tonu yok",
+          rule: "CatalogSeedData 12 kategori için ton taşıyordu (#6E8B3D Meyve-Sebze, #B07A3C Fırın-Ekmek…), CategoryTile tint parametresi alıyordu; iki çağrı yeri de tonsuzdu — palet veritabanında yaşıyor, ekranda hiç çizilmiyor ve 12 hex kod tarafında uydurulmuştu.",
+          decision: "Kategori tonu diye bir şey yok: kutucuk her yerde surfaceVariant zemin + textSecondary monogram; tintArgb parametresi ve tohumdaki 12 hex silinir. Maketteki tek tonlu kutucuk (BE, #EAEDF4) surfaceVariant'a döndü — soğuk mavi zaten sıcak paletin dışındaydı.",
+          why: "Renk bu üründe anlam taşır: yön kırmızı/yeşil, eksiklik amber, eylem kiremit (karar 43, 57). Kategoriye renk vermek o dili on iki anlamsız tonla sulandırır; kategori zaten bölüm başlığında yazılı, monogramın işi ürünü ayırt etmek. 12 ton × iki tema × kontrast kuralı sürekli bedel, karşılığı dekor — kullanılmayan bileşen borçtur (karar 94'ün dersi).",
+          where: "Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekranlar 5-8.dc.html"
+        },
+        {
+          no: "102",
+          title: "Feda sırası ara adımdı, satır iki banda ayrıldı",
+          rule: "Kararlar 80–86 anatomiye dokunmadan bütçe koydu; kendi maketinde 360dp'de feda 3–4–5 birden işliyordu: eş avatarı, raptiye ve adet rozeti aynı satırda düşüyordu. Kullanıcının istediği \"sıkışık olmasın\" bir öncelik listesi değil yeni bir düzendi.",
+          decision: "Satır iki bant: kimlik bandı (adet rozeti · ad · eş avatarı · raptiye) ve ekonomi bandı (geçmiş metası ya da ucuz çipi · sparkline · delta · fiyat çipi). Fiyat çipi kimlik bandından indi. Yalnız kimlik 56dp, iki bant 72dp — ekonomi bandı 28dp taban yükseklik alır ve sonu sağa yaslıdır, böylece satırın içeriği değişse de yükseklik ve fiyat sütunu yerinden oynamaz (tek başına fiyat da 92dp sütununda sağ kenarda durur). Feda sırası iptal değil — kısaldı ve tamamen ekonomi bandına taşındı.",
+          why: "Sıkışıklığın kaynağı öğe sayısı değil, hepsinin tek katta yarışmasıydı: 328dp'lik içerikte 100dp'yi fiyat çipi alıyordu, kalanı beş öğe paylaşıyordu. İki bant aynı öğeleri iki bütçeye böler — kimlik bandında ada 174dp kalır (eskiden üç öğe düşürerek 192dp bulunuyordu), ekonomi bandında yarışan yalnız süs kalır. Kural kendi gerekçesini yiyordu: \"yanlış adedin bedeli parayla ödenir\" diyip rozeti feda ediyordu.",
+          where: "Ekran 1 · yeni anatomi (4a)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "103",
+          title: "Kimlik bandı hiçbir genişlikte feda etmez",
+          rule: "Feda sırasının 3–4–5. üyeleri (avatar, raptiye, rozet) bilgi taşıyan öğelerdi ve dar ekranda düzenli olarak düşüyorlardı.",
+          decision: "Adet rozeti, ad, eş avatarı ve raptiye kimlik bandında ve hiçbir genişlikte düşmez. Avatar 32dp'den 20dp'ye, raptiye 14dp'ye iner — üçü toplam 110dp. Ad flex, tek satır, sona üç nokta; 120dp tabanı kural olarak kalkar çünkü 360dp'de bile 174dp alır.",
+          why: "Bu üç öğe üç ayrı soruya cevap: kaç tane, kim ekledi, neden hep listede. Hiçbiri süs değil ve hiçbiri başka yerde yazılı değil — düşünce bilgi kayboluyordu, kırpılınca değil. Boyut küçültmek görünürlüğü feda etmekten ucuz: 20dp avatar hâlâ okunur, olmayan avatar okunmaz.",
+          where: "Ekran 1 · yeni anatomi (4a)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "104",
+          title: "Fiyat çipi ekonomi bandında",
+          rule: "Fiyat çipi ana satırda 92dp + 8dp boşluk = 100dp tutuyordu; 360dp içerik genişliğinin %34'ü ve her fiyatlı satırda vardı.",
+          decision: "Çip ekonomi bandının sonunda, 92dp sabit sütun ve TextAlign.End olarak durur — karar 81 ve 84 aynen geçerli. Görsel yükseklik 32dp'den 26dp'ye iner. Çipin dokunma hedefi yoktur — karar 110 çipi bilgi olarak yeniden tanımladı; \"dokunuş Ürün Detayı'nı açar\" fıkrası geri çekildi.",
+          why: "Fiyat listede en pahalı öğeydi ve en az acil olanıydı: mağazada okunan sayı raf etiketinde, kuruşlu tam değer Ürün Detayı'nda. Yine de silinmedi — \"ne kadara mal olacak\" listenin ikinci işi. Ekonomi bandı ona rakipsiz 92dp verir; fiyatlar dikeyde hâlâ tek hizada, çünkü sütun sağ kenara sabit.",
+          where: "Ekran 1 · yeni anatomi (4a)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "105",
+          title: "Single'ın ikinci satırı tazeliğe bağlı",
+          rule: "Karar 83 \"Single: ikinci satır yok\" diyordu; maket üç yerde \"son 24,90 TL · Migros · 8 gün önce\" yazıyordu; kod \"BİM · bugün\" üretiyordu. Üç kaynak üç şey söylüyordu.",
+          decision: "Çelişki değil, iki tazelik hâli. Gözlem ≤7 gün ise fiyat güncel sayılır: çipte durur, ekonomi bandı yalnız zincir + tazelik yazar — \"BİM · bugün\". Gözlem eskimişse güncel fiyat yoktur: çip çizilmez, hatırlanan fiyat cümlenin içine girer — \"son 24,90 TL · Migros · 8 gün önce\". Karar 83'ün \"ikinci satır yok\" fıkrası silindi.",
+          why: "Karar 83'ün asıl kuralı \"fiyat iki yerde yazılmaz\"dı ve iki hâlin ikisi de ona uyuyor: bir satırda fiyat bir kez var. \"İkinci satır hiç yok\" seçeneği ürünün adını siliyordu — Neydi'nin sorduğu soru tam olarak \"neydi\", ve tek gözlemli satırda hatırlanacak tek şey o gözlem. Zincir ve tazelik olmadan sayı kendi başına yanıltıcı: 24,90 TL'nin sekiz günlük mü bugünkü mü olduğu, ona güvenip güvenmeyeceğini belirler.",
+          where: "Ekran 1 · yeni anatomi (4a)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "106",
+          title: "Sparkline listeden silindi",
+          rule: "Sparkline liste satırında 24×14dp çiziliyordu ve feda sırasının ilk üyesiydi — yani zaten \"önce bu gitsin\" denen öğeydi.",
+          decision: "Liste satırında sparkline yok. Yeri Ürün Detayı'ndaki fiyat geçmişi grafiği. Feda sırası tek üyeye indi: delta çipi. Kalan altı öğe — rozet, ad, avatar, raptiye, meta, fiyat — hiçbir genişlikte düşmez.",
+          why: "24×14dp'de yedi noktalı bir çizgi yön bile vermiyor; aynı yönü delta çipi sayıyla söylüyor. Bir öğeyi feda sırasının başına koymak, onun gereksiz olduğunu kabul etmenin dolambaçlı yoluydu — sıralamak yerine silmek satırı 30dp rahatlatıyor ve kuralı bir üyeye indiriyor. Kullanılmayan bileşen borçtur (karar 94); okunamayan bileşen de öyle.",
+          where: "Ekran 1 · yeni anatomi (4a)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "107",
+          title: "Adet rozeti her satırda ve bir kontrol",
+          rule: "Miktar düzenleme hiçbir yerde yoktu: kök alan parseQuantity ile miktar alıyordu, keşif sheet'i her zaman 1 ekliyordu, sonradan değiştirmenin yolu yoktu. Karar 12'nin işareti üçüncü yüzeye de uygulanınca \"tekrar dokunarak artırma\" da kapandı.",
+          decision: "Rozet her satırda çizilir: varsayılan miktarda dolgusuz kontur (\"1\"), değiştirilmişse dolgulu (\"4 kg\"); ikisinin de dokunma hedefi 48dp. Dokunuş ekonomi bandını üç saniyelik sayaca çevirir: − 44dp · canlı değer · + 44dp; meta ve fiyat o süre gizlenir, kimlik bandı değişmez. Her dokunuş süreyi yeniden kurar; kaydırma ya da dışarı dokunma kapatır. Adım: adet 1, kg 0,5, g 100, L 0,5; alt sınır bir adım — sıfıra inmez, silme ayrı eylemdir.",
+          why: "Kontrol satıra hiçbir öğe eklemiyor: sayıyı zaten yazan şeyi dokunulabilir yapıyor. Karar 103 rozeti hiç düşmez ilan ettiği için \"rozet düşerse düzenleme yolu kaybolur\" itirazı ortadan kalktı — 107 ancak 103'ten sonra mümkün. Sayacın ekonomi bandında olması adın okunurluğunu koruyor: miktarı düzenlerken kimse \"önce 324,00 TL\"ye bakmıyor, ama neyi düzenlediğini görmek zorunda. Süre sınırı kalıcı iki hedef eklemekten ucuz; satır bütçesi ikinci kez bozulmuyor.",
+          where: "Ekran 1 · miktar (4b)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "108",
+          title: "Birim Ürün Detayı'nda, sheet'te uzun dokunuş",
+          rule: "Birim katalogtan geliyordu (defaultUnit) ve değiştirilemiyordu: katalogda kg olan domatesi \"3 adet\" yapmanın yolu yoktu. Kullanıcı \"adet, gram vs.\" dedi.",
+          decision: "Ürün Detayı'nın en başına, kuyruğun üstünde ayrı zeminde \"Bu listedeki miktar\" bloğu: 48dp sayaç + yazılabilir değer + katalogun makul birim çipleri (katalog varsayılanı çipin altında yazılı). Seçim yalnız o satırı değiştirir, katalog varsayılanı yerinde kalır. Keşif sheet'inde uzun dokunuş sayacı hücrenin içinde açar — ızgara ritmi ve hücre boyu değişmez (karar 66 duruyor); bırakınca o miktarla ekler. İşaretli hücre pasif kalır (karar 12) ama artık miktarı yazar: \"1 kg listede\".",
+          why: "Karar 38'in sabitlediği kuyruk sırası ürüne ait satırların sırasıdır; miktar uzun dokunduğun satıra ait, o yüzden kuyruğa girmiyor, üstünde ayrı bir blok oluyor — sıra hiç karışmıyor. Hücrenin alt satırı karar 66'da birime ayrılmıştı; işaretliyken aynı yere miktarı yazmak yeni öğe eklemeden bilgiyi veriyor ve hücreyi aktif etmiyor. Uzun dokunuş bu üründe zaten \"daha fazla seçenek\" jesti (karar 38), yeni bir dil öğretmiyor.",
+          where: "Ekran 1 · miktar (4b) · Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "109",
+          title: "İkinci ekleme miktarı değiştirmez",
+          rule: "Üç yol üç davranıştaydı: tek tek ekleme ikinci dokunuşta adedi artırıyordu, toplu yol atlıyordu (karar 91), sheet'te dokunuş artık mümkün değildi.",
+          decision: "Hiçbir yolda ikinci ekleme miktarı sessizce değiştirmez. Zaten listedeki ürün eklenmeye çalışılırsa satır vurgulanır (karar 89 yıkaması) ve miktar olduğu gibi kalır; değişiklik yalnız miktar kontrolünden geçer. Birim değişimi tahmin yolunu da değiştirir: adet ise çarpan, tartılı ise ⌈miktar ÷ ambalaj⌉, ambalaj bilinmiyorsa satır toplamdan düşer ve paydada kalır (karar 96).",
+          why: "\"Ekle-ekle\" bir yol değil, kontrolün yokluğundan doğan bir çareydi; kontrol gelince çarenin kalması üç yolu üç davranışta tutuyordu. Sessiz artış zaten en tehlikeli hâl: kullanıcı eklediğini sanıyor, miktar değişiyor, fark ettiğinde parayla ödüyor — karar 80'in kendi cümlesi. Birimin hesabı izlemesi de aynı dürüstlük: kullanıcı elle kg'ı adede çevirdiyse tahmin onu izlemek zorunda, yoksa sayı sessizce yanlışa döner.",
+          where: "Ekran 1 · miktar (4b) · Ekranlar 2-4 · Ekle",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "110",
+          title: "Fiyat çipi hedef değil, bilgi",
+          rule: "Karar 104 çipe 26dp görsel + 48dp hedef yazmıştı; cihazda üçü birden sağlanamadı. Asıl çelişki raporda görünmüyordu: 72dp'lik satırda iki dikey yığılmış 48dp hedef isteniyor — adet rozeti (karar 107) ve fiyat çipi. 2 × 48 = 96 > 72.",
+          decision: "Fiyat çipi dokunulabilir değil; ekonomi bandının tamamı bilgi. Satırın iki jesti kalır — dokunuş işaretler, uzun dokunuş Ürün Detayı'nı açar (karar 38) — ve tek bir yığılmış hedef: adet rozeti, 48dp (kimlik bandı 24dp + 5dp boşluk + 9dp dolgu + ekonomi bandının sol boşluğu; rozetle fiyat yatayda hiç örtüşmediği için bu genişleme bedava). Karar 56'ya istisna yazılmaz, satır 72dp kalır, çip 92dp × 26dp kalır.",
+          why: "Çipin dokunuşu zaten mükerrerdi: gittiği yere (Ürün Detayı) uzun dokunuşla da gidiliyordu, yani satırın kaldıramadığı bir hedefi tekrar için harcıyordu. Dördü de reddedildi çünkü hepsi bedeli yanlış yere yıkıyor: satırı 80dp yapmak her satırdan bir satır çalıyor ve planlama modunu alışveriş modundan seyreltir; çipi kimlik bandına geri almak 100dp'yi ada geri kaybettirir — kullanıcının \"sıkışık olmasın\" dediği şey tam buydu; karar 56'ya istisna yazmak en çok dokunulan öğeyi kuralın dışına çıkarır, yani kuralı kâğıtta bırakır; bandın tamamını hedef yapmak 26dp'yi 48dp saymaz, yalnız alanı büyütür. Fiyatı okumak için dokunmak gerekmiyor — zaten yazılı.",
+          where: "Ekran 1 · yeni anatomi (4a)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "111",
+          title: "Ambalajsız tartılı satır düşer, eksik olgu Ürün Detayı'nda sorulur",
+          rule: "ROADMAP \"3 × 192,00 hesaplanıyor, doğrusu 192,00\" diyordu; karar 96 \"ambalajı bilinmeyen tartılı satır toplamdan düşer\" diyordu. İkisi de tasarım kaynaklı ve kullanıcının gerçek sepetinde fark 192,00 TL (1.199,50 / 815,50 / 623,50).",
+          decision: "Karar 96 duruyor: satır toplama girmez, paydada kalır (5/7 → 4/7). Eksiklik satırda yazılıdır ama yeni bir öğeyle değil — ekonomi bandının meta yuvası \"3 kg · ambalaj bilinmiyor\" hâlini alır (meta metninin bir hâli, karar 83'ün \"tek içerik\" kuralı bozulmaz). Eksik olguyu vermenin yolu yeni bir hedef değil: uzun dokunuş → Ürün Detayı, gözlem satırında boş ambalaj alanı \"ambalaj?\" yazar ve orada doldurulur. Doldurulunca satır kendiliğinden toplama girer. ⌈miktar ÷ ambalaj⌉ dalı, iki birimin aynı ölçeğe indirildiği doğrulanmadan çalışmaz; ölçek uzlaştırılamıyorsa satır ambalajsız sayılır — yani düşer. ROADMAP'in \"doğrusu 192,00\" cümlesi ve \"ön koşul priceUnit\" ifadesi düzeltilir.",
+          why: "Etiketi olduğu gibi almak (b) \"3 kg istedim\" bilgisini sessizce 1'e indiriyor: kullanıcının kendi yazdığı miktarı yok sayan bir sayı, eksik sayıdan kötüdür çünkü kendinden emin görünür. Düşen satır 0,00 TL yazmıyor — hiç tutar yazmıyor; payda 7 kaldığı için sayaç \"4/7\" eksiği zaten söylüyor (karar 95). Affordance'ın liste satırında olmaması karar 110'un sonucu: ekonomi bandı bilgi, satırın tek yığılmış hedefi rozet; oraya \"ambalaj?\" düğmesi koymak 2 × 48dp çatışmasını yeniden açardı. Ambalaj zaten gözlemin özelliği, satırın değil — alanın yeri gözlemin yanı. Birim ölçeği şartı da aynı dürüstlük: raporun bulduğu \"2 g Çay / 1 kg ambalaj\" hâli 798,00 TL, 500 g'da 199.500,00 TL üretiyordu; ölçeği bilinmeyen bölme, bilinmeyen ambalajdan farksızdır.",
+          where: "Ekran 1 · tahmin (4c) · Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "112",
+          title: "Tahmin eşiği mutlak, yüzdeler defterden düşer",
+          rule: "Tasarım sistemi \"%60'ından azının fiyatı biliniyorsa %40 opaklık ve ~ öneki, %30'un altında satır hiç gösterilmez\" diyordu; karar 53 koda MIN_PRICED_ITEMS = 3 olarak girmişti. Karar 96 payı düşürdüğü için ikisi ilk kez çelişti: 5/7 = %71 → 4/7 = %57.",
+          decision: "Eşik mutlak kalır: toplama giren satır sayısı 3'ün altındaysa tahmin satırı çizilmez (karar 53), 3 ve üstündeyse tam opaklıkta çizilir. Yüzde cümlesinin üç fıkrası da düşer — %40 opaklık yok, koşullu \"~\" yok (karar 95'ten beri her tutarın önünde), %30 gizleme yok. Eşiğin altında satır sessizce çizilmez: \"yeterli veri yok\" diye bir yüzey yazılmaz, tutarsız bir sayaç da tek başına çizilmez.",
+          why: "Yüzde kuralı, satırın kapsamını söyleyemediği zamandan kalmıştı; opaklık o zaman elimizdeki tek dürüstlük aracıydı. Karar 95 kapsamı rakamla yazdırdıktan sonra \"4/7\" ile %40 opaklık aynı şeyi iki kez söylüyor, biri okunurluk pahasına. Oran zaten yanlış şeyi ölçüyor: 20 satırlık listede 7 fiyatlı satır, 3 satırlık listede 3 fiyatlı satırdan daha sağlam bir tahmin verir — yüzde ikincisini ödüllendirir. Mutlak sayı tahminin dayanağını ölçüyor, oran listenin uzunluğunu. Eşiğin altında hiçbir şey çizmemek de tutarlı: tutarsız bir tahmin satırı, olmayan bir cevabı yüzey olarak var etmek olurdu.",
+          where: "Ekran 1 · tahmin (4c)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "113",
+          title: "Marketsiz tek gözlem zincir adını düşürür",
+          rule: "PriceObservation.storeId nullable ve marketsiz çekim meşru; 12 BİM fiyatı + 3 marketsiz fiyat ne \"BİM fiyatlarıyla\" ne açıkça \"son fiyatlarla\"ydı.",
+          decision: "Bir tek marketsiz gözlem varsa etiket \"son fiyatlarla\" olur. \"BİM fiyatlarıyla\", ancak toplama giren satırların hepsinde market bilgisi varken ve hepsi aynı zincirdenken yazılır.",
+          why: "Zincir adı bir iddia: \"bu rakam BİM'in fiyatlarıdır\". Üç satırın nereden geldiği bilinmiyorsa iddia yanlış ve yanlışlığını kullanıcı doğrulayamaz. Karar 76'nın provablySamePack katılığı: kanıt yoksa iddia edilmez. \"Son fiyatlarla\" bir kayıp değil, her hâlde doğru kalan cümle. Bugün etkisi sıfır (26 gözlemin hepsinde market var) — kural gelecekteki hâli bugünden kapatıyor, sonradan yamamak yerine.",
+          where: "Ekran 1 · tahmin (4c)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "114",
+          title: "Etikete yalnız toplama giren satırlar oy verir",
+          rule: "Karar 96'dan sonra iki küme ayrıştı: toplamdan düşen bir A101 satırı, katkıda bulunmadığı bir tutara zincir etiketi yazdırabiliyordu.",
+          decision: "Zincir etiketi ile sayacın payı aynı kümeyi sayar: toplama katkısı olan satırlar. Ambalajsız tartılı satır (karar 111) düştüyse zincir oylamasına da girmez, yalnız paydada görünür.",
+          why: "Cümle yanındaki sayıyı anlatıyor: toplamda olmayan bir fiyatın kaynağı, o toplamın kaynağı değil. Tek küme kuralı da tek cümleye indiriyor — pay = toplama giren satırlar, etiket = o satırların zinciri; ikisi hiçbir hâlde ayrışmıyor.",
+          where: "Ekran 1 · tahmin (4c)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "115",
+          title: "Karar 97'nin eşiği adı konabilir bir formüle bağlandı",
+          rule: "Karar 97 markete göre tahmini erteledi, eşiği \"listeye giren ürünlerde ortalama zincir/ürün > 1,5\" yazdı ve bugünkü değeri \"0,64\" diye not etti. Bu rakam hiçbir anlık görüntüden yeniden üretilemedi (denenen formüller 0,16 ile 1,4 arasında sonuç veriyor).",
+          decision: "0,64 defterden düşer. Ölçü tek cümle: en az bir gözlemi olan ve listeye girmiş ürünler kümesinde, ürün başına farklı zincir sayısının ortalaması — marketsiz gözlemler sayılmaz. Bugünkü değer 1,0–1,4; eşik 1,5 olduğu gibi kalır. Eşiğe basılana kadar karar 97 ertelenmiş kalır ve erteleme uygulamada hiçbir yüzeye yazılmaz.",
+          why: "Eşik bir kararın kapısı; kapının hangi rakamla açıldığı yeniden üretilemiyorsa karar denetlenemez ve \"henüz değil\" bir kanaate döner. Marketsiz gözlemlerin sayılmaması karar 113 ile aynı sebep: zincir adı yoksa zincir çeşitliliğine de kanıt değil. Aralık (1,0–1,4) tek rakamdan dürüst: ölçüm ürün kümesine göre değişiyor, ve eşik hâlâ uzakta.",
+          where: "Kararlar · 97 güncellemesi",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "116",
+          title: "Planlamada onay hedefi yok",
+          rule: "Her satırda onay hedefi vardı ve planlamada işaretlenen satır \"Alındı\" bölümüne iniyordu; kod bunu bilinçli yazmıştı (ListState: \"iki modda da doğru\"). Cihazda test ederken yanlışlıkla yapılan her dokunuş bir satırı Alındı'ya taşıdı — satırın tamamı hedef olduğu için en büyük hedef en az istenen işe bağlıydı.",
+          decision: "Planlama modunda onay dairesi çizilmez ve satırın onay hedefi yoktur; satır dokunuşu Ürün Detayı'nı açar. \"Alındı\" bölümü yalnız alışveriş ve alışveriş-sonrası modlarında var — işaretlilik geziye ait bir durum, gezi yokken hiçbir satır işaretli değildir. Daire (24dp + 10dp boşluk) çizilmediği için kimlik bandı 34dp kazanır: 360dp'de ada 214dp kalır. Planlamada satır yüzeyi hiçbir veriyi değiştirmez — miktar rozetten (karar 107), silme çekişten (karar 120).",
+          why: "Planlama listeyi kurma anı; işaretleme reyonda oluyor. Kullanıcının itirazı davranışsaldı ama bedeli ölçüldü: yanlış dokunuş listeyi kirletiyor ve geri almak da bir iş. \"Bu zaten evde var\" seçeneği aynı daireye ikinci bir fiil yüklüyordu; evde olan şey listeye girmez, girdiyse silinir — yeni bir durum makinesi gerekmiyor. Kazanılan 34dp bedava değildi: onayın maliyeti hep vardı, planlamada karşılığı yoktu.",
+          where: "Ekran 1 · planlama (4d)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "117",
+          title: "Hedef market beyan edilir: gezide hedef, satırda istisna",
+          rule: "trip.storeId var ve kullanılmıyordu (KDoc: \"alışverişe çıkarken nereye gidileceği her zaman belli değil\"); trip_line'da market alanı yoktu. Kullanıcı liste yaparken \"10 tanesi BİM'den, 2-3 tanesi A101'den\" demek istiyor.",
+          decision: "Hedef market gezi düzeyinde beyan edilir (trip.storeId doldurulur, boş kalabilir), satır yalnız istisna taşır (trip_line.storeId; boş = hedef). Beyan liste başlığının alt satırından yapılır: bugün \"Son alışveriş: geçen hafta · ~642 TL\" yazan yer, hedef seçiliyse \"BİM'e gidiyorsun · 2'si A101'de\" yazar ve dokunuşu market seçiciyi açar — seçici ve yapışkanlığı karar 59'un seçicisi. Cümlenin bütçesi ölçüldü: 390dp başlıkta avatar, kamera, more_vert ve storefront glifinden sonra 108dp kalıyor; bu hâl 72dp, yani 360dp'de de sığıyor. \"2 satır A101'de\" 97dp'ydi ve 360dp'de kırpılıyordu; chevron (20dp) çizilmez çünkü dokunma hedefi başlık bloğunun tamamı. Satır istisnası Ürün Detayı'ndan verilir. \"Belli değil\" geçerli cevap ve bugünkü davranış.",
+          why: "Kullanıcının cümlesi birebir bu: çoğunluk tek markete gidiyor, sapma azınlık. On satırı tek tek işaretletmek planlamayı yine satır dokunmaya çevirirdi — karar 116'nın kaldırdığı hatayı geri getirir. Beyan çıkışta değil planlamada sorulur çünkü ayrım listeyi kurarken yapılıyor. Alan zaten var, KDoc'un çekincesi de duruyor: hedef zorunlu değil.",
+          where: "Ekran 1 · planlama (4d) · Ekran 5 · Ürün Detayı",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "118",
+          title: "İşaret sapmadır: planlamada cümle, alışverişte bölüm",
+          rule: "Liste reyon sırasına göre bölümlü ve bu sıra ekranın bütün işi; market ikinci bir kırılım getiriyor. Kimlik bandı dolu (karar 103), ve reyon başlıklarını markete göre ikiye katlamak 13 satır için ona yakın başlık demek.",
+          decision: "Hedefteki satır işaret taşımaz — işaret yalnız sapmadır. Sapma ekonomi bandının başında yazılır: storefront 13dp + zincir adı (13sp/600), meta cümlesi \"·\" ile devam eder; yer daralırsa meta kırpılır, sapma kırpılmaz. Sapma tek başına ekonomi bandını doğurur (satır 72dp olur). Planlamada liste market başına bölünmez. Alışveriş modunda sapan satırlar reyon bölümlerinden çıkar ve listenin sonunda tek bölüme iner — \"A101'de (2)\", içinde reyon sırası korunur, Alındı'nın üstünde.",
+          why: "Planlamada bütün liste konu, alışverişte durduğun market konu: aynı işaret iki modda iki iş yapıyor ama ikisi de \"şimdi neredeyim, buradan ne alacağım\" sorusunu cevaplıyor. Sapmayı çip değil cümle yapmak üçüncü bir çip biçimi eklemiyor — bandın başı zaten cümle yeri (meta ya da ucuz çipi) ve sapma bir ekonomi bilgisi. Sapan satırlar alışverişte de silinmiyor: yol A101'e düşerse orada duruyorlar.",
+          where: "Ekran 1 · planlama (4d) · alışveriş modu",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "119",
+          title: "Beyan tahmini değiştirmez; hedef ile kaynak yan yana okunur",
+          rule: "Karar 95 tahminin kaynağını satırın sağına yazıyor (\"BİM fiyatlarıyla · 4/7\"); hedef markete göre hesaplamak karar 97'yi fiilen açardı. Bugün ürün başına zincir ortalaması 1,0–1,4 (karar 115), eşik 1,5.",
+          decision: "Tahmin son fiyatlarla hesaplanmaya devam eder; hedef beyanı organizasyonu değiştirir, aritmetiği değiştirmez. Etiket kaynağı yazmayı sürdürür ve hedefle çelişmesi kusur değil: \"BİM'e gidiyorsun\" + \"Migros fiyatlarıyla · 15/18\" ikilisi tahminin gittiğin marketten olmadığını söyler. İki tutar (\"BİM'de ~X · A101'de ~Y\") yazılmaz. Eşiğe basıldığı gün hedef aritmetiğin girdisi olur — beyan o günün tesisatı.",
+          why: "1,0–1,4 zincir/ürün ile hedefe göre süzmek payı düşürür: tahmin daha doğru değil daha boş olur, ve karar 112 toplama giren satır üçün altındaysa tahmini hiç çizmiyor — beyan tahmini susturabilirdi. Kaynak ile hedefin iki ayrı cümle olması dürüst: biri nereye gittiğini, öteki sayının nereden geldiğini söyler; aynı cümleye sıkıştırılsa ikisinden biri yalan olurdu.",
+          where: "Ekran 1 · tahmin (4c) · planlama (4d)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "120",
+          title: "Silme sonuna kadar çekiştir; açılan alan hedef değil",
+          rule: "Karar 37 \"100dp'lik alan çıkıyor ve içinde tek kelime var: Sil\" diyordu ve bu, alanın açılıp kalması ve \"Sil\"e dokunulması gibi de okunabiliyordu. Kod hiçbir zaman öyle çalışmadı: eşik açılan alanın %60'ıydı, yarım bir çekiş bazen siliyor bazen geri dönüyordu ve hangisinin olacağı parmağın nerede durduğundan belli değildi.",
+          decision: "Satır sonuna kadar çekilirse silinir, daha azı geri kapanır. Açılan alan ve içindeki \"Sil\" sözcüğü hedef değil, çekişin nereye vardığını söyleyen geri bildirimdir — dokunulabilir değil. Karar 37'nin cümlesi bu okumayla düzeltilir; geri alma snackbar'ı (karar 38) tek güvenlik ağı olarak kalır.",
+          why: "%60 eşiği kararsız bir jestti: aynı hareketin sonucu parmağın durduğu yere bağlıydı ve kullanıcı bunu kusur olarak bildirdi. Tam çekiş niyeti kanıtlar — yanlışlıkla yapılması zor. İki aşamalı alternatif (çek, sonra dokun) silmeyi güvenli değil yavaş yapardı; asıl güvenlik geri almada, ve o zaten var.",
+          where: "Ekran 1 · silme jesti",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "121",
+          title: "Beyan ile gözlem arasında ayırıcı yok, boşluk var",
+          rule: "Karar 105 metayı \"BİM · bugün\" diye yazdı, karar 118 bandın başına storefront + zincir adı koydu. İkisi aynı bantta buluşunca satır \"🏪 A101 · BİM · bugün\" oluyor: iki zincir adı, aralarında tek bir ·. Biri beyan (\"burayı A101'den alacağım\"), öteki gözlem (\"fiyatı BİM'de gördük\"). Maketin on üç satırı bu bileşimi bir kez bile çizmiyordu.",
+          decision: "Aradaki · düşer. Bant iki gruba ayrılır: sapma grubu (storefront + zincir) ve gözlem grubu (kaynak + tazelik), grup içi 4dp, gruplar arası 8dp — bandın kendi ölçüsü, fiyat çipini de aynı 8dp ayırıyor. Satır \"🏪 A101   BİM · bugün\" okunur. Karar 105'in metni değişmez, kelime eklenmez, 5dp kazanılır. 4d'deki sapmalı satır artık bu bileşimi çiziyor.",
+          why: "· iki şeyi eşit yapar; burada biri niyet, öteki kayıt. Bandın zaten bir ayırıcı dilbilgisi var — nokta grup içini bağlar, boşluk grupları ayırır — ve bu satırda o dilbilgisi ihlal ediliyordu. Kelime eklemek (\"BİM fiyatı\") kırpılan parçayı büyütür; taze gözlemin zincir adını düşürmek karar 119'un koruduğu çelişki sinyalini yok eder: hedefle kaynağın çelişmesi kusur değil, kararın kendisi.",
+          where: "Ekran 1 · yeni anatomi (4a) · planlama (4d)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "122",
+          title: "Beyanı olan market silinemez",
+          rule: "Karar 59'un silme kapısı yalnız gözleme bakıyor (hasObservationsAt); karar 117 ise gözlemsiz beyanı meşru kıldı — hiç etiket çekilmemiş bir zincire \"gidiyorum\" denebilir. Sonuç: etiket ekranındaki tek uzun dokunuş softDelete'i çağırıyor, ad null dönüyor, satırdaki sapma işareti kayboluyor ve satır hedefin satırı gibi okunuyor.",
+          decision: "Ölçüt genişler: gözlemi ya da bir beyanı (silinmemiş gezilerde trip.storeId / trip_line.storeId) olan market silinemez. Jest engellendiğinde sebebi yazılır — \"Bu markete giden 3 satır var.\" Beyan kaldırılınca (\"Belli değil\" ya da başka bir hedef) market yine silinebilir.",
+          why: "Uyarıp silmek doğru soruyu yanlış yerde sorar: kullanıcı o an etiket işindedir, kaç satırın etkilendiğini göremez ve onay verdiği şeyi görmeden verir. Engel geri alınabilir bir durum; sessiz silme değil — ve kaybı sessiz de değil, yanıltıcı: plan yok olurken satır planın uygulandığı hâlini taklit ediyor.",
+          where: "Ekranlar 2-4 · market seçici (karar 59)",
+          href: "Neydi - Ekranlar 2-4.dc.html"
+        },
+        {
+          no: "123",
+          title: "İki seçici, iki iş; yıkıcı jest yalnız etiket tarafında",
+          rule: "Maketin notu beyan seçicisini karar 59'un seçicisi sayıyordu, ama aynı set ikisini farklı çiziyor: 56px liste satırı / 44dp çip, yedi / beş zincir, arama var / yok, yeni market var / yok, uzun dokunuş siler / yok. Yapışkanlıklar da farklı olaydan besleniyor.",
+          decision: "İki ayrı bileşen doğru; maketin cümlesi düzeltilir. Beyan seçicisi çip ızgarasıdır: arama yok, ekleme yok, silme yok, uzun dokunuş yok. Çipler bilinen bütün zincirleri gösterir — beşle sınırlı değil, sarar, sheet kaydırılır. Yeni zincir yaratmak karar 59'un işi kalır. Yapışkanlık ayrı: beyan \"en son gitmeye karar verdiğin\", karar 59 \"en son etiket çektiğin\".",
+          why: "Tek değere bağlamak, A101'de çekilen bir etiketin BİM gezisinin hedefini değiştirmesi demek. Jest tutarlılığı endişesi haklı ama cevabı ortak kod değil: beyan seçicisinde yıkıcı jest hiç yok, ve olmayan bir jest yanlış bir şey öğretmez. Beş sınırı ölçüm değil varsayımdı — karar 117 gözlemsiz zincire gitmeyi meşru kıldıysa o zincir listede olmak zorunda. Bir yeri adlandırmak veri girişi, bir yeri seçmek değil.",
+          where: "Ekran 1 · planlama (4d) · Ekranlar 2-4 (karar 59)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "124",
+          title: "Alışverişte \"Alındı\" sayaçtır, bölüm değildir",
+          rule: "Karar 116 bölümü \"alışveriş ve sonrasında\" var saydı; kod bunun bedelini ölçtü: işaretlenen satır aşağı inince liste hareket eden başparmağın altında yeniden sıralanıyor ve bir sonraki ürün yanlış işaretleniyor. Karar 118'in \"Alındı'nın üstünde\" çapası da bu bölüme bağlıydı.",
+          decision: "Alışverişte işaretli satır yerinde kalır ve listenin sonunda genişlemeyen bir sayaç durur: \"Alındı · 12/18\", chevron çizilmez. Alışveriş-sonrasında satırlar durulmuştur; karar 116'nın katlanabilir \"Alındı (12)\" bölümü orada, expand_more'uyla. Karar 118 aynen geçerli: sapan zincir bölümleri Alındı bloğunun üstünde, blok listenin sonunda.",
+          why: "Bölümün asıl işi \"kaç kaldı\"yı söylemek ve sayaç bunu satır kaydırmadan yapıyor; genişletme bir inceleme eylemi, ve inceleme alışveriş bitince olur — parmak o zaman durmuştur. Chevron'u alışverişte çizmemek de bir söz: dokunulacak bir yer varsa dokunulur. Karar 118'in çapası bu yüzden yeniden yazılmıyor, yerinde kalıyor.",
+          where: "Ekran 1 · alışveriş (A2) · karar 116 ve 118 güncellemesi",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "125",
+          title: "İki zincire sapma: cümlede sayı, bölümde ad",
+          rule: "trip_line.storeId serbest bir alan — bir listede hem A101 hem ŞOK istisnası olabilir. Maketin bütün örnekleri tek zincirli ve nesir bölümün tek olduğunda ısrar ediyor. \"2'si A101'de · 1'i ŞOK'ta\" bütçeyi aşıyor: tek zincirli cümle 72dp, reddedilen \"2 satır A101'de\" 97dp'ydi ve 360dp'de kırpılıyordu.",
+          decision: "Kodun iki kararı da doğru, yazılır. Cümle: tek zincirde ad kalır (\"3'ü A101'de\"), birden fazlasında ad düşer ve sayı doğru kalır (\"3'ü başka marketlerde\"). Bölüm: zincir başına bir bölüm, başlıkta storefront + \"A101'de · 2\".",
+          why: "Her yüzey ancak genişliğinin taşıdığı doğruyu söyler. En büyük zinciri yazıp ötekileri sessizce düşürmek satır sayısını yalanlar; sayı her durumda doğru ve hangisinin nerede olduğu bir dokunuş ötede. Bölüm başlığının kendi satırı var, o yüzden adı taşıyabilir — iki zinciri tek başlık altında toplamak o adı yalan yapardı.",
+          where: "Ekran 1 · planlama (4d) · alışveriş (A2)",
+          href: "Neydi - Ekran 1 Liste.dc.html"
+        },
+        {
+          no: "126",
+          title: "İstisnayı Ürün Detayı yazar; karar 38 tek satır için açılır",
+          rule: "Karar 117 istisnanın nerede durduğunu, 118 nasıl göründüğünü söyledi; yazan jest yoktu — setLineStore hazır ve çağransız. Karar 116 satır yüzeyinin planlamada veri değiştirmesini yasaklıyor, karar 110 satırda tek yığılmış hedef diyor, uzun dokunuş zaten Ürün Detayı'nı açıyor.",
+          decision: "İstisna Ürün Detayı'ndan yazılır. Sheet'in eylem grubuna tek bir satır girer — \"Nereden alınacak\": hedefteyken değer \"BİM · hedef\" (17sp/500 onSurfaceVariant), istisnadayken zincir adı (17sp/600 onSurface); dokunuş beyan seçicisinin çip ızgarasını açar, \"Belli değil\" yerine \"Hedefte al\" der. Satır grubun başına girer — satırın kendi olgusu, \"Bu listedeki miktar\" ile aynı cins — \"Listeden çıkar\" sonda kalır. Karar 38'in sırası bu bir ekleme için açılır.",
+          why: "Satırın kendi verisi satırın kendi sheet'inde durur ve yol öğretilmiş: planlamada satır dokunuşu zaten oraya gidiyor. Seçicide çoklu işaretleme, kullanıcıya baktığı listeyi ikinci bir düz listede reyon bağlamı olmadan yeniden tanımlatır. Yeni bir satır jesti karar 110'a dokunur ve boş yer yok. Sapma azınlık olduğu için aritmetik lehte: iki-üç satır için iki-üç dokunuş, on satır için sıfır — karar 117'nin dayandığı hesap bu.",
+          where: "Ekran 5 · Ürün Detayı · Ekran 1 · planlama (4d)",
+          href: "Neydi - Ekranlar 5-8.dc.html"
         }
       ]
     };

@@ -402,7 +402,7 @@ class Component extends DCLogic {
         { name: "Destinasyon", rule: "Geri yığınına girer, başlığında ← taşır, süreç ölümünden sonra geri gelir. Yalnızca kendi işini yapar." },
         { name: "Sheet", rule: "Yığına girmez ama geri onu kapatır. Arkasındaki ekran görünür ve canlı kalır; dışına dokunmak da kapatır." },
         { name: "Kart", rule: "Kameranın üstünde yaşayan tek yüzey. Dışına dokunmak kapatmaz — koridorda kazayla iptal olmasın diye." },
-        { name: "Geçici", rule: "Toast: 2 sn, aksiyonsuz, kuyruksuz. Snackbar: iki yerde, tek aksiyon — alışveriş kendiliğinden kapanınca ve satır silinince. İkisi de geri tuşundan etkilenmez." }
+        { name: "Geçici", rule: "Toast: 2 sn, aksiyonsuz, kuyruksuz; yedi kullanım — yedincisi toplu ekleme: \"12 satır eklendi\" (karar 91). Snackbar: üç yerde, tek aksiyon — alışveriş kendiliğinden kapanınca, satır ve gözlem silinince. İkisi de geri tuşundan etkilenmez." }
       ],
       backRules: [
         { surface: "Liste · plan modu", back: "Uygulamadan çıkar.", draft: "Yok — her değişiklik anında yazılır.", up: "Yok; kökte ← çizilmez." },
@@ -485,7 +485,7 @@ class Component extends DCLogic {
         { name: "Sağdan dolum", rule: "Fiyat alanı yazar kasa gibi sağdan dolar: 3 → 0,03 · 3950 → 39,50. Virgül ve nokta tuşları yok sayılır, ⌫ sağdan siler; dolu alanda ilk rakam değeri sıfırlayıp baştan başlatır, boşalan alan — TL hâline döner (karar 73). Dokunuş en yakın haneye tek atımlık seçim koyar: yazılan rakam yalnız o haneyi değiştirir, uzunluk sabit, seçim düşer; ayraç sabit — taşınamaz, silinemez. Sıfırlama yalnız seçimsiz ilk rakamda (karar 75)." },
         { name: "İlk odak", rule: "Hiçbir ekran açılırken klavye açmaz. Kök alanın klavyesini ekran değil kullanıcının Ekle dokunuşu açar. Tek istisna: fiyatı okunamamış onay kartı." },
         { name: "Dokunma hedefi", rule: "En küçük hedef 48dp. Alışveriş modunda satır 72dp, çünkü yürürken dokunuluyor." },
-        { name: "Haptik", rule: "Üç olay: işaretlemede hafif tık, çekimde hafif darbe, kaydetmede tek darbe; hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
+        { name: "Haptik", rule: "Dört olay: işaretlemede hafif tık, çekimde hafif darbe, kaydetmede tek darbe, listeyi görmeden eklemede — keşif sheet'inin üç yüzeyi ve \"«X» ekle\" satırı — hafif tık (karar 90). Kök alandan ekleme haptik almaz: satır gözün önünde belirir, yıkama onay verir. Hata yok. Haptik uygulamanın tek ses kanalı — ses efekti yok." },
         { name: "Uzun dokunuş", rule: "Üç yerde: Liste satırı Ürün Detayı açar; Ürün Detayı'nda gözlem satırı error renginde \"Bu gözlemi sil\" sunar; market seçicide gözlemsiz market silinebilir. Başka hiçbir yerde uzun dokunuş bir işe bağlanmaz." },
         { name: "Jest", rule: "Sağdan sola swipe yalnızca plan modunda ve yalnızca alınmamış satırda satırı siler; geri alma 5 sn'lik snackbar'da, aksiyon \"Geri al\". Alışveriş modunda, \"Alındı\" bölümünde ve etiket akışında jest yok." },
         { name: "Jestsiz eş", rule: "Silmenin jest olmayan eşi Ürün Detayı'nda: satıra uzun dokunuş → error renginde \"Listeden çıkar\". Taşma menüsünde silme yok — menü ekran düzeyinde yaşar, silme satır düzeyinde bir iştir." },
@@ -536,6 +536,8 @@ class Component extends DCLogic {
         { name: "Kart kapanıp kamera", dur: "300 ms", curve: "Kart iner + kamera anında hazır", rule: "Deklanşörün yeniden basılabilir olması 300 ms'yi geçmez" },
         { name: "Satır işaretleme", dur: "180 ms", curve: "Satır aşağı kayar, opaklık .5", rule: "Haptik animasyonun başında verilir, sonunda değil" },
         { name: "Satır silme", dur: "200 ms", curve: "Yükseklik daralması", rule: "Silinen satırın altındakiler tek hareketle toplanır" },
+        { name: "Eklenen satır vurgusu", dur: "1200 + 400 ms", curve: "successSurface dolgu · solma", rule: "Her ekleme yolunda; adet artışı da alır (karar 89, 92). Amber değil — amber \"eksik\" demek" },
+        { name: "Sayaç / rozet vurgusu", dur: "150 ms", curve: "Ölçek 1 → 1,12 → 1", rule: "Sheet sayacı ve adet rozeti; renk anlık ink'e çıkar, geri döner" },
         { name: "Toast", dur: "150 / 2000 / 150", curve: "Solma", rule: "Girişte kayma yok; yalnızca opaklık" },
         { name: "Snackbar", dur: "220 / 5000 / 220", curve: "Aşağıdan kayma", rule: "Üç yer: alışveriş kendiliğinden kapanışı, satır silme ve gözlem silme geri almaları" },
         { name: "Mod geçişi", dur: "260 ms", curve: "Çapraz solma", rule: "Satırlar yerinde kalır, yalnızca yoğunluk değişir" },
@@ -594,7 +596,7 @@ class Component extends DCLogic {
       ],
       device: [
         { name: "Rotasyon · liste", rule: "Yatay tutuşta düzen değişmez, yalnızca genişler; iki sütuna geçmez. Kaydırma konumu korunur." },
-        { name: "Rotasyon · kamera", rule: "Tek yüzeyde gerçek yatay düzen var: kontroller kısa kenara taşınır, metin dönmez. Dikeyde klavye açılınca kırpım şeridi toplanır, kapanınca geri gelir; kart kaydırılmaz, Vazgeç+Kaydet çifti klavyenin üstünde kalır (karar 70–71). Yatayda onay kartı sağ yarıda dikey panel; sayısal klavye sol yarıyı (vizörü) örter, kartı asla örtmez; amber şerit kartın içinde." },
+        { name: "Rotasyon · kamera", rule: "Tek yüzeyde gerçek yatay düzen var: kontroller kısa kenara taşınır, metin dönmez. Dikeyde klavye açılınca kırpım şeridi toplanır, kapanınca geri gelir; kart kaydırılmaz, Vazgeç+Kaydet çifti klavyenin üstünde kalır (karar 70–71). Yatayda onay kartı sağda %58 dikey panel (karar 100); vizör rehberi kısa kenardan bağlanır, deklanşör sağ kenarda dikey ortada ve kart açıkken gizlenir (karar 99). IME alttan tam genişlikte gelir: fiyat odağında kart klavyenin üstünde tam genişliğe yayılır — vizör gizlenir, alan çiftleri tek sıraya iner, hiçbir alan örtülmez, kaydırma yok; klavye kapanınca panel düzeni döner (karar 98). Amber şerit kartın içinde." },
         { name: "Tablet ve katlanabilir", rule: "v1'de tek sütun, 600dp'de ortalanmış ve 480dp genişlikte sabitlenmiş. İki panelli düzen yok." },
         { name: "Karanlık tema", rule: "Sistemi takip eder, uygulama içi anahtar yok. Geçiş anında olur, animasyonsuz." },
         { name: "Karanlık tema · kamera", rule: "Etiket akışı temadan bağımsız tek paletle çizilir: vizör koyu (göz karanlık rafa uyumlu kalır), onay kartı açık (alanlar okunur). Tema değişimi bu akışı etkilemez." },
@@ -612,6 +614,7 @@ class Component extends DCLogic {
         { t: "Marka gözlemin alanıdır; ürün jenerik kalır." },
         { t: "Ürün eşleşmesi markette bir kez kurulur: etiket metni güvenilirse ona bağlanır; gürültülüyse (Migros) ad önerilmez, son seçilen ürün hazır gelir." },
         { t: "İşaretleme snackbar açmaz; bir gezide yirmi kez olur." },
+        { t: "Toplu ekleme sayısını toast söyler: \"12 satır eklendi\"; sıfır hâli \"Hepsi zaten listende\" ya da \"Panoda liste bulunamadı\". Toplu yolda mükerrer satır adet artırmaz (karar 91)." },
         { t: "Toast kuyruğu yoktur: ikinci mesaj çakışırsa hiç çizilmez." },
         { t: "Snackbar iki yerde yaşar: alışverişin kendiliğinden kapanması ve satır silme geri alması. Üçüncü bir aksiyonlu geçici yüzey yok." },
         { t: "Her yıkıcı işlemin jest olmayan bir eşi var; eş satır düzeyinde Ürün Detayı'nda, taşma menüsünde değil." }
