@@ -5,8 +5,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.unit.sp
 import com.neydi.app.data.quantityLabel
+import com.neydi.app.data.sanitizeDecimal
 import com.neydi.app.data.unitOptionsFor
 import com.neydi.app.ui.components.QuantityStepper
 import com.neydi.app.ui.components.StepperMetrics
@@ -172,6 +178,8 @@ fun ProductSheetContent(
     onDeleteObservation: (String) -> Unit = {},
     /** Miktar sayacinin bir adimi - `true` artir (karar 108). */
     onStepQuantity: (Boolean) -> Unit = {},
+    /** Alana yazilan miktar - "buyuk atlamalar" bu yoldan (karar 108). */
+    onSetQuantity: (Double) -> Unit = {},
     /** Birim cipi secildi - YALNIZ bu satiri degistirir, katalogu degil. */
     onPickUnit: (String) -> Unit = {},
 ) {
@@ -241,6 +249,7 @@ fun ProductSheetContent(
             QuantityBlock(
                 quantity = q,
                 onStep = onStepQuantity,
+                onSetCount = onSetQuantity,
                 onPickUnit = onPickUnit,
             )
         }
@@ -330,6 +339,7 @@ fun ProductSheetContent(
 private fun QuantityBlock(
     quantity: RowQuantity,
     onStep: (Boolean) -> Unit,
+    onSetCount: (Double) -> Unit,
     onPickUnit: (String) -> Unit,
 ) {
     val options = unitOptionsFor(quantity.catalogUnit)
@@ -360,33 +370,23 @@ private fun QuantityBlock(
             onIncrement = { onStep(true) },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            // DEGER ALANI KONTURLU BIR KUTU - bir metin degil.
+            // DEGER ALANI YAZILABILIR - ve blogun asil sebebi bu.
             //
-            // Maket onu 16dp koseli, kenarlikli ve 182dp genisliginde
-            // ciziyor; sayac dugmelerinden farkli bir sekil, cunku farkli bir
-            // sey: ikisi arasinda GORULEN deger duruyor.
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(StepperMetrics.Detail.buttonHeight)
-                    .clip(NeydiShapes.medium)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outline,
-                        NeydiShapes.medium,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = quantityLabel(quantity.count, quantity.unit),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                )
-            }
+            // Satirdaki sayac tek adim atiyor; 1'den 20'ye gitmek orada on
+            // dokuz dokunus demek. Karar 108 *"buyuk atlamalar"*i buraya
+            // koyuyor ve yazmadan buyuk atlama olmuyor. Kullanicinin sikayeti
+            // de zaten buydu: *"4-5 yapmak istedigimde ya tekrardan yazmam
+            // gerekiyor ya da katalogdan surekli ekle-ekle yapmam lazim."*
+            //
+            // ALAN YALNIZ SAYIYI TASIYOR, birimi DEGIL: birimi hemen altindaki
+            // cipler soyluyor ve maket de alanda birim yazisi olmadan "4"
+            // ciziyor. Ikisini birlikte yazdirmak, kullanicidan ayristirilacak
+            // bir metin beklemek olurdu.
+            QuantityField(
+                count = quantity.count,
+                onCommit = onSetCount,
+                modifier = Modifier.weight(1f),
+            )
         }
 
         // TEK SECENEK VARSA CIP SERIDI HIC CIZILMIYOR: yumurta katalogda
@@ -419,6 +419,77 @@ private fun QuantityBlock(
         }
     }
 }
+
+/**
+ * Miktarin yazilabilir alani (karar 108).
+ *
+ * ## Neden yerel bir metin hali var
+ *
+ * Kullanici yazarken alan gecerli bir sayi TUTMAYABILIR - "1," ara bir hal ve
+ * sayiya cevrilemiyor. Her tusa basista veriye yazsaydik ya yaziyi silerdik ya
+ * da yarim sayiyi kaydederdik. Yerel hal yazmaya izin veriyor, veriye
+ * yalnizca cozumlenebilen degerler gidiyor.
+ *
+ * DISARIDAN GELEN DEGISIM DE IZLENIYOR (`remember(count)`): arti ve eksi
+ * dugmeleri ayni sayiyi degistiriyor ve alan onlari gormezse iki kontrol
+ * birbirinden ayrilirdi.
+ *
+ * SIFIR KABUL EDILMIYOR (karar 109): silme ayri bir eylem. Yazilan sifir
+ * sessizce yok sayiliyor - hata gostermek olmayan bir yanlisi varmis gibi
+ * yapmak olurdu; silmek isteyen zaten satiri kaydiriyor.
+ */
+@Composable
+private fun QuantityField(
+    count: Double,
+    onCommit: (Double) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var text by remember { mutableStateOf(decimalText(count)) }
+    // DISARIDAN GELEN DEGISIM IZLENIYOR - AMA YAZARKEN ARAYA GIRMEDEN.
+    //
+    // Ilk hali `remember(count)` idi, yani sayi her degistiginde metin
+    // sifirlaniyordu. Kullanici yazarken sayi ZATEN her tusta degisiyor ve
+    // sifirlama imlecin altindan metni cekiyordu: cihazda "2,5"i silip "1"
+    // yazmak "11" uretti.
+    //
+    // Kosul metnin COZUMLENEBILIR olmasi: yarim bir hal ("", "1,") sayiya
+    // cevrilemiyor ve o anda disaridan gelen bir degeri yazmak, kullanicinin
+    // yazmakta oldugu seyi ezmek olurdu. Cozumlenebiliyor ve farkliysa
+    // degisim disaridan gelmis demektir - arti/eksi dugmelerinden.
+    LaunchedEffect(count) {
+        val local = text.replace(',', '.').toDoubleOrNull()
+        if (local != null && local != count) text = decimalText(count)
+    }
+    BasicTextField(
+        value = text,
+        onValueChange = { raw ->
+            val cleaned = sanitizeDecimal(raw)
+            text = cleaned
+            cleaned.replace(',', '.').toDoubleOrNull()
+                ?.takeIf { it > 0.0 }
+                ?.let(onCommit)
+        },
+        textStyle = MaterialTheme.typography.titleLarge.copy(
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        ),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = modifier
+            .height(StepperMetrics.Detail.buttonHeight)
+            .clip(NeydiShapes.medium)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, NeydiShapes.medium),
+        decorationBox = { inner -> Box(contentAlignment = Alignment.Center) { inner() } },
+    )
+}
+
+/** "1,5" / "4" - rozetin bicimiyle ayni ondalik, birimsiz. */
+private fun decimalText(count: Double): String =
+    if (count % 1.0 == 0.0) count.toInt().toString() else count.toString().replace('.', ',')
 
 /** Birim cipi: secili olan kiremit dolgulu, otekiler konturlu (maketin olcusu). */
 @Composable

@@ -324,6 +324,26 @@ class ListViewModel(
      * adimi 100 ve sayac sifira inemiyor (karar 109). Donusturmek (1 kg ->
      * 1000 g) kullanicinin sectigi sayiyi sessizce yeniden yazmak olurdu.
      */
+    /**
+     * Alana YAZILAN miktar (karar 108) - "buyuk atlamalar" yolu.
+     *
+     * Sayaci taklit etmiyor: adim hesabi yok, gelen deger oldugu gibi
+     * yaziliyor. Alanin kendisi sifiri zaten eliyor (karar 109), yani taban
+     * kontrolu burada tekrarlanmiyor - iki yerde olsaydi biri digerinden
+     * ayrilirdi.
+     */
+    fun setSheetQuantity(count: Double) {
+        val sheet = _productSheet.value ?: return
+        val rowId = sheet.rowId ?: return
+        val q = sheet.quantity ?: return
+        if (count == q.count) return
+        _productSheet.update { it?.copy(quantity = q.copy(count = count)) }
+        viewModelScope.launch {
+            val line = repo.line(rowId) ?: return@launch
+            repo.setQuantity(rowId, count, line.unitOverride)
+        }
+    }
+
     fun pickSheetUnit(unit: String) {
         val sheet = _productSheet.value ?: return
         val rowId = sheet.rowId ?: return
