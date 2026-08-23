@@ -436,16 +436,7 @@ interface TripLineDao {
                         WHERE po3.productId = p.id AND po3.deletedAt IS NULL
                           AND po3.storeId = po.storeId
                           AND po3.observedAt >= :freshAfter)
-                ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPackUnit,
-
-            -- Sparkline satirin ICINDE ciziliyor, yani gecmis de bu sorgudan
-            -- gelmek zorunda. `group_concat` alt sorgunun SIRASINI korumuyor
-            -- diye bir garanti yok ama pratikte koruyor; sira bozulursa
-            -- sparkline'in sekli bozulur, fiyat bilgisi degil.
-            (SELECT group_concat(h.unitPriceMinor) FROM
-                (SELECT po.unitPriceMinor FROM price_observation po
-                    WHERE po.productId = p.id AND po.deletedAt IS NULL
-                    ORDER BY po.observedAt DESC LIMIT 8) h)     AS priceHistory
+                ORDER BY po.unitPriceMinor ASC LIMIT 1)         AS rivalPackUnit
         FROM trip_line tl
         JOIN product p  ON p.id = tl.productId
         JOIN category c ON c.id = p.categoryId

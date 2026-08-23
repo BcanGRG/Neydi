@@ -2,119 +2,82 @@ package com.neydi.app.ui.components
 
 import androidx.compose.ui.unit.dp
 import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Satir butcesi ve feda sirasi (karar 80).
+ * Ekonomi bandinin tek feda kurali (karar 104).
  *
  * ## Neden bu aritmetigin testi var
  *
- * Kodun kendi kurali bastan beri *"ad kirpilmasi kabul edilemez"* diyordu ve
- * TUTMUYORDU - olcum 411dp'de ada %35, 360dp'de dokuz karakter kaldigini
- * gosterdi. Kural artik yazili ve sayilarla: taban 120dp, feda sirasi bes
- * uyeli. Yazili bir kuralin nobetcisi yoksa bir sonraki bileşen degisiminde
- * yine sessizce bozulur.
+ * Once bes uyeli bir feda sirasi vardi ve kendi gerekcesini ihlal ediyordu:
+ * 360dp'de adet rozeti bile dusuyordu - yani *"yanlis adedin bedeli parayla
+ * odenir"* diyen kural, adedi siliyordu. Karar 102 anatomiyi bolerek yarisi
+ * kaldirdi; geriye tek bir soru kaldi ve o sorunun cevabi hala bir SOZ:
+ * *"cumle tam kalir."*
+ *
+ * Yazili bir sozun nobetcisi yoksa bir sonraki bilesen degisiminde sessizce
+ * bozulur - eskisi tam olarak boyle bozulmustu.
  */
 class RowBudgetTest {
 
-    /** Olculmus tipik maliyetler: oge genisligi + ondan onceki bosluk. */
-    private val pin = 20.dp
-    private val wideBadge = 84.dp // "1,5 kg"
-    private val narrowBadge = 56.dp // "2x"
-    private val avatar = 32.dp
-    private val delta = 61.dp
-    private val sparkline = 30.dp
+    /** Tasarimin 360dp olcumu: cip dusuldukten sonra banda kalan. */
+    private val bandAt360 = 186.dp
 
-    private fun costs(
-        badge: androidx.compose.ui.unit.Dp? = null,
-        withPin: Boolean = false,
-        withAvatar: Boolean = false,
-        withTrend: Boolean = false,
-    ) = buildMap {
-        if (withTrend) {
-            put(RowElement.Sparkline, sparkline)
-            put(RowElement.DeltaChip, delta)
-        }
-        if (withAvatar) put(RowElement.PartnerAvatar, avatar)
-        if (withPin) put(RowElement.StaplePin, pin)
-        badge?.let { put(RowElement.QuantityBadge, it) }
-    }
+    /** *"Fiyat 92dp + delta 46dp, metaya 140dp kaliyor."* */
+    private val delta = 46.dp
 
-    /** Yer bolsa HICBIR SEY dusmuyor - kural bir kisitlama degil, bir taban. */
+    /** *"«onceki 324,00 TL» 92dp."* */
+    private val shortMeta = 92.dp
+
+    /** *"Altta 30 karakterlik meta"* - ambalaj cumlesi bu uzunlukta. */
+    private val longMeta = 170.dp
+
+    /**
+     * 360dp'DE KISA META ILE DELTA BIRLIKTE YASIYOR.
+     *
+     * Tasarimin maketi ust satirda ikisini birden ciziyor ve altini ciziyor:
+     * *"alti oge birden ... hicbiri dusmuyor."*
+     */
     @Test
-    fun nothingIsSacrificedWhenThereIsRoom() {
-        val alive = survivingElements(
-            available = 400.dp,
-            costs = costs(narrowBadge, withPin = true, withAvatar = true),
-        )
-        assertEquals(3, alive.size)
+    fun aShortSentenceLeavesRoomForTheDelta() {
+        assertTrue(deltaSurvives(bandAt360, metaWidth = shortMeta, deltaWidth = delta))
     }
 
     /**
-     * SIRA TASARIMIN YAZDIGI SIRA: once sparkline, sonra delta, sonra avatar.
+     * UZUN CUMLE DELTAYI DUSURUR - TERSI DEGIL.
      *
-     * Gerekcesi bilgi degeri: *"sparkline sus, delta ozeti metada da yasar,
-     * avatar baglam."* Sira bozulursa satir once TASIDIGI BILGIYI kaybeder,
-     * susunu degil.
+     * Kararin kendi cumlesi: *"yalniz delta duser, cumle tam kalir."* Delta
+     * bir OZET; ozetin kendisi zaten metanin icinde yasiyor ("onceki 324,00
+     * TL" ile guncel fiyat yan yana duruyor). Cumleyi kirpip ozeti tutmak,
+     * bilgiyi atip susu tutmak olurdu.
      */
     @Test
-    fun theSacrificeOrderIsSparklineThenDeltaThenAvatar() {
-        val all = costs(wideBadge, withPin = true, withAvatar = true, withTrend = true)
-        // Her adimda bir oge daha dussun diye genisligi kademeli daraltiyoruz.
-        val wide = survivingElements(340.dp, all)
-        val tighter = survivingElements(300.dp, all)
-        val tightest = survivingElements(250.dp, all)
-
-        assertTrue(RowElement.Sparkline !in wide, "once sparkline dusmeliydi")
-        assertTrue(RowElement.DeltaChip in wide, "delta sparkline'dan once dusmemeli")
-        assertTrue(RowElement.DeltaChip !in tighter, "sirada delta vardi")
-        assertTrue(RowElement.PartnerAvatar !in tightest, "sirada avatar vardi")
+    fun aLongSentenceDropsTheDelta() {
+        assertFalse(deltaSurvives(bandAt360, metaWidth = longMeta, deltaWidth = delta))
     }
 
     /**
-     * 360dp + GENIS ROZET: tasarimin maketinin birebir yazdigi hal.
+     * BOS BAND: meta yoksa delta her zaman yasar.
      *
-     * *"76dp'lik «1,5 kg» tabana hic sigmaz: feda 3-4-5 isler (avatar,
-     * raptiye, rozet)."* Yani bu genislikte adet rozeti bile dusuyor - feda
-     * sirasinin SONUNCU uyesi, cunku ondan once dusecek bir sey kalmiyor.
+     * `Trend` dalinda meta *"onceki ..."* yaziyor, ama `cheaperElsewhere`
+     * bastirildiginda ya da band yalnizca delta tasidiginda genislik sifir
+     * olur. Sifirin delta dusurmesi anlamsiz olurdu.
      */
     @Test
-    fun aWideBadgeOnANarrowScreenCostsEverythingElse() {
-        // 360dp ekran: 360 - 32 (dolgu) - 36 (onay + bosluk) - 100 (fiyat
-        // cipi + bosluk) = 192dp. Cip butcenin KONUSU DEGIL, cunku dusmuyor.
-        val alive = survivingElements(
-            available = 192.dp,
-            costs = costs(wideBadge, withPin = true, withAvatar = true),
-        )
-        assertEquals(emptySet(), alive, "uc oge de dusmeliydi")
-        // Ve geriye kalan ad genisligi maketin yazdigi sayi: 192dp.
+    fun anEmptyBandAlwaysKeepsTheDelta() {
+        assertTrue(deltaSurvives(bandAt360, metaWidth = 0.dp, deltaWidth = delta))
     }
 
     /**
-     * AD TABANI HER ZAMAN KORUNUYOR - ogeler bittigi hal HARIC.
+     * DAR EKRAN: band kucuduginde ayni kisa cumle bile deltayi dusurur.
      *
-     * Hepsi dustugu halde taban saglanmiyorsa geriye ad ile fiyat cipi kaliyor:
-     * ikisi de dusmuyor, ad kirpiliyor. O hal bir kural ihlali degil, ekranin
-     * fiziksel siniri - ve fonksiyon onu sessizce dogru yapiyor: bos kume.
+     * Kural bir esik degil bir KARSILASTIRMA - bu yuzden ekran genisligi
+     * degistiginde cevap da degisiyor. Sabit bir taban koysaydik 320dp'lik
+     * cihazda cumle kirpilir, delta kalirdi.
      */
     @Test
-    fun theNameFloorIsHonouredUntilNothingIsLeftToDrop() {
-        val all = costs(wideBadge, withPin = true, withAvatar = true, withTrend = true)
-        listOf(400, 340, 300, 260, 200, 140).forEach { width ->
-            val alive = survivingElements(width.dp, all)
-            val used = alive.fold(0f) { acc, e -> acc + all.getValue(e).value }
-            assertTrue(
-                alive.isEmpty() || width - used >= NAME_FLOOR.value,
-                "$width dp: ad tabani korunmadi (kalan ${width - used}dp)",
-            )
-        }
-    }
-
-    /** Cizilmeyen oge feda edilemez - listeye hic girmiyor. */
-    @Test
-    fun anAbsentElementIsNeverCounted() {
-        val alive = survivingElements(200.dp, costs(badge = null, withPin = true))
-        assertTrue(RowElement.QuantityBadge !in alive)
+    fun aNarrowerBandDropsTheDeltaEvenForAShortSentence() {
+        assertFalse(deltaSurvives(130.dp, metaWidth = shortMeta, deltaWidth = delta))
     }
 }

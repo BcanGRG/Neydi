@@ -64,15 +64,6 @@ data class ListRowProjection(
     val rivalPackSize: Double? = null,
     val rivalPackUnit: String? = null,
 
-    /**
-     * Son sekiz gozlemin fiyatlari, YENIDEN ESKIYE, virgulle ayrilmis.
-     *
-     * `group_concat` ile geliyor cunku sparkline satirin icinde ciziliyor ve
-     * tek-SQL kurali satir basina ikinci bir sorguyu yasakliyor. Dizi yerine
-     * dizgi olmasinin sebebi Room'un skaler alt sorgudan koleksiyon
-     * dondurememesi; ayristirmasi tek satir.
-     */
-    val priceHistory: String? = null,
 )
 
 /** Gezi basina satir sayisi (Gecmis ekrani). */

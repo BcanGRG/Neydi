@@ -21,7 +21,7 @@ class RowIndexTest {
     private fun row(id: String) = UiRow(
         id = id,
         productId = "p-$id",
-        row = ListRow(name = id, quantity = null, checked = false, isStaple = false),
+        row = ListRow(name = id, checked = false, isStaple = false),
     )
 
     private fun state(

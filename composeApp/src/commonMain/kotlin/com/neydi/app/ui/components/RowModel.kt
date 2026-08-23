@@ -1,6 +1,7 @@
 package com.neydi.app.ui.components
 
 import androidx.compose.runtime.Immutable
+import com.neydi.app.data.formatAge
 
 /**
  * Liste satirinin gorunum modelleri. GECICI: F2'de Room entity'lerinden turetilecek.
@@ -24,15 +25,21 @@ sealed interface PriceHint {
     @Immutable
     data class Single(val price: String, val store: String, val daysAgo: Int) : PriceHint
 
-    /** 2+ gozlem, ambalaj ayni: trend + delta + sparkline. */
+    /**
+     * 2+ gozlem, ambalaj ayni: trend + delta.
+     *
+     * SPARKLINE ALANI SILINDI (karar 106). Cizgi listeden kalkinca `history`
+     * yalnizca YAZILAN, hic okunmayan bir alan kaldi - ve bedeli gorunmezdi:
+     * satir basina korele bir `group_concat` alt sorgusu. Bileseni silip veri
+     * hattini ayakta birakmak tam olarak sessiz curume olurdu. Gecmis grafigi
+     * Urun Detayi'nda kendi sorgusundan besleniyor.
+     */
     @Immutable
     data class Trend(
         val from: String,
         val to: String,
         val deltaPercent: Int,
         val rising: Boolean,
-        /** Son 8 gozlem. 2'den azsa sparkline cizilmez. */
-        val history: List<Float>,
     ) : PriceHint
 
     /**
@@ -47,8 +54,21 @@ sealed interface PriceHint {
 @Immutable
 data class ListRow(
     val name: String,
-    /** "2x" veya "1 kg". Adet 1 ise null - rozet cizilmez. */
-    val quantity: String? = null,
+    /**
+     * "2x", "1 kg" ya da yalin "1". HER SATIRDA dolu (karar 103).
+     *
+     * Rozet artik yalnizca okunan degil DUZENLENEN yer; cizilmeyen rozet
+     * duzenlenemeyen miktar demek olurdu.
+     */
+    val quantity: String = "1",
+    /**
+     * Miktar varsayilanindan cikarildi mi (karar 107).
+     *
+     * Rozetin dolgulu mu konturlu mu cizilecegini bu soyluyor: kontur
+     * "dokunulmamis", dolgu "bunu ben sectim". Ayrimin degeri listeye hizli
+     * bakista: hangi satirlarin miktarini gercekten dusundugunu gorursun.
+     */
+    val quantityModified: Boolean = false,
     val checked: Boolean = false,
     /** "Her zamankiler" bolumundeki sabit. %70 opaklik + raptiye ile cizilir. */
     val isStaple: Boolean = false,
@@ -90,6 +110,62 @@ internal fun ListRow.secondLine(): SecondLine = when {
     suggestionReason != null -> SecondLine.Reason(suggestionReason)
     note != null -> SecondLine.Note(note)
     else -> SecondLine.Empty
+}
+
+/**
+ * Bir gozlemin "guncel" sayildigi sinir (karar 105).
+ *
+ * ## Neden bir sinir var
+ *
+ * Fiyat cipi GUNCEL fiyati tasiyor. Iki hafta once gorulmus bir fiyati cipe
+ * koymak, onu bugunku fiyat gibi gostermek olurdu - satirin en cok bakilan
+ * yerinde, en kolay yanlis anlasilacak bicimde. Sinirin otesinde cip HIC
+ * cizilmiyor ve fiyat cumlenin icine giriyor: *"son 24,90 TL · Migros · 8 gun
+ * once"*. Ayni sayi, ama artik bir HATIRLAMA olarak isaretlenmis.
+ *
+ * Yedi gun, market fiyatlarinin haftalik kampanya dongusuyle degistigi
+ * gercegine dayaniyor: bir haftadan eski etiket baska bir kampanyaya ait
+ * olabilir.
+ */
+const val FRESH_DAYS: Int = 7
+
+/**
+ * Ekonomi bandinin cumlesi (karar 104-105). Bos ise bant cizilmez.
+ *
+ * ## Neden saf bir fonksiyon
+ *
+ * Bu cumle bir SOZ tasiyor: *"fiyat iki yerde asla yazilmaz."* Cipin ne zaman
+ * cizildigi ile cumlenin ne yazdigi ayri yerlerde kararlastirilirsa, ikisinin
+ * ayni anda fiyat yazdigi bir hal er ya da gec ortaya cikar - nitekim eskiden
+ * `Single` dalinda tam olarak o oluyordu. Saf fonksiyon o sozu Compose
+ * kurmadan sinanabilir kiliyor.
+ */
+internal fun SecondLine.metaText(): String = when (this) {
+    is SecondLine.Reason -> text
+    is SecondLine.Note -> text
+    SecondLine.Empty -> ""
+    is SecondLine.Price -> when (val h = hint) {
+        PriceHint.None -> ""
+
+        // SINGLE'IN IKI TAZELIK HALI (karar 105).
+        //
+        // Karar 83 ile maket celismiyordu, iki FARKLI hali ciziyordu ve kod
+        // yalnizca birini biliyordu. Taze gozlemde fiyat cipte durur, bant
+        // yalniz zincir + yasi yazar. Eskimis gozlemde guncel fiyat YOKTUR,
+        // o yuzden cip de yoktur - hatirlanan fiyat cumleye girer.
+        //
+        // YAS BICIMI, merdiven DEGIL (F11.25): burada okunan sey gozlemin yasi
+        // ve "gecen hafta" yedi ile on uc arasini silerdi - oysa "8 gun once"
+        // ile "12 gun once" arasindaki fark tam da kullanicinin baktigi sey.
+        is PriceHint.Single ->
+            if (h.daysAgo <= FRESH_DAYS) "${h.store} · ${formatAge(h.daysAgo)}"
+            else "son ${h.price} · ${h.store} · ${formatAge(h.daysAgo)}"
+
+        // GUNCEL FIYAT YAZMIYOR (karar 83): meta GECMISI anlatir, guncel fiyat
+        // her zaman ve yalniz fiyat cipindedir.
+        is PriceHint.Trend -> "önce ${h.from}"
+        is PriceHint.PackChanged -> "ambalaj küçüldü: ${h.fromPack} → ${h.toPack}"
+    }
 }
 
 /**

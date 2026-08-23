@@ -79,25 +79,8 @@ internal fun ListRowProjection.toPriceHint(now: Long, chipWins: Boolean = false)
         to = formatChipMinor(last),
         deltaPercent = abs(delta * 100).roundToInt(),
         rising = last > prev,
-        history = parseHistory(priceHistory),
     )
 }
-
-/**
- * `group_concat` ciktisini sparkline degerlerine cevirir.
- *
- * SQL yeniden eskiye siraliyor, sparkline ise soldan saga ZAMAN okuyor -
- * dolayisiyla ters cevriliyor. Ters cevrilmezse grafik zamanda geriye akardi
- * ve yukselen bir fiyat dusuyormus gibi gorunurdu.
- *
- * Bozuk parca sessizce ATLANIYOR: sparkline bir suslemedir, tek bir okunamayan
- * deger yuzunden satirin tamamini dusurmek orantisiz olurdu.
- */
-internal fun parseHistory(raw: String?): List<Float> =
-    raw?.split(',')
-        ?.mapNotNull { it.trim().toFloatOrNull() }
-        ?.reversed()
-        .orEmpty()
 
 /**
  * Iki ambalaj KARSILASTIRILABILIR mi - trendin de cipin de dayandigi ONERME.

@@ -36,7 +36,7 @@ object Spacing {
 /** Satir yukseklikleri - alisveris modunda 56/68 -> 72dp. */
 object Sizes {
     val rowCollapsed = 56.dp
-    val rowWithMeta = 68.dp
+    val rowWithMeta = 72.dp
     val rowShopping = 72.dp
     /**
      * EN KUCUK DOKUNMA HEDEFI - TEK SAYI, iOS dahil (karar 56).
