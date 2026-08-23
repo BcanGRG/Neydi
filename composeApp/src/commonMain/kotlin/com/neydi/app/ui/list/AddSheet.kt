@@ -452,7 +452,7 @@ private const val RARE_LIMIT = 24
 
 // --- Preview ---------------------------------------------------------------
 
-private fun k(id: String, name: String) = Category(id, name, 0, 0xFF6E8B3D)
+private fun k(id: String, name: String) = Category(id, name, 0)
 private fun d(id: String, name: String, unit: String) = DiscoveryItem(id, name, unit, name.lowercase())
 
 @PreviewLightDark

@@ -17,8 +17,6 @@ data class Category(
     @PrimaryKey val id: String,
     val name: String,
     val sortOrder: Int,
-    /** Kategori kutucugunun tonu (ARGB). Ikon yoksa iki-harf fallback bunun uzerine biner. */
-    val tintArgb: Long,
 )
 
 /**

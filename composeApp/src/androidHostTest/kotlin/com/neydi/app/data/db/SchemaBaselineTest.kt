@@ -49,6 +49,12 @@ class SchemaBaselineTest {
         // uc-vurus sorgusu). Ikisi de nullable/indeks, veri geri-doldurmasi
         // YOK - toplu bump kuralinin sarti korunuyor.
         6 to "eb22e60bf4e0d69ab72f6b8049ca1734",
+        // v7: BIR EKLEME, BIR SILME. `trip_line.unitOverride` (karar 108 -
+        // kullanicinin o satir icin sectigi birim, nullable cunku `null`
+        // "katalogu izliyor" demek) ve `category.tintArgb` DUSTU (karar 101 -
+        // on iki ton tohumlaniyordu, hicbiri cizilmiyordu). Ikisi ayni bump'ta
+        // ki cihaz dansi bir kez yapilsin.
+        7 to "eadf303b0256138e56ff65f1bc333b8f",
     )
 
     private val schemaDir: File by lazy {

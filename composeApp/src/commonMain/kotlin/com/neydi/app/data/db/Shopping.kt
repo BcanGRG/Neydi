@@ -111,7 +111,32 @@ data class TripLine(
     val productId: String,
     /** Adet ya da miktar. 1.5 kg mumkun oldugu icin Double; para DEGIL, kural gecerli degil. */
     val quantity: Double = 1.0,
+    /**
+     * Satirin birimi - urun olusturulurken `product.defaultUnit`ten KOPYALANIR.
+     *
+     * Kopya oldugu icin zaten satira ozel; ama kimse onu ekleme sonrasi
+     * degistirmiyordu ve *"katalog boyle diyor"* ile *"kullanici boyle secti"*
+     * arasindaki fark burada kaybolurdu. Bkz. [unitOverride].
+     */
     val unit: String,
+    /**
+     * Kullanicinin BU SATIR icin sectigi birim (karar 108). `null` = katalogu izliyor.
+     *
+     * ## Neden ayri bir kolon
+     *
+     * [unit] zaten satira ozel, yani birim degisimini oraya yazmak yeterdi -
+     * ama o zaman iki hal ayirt edilemezdi: *"katalog kg diyor"* ile
+     * *"kullanici kg secti"*. Ikisini ayirmak iki yerde gerekli: rozet
+     * varsayilan miktarda DOLGUSUZ ciziliyor (karar 107) ve Urun Detayi
+     * ciplerin altina *"katalog: kg"* yaziyor (karar 108).
+     *
+     * Ve fark teorik degil: `CatalogSeeder` katalogu `INSERT OR REPLACE` ile
+     * yeniliyor. Sadece [unit]'i karsilastirsaydik, katalogun varsayilani
+     * degistigi gun kullanicinin kendi secimi sessizce "varsayilan"a donerdi.
+     *
+     * Gecerli birim = `unitOverride ?: unit`.
+     */
+    val unitOverride: String? = null,
     val checked: Boolean = false,
     val checkedAt: Long? = null,
     /** Kim ekledi - satirdaki es avatari bundan cikiyor. */
