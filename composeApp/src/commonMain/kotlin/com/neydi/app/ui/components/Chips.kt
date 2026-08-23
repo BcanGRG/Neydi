@@ -76,7 +76,6 @@ private val PRICE_CHIP_VISUAL = 26.dp
 fun PriceChip(
     text: String,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
 ) {
     val styles = LocalNeydiTextStyles.current
     // CIP GERCEKTEN BIR CIP: dolgulu hap, ciplak metin degil.
@@ -98,28 +97,20 @@ fun PriceChip(
     // her satiri 56dp yerine 64dp yapiyordu ve "10-11 satir gorunur" hedefini
     // dokuza dusuruyordu. Hedef bir GORSEL BOYUT degil bir isabet sozlesmesi;
     // satir zaten 56dp isabet veriyor.
-    // ⚠ DOKUNMA HEDEFI BUGUN 92dp x 26dp - 48dp DEGIL (acik madde).
+    // CIP DOKUNULABILIR DEGIL (karar 110).
     //
-    // Karar 105 *"gorsel 26dp, hedef 48dp, satirin alt yarisina yayilir, cip
-    // gorselini buyutmez"* diyor ve maketin kendi geometrisinde bu UCU BIRDEN
-    // saglanamiyor: satir 72dp, kimlik bandi 24dp, aradaki bosluk 5dp; ekonomi
-    // bandina 26dp kaliyor ve cip o bandin icinde duruyor (maket raptiyeyi
-    // cible ayni dikeyde ciziyor - disari alinca kimlik bandi 92dp daraliyor
-    // ve raptiye satirin ortasinda asili kaliyor).
+    // Bir sure once `onClick` alirdi ve karar 84 *"cip dokunusu Urun Detayi
+    // acar"* diyordu. Karar 105 ustune *"gorsel 26dp, hedef 48dp"* ekleyince
+    // geometri tutmadi ve `docs/35` soruldu; gelen cevap sorunun yerini
+    // degistirdi: *"asil celiski 72dp satirda IKI yiginlmis 48dp hedef
+    // istenmesiydi (rozet + cip; 2 x 48 = 96)."*
     //
-    // Iki standart yol da cihazda denendi ve ikisi de basarisiz:
-    //   - Olcum/yerlesim ayirmak (dugumu 48dp olcup 26dp bildirmek): Compose'un
-    //     isabet testi ust dugumun BILDIRDIGI boyutu kullaniyor, dolayisiyla
-    //     gorselin disina dokunmak satiri isaretledi.
-    //   - `minimumInteractiveComponentSize()`: bu surumde YERLESIMI buyutuyor,
-    //     yani satir 72dp'yi asti.
-    //
-    // Bugunku hedef yatayda comert (92dp), dikeyde 26dp. Tasarima soruldu:
-    // satir 80dp'ye mi cikmali, yoksa cip kimlik bandiyla ayni katta mi
-    // durmali. Cevap gelene kadar GORUNUM maketle birebir, hedef eksik.
-    val base = modifier.width(SizesExtra.priceColumn)
+    // Cozum teknik degil MIKTARSAL. Satirin tek yigilmis hedefi adet rozeti;
+    // ekonomi bandinin tamami bilgi. Karar 84'un fikrasi da geri cekildi -
+    // uzun basma zaten Urun Detayi'ni aciyordu, yani cipin dokunusu
+    // mukerrerdi.
     Box(
-        modifier = if (onClick != null) base.pressable(onTap = onClick) else base,
+        modifier = modifier.width(SizesExtra.priceColumn),
         contentAlignment = Alignment.CenterEnd,
     ) {
         Box(

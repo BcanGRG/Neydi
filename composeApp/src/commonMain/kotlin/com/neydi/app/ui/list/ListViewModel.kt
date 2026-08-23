@@ -282,6 +282,26 @@ class ListViewModel(
         _productSheet.value = null
     }
 
+    private val _stepper = MutableStateFlow<OpenStepper?>(null)
+
+    /**
+     * Acik olan miktar sayaci (karar 107).
+     *
+     * SAHIP BURASI, SATIR DEGIL: `LazyColumn` gorunmeyen satiri geri
+     * donusturuyor ve satir-yerel bir `remember` kaydirmada olurdu. Kaydirmanin
+     * YAPMASI GEREKEN sey sayaci kapatmak - ama gorunur bir kapanma olarak,
+     * satirla birlikte yok olarak degil. Ve tek sahip olmadan "yalniz bir satir
+     * acik kalir" kurali yazilamazdi.
+     */
+    val stepper: StateFlow<OpenStepper?> = _stepper
+
+    private var stepperSeq = 0L
+
+    /** Sayacin butun gecisleri tek kapidan - kural [reduceStepper]'da. */
+    fun onStepperEvent(event: StepperEvent) {
+        _stepper.value = reduceStepper(_stepper.value, event, ++stepperSeq)
+    }
+
     /**
      * Sayacin bir adimi (karar 107).
      *
@@ -296,6 +316,10 @@ class ListViewModel(
      * yani mevcut degeri gecirmeyi unutmak onu silmek olurdu.
      */
     fun stepQuantity(rowId: String, up: Boolean) {
+        // SUREYI BURADA UZATIYORUZ, cagiranda degil: "her dokunus sayaci
+        // yeniden kurar" kurali cagiran taraflara birakilsaydi, yeni bir sayac
+        // yuzeyi (Urun Detayi, kesif hucresi) onu ayrica yazmayi unutabilirdi.
+        onStepperEvent(StepperEvent.Step(rowId))
         viewModelScope.launch {
             val line = repo.line(rowId) ?: return@launch
             val unit = line.unitOverride ?: line.unit
@@ -424,7 +448,7 @@ class ListViewModel(
     /**
      * Bos durumdaki bir reyona dokunus - kesif sheet'ini O REYON SECILI acar.
      *
-     * Karar 64 sheet'in ic yapisini degistirdi (kutucuk izgarasi olduу, yerine
+     * Karar 64 sheet'in ic yapisini degistirdi (kutucuk izgarasi oldu, yerine
      * yatay filtre cipi geldi) ama bu giris noktasinin isi ayni: kullanici bir
      * reyon soylemis, sheet o filtreyle acilmali.
      */

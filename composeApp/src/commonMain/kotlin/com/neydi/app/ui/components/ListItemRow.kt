@@ -15,6 +15,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +32,13 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,7 +131,19 @@ fun ListItemRow(
      * bir ara cozum. F5.2 gelince cip asil acici olur.
      */
     onLongPress: (() -> Unit)? = null,
-    onPriceClick: (() -> Unit)? = null,
+
+    /**
+     * Miktar sayaci BU SATIRDA acik mi (karar 107).
+     *
+     * Satirin kendi state'i DEGIL: `LazyColumn` gorunmeyen satiri geri
+     * donusturuyor ve satir-yerel bir `remember` kaydirmada olurdu - oysa
+     * kaydirmanin yapmasi gereken sey sayaci KAPATMAK, kaybetmek degil.
+     */
+    stepperOpen: Boolean = false,
+    /** Adet rozetine dokunuldu - sayaci acar. */
+    onBadgeTap: (() -> Unit)? = null,
+    /** `+` (true) ya da `-` (false). */
+    onStep: ((up: Boolean) -> Unit)? = null,
     /**
      * Sagdan sola cekince siler (tasarim karari 37).
      *
@@ -191,7 +211,31 @@ fun ListItemRow(
     val thresholdPx = with(density) { SWIPE_THRESHOLD.toPx() }
     val surface = MaterialTheme.colorScheme.surface
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    // ROZETIN 48dp'LIK HEDEFI ICIN OLCUM (karar 107 + 56).
+    //
+    // ## Neden ustte ayri bir kutu
+    //
+    // Rozet 24dp'lik kimlik bandinin icinde ve orada 48dp'lik bir dugum
+    // BANDI 48dp yapardi - yani satiri 72dp'nin uzerine cikarirdi. `docs/35`
+    // iki standart yolun da cihazda basarisiz oldugunu kaydediyor: olcum ile
+    // yerlesimi ayirmak isabet testini genisletmiyor (Compose ust dugumun
+    // BILDIRDIGI boyutu kullaniyor), `minimumInteractiveComponentSize()` ise
+    // yerlesimi buyutuyor.
+    //
+    // Ucuncu yol: hedefi bandin DISINA, satirin kok kutusuna koymak. Orada
+    // dugum gercekten 48dp - hicbir dar ebeveyn onu kirpmiyor - ve satirin
+    // yuksekligine dokunmuyor, cunku `Box` icinde serbest konumlandiriliyor.
+    // Rozetin nerede oldugunu olcumden ogreniyoruz; sabit bir sayi yazmak
+    // rozetin genisligi degistiginde ("1" ile "1,5 kg" arasinda 54dp fark)
+    // hedefi kaydirirdi.
+    var badgeInRoot by remember { mutableStateOf<Rect?>(null) }
+    var rowInRoot by remember { mutableStateOf(Offset.Zero) }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .onGloballyPositioned { rowInRoot = it.positionInRoot() },
+    ) {
         if (onSwipeDelete != null && offsetX.value < 0f) {
             // Kirmizi zemin YALNIZCA surukleme sirasinda ciziliyor. Her zaman
             // cizilseydi satirin arkasinda gorunmeyen bir katman dururdu ve
@@ -262,6 +306,17 @@ fun ListItemRow(
             // "YAPILDI" YIKAMASI, satirin KENDI zemininin ustunde ve butun
             // icerigin ALTINDA - metnin okunurlugu degismiyor, yalnizca zemin
             // bir sure yesile caliyor.
+            // SAYAC ACIKKEN SATIRIN KENDI ZEMINI VAR (karar 107).
+            //
+            // Maket acik satiri ayri bir zemine oturtuyor ve sebebi jestin
+            // kendisi: uc saniyelik bir kontrol, hangi satira ait oldugunu
+            // kendisi soylemek zorunda. Sayac ekranin ortasindaysa ve satirin
+            // siniri gorunmuyorsa "+" hangi urune gidiyor belli olmaz.
+            .then(
+                if (stepperOpen) {
+                    Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                } else Modifier,
+            )
             .then(
                 if (wash.value > 0f) {
                     Modifier.background(extras.successSurface.copy(alpha = wash.value))
@@ -326,7 +381,11 @@ fun ListItemRow(
             ) {
                 // ROZET BASTA VE HER SATIRDA (karar 103): miktar, adin
                 // solunda okunan ilk sey - ve dokununca duzenlenen yer.
-                QuantityBadge(row.quantity, modified = row.quantityModified)
+                QuantityBadge(
+                    row.quantity,
+                    modifier = Modifier.onGloballyPositioned { badgeInRoot = it.boundsInRoot() },
+                    modified = row.quantityModified,
+                )
 
                 Text(
                     modifier = Modifier.weight(1f),
@@ -349,7 +408,34 @@ fun ListItemRow(
             //
             // Alisveris modunda hic cizilmiyor: reyonda gerekli tek bilgi urun
             // adi, ve 8-9 satir yerine 7-8 satir gormek burada bedel.
-            if (hasSecondLine && !shoppingMode) {
+            // ⚠ SAYAC ALISVERIS MODUNDA ACILMIYOR (acik madde, tasarima soruldu).
+            //
+            // Cihazda goruldu: kosul yalnizca `stepperOpen` olunca sayac reyon
+            // satirinda da beliriyordu. Ekonomi bandi zaten `!shoppingMode` ile
+            // korunuyor ve gerekcesi burada da gecerli - *"reyonda gerekli tek
+            // bilgi urun adi"*. Karar 107'nin kendi gerekcesi de bir PLANLAMA
+            // cumlesi: *"miktari duzenlerken kimse onceki 324,00 TL'ye
+            // bakmiyor."*
+            //
+            // Rozet reyonda yine ciziliyor, ama okunan bir sey olarak.
+            if (stepperOpen && onStep != null && !shoppingMode) {
+                // SAYAC EKONOMI BANDININ YERINE GECIYOR (karar 107).
+                //
+                // KIMLIK BANDI YERINDE KALIYOR: rozet, ad, avatar ve raptiye
+                // kipirdamiyor - sayac yalnizca ALT bandi devraliyor. Meta ile
+                // fiyat o uc saniye boyunca gizli, cunku miktari duzenleyen
+                // kimse "onceki 324,00 TL"ye bakmiyor.
+                //
+                // Satir 72dp'den 77dp'ye cikiyor (sayac bandi 32dp, meta bandi
+                // 26dp) ve bu maketin kendi olcusu - "kimlik bandi bozulmaz"
+                // cumlesi pikselde donmayi degil, BILESIMIN korunmasini
+                // soyluyor.
+                RowStepper(
+                    value = row.quantity,
+                    onDecrement = { onStep(false) },
+                    onIncrement = { onStep(true) },
+                )
+            } else if (hasSecondLine && !shoppingMode) {
                 // FIYAT CIPI EKONOMI BANDININ ICINDE - kolonun disinda degil.
                 //
                 // Disarida durursa kimlik bandi 92dp daralir ve raptiye ile
@@ -363,13 +449,68 @@ fun ListItemRow(
                     priceText = (row.priceHint as? PriceHint.Single)
                         ?.takeIf { it.daysAgo <= FRESH_DAYS }?.price
                         ?: (row.priceHint as? PriceHint.Trend)?.to,
-                    onPriceClick = onPriceClick,
                 )
             }
         }
 
     }
+
+        // ROZETIN GERCEK 48dp HEDEFI - gorunmez, satirin yuksekligine
+        // dokunmuyor ve rozetin GENISLIGINI aliyor.
+        //
+        // Rozetin ustunde/altinda kalan alan kimlik bandinin bos payi; orada
+        // dokunulacak baska bir sey yok, yani calinan bir hedef de yok.
+        // SATIRIN TEK YIGILMIS HEDEFI ROZET (karar 110).
+        if (onBadgeTap != null) TouchTarget(badgeInRoot, rowInRoot, onBadgeTap)
     }
+}
+
+/** En kucuk dokunma hedefi (karar 56): tek sayi, 48dp. */
+private val TOUCH_TARGET = 48.dp
+
+/**
+ * Adet rozetinin uzerine 48dp'lik GORUNMEZ dokunma hedefi koyar.
+ *
+ * ## Neden dar bandin disinda
+ *
+ * Rozet 24dp'lik kimlik bandinda ve orada 48dp'lik bir dugum BANDI buyuturdu -
+ * yani satiri 72dp'nin uzerine cikarirdi. `docs/35` iki standart yolun da
+ * cihazda basarisiz oldugunu kaydetti: olcum ile yerlesimi ayirmak isabet
+ * testini genisletmiyor (Compose ust dugumun BILDIRDIGI boyutu kullaniyor),
+ * `minimumInteractiveComponentSize()` ise yerlesimi buyutuyor.
+ *
+ * Calisan yol hedefi dar ebeveynin DISINA, satirin kok kutusuna koymak: orada
+ * dugum gercekten 48dp ve satirin yuksekligine dokunmuyor.
+ *
+ * ## Neden YALNIZCA rozet
+ *
+ * Ayni yol fiyat cipi icin de yazilmisti ve calisiyordu - ama karar 110 soruyu
+ * baska yerden cozdu: *"asil celiski 72dp satirda IKI yiginlmis 48dp hedef
+ * istenmesiydi (rozet + cip; 2 x 48 = 96)."* Cip artik dokunulabilir degil,
+ * ekonomi bandinin tamami bilgi. Karar 84'un *"cip dokunusu Urun Detayi acar"*
+ * fikrasi da geri cekildi - uzun basma zaten ayni seyi yapiyordu.
+ *
+ * Yani cozum teknik degil MIKTARSAL: bir satirda bir yigilmis hedef var.
+ *
+ * @param bounds rozetin koke gore siniri; henuz olculmediyse `null` ve hedef
+ *   cizilmez (ilk kareyi kacirmak, yanlis yere hedef koymaktan iyi).
+ */
+@Composable
+private fun TouchTarget(bounds: Rect?, rowInRoot: Offset, onTap: () -> Unit) {
+    if (bounds == null) return
+    val density = LocalDensity.current
+    val half = with(density) { (TOUCH_TARGET / 2).toPx() }
+    Box(
+        modifier = Modifier
+            .offset {
+                IntOffset(
+                    (bounds.left - rowInRoot.x).roundToInt(),
+                    (bounds.center.y - rowInRoot.y - half).roundToInt(),
+                )
+            }
+            .size(width = with(density) { bounds.width.toDp() }, height = TOUCH_TARGET)
+            .pressable(onTap = onTap),
+    )
 }
 
 /**
@@ -475,7 +616,6 @@ private fun EconomyBand(
     second: SecondLine,
     cheaper: String?,
     priceText: String?,
-    onPriceClick: (() -> Unit)?,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz cipi YA
@@ -536,10 +676,61 @@ private fun EconomyBand(
                 Spacer(Modifier.weight(1f))
             }
             if (visibleTrend != null) DeltaChip(visibleTrend.deltaPercent, visibleTrend.rising)
-            if (priceText != null) PriceChip(priceText, onClick = onPriceClick)
+            if (priceText != null) PriceChip(priceText)
         }
     }
 }
+
+/**
+ * Satirdaki uc saniyelik miktar sayaci (karar 107).
+ *
+ * Olculer maketten: bant 32dp, aralik 6dp, dugmeler 44x32, deger 64dp
+ * genisliginde 17sp/700 - yani ADIN puntosuyla ayni. Deger sayacin konusu,
+ * kucultmek onu ikincil bir bilgi gibi gosterirdi.
+ */
+@Composable
+private fun RowStepper(
+    value: String,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        QuantityStepper(
+            metrics = StepperMetrics.Row,
+            onDecrement = onDecrement,
+            onIncrement = onIncrement,
+        ) {
+            Text(
+                modifier = Modifier.width(STEPPER_VALUE_WIDTH),
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        // IPUCU YENI BIR JEST TARIF ETMIYOR: uzun basma zaten Urun Detayi'ni
+        // aciyor ve birim cipleri karar 108 ile orada. Cumle var olan yolu
+        // ADLANDIRIYOR - "gorunmeyen kontrol yok" kuralinin ucuz karsiligi.
+        Text(
+            text = "birim için basılı tut",
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.outline,
+            maxLines = 1,
+        )
+    }
+}
+
+/** Sayacin deger sutunu - maketin olcusu; sayi degisince dugmeler kaymasin diye sabit. */
+private val STEPPER_VALUE_WIDTH = 64.dp
 
 @Composable
 private fun MetaText(text: String, color: Color, modifier: Modifier = Modifier) {

@@ -38,7 +38,38 @@ raptiyeyi çiple **aynı dikeyde** çiziyor; çip dışarı alınınca kimlik ba
 Hedef **92dp × 26dp**. Yatayda cömert, dikeyde karar 56'nın *"tek sayı 48dp"*
 kuralının altında. Görünüm maketle birebir; eksik olan yalnızca hedef.
 
-## Soru
+## ✅ Cevap — karar 110 (23 Ağustos 2026)
+
+**Dört seçenek de reddedildi**, çünkü soruyu yanlış yerden sormuşuz. Tasarımın
+cümlesi:
+
+> *"Asıl çelişki 72dp satırda **İKİ yığılmış 48dp hedef** istenmesiydi
+> (rozet + çip; 2 × 48 = 96)."*
+
+Yani sorun çipin 26dp olması değil, bir satırda iki tane yığılmış dokunma
+hedefi istenmesiydi. Çözüm teknik değil **miktarsal**:
+
+- **Fiyat çipi dokunulabilir değil.** Ekonomi bandının tamamı bilgi.
+- Satırın **tek yığılmış hedefi adet rozeti** (48dp).
+- Satır jestleri: **dokunuş = işaretle**, **uzun dokunuş = Ürün Detayı**.
+- **Karar 84'ün *"çip dokunuşu Ürün Detayı açar"* fıkrası geri çekildi** —
+  uzun dokunuş zaten aynı şeyi yapıyordu, mükerrerdi.
+
+Reddedilme gerekçeleri de yazılı: 80dp satır her ekrandan bir satır çalar;
+çipi kimlik bandına almak ada 100dp kaybettirir; karar 56'ya istisna eklemek
+kuralı kâğıtta bırakır; bandın tamamını hedef yapmak 26dp'yi 48dp saymaz.
+
+### Kodda ne yapıldı
+
+`PriceChip`'in `onClick`'i silindi; `ListItemRow`'un `onPriceClick`
+parametresi kalktı. Rozetin 48dp hedefi ise **çalışan üçüncü yolla** verildi:
+hedef, dar bandın dışına — satırın kök kutusuna — konuluyor ve konumu
+ölçümden geliyor. Cihazda doğrulandı: rozetin görselinin üstüne dokunmak
+sayacı açıyor, satırı işaretlemiyor.
+
+---
+
+## Soru (kapandı — yukarıdaki cevaba bakın)
 
 - **(a)** Satır iki bantlı hâlde **80dp** olsun (24 + 5 + 48 − örtüşme).
   Ekranda 8–9 yerine 7–8 satır görünür.
