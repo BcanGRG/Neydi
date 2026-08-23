@@ -1714,3 +1714,82 @@ bildirilecek.
 testi önce **sabit saatle** yazılmıştı: iki gezi aynı `startedAt` damgasını
 taşıyordu, yani `DESC` → `ASC` ısırığı **hiçbir testi düşürmüyordu**. Sıralama
 iddiası ancak damgalar farklıyken korunuyor; saat ilerletildi.
+
+### Karar 124 — aynı blok, iki mod, iki farklı vaat ✅
+
+`docs/38` S4 **engelleyiciydi** ve iki doğru cümle birbirini kesiyordu:
+
+- Karar 116 *"Alındı"* bölümünü **alışverişte istiyordu** ve maket onu
+  çiziyordu (`Alındı (12)` + `expand_more`).
+- Kod bölümü **kaldırmıştı** ve gerekçesi ölçülmüştü: alışverişte işaretlenen
+  satırın yer değiştirmesi *"hareket eden başparmağın altında yeniden
+  sıralama"* demek — kullanıcı bir sonrakine dokunacakken liste kayar ve
+  **yanlış ürünü işaretler**.
+
+⚠ Üstelik karar 118'in sapanlar bölümü *"Alındı'nın üstünde"* diye
+konumlandırılmıştı; Alındı yoksa **çapa da yoktu**.
+
+**Tasarım (b)'yi seçti ve kodun ölçülmüş gerekçesini kabul etti.** Ayrımın
+ekseni **parmak**:
+
+| Mod | Satır | Blok |
+|---|---|---|
+| **SHOPPING** | yerinde kalır | genişleMEYEN sayaç: `Alındı · 12/18`, **chevron yok** |
+| **POST_SHOPPING** | bölüme iner | katlanabilir bölüm: `Alındı 12` + `expand_more`, **kapalı açılır** |
+
+Alışverişte başparmak işaretliyor, yani satırın oynaması yanlış ürünü
+işaretletir. Sonrasında işaretlenecek bir şey kalmadı: alınanlar artık
+yapılacak iş değil **kayıt**, ve listenin işi geriye kalanı göstermek.
+
+**Chevron çizilmiyor ve bu bir süsleme kararı değil:** chevron bir **vaattir**
+— *"dokun, açılır"*. Alışverişte açılacak bir şey yok, satırlar zaten
+listenin içinde. Çizilseydi dokunan kullanıcı hiçbir şey olmadığını görürdü.
+
+**Karar 118'in çapası yeniden yazılmadan yerini buldu:** sapan zincir
+bölümleri `sections` içinde, blok bütün bölümlerden sonra — yani *"Alındı'nın
+üstünde"* cümlesi iki modda da doğru. Cihazda görüldü: `🏪 A101'de 2` bölümü,
+altında `Alındı · 0/6`.
+
+### 124 üçüncü bir mod doğurdu — ve saklanmıyor
+
+`shoppingMode` bir `Boolean`; POST_SHOPPING'i ayırmak için üçüncü bir bayrak
+gerekmiyor. **Planlamada işaretlenecek bir şey yok** (karar 116 onay dairesini
+ve satırın onay hedefini kaldırdı), yani *"işaretli satır var"* cümlesi zaten
+*"alışveriş yapıldı"* demek. Üçüncü bir alan, aynı olguyu ikinci kez saklamak
+olurdu.
+
+⚠ **Bu tur üç testi tersine çevirdi ve gerekçesi yazılı.** Dosya bir tur
+boyunca *"işaretli satır HER İKİ MODDA yerinde kalır"* diyordu; o cümle
+yazıldığında mod **sayısı ikiydi**. Kullanıcının şikâyeti (*"liste yaparken
+neden alındı/alınmadı var ki?"*) **yerinde duruyor**: planlamada bölüm
+hiçbir zaman doğmuyor, çünkü orada işaretlenecek bir şey yok —
+`planningHasNoTakenSection` tam olarak bunu tutuyor.
+
+⚠ **KOD KARARI — okuma tasarıma bildirilecek:** POST_SHOPPING'i *"listenin
+alışveriş sonrası hâli"* diye okudum. Dayanağı Compose Spec'in kendi cümlesi:
+*"sapan zincir bölümleri **her iki modda** bu bloğun üstünde"* — sapan zincir
+bölümleri yalnızca **listede** var, dolayısıyla POST_SHOPPING bir liste modu.
+Bitir ekranı okunsaydı o cümle anlamsız kalırdı.
+
+⚠ **MAKET BU MADDEDE BAYAT:** Ekran 1'in alışveriş çizimleri hâlâ
+`Alındı (12)` + `expand_more` gösteriyor. Karar metni (github.md ve Compose
+Spec denetim satırı) `Alındı · 12/18` + chevron yok diyor. Kod **karar
+metnini** izledi; maketin alışveriş paneli güncellenmemiş.
+
+### Isırma kanıtı — 124
+
+| Tersine çevrilen | Düşen test |
+|---|---|
+| Alınanlar alışverişte de bölüme insin | `aCheckedRowStaysInPlaceWhileShopping` + `aCheckedStapleStaysInPlaceWhileShopping` |
+| Sonrasında da inmesin (124 öncesi hâl) | `afterShoppingTheTakenRowsCollectAtTheBottom` + `aCheckedStapleLeavesTheStapleSectionAfterShopping` |
+| Sayaç tek sayı yazsın | `TakenBlockTest`in **dördü birden** |
+
+### 22. turun kapanışı — cihazda görülenler
+
+| Karar | Cihazda |
+|---|---|
+| **121** | Yumurta satırı: `🏪 A101␣␣BİM · dün`. Ölçüldü: `A101` 172px'de bitiyor, `BİM · dün` 193px'de başlıyor → **21px = 8,0dp**; ikon ile ad arası 4dp |
+| **122** | Gimat'a uzun dokunuş: **"Bu markete giden 1 satır var."** (gözlemi yok, bir istisnası var). A101'de birinci kapı: *"Bu markette gözlem var, silinemez"* |
+| **123** | Seçici dokuz zincirin hepsini çiziyor. ⚠ Yapışkanlık **cihazda gösterilemedi**: `trip.storeId` v8'de doğdu, kapanmış hiçbir gezi beyan taşımıyor — sorgu doğru olarak `null` dönüyor. Kanıtı `StoreDeleteGateTest` |
+| **124** | Alışverişte `Alındı · 0/6` → iki satır işaretlendi → `Alındı · 2/6`, **satırlar yerinden oynamadı**; `🏪 A101'de 2` bölümü bloğun üstünde. Bırakınca `Alındı 2` + chevron, **kapalı**; dokununca açıldı ve chevron döndü |
+| **126** | `Nereden alınacak → 🏪 A101 ›` → çip ızgarası → *"Hedefte al"* → satır `BİM · hedef`'e döndü ve **başlık aynı anda** `2'si A101'de` → `1'i A101'de` oldu |

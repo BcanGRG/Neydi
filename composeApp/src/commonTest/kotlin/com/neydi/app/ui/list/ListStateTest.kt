@@ -91,13 +91,49 @@ class ListStateTest {
     fun planningHasNoTakenSection() {
         val state = listOf(
             row("Domates"),
-            row("Elma", checked = true),
             row("Ekmek", categoryName = "Fırın-Ekmek", categoryOrder = 1),
         ).toSections(myMemberId = "ben", now = NOW)
 
         assertTrue(state.taken.isEmpty(), "planlamada Alindi bolumu olusturuldu")
-        // Uc satirin ucu de reyonunda - isaretli olan dahil.
-        assertEquals(3, state.sections.sumOf { it.rows.size })
+        assertEquals(2, state.sections.sumOf { it.rows.size })
+    }
+
+    /**
+     * ALISVERIS SONRASI ALINANLAR BOLUME INIYOR (karar 124).
+     *
+     * ## "Iki mod" ucuncuyu tanimiyordu
+     *
+     * Bu dosya bir tur boyunca *"isaretli satir HER IKI MODDA yerinde
+     * kalir"* diyordu ve o cumle yazildiginda mod SAYISI ikiydi. `docs/38`
+     * S4 ucuncusunu gorunur yapti ve tasarim ikisini ayirdi; ayrimin ekseni
+     * PARMAK:
+     *
+     * - Alisveriste basparmak isaretliyor - satirin oynamasi yanlis urunu
+     *   isaretletir. Satir yerinde kalir.
+     * - Sonrasinda isaretlenecek bir sey kalmadi - alinanlar KAYIT ve
+     *   listenin isi geriye kalani gostermek.
+     *
+     * ⚠ Kullanicinin sikayeti (*"liste yaparken neden alindi/alinmadi var
+     * ki?"*) YERINDE DURUYOR: planlamada isaretlenecek bir sey olmadigi icin
+     * (karar 116) o modda bolum hicbir zaman dogmuyor - bir ustteki test tam
+     * olarak bunu tutuyor.
+     *
+     * UCUNCU MOD TURETILIYOR: "isaretli satir var" cumlesi zaten "alisveris
+     * yapildi" demek.
+     */
+    @Test
+    fun afterShoppingTheTakenRowsCollectAtTheBottom() {
+        val state = listOf(
+            row("Domates"),
+            row("Elma", checked = true),
+            row("Ekmek", categoryName = "Fırın-Ekmek", categoryOrder = 1),
+        ).toSections(myMemberId = "ben", now = NOW)
+
+        assertEquals(listOf("Elma"), state.taken.map { it.row.name })
+        assertEquals(2, state.sections.sumOf { it.rows.size }, "alinan satir reyonunda kalmis")
+        // Sayac iki modda da ayni sayiyi vermeli.
+        assertEquals(3, state.totalRows)
+        assertEquals(1, state.takenRows)
     }
 
     /**
@@ -154,32 +190,31 @@ class ListStateTest {
     // --- Alisveris modu -----------------------------------------------------
 
     /**
-     * ISARETLI SATIR HER IKI MODDA DA YERINDE KALIYOR.
+     * ISARETLI SATIR ALISVERISTE YERINDE KALIYOR (karar 124).
      *
-     * Reyonda gerekcesi baştan beri ayni: hareket eden basparmagin altinda
-     * yeniden siralama bu ekranin yapabilecegi en kotu hata - kullanici bir
-     * sonrakine dokunacakken liste kayar ve yanlis urunu isaretler.
+     * Gerekcesi bastan beri ayni ve olculmus: hareket eden basparmagin
+     * altinda yeniden siralama bu ekranin yapabilecegi en kotu hata -
+     * kullanici bir sonrakine dokunacakken liste kayar ve YANLIS urunu
+     * isaretler. Tasarim bu gerekceyi kabul etti ve alisverisi bolumden
+     * muaf tuttu; bloğun yerini genisleMEYEN bir sayac aldi.
      *
-     * Planlamada gerekce yeni (karar 116): orada zaten isaretlenecek bir sey
-     * yok, dolayisiyla tasinacak bir satir da yok.
+     * ISIRMA NOKTASI: `alinan` dalindaki `shoppingMode` kosulunu kaldirin -
+     * bu test duser ve satir reyonundan cikar.
      */
     @Test
-    fun aCheckedRowStaysInPlaceInBothModes() {
-        val input = listOf(
+    fun aCheckedRowStaysInPlaceWhileShopping() {
+        val state = listOf(
             row("Domates"),
             row("Elma", checked = true),
             row("Salatalik"),
-        )
+        ).toSections("ben", shoppingMode = true, now = NOW)
 
-        listOf(false, true).forEach { shopping ->
-            val state = input.toSections("ben", shoppingMode = shopping, now = NOW)
-            assertTrue(state.taken.isEmpty(), "shoppingMode=$shopping: satir Alindi'ya tasindi")
-            assertEquals(
-                listOf("Domates", "Elma", "Salatalik"),
-                state.sections.single().rows.map { it.row.name },
-                "shoppingMode=$shopping: reyon sirasi bozuldu",
-            )
-        }
+        assertTrue(state.taken.isEmpty(), "alisveriste satir Alindi'ya tasindi")
+        assertEquals(
+            listOf("Domates", "Elma", "Salatalik"),
+            state.sections.single().rows.map { it.row.name },
+            "alisveriste reyon sirasi bozuldu",
+        )
     }
 
     /** Alt cubuktaki "kac kaldi" yalnizca isaretsizleri sayar. */
@@ -282,21 +317,37 @@ class ListStateTest {
     }
 
     /**
-     * ISARETLENEN SABIT DE BOLUMUNDE KALIYOR (karar 116).
+     * ISARETLENEN SABIT DE ALISVERISTE BOLUMUNDE KALIYOR (karar 116 + 124).
      *
-     * Eskiden "Alindi"ya iniyordu. Sabitler bolumu planlamanin bolumu ve
-     * planlamada artik isaretlenecek bir sey yok; bir satir gecmis bir
-     * alisveristen isaretli gelse bile yerinden oynamiyor.
+     * Sabitler bolumu alisveriste zaten cizilmiyor (satirlar reyonlarina
+     * dagiliyor), ama kural ayni: isaretli satir oynamiyor.
+     *
+     * ⚠ Bu testin onceki hali PLANLAMA modunda kosuyordu ve *"gecmis bir
+     * alisveristen isaretli gelse bile yerinden oynamiyor"* diyordu - tam da
+     * karar 124'un tersine cevirdigi cumle. Alisveris SONRASINDA isaretli
+     * sabit de bolume iniyor; sabitler bolumu geriye kalani gosteriyor.
      */
     @Test
-    fun aCheckedStapleStaysInItsSection() {
+    fun aCheckedStapleStaysInPlaceWhileShopping() {
+        val state = listOf(
+            row("Ekmek", isStaple = true, checked = true),
+            row("Süt", isStaple = true),
+        ).toSections(myMemberId = "ben", shoppingMode = true, now = NOW)
+
+        assertEquals(listOf("Ekmek", "Süt"), state.sections.first().rows.map { it.row.name })
+        assertTrue(state.taken.isEmpty())
+    }
+
+    /** Sonrasinda ise isaretli sabit bolume iniyor - sabitler bolumu geriye kalani yaziyor. */
+    @Test
+    fun aCheckedStapleLeavesTheStapleSectionAfterShopping() {
         val state = listOf(
             row("Ekmek", isStaple = true, checked = true),
             row("Süt", isStaple = true),
         ).toSections(myMemberId = "ben", now = NOW)
 
-        assertEquals(listOf("Ekmek", "Süt"), state.sections.first().rows.map { it.row.name })
-        assertTrue(state.taken.isEmpty())
+        assertEquals(listOf("Süt"), state.sections.first().rows.map { it.row.name })
+        assertEquals(listOf("Ekmek"), state.taken.map { it.row.name })
     }
 
     // --- Baslik alt satiri (Ekran 1 tasarimi) --------------------------------

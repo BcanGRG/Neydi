@@ -10,10 +10,10 @@ Döngü: *liste → markette işaretle → etiket çek → ürün + marka + mark
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
 **Durum:** **Faz E kapandı (19/19)**, ardından **Faz G — Ekran 1 revizyonu**
-(kararlar 102–120) kapandı. Etiket okuyucusu **üç zincirde** çalışıyor
+(kararlar 102–126) kapandı. Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro ölçüldü ve bilinçli olarak ertelendi. Fikstür seti
 **99 gerçek etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu,
-**554 test yeşil**, **sıfır derleyici uyarısı**. Şema **v8**.
+**579 test yeşil**, **sıfır derleyici uyarısı**. Şema **v8**.
 
 Tasarım kararları **46–120** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı
 denetimin **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
@@ -50,7 +50,8 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 8 | **docs/29 — ekleme geri bildirimi (beş soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 9 | ~~**docs/30 — markete göre tahmin**~~ ✅ | — | **Cevaplandı** (kararlar 117–119): beyan geldi, aritmetik gelmedi; karar 97 ertelenmiş kalıyor | [→](#tasarim) |
 | 9b | ~~**docs/38 — hedef market, altı açık madde**~~ ✅ | — | **Cevaplandı** — kararlar **121–126** (22. tur, 23 Ağu). Altı maddenin altısı da kapandı | [→](#d38) |
-| 9c | **Kararlar 121–126 kodlanacak** | `[ ]` | Hiçbir şeyi — **sıradaki iş budur**. Altı madde, biri var olanın düzeltmesi | [→](#d38) |
+| 9c | ~~**Kararlar 121–126 kodlanacak**~~ ✅ | — | **Kodlandı ve cihazda doğrulandı** (22. tur). Altısı da kapandı; üç kod kararı tasarıma sorulacak | [→](#d38) |
+| 9d | **`docs/39` — 22. turdan kalan üç soru** | `[ ]` | Tasarımı — hepsi kodun tek taraflı verdiği karar | [→](#d38) |
 | 10 | **Ölü primitif sorusunu YAZ** | `[ ]` | — *(ölü primitif maddesi ona bağlı)* | [→](#olu-kod) |
 | 11 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 12 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
@@ -352,7 +353,28 @@ Alışveriş modundaki satırın kendi container'ı yok; plan modunun bileşeni
 `graphify-out/graph.json` sürüm kontrolünde tutulacak mı, yoksa üretilmiş
 çıktı olarak `.gitignore`'a mı düşecek?
 
-#### docs/38 → kararlar 121–126 *(cevaplandı, kodlanacak)* <a id="d38"></a>
+#### docs/38 → kararlar 121–126 *(cevaplandı, **kodlandı**)* <a id="d38"></a>
+
+> **✅ Altısı da koda indi ve cihazda doğrulandı** (R58N81SAZ1Y). Ölçüm,
+> ısırma kanıtı ve cihaz notları `11-tasarim-kararlari.md`'nin 121–126
+> bölümünde. **579 test yeşil**, sıfır derleyici uyarısı.
+>
+> ⚠ **Tasarıma sorulacak üç kod kararı** (`docs/39` olarak yazılacak):
+> 1. **Hedef yokken *"Nereden alınacak"* satırı çizilmiyor** (126). Karar 117
+>    hedefi boş bırakmayı meşru kıldı, ama sapma kuralının ilk şartı hedefin
+>    varlığı — hedefsizken yazılan istisna hiçbir yerde görünmezdi.
+> 2. **Beyan yapışkanlığı *"Belli değil"*i hatırlamıyor** (123).
+>    `trip.storeId` *"hiç seçilmedi"* ile *"belli değil seçildi"* hâllerinin
+>    ikisini de `null` yazıyor; ayırmak üçüncü bir alan isterdi.
+> 3. **POST_SHOPPING bir liste modu diye okundu** (124). Dayanak Compose
+>    Spec'in *"sapan zincir bölümleri **her iki modda** bu bloğun üstünde"*
+>    cümlesi — o bölümler yalnızca listede var.
+>
+> ⚠ **İki ayna tutarsızlığı bildirilecek:** (a) Ekran 1'in alışveriş
+> çizimleri hâlâ `Alındı (12)` + `expand_more` gösteriyor, oysa karar metni
+> `Alındı · 12/18` + chevron yok diyor — kod karar metnini izledi.
+> (b) Bölüm başlığını Compose Spec `"A101'de · 2"`, karar 117–118 satırı
+> `"A101'de (2)"` yazıyor.
 
 **✅ Tasarım 23 Ağustos'ta altı maddenin altısını da cevapladı** (22. tur).
 İki kod kararı **onaylandı**, biri **değiştirildi**, üçü **yeni iş**.

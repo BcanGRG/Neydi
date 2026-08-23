@@ -41,6 +41,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import kotlin.time.Clock
 import androidx.compose.runtime.setValue
@@ -74,6 +75,8 @@ import com.neydi.app.ui.components.NeydiPreview
 import com.neydi.app.ui.components.NeydiSnackbar
 import com.neydi.app.ui.components.NeydiToast
 import com.neydi.app.ui.components.SectionHeader
+import com.neydi.app.ui.components.TakenCounter
+import com.neydi.app.ui.components.TakenSection
 import com.neydi.app.ui.product.ProductSheetContent
 import com.neydi.app.ui.theme.Motion
 import com.neydi.app.ui.theme.Elevation
@@ -487,6 +490,18 @@ internal fun ListContent(
 
     val listState = rememberLazyListState()
 
+    // "ALINDI" BOLUMU KAPALI ACILIYOR (karar 124).
+    //
+    // Blok yalnizca alisveris SONRASINDA bir bolum; oradaki satirlar artik
+    // yapilacak is degil KAYIT ve listenin isi geriye kalani gostermek.
+    // Maketin cizdigi hal de bu: `Alindi (12)` + `expand_more`, satirlar
+    // gorunmuyor.
+    //
+    // `rememberSaveable`: kullanici bolumu actiysa ekran donunce ya da
+    // surec olunce kapanmamali - actigi seyin kapanmasi, dokundugunun
+    // islenmedigi izlenimini verir.
+    var takenExpanded by rememberSaveable { mutableStateOf(false) }
+
     // SAYAC UC SANIYE SONRA KAPANIYOR (karar 107).
     //
     // `LaunchedEffect` anahtari SAYACIN KIMLIGI: her dokunus yeni bir kimlik
@@ -750,28 +765,59 @@ internal fun ListContent(
                     }
                 }
 
+                // "ALINDI" BLOGU LISTENIN SONUNDA, IKI MODDA IKI HALDE
+                // (karar 124).
+                //
+                // ALISVERISTE: satirlar bolumlerinde YERINDE kaliyor
+                // (`state.taken` bos) ve burada yalnizca genisleMEYEN bir
+                // sayac duruyor. Bolum olsaydi isaretlenen satir listenin
+                // dibine inerdi - "hareket eden basparmagin altinda yeniden
+                // siralama". Tasarim kodun bu olculmus gerekcesini kabul
+                // etti ve ucuncu yolu yazdi.
+                //
+                // SONRASINDA: alinanlar artik yapilacak is degil KAYIT, ve
+                // blok katlanabilir bir bolume donuyor - kapali aciliyor,
+                // cunku listenin isi geriye kalani gostermek.
+                //
+                // SAPAN ZINCIR BOLUMLERI IKISININ DE USTUNDE: `sections`
+                // icindeler ve bu blok butun bolumlerden sonra geliyor. Karar
+                // 118'in "Alindi'nin ustunde" capasi boylece yeniden
+                // yazilmadan yerini buluyor.
                 if (state.taken.isNotEmpty()) {
                     item(key = "b-alindi") {
-                        SectionHeader(
-                            title = "Alındı",
+                        TakenSection(
                             count = state.taken.size,
+                            expanded = takenExpanded,
+                            onToggle = { takenExpanded = !takenExpanded },
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
                         )
                     }
-                    items(state.taken, key = { it.id }) { row ->
-                        ListItemRow(
-                            justAddedSeq = lastAdded?.takeIf { it.rowId == row.id }?.seq,
+                    if (takenExpanded) {
+                        items(state.taken, key = { it.id }) { row ->
+                            ListItemRow(
+                                justAddedSeq = lastAdded?.takeIf { it.rowId == row.id }?.seq,
+                                modifier = Modifier.animateItem(
+                                    placementSpec = tween(Motion.REORDER_MS),
+                                ),
+                                row = row.row,
+                                onToggle = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onToggleChecked(row.id, false)
+                                },
+                                onLongPress = { onRowLongPress(row.productId, row.id) },
+                            )
+                        }
+                    }
+                } else if (state.shoppingMode && state.totalRows > 0) {
+                    item(key = "b-alindi-sayac") {
+                        TakenCounter(
+                            taken = state.takenRows,
+                            total = state.totalRows,
                             modifier = Modifier.animateItem(
                                 placementSpec = tween(Motion.REORDER_MS),
                             ),
-                            row = row.row,
-                            onToggle = {
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onToggleChecked(row.id, false)
-                            },
-                            onLongPress = { onRowLongPress(row.productId, row.id) },
                         )
                     }
                 }

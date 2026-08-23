@@ -24,7 +24,10 @@ data class ListState(
     val sections: List<ListSection> = emptyList(),
     /**
      * "Alindi" bolumu ayri: reyon gruplamasinin disinda, en altta.
-     * ALISVERIS MODUNDA HEP BOS - orada isaretli satirlar yerinde kalir.
+     *
+     * ALISVERIS MODUNDA HEP BOS (karar 124) - orada isaretli satirlar
+     * yerinde kaliyor ve blogun yerini genisleMEYEN bir sayac aliyor.
+     * Doluysa mod alisveris SONRASI demektir; bolum kapali aciliyor.
      */
     val taken: List<UiRow> = emptyList(),
     val loading: Boolean = true,
@@ -403,9 +406,27 @@ internal fun List<ListRowProjection>.toSections(
     // yapabilecegi en kotu hata - kullanici bir sonrakine dokunacakken liste
     // kayar ve yanlis urunu isaretler.
     //
-    // Sonuc: hicbir modda satir "Alindi"ya INMIYOR. Bolum yalnizca gecmis
-    // gezilerde anlamli kaliyor ve orasi Bitir ekraninin isi.
-    val (alinan, remaining) = emptyList<ListRowProjection>() to this
+    // AMA SONRASINDA INIYOR (karar 124).
+    //
+    // Bir tur boyunca kod bolumu UC modda birden kaldirmisti ve `docs/38` S4
+    // bunu tasarima sordu. Cevap ikisini ayirdi ve ayrimin ekseni PARMAK:
+    //
+    // - **Alisveriste** basparmak isaretliyor, yani satirin oynamasi yanlis
+    //   urunu isaretletir. Satir yerinde kalir; listenin sonunda yalnizca bir
+    //   SAYAC durur ("Alindi . 12/18", chevron yok).
+    // - **Sonrasinda** isaretlenecek bir sey kalmadi. Alinanlar artik
+    //   yapilacak is degil KAYIT ve listenin isi geriye kalani gostermek -
+    //   bolum kapali olarak en altta topluyor.
+    //
+    // UCUNCU MOD SAKLANMIYOR, TURETILIYOR: planlamada isaretlenecek bir sey
+    // YOK (karar 116 onay dairesini ve satirin onay hedefini kaldirdi), yani
+    // "isaretli satir var" cumlesi zaten "alisveris yapildi" demek. Ucuncu
+    // bir bayrak, ayni olguyu ikinci kez saklamak olurdu.
+    val (alinan, remaining) = if (shoppingMode) {
+        emptyList<ListRowProjection>() to this
+    } else {
+        partition { it.checked }
+    }
 
     // "HER ZAMANKILER" EN USTE, VE YALNIZCA PLANLAMA MODUNDA (F6.8).
     //
