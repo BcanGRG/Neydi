@@ -57,6 +57,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 13 | **F5.7 — ambalaj küçülmesi ipucu** | `[cihaz]` | Aynı üründen **iki farklı boyda** gerçek çekim | [→](#f57) |
 | 14 | **F6.4 — Eksik Olabilir (Ekran 3)** | `[cihaz]` | Göz kontrolünü | [→](#f64) |
 | 15 | **F11.19 — karar 36'nın renk ayrımı** | `[cihaz]` | **Karışık liste**: kimi ürün gözlemli, kimi gözlemsiz | [→](#f1119) |
+| 15b | **F11.29 — delta oku cihazda** | `[cihaz]` | **Aynı üründen ≥2 gözlem** — bugünkü 12 gözlemin hepsi ayrı ürün | [→](#f1129) |
 | 16 | **F1.3b — `@Preview` altyapısı** | `[cihaz]` | Göz kontrolünü | [→](#f13b) |
 | 17 | **F3.3 — Hızlı ekleme** | `[cihaz]` | Göz kontrolünü | [→](#f33) |
 | 18 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
