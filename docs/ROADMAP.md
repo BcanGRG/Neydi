@@ -49,8 +49,8 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
 | 8 | **docs/29 — ekleme geri bildirimi (beş soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 9 | ~~**docs/30 — markete göre tahmin**~~ ✅ | — | **Cevaplandı** (kararlar 117–119): beyan geldi, aritmetik gelmedi; karar 97 ertelenmiş kalıyor | [→](#tasarim) |
-| 9b | **docs/38 — hedef market, altı açık madde** | `[ ]` | Tasarımı; **ikisi engelleyici** (S4 "Alındı" çapası, S6 istisna jesti) | [→](#d38) |
-| 9c | **Satır istisnasının jesti** | `[~]` | `docs/38` S6'yı — şema, depo ve gösterim hazır, `setLineStore` **çağransız** | [→](#d38) |
+| 9b | ~~**docs/38 — hedef market, altı açık madde**~~ ✅ | — | **Cevaplandı** — kararlar **121–126** (22. tur, 23 Ağu). Altı maddenin altısı da kapandı | [→](#d38) |
+| 9c | **Kararlar 121–126 kodlanacak** | `[ ]` | Hiçbir şeyi — **sıradaki iş budur**. Altı madde, biri var olanın düzeltmesi | [→](#d38) |
 | 10 | **Ölü primitif sorusunu YAZ** | `[ ]` | — *(ölü primitif maddesi ona bağlı)* | [→](#olu-kod) |
 | 11 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 12 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
@@ -352,11 +352,26 @@ Alışveriş modundaki satırın kendi container'ı yok; plan modunun bileşeni
 `graphify-out/graph.json` sürüm kontrolünde tutulacak mı, yoksa üretilmiş
 çıktı olarak `.gitignore`'a mı düşecek?
 
-#### docs/38 — hedef market beyanı: altı açık madde <a id="d38"></a>
+#### docs/38 → kararlar 121–126 *(cevaplandı, kodlanacak)* <a id="d38"></a>
 
-Kararlar 116–120 koda indi ve **makette ölçülü olan her şey birebir uygulandı**
-(§6.2'de madde madde). Aşağıdakiler makette **yok** ya da **kendisiyle
-çelişiyor**; kod bunlara hakemlik edemez.
+**✅ Tasarım 23 Ağustos'ta altı maddenin altısını da cevapladı** (22. tur).
+İki kod kararı **onaylandı**, biri **değiştirildi**, üçü **yeni iş**.
+
+| Karar | Cevap | Koda etkisi |
+|---|---|---|
+| **121** (S1) | Beyan ile gözlem arasındaki `·` **düşer**, aralarındaki boşluk **8dp** olur (grup içi 4dp kalır): `🏪 A101␣␣BİM · bugün`. *"Nokta grup içini bağlar, boşluk grupları ayırır"* — bandın kendi dilbilgisi, fiyat çipini de aynı 8dp ayırıyor. Taze gözlemin zincir adını düşürmek **reddedildi**: karar 119'un koruduğu çelişki sinyalini yok ederdi. | **Var olanın düzeltmesi** — bant iki `Row` grubuna ayrılır, `"· $text"` birleştirmesi kalkar |
+| **122** (S2) | Silme kapısı `hasObservationsAt` **OR** `hasDeclarationsAt`. Beyanı olan market **silinemez**; engellenen uzun dokunuş sebebini yazar (*"Bu markete giden 3 satır var."*), beyan kaldırılınca silme yeniden açılır. Uyarıp silmek reddedildi — *"doğru soruyu yanlış yerde soruyordu"*. | **Yeni** — etiket tarafındaki silme kapısı + snackbar |
+| **123** (S3) | **İki ayrı seçici doğru**, maketin cümlesi düzeltildi. Beyan seçicisinde arama/ekleme/silme ve uzun dokunuş **yok** (*"olmayan jest yanlış şey öğretmez"*). ⚠ Ama **beş sınırı kalktı**: çipler bilinen **bütün** zincirleri gösterir, çünkü karar 117 gözlemsiz zincire gitmeyi meşru kıldı. Yapışkanlık ayrı: `lastDeclaredStoreId` ≠ `lastTaggedStoreId`. | Seçici ✅ zaten ayrı, bütün zincirler ✅ zaten çiziliyor — **kalan:** `lastDeclaredStoreId` |
+| **124** (S4) | Alışverişte işaretli satır **yerinde kalır** (kodun ölçülmüş gerekçesi kabul edildi) ve listenin sonunda **genişlemeyen** `Alındı · 12/18` sayacı durur, chevron çizilmez. Katlanabilir bölüm **alışveriş-sonrasına** ait. Karar 118'in çapası böylece yeniden yazılmadı: sapan zincir bölümleri o bloğun üstünde, blok listenin sonunda. | **Yeni** — sayaç bloğu + `POST_SHOPPING` ayrımı |
+| **125** (S5) | **Kodun ikisi de doğru:** cümlede tek zincirde ad kalır, birden fazlasında ad düşer sayı kalır (*"3'ü başka marketlerde"*); bölüm zincir başına, başlıkta storefront + `"A101'de · 2"`. | ✅ **Değişiklik yok** |
+| **126** (S6) | İstisnayı **Ürün Detayı** yazar: eylem grubunun **başına** *"Nereden alınacak"* satırı — hedefteyken `"BİM · hedef"` 500/`onSurfaceVariant`, istisnadayken zincir adı 600/`onSurface` + `chevron_right`. Dokunuş beyanın çip ızgarasını açar; *"Hedefte al"* `setLineStore(null)` çağırır. **Karar 38'in sabit satır sırası bu tek ekleme için açıldı.** Çoklu işaretleme (b) ve yeni satır jesti (d) reddedildi. | **Yeni** — `setLineStore`'un çağranı nihayet var |
+
+⚠ **Karar defterinin kendi sayacı düzeltildi:** 97 değil **113 giriş, 126'ya
+kadar numaralı**.
+
+⚠ **Cevapsız kalan tek kod kararı:** sapma varken *"başka markette ucuz"*
+çipinin bastırılması. `docs/38` S1'in içinde geçiyordu ama 121 yalnızca iki
+zincir adının ayrılmasını cevapladı; çipin kaderi hâlâ kodun kararı.
 
 | # | Madde | Ağırlık |
 |---|---|---|
