@@ -239,12 +239,25 @@ internal fun List<ListRowProjection>.toSections(
      */
     now: Long,
 ): ListState {
-    // ALISVERIS MODUNDA REYON SIRASI DONAR. Isaretlenen satir YERINDE kalir,
-    // "Alindi"ya inmez. Hareket eden basparmagin altinda yeniden siralama bu
-    // ekranin yapabilecegi en kotu hata: kullanici bir sonrakine dokunacakken
-    // liste kayar ve yanlis urunu isaretler. Planlamada tasima dogru, reyonda
-    // felaket.
-    val (alinan, remaining) = if (shoppingMode) emptyList<ListRowProjection>() to this else partition { it.checked }
+    // PLANLAMADA "ALINDI" BOLUMU YOK (karar 116).
+    //
+    // Once tam tersiydi: planlamada isaretli satirlar "Alindi"ya iniyordu,
+    // alisveriste yerinde kaliyordu. Kullanicinin sikayeti bunun ta kendisiydi:
+    // *"liste yaparken neden alindi/alinmadi var ki? Zaten alisverise cikiyorum
+    // dediğimde isaretleme yapiyorum."*
+    //
+    // Ve bedeli olculdu: cihaz testlerinde YANLISLIKLA yapilan her dokunus bir
+    // satiri "Alindi"ya tasidi. Planlamada satirin TAMAMI isaretleme hedefiydi -
+    // yani ekranin en buyuk hedefi, en az istenen ise bagliydi.
+    //
+    // ALISVERIS MODUNDA REYON SIRASI YINE DONUYOR: isaretlenen satir yerinde
+    // kalir. Hareket eden basparmagin altinda yeniden siralama bu ekranin
+    // yapabilecegi en kotu hata - kullanici bir sonrakine dokunacakken liste
+    // kayar ve yanlis urunu isaretler.
+    //
+    // Sonuc: hicbir modda satir "Alindi"ya INMIYOR. Bolum yalnizca gecmis
+    // gezilerde anlamli kaliyor ve orasi Bitir ekraninin isi.
+    val (alinan, remaining) = emptyList<ListRowProjection>() to this
 
     // "HER ZAMANKILER" EN USTE, VE YALNIZCA PLANLAMA MODUNDA (F6.8).
     //

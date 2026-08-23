@@ -654,6 +654,16 @@ internal fun ListContent(
                                     onStepperEvent(StepperEvent.TapElsewhere)
                                     return@ListItemRow
                                 }
+                                // PLANLAMADA DOKUNUS ISARETLEMIYOR, URUN
+                                // DETAYI'NI ACIYOR (karar 116).
+                                //
+                                // Satirin en buyuk hedefi, planlamada en cok
+                                // istenen ise bagli: "bu neydi, ne kadardi".
+                                // Isaretleme reyonun isi.
+                                if (!state.shoppingMode) {
+                                    onRowLongPress(row.productId, row.id)
+                                    return@ListItemRow
+                                }
                                 // Haptik onay: reyonda goz listede degil rafta.
                                 // Dokunusun islendigini parmak soyluyor.
                                 // SNACKBAR YOK - bir gezide 20 isaretleme var,

@@ -366,12 +366,22 @@ fun ListItemRow(
             .alpha(rowAlpha),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CheckTarget(checked = row.checked, shoppingMode = shoppingMode)
+        // ONAY DAIRESI YALNIZ ALISVERISTE (karar 116).
+        //
+        // Planlamada isaretlenecek bir sey yok - liste kuruluyor, tuketilmiyor.
+        // Daire (24dp + 10dp bosluk) dusunce kimlik bandi 34dp KAZANIYOR:
+        // 360dp'de ada 180dp yerine 214dp kaliyor.
+        if (shoppingMode) {
+            CheckTarget(checked = row.checked, shoppingMode = true)
+        }
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = SpacingExtra.betweenCheckboxAndName),
+                // Daire yoksa onun bosluğu da yok - ad satirin solundan basliyor.
+                .padding(
+                    start = if (shoppingMode) SpacingExtra.betweenCheckboxAndName else 0.dp,
+                ),
             // BANTLAR ARASI 5dp - maketin olcusu. Sifir birakilsaydi meta ada
             // yapisir ve iki bant tek blok gibi okunurdu; buyutmek de satiri
             // 72dp'nin uzerine cikarirdi.
