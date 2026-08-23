@@ -115,6 +115,21 @@ data class ListRow(
      * kazanir, trend bastirilir; siralama mutlak TL tasarrufuna gore.
      */
     val cheaperElsewhere: String? = null,
+    /**
+     * Bu satir HEDEF MARKETTEN BASKA bir yerden alinacak - zincirin adi
+     * (karar 118). `null` = hedefi izliyor, ya da beyan edilmis bir hedef yok.
+     *
+     * ## Neden [cheaperElsewhere] ile ayni yuvada degil
+     *
+     * Ikisi ayni bandi paylasiyor ama BIRBIRININ ALTERNATIFI DEGIL: "A101'de
+     * 36,00" bir ONERI (*"istersen oraya ugra"*), sapma ise kullanicinin KENDI
+     * BEYANI (*"burayi zaten oradan alacagim"*). Ayni satirda ikisi birden
+     * dogru olabilir ve oneriyi beyanin ustune yazmak, kullanicinin verdigi
+     * karari uygulamanin tahminiyle ezmek olurdu.
+     *
+     * Sapma bandin BASINDA duruyor ve KIRPILMIYOR; kirpilan meta.
+     */
+    val deviantStore: String? = null,
 )
 
 /** Satirin ikinci satirinda ne yazacagi. Ayni anda yalnizca BIRI. */

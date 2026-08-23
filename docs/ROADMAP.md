@@ -9,14 +9,20 @@ hatırlatan ve raf etiketi çektikçe **ürün bazında** fiyat hafızası birik
 Döngü: *liste → markette işaretle → etiket çek → ürün + marka + market + tarih
 + fiyat gözlemi → sonraki listede fiyat ipucu*.
 
-**Durum:** **Faz E kapandı (19/19)** — son madde, E15'in yatay düzeni (karar
-61), 23 Ağustos'ta bağlandı. Etiket okuyucusu **üç zincirde** çalışıyor
+**Durum:** **Faz E kapandı (19/19)**, ardından **Faz G — Ekran 1 revizyonu**
+(kararlar 102–120) kapandı. Etiket okuyucusu **üç zincirde** çalışıyor
 (A101, BİM, Migros); Metro ölçüldü ve bilinçli olarak ertelendi. Fikstür seti
 **99 gerçek etiket**, dört zincir. Uygulama derleniyor, cihazda kurulu,
-**458 test yeşil**, **sıfır derleyici uyarısı**.
+**554 test yeşil**, **sıfır derleyici uyarısı**. Şema **v8**.
 
-Tasarım kararları **46–75** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı
+Tasarım kararları **46–120** kodlandı (`11-tasarim-kararlari.md`); 56 ajanlı
 denetimin **41 bulgusunun 41'i** kapandı ya da gerekçesiyle bloklu kaydedildi.
+
+**Son tur (23 Ağustos, 21. tur — kararlar 116–120):** planlamada onay dairesi
+kalktı, liste hedef market beyanı öğrendi (*"BİM'e gidiyorsun · 2'si A101'de"*),
+sapan satırlar işaret ve — alışverişte — kendi bölümlerini kazandı, tahmin
+bunların hiçbirinden etkilenmedi. Ölçülen her şey maketten alındı; makette
+**olmayan altı madde** `docs/38`'de tasarıma soruldu.
 
 > Bu dosya **açık işi**, **kalıcı kuralları** ve **kapanmış işin arşivini**
 > taşır. Fiş dönemine (16 Ağu 2026 pivotundan öncesi) ait her şey
@@ -37,18 +43,21 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 |---|---|---|---|---|
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
-| 3 | **`priceUnit` / `packSize` normalizasyonu** | `[ ]` | — *(karar 97 için ön koşul; karar 96 için **değil** — 96 uygulandı ve o kolona bakmıyor. Açık delik: kilo fiyatının adet satırına yazılması)* | [→](#tahmin-carpimi) |
+| 3 | **`priceUnit` yazıcısı** | `[ ]` | — *(karar 96/111–115 **kapandı**; kalan tek delik: kilo fiyatının adet satırına yazılması)* | [→](#tahmin-carpimi) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
 | 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
 | 8 | **docs/29 — ekleme geri bildirimi (beş soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
-| 9 | **docs/30 — markete göre tahmin (beş soru)** | `[ ]` | Tasarımı; **ölçüm ertelemeyi öneriyor** | [→](#tasarim) |
+| 9 | ~~**docs/30 — markete göre tahmin**~~ ✅ | — | **Cevaplandı** (kararlar 117–119): beyan geldi, aritmetik gelmedi; karar 97 ertelenmiş kalıyor | [→](#tasarim) |
+| 9b | ~~**docs/38 — hedef market, altı açık madde**~~ ✅ | — | **Cevaplandı** — kararlar **121–126** (22. tur, 23 Ağu). Altı maddenin altısı da kapandı | [→](#d38) |
+| 9c | **Kararlar 121–126 kodlanacak** | `[ ]` | Hiçbir şeyi — **sıradaki iş budur**. Altı madde, biri var olanın düzeltmesi | [→](#d38) |
 | 10 | **Ölü primitif sorusunu YAZ** | `[ ]` | — *(ölü primitif maddesi ona bağlı)* | [→](#olu-kod) |
 | 11 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 12 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
 | 13 | **F5.7 — ambalaj küçülmesi ipucu** | `[cihaz]` | Aynı üründen **iki farklı boyda** gerçek çekim | [→](#f57) |
 | 14 | **F6.4 — Eksik Olabilir (Ekran 3)** | `[cihaz]` | Göz kontrolünü | [→](#f64) |
 | 15 | **F11.19 — karar 36'nın renk ayrımı** | `[cihaz]` | **Karışık liste**: kimi ürün gözlemli, kimi gözlemsiz | [→](#f1119) |
+| 15b | **F11.29 — delta oku cihazda** | `[cihaz]` | **Aynı üründen ≥2 gözlem** — bugünkü 12 gözlemin hepsi ayrı ürün | [→](#f1129) |
 | 16 | **F1.3b — `@Preview` altyapısı** | `[cihaz]` | Göz kontrolünü | [→](#f13b) |
 | 17 | **F3.3 — Hızlı ekleme** | `[cihaz]` | Göz kontrolünü | [→](#f33) |
 | 18 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
@@ -162,7 +171,12 @@ doğrulandı.
 E15 kapandı; madde artık **cihazda görülecekler kuyruğunda** —
 **F11.29'un delta oku da aynı kuyrukta**.
 
-#### F11.29 — İkon envanteri 17 <a id="f1129"></a>
+#### F11.29 — İkon envanteri *(17 → 20 → **21**)* <a id="f1129"></a>
+
+> **Envanter üç kez büyüdü ve üçü de bir kararın sonucu:** karar 64 ekleme
+> akışını ikiye ayırınca `GridView` + `Keyboard`, karar 107 satır sayacını
+> getirince `Remove`, karar 118 market beyanını getirince `Storefront`.
+> Sayı bir hedef değil, kararların bıraktığı iz.
 
 **✅ (kod)** — İki Phosphor oku (`ph-arrow-up` / `ph-arrow-down`) taşındı,
 `autoMirror` **kapalı** — dikey yön taşıyorlar. `Chips.kt` artık Unicode glif
@@ -192,35 +206,40 @@ emülatörde ve testte anlamlı bir kanıt üretmiyor.)*
 
 ### 3.2 Kodlanacak — yerel
 
-#### Tahmin çarpımı ambalajı okumuyor <a id="tahmin-carpimi"></a>
+#### ~~Tahmin çarpımı ambalajı okumuyor~~ ✅ → kalan: `priceUnit` yazıcısı <a id="tahmin-carpimi"></a>
 
-Tahmin sorgusu `adet × etiket fiyatı` yapıyor; `packSize`, `packUnit`,
-`priceUnit` ve `trip_line.unit`'in **hiçbirini** okumuyor.
+**✅ Kapandı (23 Ağustos, kararlar 95–96 ve 111–115).** Çarpan koşullu oldu:
 
-Satır seviyesinde bu koruma **var ve çalışıyor** — `PriceHintMapping` ambalaj
-değişiminde trendi bastırıyor ve KDoc'u *"trend dalı önce seçilseydi yeşil bir
-aşağı ok çizerdi ve kullanıcıya gerçeğin tersini söylerdi"* diyor. Bir
-üstteki tahmin satırının bu korumaların **hiçbiri yok**: ürün satırı *"ambalaj
-değişti, karşılaştırma yapmıyorum"* derken tahmin aynı iki sayıyı sessizce
-çarpıyor.
+| Satır | Katkı |
+|---|---|
+| gözlem yok | yok |
+| **sayılan** birim | `miktar × fiyat` |
+| tartılı, ambalaj biliniyor | `⌈miktar ÷ ambalaj⌉ × fiyat` |
+| tartılı, ambalaj bilinmiyor | **yok** — toplamdan düşer, **paydada kalır** |
 
-Somut vaka (kullanıcının kendi listesi): `3 kg Yoğurt`, son gözlem `192,00 TL`
-— bir **3 kg'lık kova**. Bugün 3 × 192,00 = **576,00 TL** hesaplanıyor;
-doğrusu **satırın toplama hiç girmemesi** (karar 111): 192,00 TL bir
-ambalajın fiyatı, 3 kg'ın değil. Bu satırın eski *"doğrusu 192,00"* cevabı
-tasarım tarafından **reddedildi** — kullanıcının yazdığı 3 kg'ı sessizce 1'e
-indiriyordu.
+Kural *"adet ise 1"* değil **"tartılmıyorsa 1"** yazıldı: paket, kutu, demet ve
+şişe de sayılıyor. Düşen satır sessiz değil — meta *"3 kg · ambalaj
+bilinmiyor"* yazıyor, `0,00 TL` **yazılmıyor** (düşen satırın tutarı yok, sıfır
+değil).
 
-`priceUnit` kolonu ayrıca **hiç yazılmıyor** — tanımı ve bir test yorumu
-dışında sıfır referansı var, oysa kendi KDoc'u *"bu kolon olmadan
-`unitPriceMinor` tek başına anlamsızdı"* diyor.
+⚠ **Bu iş sırasında bir 1000× mayını bulundu ve etkisiz kılındı.**
+`trip_line.unit` ile `packUnit` **farklı kanonlar** konuşuyor ve bu bilinçliydi.
+Aktif listedeki **beş fiyatlı satırın sıfırında** ikisi aynı dizgeydi
+(`L`/`lt`, `g`/`kg`). Ham bölmeyle `2 g Çay` bir `1 kg` ambalaja karşı
+**798,00 TL** verirdi (doğrusu 399,00); `500 g` olsaydı **199.500,00 TL**.
+`UnitScale` üç kanonu **okuma anında** uzlaştırıyor — migrasyonla değil, çünkü
+geçmiş veriyi yeniden yazmak eski gözlemlerin anlamını değiştirirdi.
 
-⚠ **Bu, «markete göre tahmin» tartışmasının ön koşulu** (`docs/30`): yanlış
-markete göre yanlış bir çarpım, doğru markete göre yanlış bir çarpımdan iyi
-değil.
+**Kalan tek delik — `priceUnit` yazıcısı.** Kolon **hiç yazılmıyor**; tanımı ve
+bir test yorumu dışında sıfır referansı var, oysa kendi KDoc'u *"bu kolon
+olmadan `unitPriceMinor` tek başına anlamsızdı"* diyor. Somut kusur:
+`MigrosGrammar`'ın manav yolunda **kilo fiyatı adet birimli satıra** yazılıyor
+ve satır yine yanlış çarpılıyor. Okuyucusu (`readTagUnitPrice`) zaten var ve
+normalize; eksik olan bir alan, bir parametre ve bir atama.
 
-Hiçbiri dış veriye bağlı değil; hepsi bugünkü şema ve bugünkü verinin üstünde
-yazılabilir.
+⚠ Karar 96'nın önkoşulu **değil** — formül o kolona bakmıyor. Karar 97'nin
+(markete göre tahmin) önkoşulu, ve 97 zaten ertelenmiş: eşik 1,5 zincir/ürün,
+bugün **1,0–1,4**.
 
 
 **✅ Kapandı (23 Ağustos).** Kart yatayda sağ yarıda dikey panel (%58); yön
@@ -333,10 +352,48 @@ Alışveriş modundaki satırın kendi container'ı yok; plan modunun bileşeni
 `graphify-out/graph.json` sürüm kontrolünde tutulacak mı, yoksa üretilmiş
 çıktı olarak `.gitignore`'a mı düşecek?
 
+#### docs/38 → kararlar 121–126 *(cevaplandı, kodlanacak)* <a id="d38"></a>
+
+**✅ Tasarım 23 Ağustos'ta altı maddenin altısını da cevapladı** (22. tur).
+İki kod kararı **onaylandı**, biri **değiştirildi**, üçü **yeni iş**.
+
+| Karar | Cevap | Koda etkisi |
+|---|---|---|
+| **121** (S1) | Beyan ile gözlem arasındaki `·` **düşer**, aralarındaki boşluk **8dp** olur (grup içi 4dp kalır): `🏪 A101␣␣BİM · bugün`. *"Nokta grup içini bağlar, boşluk grupları ayırır"* — bandın kendi dilbilgisi, fiyat çipini de aynı 8dp ayırıyor. Taze gözlemin zincir adını düşürmek **reddedildi**: karar 119'un koruduğu çelişki sinyalini yok ederdi. | **Var olanın düzeltmesi** — bant iki `Row` grubuna ayrılır, `"· $text"` birleştirmesi kalkar |
+| **122** (S2) | Silme kapısı `hasObservationsAt` **OR** `hasDeclarationsAt`. Beyanı olan market **silinemez**; engellenen uzun dokunuş sebebini yazar (*"Bu markete giden 3 satır var."*), beyan kaldırılınca silme yeniden açılır. Uyarıp silmek reddedildi — *"doğru soruyu yanlış yerde soruyordu"*. | **Yeni** — etiket tarafındaki silme kapısı + snackbar |
+| **123** (S3) | **İki ayrı seçici doğru**, maketin cümlesi düzeltildi. Beyan seçicisinde arama/ekleme/silme ve uzun dokunuş **yok** (*"olmayan jest yanlış şey öğretmez"*). ⚠ Ama **beş sınırı kalktı**: çipler bilinen **bütün** zincirleri gösterir, çünkü karar 117 gözlemsiz zincire gitmeyi meşru kıldı. Yapışkanlık ayrı: `lastDeclaredStoreId` ≠ `lastTaggedStoreId`. | Seçici ✅ zaten ayrı, bütün zincirler ✅ zaten çiziliyor — **kalan:** `lastDeclaredStoreId` |
+| **124** (S4) | Alışverişte işaretli satır **yerinde kalır** (kodun ölçülmüş gerekçesi kabul edildi) ve listenin sonunda **genişlemeyen** `Alındı · 12/18` sayacı durur, chevron çizilmez. Katlanabilir bölüm **alışveriş-sonrasına** ait. Karar 118'in çapası böylece yeniden yazılmadı: sapan zincir bölümleri o bloğun üstünde, blok listenin sonunda. | **Yeni** — sayaç bloğu + `POST_SHOPPING` ayrımı |
+| **125** (S5) | **Kodun ikisi de doğru:** cümlede tek zincirde ad kalır, birden fazlasında ad düşer sayı kalır (*"3'ü başka marketlerde"*); bölüm zincir başına, başlıkta storefront + `"A101'de · 2"`. | ✅ **Değişiklik yok** |
+| **126** (S6) | İstisnayı **Ürün Detayı** yazar: eylem grubunun **başına** *"Nereden alınacak"* satırı — hedefteyken `"BİM · hedef"` 500/`onSurfaceVariant`, istisnadayken zincir adı 600/`onSurface` + `chevron_right`. Dokunuş beyanın çip ızgarasını açar; *"Hedefte al"* `setLineStore(null)` çağırır. **Karar 38'in sabit satır sırası bu tek ekleme için açıldı.** Çoklu işaretleme (b) ve yeni satır jesti (d) reddedildi. | **Yeni** — `setLineStore`'un çağranı nihayet var |
+
+⚠ **Karar defterinin kendi sayacı düzeltildi:** 97 değil **113 giriş, 126'ya
+kadar numaralı**.
+
+⚠ **Cevapsız kalan tek kod kararı:** sapma varken *"başka markette ucuz"*
+çipinin bastırılması. `docs/38` S1'in içinde geçiyordu ama 121 yalnızca iki
+zincir adının ayrılmasını cevapladı; çipin kaderi hâlâ kodun kararı.
+
+| # | Madde | Ağırlık |
+|---|---|---|
+| **S1** | Bant tek akışta **iki zincir adı** taşıyor: `🏪 A101 · BİM · dün` — biri beyan, öteki gözlem (karar 105). Maketin on üç satırlık verisi bu bileşimi **bir kez bile** çizmiyor. **Cihazda görüldü.** | Okunabilirlik |
+| **S2** | Karar 59 **gözlemsiz marketi siliyor**; karar 117'nin hedefi gün bir'de zaten gözlemsiz. Etiket ekranındaki tek uzun dokunuş, listedeki beyanı **haber vermeden imha ediyor**. | Veri kaybı |
+| **S3** | *"Nereye gidiyorsun?"* karar 59'un seçicisi **değil** — aynı maket seti ikisini farklı çiziyor (arama + "Yeni market" + uzun-dokunuş-sil ⟂ beş çip + "Belli değil") ve iki **yapışkanlık farklı olaydan** besleniyor. | Davranış sözü |
+| **S4** | Karar 116 *"Alındı"*yı alışverişte **istiyor** ve maket onu çiziyor; kod **iki modda da** kaldırdı (ölçülmüş gerekçeyle). ⚠ Karar 118'in sapanlar bölümü *"Alındı'nın üstünde"* diye konumlandırılmıştı — **çapa yok**. | **Engelleyici** |
+| **S5** | **İki zincire** sapılırsa cümle ve bölüm ne diyor? Makette bütün örnekler tek zincirli. Kod cümlede karar verdi (*"3'ü başka marketlerde"* — ad düşer, sayı doğru kalır), bölümde zincir başına bir bölüm açtı. | Yazı + yapı |
+| **S6** | **İstisnayı yazan jest hiç tasarlanmadı.** Kullanıcının cümlesindeki tek fiil — *"işaretlerim"* — karşılıksız: veri alanı var, gösterimi var, `setLineStore` **çağransız**. | **Engelleyici** |
+
+**Kod neden bir jest uydurmadı (S6):** seçeneklerinin hepsi var olan bir kararı
+deliyor — Ürün Detayı'na blok eklemek karar 38'in sabitlediği satır sırasını
+açar; satırda uzun dokunuş / çoklu seçim karar 110'un *"satırda tek yığılmış
+hedef"* kuralına dokunur; karar 116 zaten *"satır yüzeyi planlamada veri
+değiştirmez"* diyor. Kod birini seçerse **hangi kararı deldiğini bilmeden**
+delmiş olur.
+
 #### Tasarım cevabı bekleyen sorular <a id="tasarim"></a>
 
-Kod tarafında yapılacak bir şey yok; ikisi de tasarımın kalemini bekliyor.
+Kod tarafında yapılacak bir şey yok; hepsi tasarımın kalemini bekliyor.
 
+- **`docs/38` — hedef market, altı madde.** Yukarıda; ikisi engelleyici.
 - **`docs/27` — on ikinci tur, dört soru.** En görünür olanı: yoğurt satırı
   hâlâ `↑ %88` yazıyor. Trendin `null` kuralı **tasarımın kuralı**, tek
   taraflı gevşetilmedi. F5.5'in ambalaj şartını tasarımdakinden **katı**
@@ -344,6 +401,12 @@ Kod tarafında yapılacak bir şey yok; ikisi de tasarımın kalemini bekliyor.
 - **`docs/28` — on üçüncü tur, on üç soru.** İçinde F6.5'in sabit terfisi ve
   ⚠ `focusRing` / `AccentStrip` bu turlarda **sorulmadı**; sorunun kendisi
   hâlâ yazılacak iş.
+- ~~**`docs/30` — markete göre tahmin.**~~ ✅ **Cevaplandı** (kararlar 117–119).
+  Üç şartından ikisi karşılandı (satır istisnası; eklemede market sorulmuyor),
+  üçüncüsü — *"hesap gidilecek markete göre"* — **bilinçle reddedildi**: beyan
+  organizasyon, aritmetik değil. ⚠ Kullanıcının cümlesinin ikinci yarısı
+  (*"bu şekilde de tahmini sepet hesaplanabilir"*) maketin özetinde düşmüştü;
+  bu `docs/38`'in girişinde kayıtlı.
 
 ### 3.3 Kodlanacak — dış veri
 
@@ -613,7 +676,13 @@ yazılacak.
 
 | Dosya | Ne işe yarar |
 |---|---|
-| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — 56 kararın kod durumu (46–75 dahil), gezinme sözleşmesi sabitleri, ikonografi |
+| [11-tasarim-kararlari.md](11-tasarim-kararlari.md) | **Aktif** — kararların kod durumu (**46–120** dahil), gezinme sözleşmesi sabitleri, ikonografi |
+| [38-hedef-market-acik-maddeler.md](38-hedef-market-acik-maddeler.md) | **AÇIK** — hedef market beyanının altı açık maddesi; **ikisi engelleyici** (S4, S6) |
+| [37-market-ve-isaretleme.md](37-market-ve-isaretleme.md) | **Cevaplandı** — kararlar 116–120; kullanıcının iki cümlesinin dosyalandığı yer |
+| [36-tahmin-95-96.md](36-tahmin-95-96.md) | **Cevaplandı** — kararlar 111–115; ROADMAP'in kendi cevabının reddedildiği tur |
+| [35-fiyat-cipi-dokunma-hedefi.md](35-fiyat-cipi-dokunma-hedefi.md) | **Cevaplandı** — karar 110; iki cihaz denemesinin başarısızlık raporu |
+| [33](33-satir-yeniden-tasarim.md) · [34](34-miktar-duzenleme.md) | **Cevaplandı** — kararlar 102–106 · 107–109 |
+| [30-markete-gore-tahmin.md](30-markete-gore-tahmin.md) | **Cevaplandı** — kararlar 117–119; üç şarttan ikisi karşılandı, biri bilinçle reddedildi |
 | [27-tasarima-sorular-12.md](27-tasarima-sorular-12.md) | **AÇIK** — on ikinci tur, dört soru; F5.5'in katı ambalaj şartının gerekçesi de burada |
 | [28-tasarima-sorular-13.md](28-tasarima-sorular-13.md) | **AÇIK** — on üçüncü tur, on üç soru; F6.5 sabit terfisi ve ölü primitiflerin kaderi |
 | [17](17-e12-etiket-olcumu.md) · [18](18-zincir-karsilastirmasi.md) · [24](24-a101-olcumu.md) | **Etiket ölçüm raporları** — BİM · üç zincir karşılaştırması · A101 |
@@ -912,7 +981,139 @@ alındı** — defter artık yalnızca bugün geçerli olanı anlatıyor.
 
 *(F11.10 bu adıma devroldu ve burada kapandı.)*
 
-### 6.2 Kapanmış F maddeleri
+### 6.2 Faz G — Ekran 1 revizyonu *(kapandı — 23 Ağu 2026)*
+
+Kullanıcının *"her şey tasarımdaki görünüm ile birebir aynı olsun"* kuralı bu
+fazın boyunca geçerliydi ve **gözle değil ölçerek** uygulandı: her ölçü, canlı
+maketten `getComputedStyle` ile okundu; her ekran çıktısı cihazdan
+`uiautomator dump` ile doğrulandı. Tasarım bu faz boyunca **beş tur** cevap
+verdi (kararlar 102–120).
+
+#### ▸ ~~Kararlar 102–106 — satır iki banda ayrıldı~~ ✅
+
+Satırın anatomisi yeniden çizildi: **kimlik bandı** (ne alınacak) ve **ekonomi
+bandı** (ne biliyoruz). Rozet **her satırda** çiziliyor (karar 103) — eskiden
+feda sırasının kurbanıydı, yani *"yanlış adedin bedeli parayla ödenir"* diyen
+kural adedi siliyordu. Sparkline **silindi** (karar 106): 24×14dp'de okunmuyordu
+ve tam da bu yüzden feda sırasının ilk üyesiydi; yeri Ürün Detayı'ndaki grafik.
+
+#### ▸ ~~Kararlar 107–110 — miktar düzenlenebilir oldu~~ ✅
+
+Rozete dokunmak satır içinde **üç saniyelik bir sayaç** açıyor; sayaç ekonomi
+bandının **yerine** geçiyor, kimlik bandı kıpırdamıyor. Ürün Detayı'na *"Bu
+listedeki miktar"* bloğu ve birim çipleri girdi (karar 108). Ekleme
+**etkisiz** oldu: aynı ürünü iki kez eklemek ikinci satır doğurmuyor.
+
+⚠ **Karar 110 iki cihaz denemesinden sonra geldi.** Fiyat çipine 48dp hedef
+vermenin iki standart yolu da cihazda **başarısız oldu** — ölçüm/yerleşim
+ayrımı isabet testini genişletmiyor (Compose üst düğümün *bildirdiği* boyutu
+kullanıyor) ve `minimumInteractiveComponentSize()` yerleşimi 72dp'nin üstüne
+çıkarıyor. `docs/35` bunu dosyaladı; tasarım **soruyu yeniden çerçeveledi**:
+72dp'ye iki yığılmış 48dp hedef sığmaz, o yüzden **çip etkisiz** ve satırın tek
+yığılmış hedefi rozet.
+
+#### ▸ ~~Kararlar 95–96, 111–115 — tahmin kör çarpmayı bıraktı~~ ✅
+
+Ayrıntısı §3.2'de. En sert bulgu: **1000× mayını**, üç birim kanonunun okuma
+anında uzlaştırılmasıyla etkisiz kılındı.
+
+⚠ Bu turda `docs/36` tasarıma **ROADMAP'in kendi cevabının yanlış olduğunu**
+gösterdi: `3 kg Yoğurt` için önerilen *"doğrusu 192,00 TL"* cevabı, kullanıcının
+yazdığı 3 kg'ı sessizce 1'e indiriyordu. Tasarım bunu reddetti ve satır
+**toplamdan düşüyor, paydada kalıyor**.
+
+#### ▸ ~~Karar 120 — iki kusur (kullanıcı bildirdi)~~ ✅
+
+1. **Ürün Detayı sheet'inin altı görünmüyordu** — gövdenin kaydırması yoktu;
+   sheet'ten uzun olan her şey sessizce kırpılıyordu. *(Bir tur önce
+   `skipPartiallyExpanded` eklenmişti — iki ayrı kusur, ikisi de gerekliydi.)*
+2. **Silme jesti yarım kalıyordu** — eşik açılan alanın %60'ıydı ve hangisinin
+   olacağı parmağın nerede durduğundan belli değildi. Artık **sonuna kadar
+   çekmek** siliyor.
+
+#### ▸ ~~Karar 116 — planlamada işaretlenecek bir şey yok~~ ✅ *(cihazda doğrulandı)*
+
+Onay dairesi yalnız alışverişte; planlamada satır dokunuşu Ürün Detayı'nı
+açıyor; **"Alındı" bölümü planlamada yok.** Kimlik bandı **34dp kazandı**.
+
+⚠ Kod bir adım ileri gitti — bölümü **iki modda da** kaldırdı. Gerekçesi
+ölçülmüş (reyonda yeniden sıralama), ama maket bölümü alışverişte çiziyor.
+`docs/38` S4.
+
+#### ▸ ~~Karar 117 — hedef gezide, istisna satırda~~ ✅ *(cihazda doğrulandı)*
+
+**Şema v8:** `trip_line.storeId`, tek nullable kolon, otomatik migrasyon,
+spec'siz. Cihazda **v7 → v8, `pm clear` olmadan** doğrulandı: dokuz tablonun
+sayıları aynı (1/1/12/245/59/14/120/26/9), kolon her satırda null.
+
+Başlığın alt satırı beyan cümlesine dönüştü: `🏪 BİM'e gidiyorsun · 2'si
+A101'de`. Chevron **çizilmiyor** — tasarımın ölçümü: cümleden sonra 36dp pay
+kalıyor, chevron 20dp. Dokunma hedefi başlık bloğunun tamamı.
+
+**İki yeni Türkçe ek kuralı**, ikisi de var olan `turkishLocative`'ten farklı:
+
+- `turkishDative` — **kaynaştırma `y`**: yedi tohum zincirinin **üçü** istiyor
+  ("File'ye", "CarrefourSA'ya", "Tarım Kredi'ye"), yani istisna değil.
+- `possessiveSuffix` — **tablo**, iki eksenli kural değil: dokuz rakam **beş**
+  ayrı ek üretiyor (`i, si, ü, sı, u`).
+
+⚠ Cümlenin kısa biçimi bir üslup değil **ölçüm sonucu**: reddedilen
+`"2 satır A101'de"` 97dp'ydi ve 360dp'de kırpılıyordu; `"2'si A101'de"` 72dp.
+
+Seçici (`"Nereye gidiyorsun?"`) **yeni bir bileşen** — karar 59'unki değil
+(`docs/38` S3). Çip h44, dolgu 0/16, yarıçap 999, aralık 8; seçili
+`inverseSurface`, seçili olmayan `surfaceVariant` + 0.8dp hairline;
+`"Belli değil"` h48.
+
+#### ▸ ~~Karar 118 — işaret sapmadır~~ ✅ *(cihazda doğrulandı)*
+
+Ekonomi bandının başında `storefront` 14dp + zincir 13sp/600 + `·` + meta.
+**Meta kırpılır, sapma kırpılmaz.** Sapma tek başına bandı var ediyor
+(56dp → 72dp). Alışverişte sapanlar reyondan çıkıp **zincir başına bir bölüme**
+iniyor — cihazda `🏪 A101'de · 2` görüldü.
+
+`deviatesFrom` kuralı **tek yerde**, üç yer okuyor (işaret, bölümleme, cümlenin
+sayısı). Ayrı yazılsalardı biri ötekinden ayrılır ve cümle *"2'si A101'de"*
+derken listede üç satır işaretli görünürdü.
+
+Envanter **20 → 21**: `storefront`, Phosphor Regular 2.1.1 (MIT), yolu
+kaynağıyla **birebir** doğrulandı.
+
+#### ▸ ~~Karar 119 — beyan aritmetiğe girmiyor~~ ✅ *(cihazda doğrulandı)*
+
+Hedef seçilmeden önce ve sonra: `~609 TL · BİM fiyatlarıyla · 4/6`. Yapısal
+olarak da mümkün değil — tahmin `EstimateRow` üzerinden hesaplanıyor ve o
+projeksiyonda `storeId` **yok**.
+
+#### ▸ ~~Yan bulgular — tasarım kaynaklı değil, ölçerek bulundu~~ ✅
+
+1. **Bölüm başlığı yanlış tarafa yaslanıyordu.** Dolgusu simetrikti (8dp/8dp)
+   ve cihazda üstünde **20,2dp**, altında **24,4dp** ölçüldü — yani her başlık
+   bir **önceki** bölümün kuyruğu gibi okunuyordu ve listede üç kademe
+   (bant < satır < bölüm) yerine tek kademe vardı. Maketin ölçüsü **20dp/4dp**;
+   uygulandıktan sonra cihazda 33,1dp/20,6dp.
+   *Kullanıcı bunu "listedeki itemlar çok iç içe gibi duruyor, karışık gibi"
+   diye bildirdi — ve satırların kendisi zaten doğruydu (56/72dp, bantlar arası
+   5dp, ikinci bandın sola dayalılığı dahil).*
+2. **Ekonomi bandının aralığı 6dp'ydi**, maket 8px diyor — sapmasız satırları
+   da ilgilendiriyordu.
+3. **`inverseSurface`/`inverseOnSurface` tanımsızdı** — M3 baseline morunu
+   taşıyorlardı; onları kullanan ilk yüzey sessizce mor çizerdi.
+4. **Test dosyasında `emptyList()` adlı bir test** standart `emptyList()`'i
+   gölgeliyordu; hata *"beklenen `List<String>`, gelen `Unit`"* diye çıkıyor ve
+   sebebi hiçbir yerde görünmüyordu.
+
+#### ▸ Faz G'nin ders çıkardığı üç hata
+
+1. **Eksi tuşu değeri ARTIRIYORDU.** Taban `step` düz döndürüyordu, yani
+   `1 g → 100 g`. `minOf(count, step)` ile düzeldi — **cihazda** bulundu.
+2. **Birim seçimi geri alınamıyordu.** Ortak yardımcı `override ?: mevcut`
+   yazıyordu ve bu *"dokunma"* ile *"sil"*i aynı şeye indiriyordu. İki ayrı
+   çağrı yerine ayrıldı.
+3. **Miktar alanı yazarken geri sıçrıyordu.** `remember(count)` her tuşta
+   yeniden anahtarlanıyordu; "2,5"i silip "1" yazmak "11" üretiyordu.
+
+### 6.3 Kapanmış F maddeleri
 
 Numara sırasında. Numaralar **kimliktir, sıra değildir** — eski F-numaraları
 PR geçmişi ve kod göndermeleri bozulmasın diye korunuyor.

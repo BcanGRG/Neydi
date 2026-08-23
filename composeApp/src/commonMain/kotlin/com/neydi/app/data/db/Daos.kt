@@ -197,6 +197,18 @@ interface TripDao {
     suspend fun byId(id: String): Trip?
 
     /**
+     * Gezinin HEDEF MARKETI (karar 117).
+     *
+     * `completedAt IS NULL` KOSULU BILEREK VAR: kapanmis bir gezinin hedefini
+     * degistirmek gecmisi yeniden yazmak olurdu. Beyan bir PLAN, kayit degil.
+     *
+     * `storeId` null verilebiliyor - "Belli degil" bir hal ve geri donusu
+     * olmak zorunda.
+     */
+    @Query("UPDATE trip SET storeId = :storeId, updatedAt = :at WHERE id = :id AND completedAt IS NULL")
+    suspend fun setStore(id: String, storeId: String?, at: Long)
+
+    /**
      * PLANNING <-> SHOPPING. Kapanmis geziye DOKUNMUYOR.
      *
      * completedAt IS NULL kosulu sart: kullanici ozet kartini kapatirken alisveris
@@ -328,6 +340,18 @@ interface TripLineDao {
             tl.addedByMemberId AS addedByMemberId,
             tl.note          AS note,
             tl.takeOutcome   AS takeOutcome,
+
+            -- SATIRIN MARKETI (karar 117): hedef marketten SAPMA.
+            --
+            -- Ham kimlik DE geliyor, cunku "sapma var mi" sorusu ADLA degil
+            -- KIMLIKLE cevaplaniyor: iki zincir ayni adi tasiyabilir ve ad
+            -- kullanicinin duzenledigi bir alan. Ad yalnizca CIZILIYOR.
+            --
+            -- LEFT JOIN degil alt sorgu: `tl.storeId` cogu satirda NULL ve
+            -- JOIN'i sorgunun govdesine eklemek dort tabloyu bes yapardi.
+            tl.storeId       AS storeId,
+            (SELECT s.name FROM store s
+                WHERE s.id = tl.storeId AND s.deletedAt IS NULL) AS storeName,
 
             -- FIYAT IPUCU (E16): iki correlated alt sorgu + magaza adi + gecmis.
             --
@@ -575,6 +599,14 @@ interface TripLineDao {
         """,
     )
     suspend fun setQuantity(id: String, quantity: Double, unitOverride: String?, at: Long)
+
+    /**
+     * Satirin market ISTISNASI (karar 117).
+     *
+     * `storeId` null = istisnayi kaldir, satir yine hedefi izler.
+     */
+    @Query("UPDATE trip_line SET storeId = :storeId, updatedAt = :at WHERE id = :id")
+    suspend fun setStore(id: String, storeId: String?, at: Long)
 
     @Query("UPDATE trip_line SET deletedAt = :at WHERE id = :id")
     suspend fun softDelete(id: String, at: Long)

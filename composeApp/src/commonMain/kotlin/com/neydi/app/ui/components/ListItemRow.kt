@@ -185,7 +185,14 @@ fun ListItemRow(
     // yatay genisligi calar ve URUN ADINI kirpar. Ad kirpilmasi kabul edilemez -
     // fiyat ipucu yardimci bilgi, ad ise satirin varlik sebebi.
     val cheaper = row.cheaperElsewhere.takeUnless { shoppingMode }
-    val hasSecondLine = second != SecondLine.Empty || cheaper != null
+    // SAPMA TEK BASINA BANDI VAR EDIYOR (karar 118): fiyati, gecmisi, hicbir
+    // seyi olmayan bir satir da "burayi A101'den alacagim" diyorsa 56dp'den
+    // 72dp'ye cikiyor. Beyan bir gurultu degil, kullanicinin kendi yazdigi sey.
+    //
+    // ALISVERIS MODUNDA CIZILMIYOR (bandin kendi kurali): orada sapanlar zaten
+    // kendi bolumune ayriliyor, yani satir basina tekrar etmek gereksiz.
+    val deviantStore = row.deviantStore.takeUnless { shoppingMode }
+    val hasSecondLine = second != SecondLine.Empty || cheaper != null || deviantStore != null
 
     val height = when {
         shoppingMode -> Sizes.rowShopping
@@ -366,12 +373,22 @@ fun ListItemRow(
             .alpha(rowAlpha),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CheckTarget(checked = row.checked, shoppingMode = shoppingMode)
+        // ONAY DAIRESI YALNIZ ALISVERISTE (karar 116).
+        //
+        // Planlamada isaretlenecek bir sey yok - liste kuruluyor, tuketilmiyor.
+        // Daire (24dp + 10dp bosluk) dusunce kimlik bandi 34dp KAZANIYOR:
+        // 360dp'de ada 180dp yerine 214dp kaliyor.
+        if (shoppingMode) {
+            CheckTarget(checked = row.checked, shoppingMode = true)
+        }
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(start = SpacingExtra.betweenCheckboxAndName),
+                // Daire yoksa onun bosluğu da yok - ad satirin solundan basliyor.
+                .padding(
+                    start = if (shoppingMode) SpacingExtra.betweenCheckboxAndName else 0.dp,
+                ),
             // BANTLAR ARASI 5dp - maketin olcusu. Sifir birakilsaydi meta ada
             // yapisir ve iki bant tek blok gibi okunurdu; buyutmek de satiri
             // 72dp'nin uzerine cikarirdi.
@@ -454,6 +471,7 @@ fun ListItemRow(
                 EconomyBand(
                     second = second,
                     cheaper = cheaper,
+                    deviantStore = deviantStore,
                     priceText = (row.priceHint as? PriceHint.Single)
                         ?.takeIf { it.daysAgo <= FRESH_DAYS }?.price
                         ?: (row.priceHint as? PriceHint.Trend)?.to,
@@ -475,6 +493,11 @@ fun ListItemRow(
 
 /** Ekonomi bandinin taban yuksekligi - fiyatli ve fiyatsiz satir ayni hizada dursun diye. */
 private val ECONOMY_BAND_MIN = 28.dp
+
+/** Sapma isaretinin olculeri (karar 118) - maketten. */
+private val DEVIATION_ICON = 14.dp
+private val DEVIATION_TEXT = 13.sp
+private val DEVIATION_GAP = 4.dp
 
 /** En kucuk dokunma hedefi (karar 56): tek sayi, 48dp. */
 private val TOUCH_TARGET = 48.dp
@@ -627,6 +650,7 @@ private fun EconomyBand(
     second: SecondLine,
     cheaper: String?,
     priceText: String?,
+    deviantStore: String? = null,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz cipi YA
@@ -679,13 +703,70 @@ private fun EconomyBand(
             // ciziliyordu. Taban ikisini ayni hizaya oturtuyor.
             modifier = Modifier.heightIn(min = ECONOMY_BAND_MIN),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            // BANDIN ARALIGI 8dp - maketin olcusu (`gap:8px`). Kodda 6dp
+            // yaziyordu ve bu, sapma isaretini olcerken yakalanan eski bir
+            // sapmaydi; sapmasiz satirlari da ilgilendiriyor.
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
-            // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz
-            // cipi - asla ikisi. Birliktelik YENI BIR KISIT DEGIL, var olan
-            // kurallarin sonucu: cip varken trend bastiriliyor (karar 41) ve
-            // `PackChanged` cipi zaten imkansiz kiliyor.
-            if (cheaper != null) {
+            // SAPMA ISARETI BANDIN BASINDA VE ASLA KIRPILMIYOR (karar 118).
+            //
+            // "Tek icerik" kuralinin (karar 83-84-86) DISINDA, cunku o kural
+            // uygulamanin SOYLEDIKLERI arasinda seciyor - gecmis metasi mi,
+            // ucuz cipi mi. Sapma ise kullanicinin KENDI BEYANI; onu bir
+            // ipucuyla yarisa sokmak, kullanicinin yazdigini uygulamanin
+            // tahminine yenik dusurmek olurdu.
+            //
+            // ISARET VE META TEK GRUP, 4dp icerideyken bant 8dp: maket bunu
+            // ic ice iki flex ile ciziyor. Duz bir sirada tek aralik
+            // olsaydi ikon zincir adindan, zincir adi da metadan esit uzakta
+            // dururdu - oysa ilk ikisi TEK BIR ISIM gibi okunmali.
+            if (deviantStore != null) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(DEVIATION_GAP),
+                ) {
+                    NeydiIcon(
+                        icon = NeydiIcons.Storefront,
+                        contentDescription = null,
+                        size = DEVIATION_ICON,
+                        tint = MaterialTheme.colorScheme.outline,
+                    )
+                    Text(
+                        text = deviantStore,
+                        fontSize = DEVIATION_TEXT,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                    )
+                    // AYIRICI YALNIZCA META VARSA: sapma tek basinaysa cumle
+                    // orada bitiyor ve asili bir nokta kalmamali. Maket iki
+                    // hali de ciziyor.
+                    if (text.isNotEmpty()) {
+                        Text(
+                            text = "·",
+                            fontSize = DEVIATION_TEXT,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                        // KIRPILAN TARAF META: `weight(1f)` onda, isarette
+                        // degil - beyan kullanicinin yazdigi, meta bizim
+                        // hatirlattigimiz sey.
+                        MetaText(text, muted, Modifier.weight(1f))
+                    } else {
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
+            } else if (cheaper != null) {
+                // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA
+                // ucuz cipi - asla ikisi. Birliktelik YENI BIR KISIT DEGIL,
+                // var olan kurallarin sonucu: cip varken trend bastiriliyor
+                // (karar 41) ve `PackChanged` cipi zaten imkansiz kiliyor.
+                //
+                // ⚠ SAPMA CIPI DE BASTIRIYOR ve bu makette YOK (docs/38):
+                // cip *"istersen A101'e ugra"* diyor, sapma ise kullanicinin
+                // *"zaten A101'den alacagim"* karari. Kapanmis bir soruyu
+                // yeniden sormak, ustelik 92dp'lik cipi 50dp'lik isaretin
+                // yanina koyup 360dp'de ikisini birden kirpmak pahasina.
                 CheaperChip(cheaper)
                 Spacer(Modifier.weight(1f))
             } else if (text.isNotEmpty()) {

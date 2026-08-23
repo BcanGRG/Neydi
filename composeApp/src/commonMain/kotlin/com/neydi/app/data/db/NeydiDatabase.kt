@@ -41,7 +41,7 @@ import androidx.room3.migration.AutoMigrationSpec
         PendingOp::class,
         SyncMeta::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
     // TAMAMEN OTOMATIK migration - spec yok, veri geri-doldurmasi GEREKMIYOR.
     //
@@ -138,6 +138,13 @@ import androidx.room3.migration.AutoMigrationSpec
         // 101'in borcu v5 -> v6 turunda odenmemisti; ikinci bir bump acmak
         // ayni dansi iki kez yapmak olurdu.
         AutoMigration(from = 6, to = 7, spec = Migration6To7Spec::class),
+        // v7 -> v8: TEK NULLABLE KOLON, spec yok.
+        //
+        // `trip_line.storeId` - satirin hedef marketten SAPMASI (karar 117).
+        // Nullable, cunku `null`in kendisi bir anlam tasiyor: "hedefi izliyor".
+        // Varsayilan gerekmiyor, veri geri-doldurmasi da yok; eski satirlarin
+        // hepsi dogru sekilde "hedefi izliyor" haline dusuyor.
+        AutoMigration(from = 7, to = 8),
     ],
 )
 @ConstructedBy(NeydiDatabaseConstructor::class)

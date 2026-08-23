@@ -11,6 +11,7 @@ import com.neydi.app.data.db.MemberDao
 import com.neydi.app.data.db.PriceObservationDao
 import com.neydi.app.data.db.BlockSource
 import com.neydi.app.data.db.ProductDao
+import com.neydi.app.data.db.StoreDao
 import com.neydi.app.data.db.SuggestionBlock
 import com.neydi.app.data.db.SuggestionBlockDao
 import com.neydi.app.data.db.TripDao
@@ -71,6 +72,8 @@ class ListViewModel(
     private val catalogSeedDao: CatalogSeedDao,
     private val categoryDao: CategoryDao,
     private val priceObservationDao: PriceObservationDao,
+    /** Hedef market secicisinin adaylari ve hedefin gorunen adi (karar 117). */
+    private val storeDao: StoreDao,
     private val statsRebuilder: ProductStatsRebuilder,
     private val suggestionEngine: SuggestionEngine,
     private val blockDao: SuggestionBlockDao,
@@ -122,6 +125,36 @@ class ListViewModel(
      * siralamasiyla donduruyor - ilki en sonuncusu.
      */
     /**
+     * Gezinin HEDEF MARKETI: kimlik + gorunen ad (karar 117).
+     *
+     * IKISI BIRDEN GEREKLI ve ayri sebeplerden: kimlik SAPMA
+     * karsilastirmasinin tarafi, ad ise beyan cumlesinin yazdigi sey.
+     * Yalnizca adi tasisaydik iki zincirin ayni adi tasidigi bir hanede
+     * her ikisi de "hedef" sayilirdi.
+     *
+     * Hedef silinmis bir markete isaret ediyorsa ad `null` kaliyor ve beyan
+     * cizilmiyor - baslik "Son alisveris"e geri duser. Sessizce bir baska
+     * marketin adini yazmak, kullaniciya hic secmedigi bir hedefi gosterirdi.
+     */
+    private val storeTarget: Flow<StoreTarget> = combine(
+        repo.activeTrip(household),
+        storeDao.observeAll(household),
+    ) { trip, stores ->
+        val id = trip?.storeId
+        StoreTarget(id = id, name = stores.firstOrNull { it.id == id }?.name)
+    }
+
+    /**
+     * Market secicisinin adaylari (karar 117 + karar 58: market = ZINCIR).
+     *
+     * Ayarlar'daki zincir listesiyle AYNI sorgudan geliyor, yani kullanicinin
+     * bir yerde gordugu kume otekinde de gecerli.
+     */
+    val storeOptions: StateFlow<List<StoreOption>> = storeDao.observeAll(household)
+        .map { stores -> stores.map { StoreOption(id = it.id, name = it.name) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
      * Basligin TAMAMINI besleyen tek akis: son gezi + avatar.
      *
      * TEK AKISTA BIRLESTIRILDI cunku `combine` bes akistan sonra tipli
@@ -133,7 +166,8 @@ class ListViewModel(
         memberDao.observeSelf(household),
         memberDao.observeAll(household),
         priceObservationDao.observeTripEstimates(household),
-    ) { trips, self, all, estimates ->
+        storeTarget,
+    ) { trips, self, all, estimates, target ->
         val byTrip = estimates.associateBy { it.tripId }
         HeaderData(
             lastTrip = trips.firstOrNull()?.let { trip ->
@@ -146,6 +180,7 @@ class ListViewModel(
             },
             selfInitials = self?.displayName?.let { turkishInitials(it) },
             hasPartner = all.size > 1,
+            target = target,
         )
     }
 
@@ -169,7 +204,14 @@ class ListViewModel(
             emptyKind,
             header,
         ) { rows, memberId, mod, kind, head ->
-            rows.toSections(memberId, mod, kind, now = clock()).copy(
+            rows.toSections(
+                memberId,
+                mod,
+                kind,
+                now = clock(),
+                targetStoreId = head.target.id,
+                targetStoreName = head.target.name,
+            ).copy(
                 lastTrip = head.lastTrip,
                 selfInitials = head.selfInitials,
                 hasPartner = head.hasPartner,
@@ -249,6 +291,21 @@ class ListViewModel(
      * Liste uzerinde acilan bottom sheet'lerdir."* O yuzden Nav3 back stack'inde
      * degil, ekranin kendi state'inde.
      */
+    /**
+     * Hedef market secicisi acik mi (karar 117).
+     *
+     * ADAYLARI TASIMIYOR, yalnizca ACIK/KAPALI: liste `storeOptions`'tan
+     * canli geliyor ve sheet acikken bir zincir eklenirse (baska ekrandan)
+     * secici onu ayni anda gosteriyor. Adaylari acilis aninda dondursaydik
+     * bayat bir kume cizerdik.
+     */
+    private val _storePickerOpen = MutableStateFlow(false)
+    val storePickerOpen: StateFlow<Boolean> = _storePickerOpen
+
+    fun openStorePicker() { _storePickerOpen.value = true }
+
+    fun closeStorePicker() { _storePickerOpen.value = false }
+
     private val _productSheet = MutableStateFlow<ProductSheetState?>(null)
     val productSheet: StateFlow<ProductSheetState?> = _productSheet
 
@@ -510,6 +567,52 @@ class ListViewModel(
             _productSheet.update { current ->
                 current?.takeIf { it.productId == productId }?.copy(isBlocked = blocked) ?: current
             }
+        }
+    }
+
+    /**
+     * Gezinin hedef marketini beyan eder (karar 117). `null` = "Belli degil".
+     *
+     * Uye kimligi bekleniyor cunku hedefi secmek AKTIF GEZI ACABILIYOR ve
+     * gezi acilirken sabitler tohumlaniyor - onlarin da bir ekleyeni olmak
+     * zorunda. Uye henuz yuklenmemisse islem sessizce dusuyor; bir sonraki
+     * dokunusta uye hazir olur ve bu, olmayan bir uyeyle satir yazmaktan
+     * iyidir.
+     */
+    fun setTargetStore(storeId: String?) {
+        // SECICI HEMEN KAPANIYOR, yazmayi BEKLEMEDEN: secim tek dokunusluk
+        // ve geri donusu var ("Belli degil"). Yazmayi bekleseydik parmak
+        // kalktiktan sonra sheet bir an daha acik kalirdi.
+        _storePickerOpen.value = false
+        viewModelScope.launch {
+            val me = myMemberId.value ?: return@launch
+            repo.setTripStore(householdId = household, memberId = me, storeId = storeId)
+        }
+    }
+
+    /**
+     * Bir satirin market ISTISNASINI yazar (karar 117).
+     *
+     * ⚠ HENUZ CAGRANI YOK - jesti TASARLANMADI (`docs/38` S6).
+     *
+     * Karar 117 istisnanin nerede DURDUGUNU soyluyor, karar 118 nasil
+     * GORUNDUGUNU; ama onu YAZAN jest hicbir yerde cizilmemis. Karar 116
+     * planlamada satir yuzeyinin veri degistirmesini yasakliyor, Urun
+     * Detayi'nin satir sirasi karar 38'le sabit, satirda uzun dokunus zaten
+     * Urun Detayi'ni aciyor.
+     *
+     * Yol BURADA BIRAKILIYOR (silinmiyor) cunku sema, depo ve gosterim
+     * tamamlandi; eksik olan tek sey hangi karari delecegimiz - ve bunu kod
+     * secerse, hangi karari deldigini bilmeden delmis olur.
+     *
+     * Hedef BURADA okunuyor, cagirandan gelmiyor: cizim tarafinin elindeki
+     * hedef bir kare eski olabilir ve o kare icinde hedefi degistirmis bir
+     * kullanici, istisnayi yanlis hedefe gore yazdirirdi.
+     */
+    fun setLineStore(rowId: String, storeId: String?) {
+        viewModelScope.launch {
+            val target = tripDao.activeOrNull(household)?.storeId
+            repo.setLineStore(rowId = rowId, storeId = storeId, targetStoreId = target)
         }
     }
 
@@ -1263,12 +1366,24 @@ data class ShoppingSummary(
     val previous: PreviousTrip?,
 )
 
-/** Basligin uc parcasi: son gezi, avatar bas harfleri, es var mi. */
+/** Basligin parcalari: son gezi, avatar bas harfleri, es var mi, hedef market. */
 private data class HeaderData(
     val lastTrip: LastTrip?,
     val selfInitials: String?,
     val hasPartner: Boolean,
+    val target: StoreTarget,
 )
+
+/**
+ * Gezinin hedef marketi (karar 117).
+ *
+ * @property id sapma karsilastirmasinin tarafi; `null` = "Belli degil".
+ * @property name beyan cumlesinin yazdigi ad; market silinmisse `null`.
+ */
+private data class StoreTarget(val id: String?, val name: String?)
+
+/** Market secicisindeki bir aday (karar 117). */
+data class StoreOption(val id: String, val name: String)
 
 /** Ekran 5'in alim gecmisi dokuz satir gosteriyor (tasarim). */
 private const val HISTORY_LIMIT = 9

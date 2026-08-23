@@ -55,6 +55,11 @@ class SchemaBaselineTest {
         // on iki ton tohumlaniyordu, hicbiri cizilmiyordu). Ikisi ayni bump'ta
         // ki cihaz dansi bir kez yapilsin.
         7 to "eadf303b0256138e56ff65f1bc333b8f",
+        // v8: TEK NULLABLE KOLON. `trip_line.storeId` (karar 117 - satirin
+        // hedef marketten sapmasi). Nullable, varsayilan yok, veri
+        // geri-doldurmasi yok: eski satirlarin hepsi "hedefi izliyor" haline
+        // dusuyor ve o dogru hal.
+        8 to "aab48dccc1a55eab489803f4cc31d64d",
     )
 
     private val schemaDir: File by lazy {

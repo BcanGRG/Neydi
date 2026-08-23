@@ -67,7 +67,7 @@ val dataModule = module {
         ListViewModel(
             repo = get(), tripDao = get(), tripLineDao = get(), memberDao = get(),
             productDao = get(), catalogSeedDao = get(), categoryDao = get(),
-            priceObservationDao = get(),
+            priceObservationDao = get(), storeDao = get(),
             statsRebuilder = get(),
             suggestionEngine = get(), blockDao = get(),
             clock = ::now, newId = ::newUuid,

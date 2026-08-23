@@ -30,6 +30,18 @@ data class ListRowProjection(
     /** Kullanicinin beyan ettigi akibet; null = bir sey soylemedi (F4.12). */
     val takeOutcome: TakeOutcome?,
 
+    /**
+     * Bu satir icin beyan edilen market (karar 117). `null` = gezinin hedefini
+     * izliyor.
+     *
+     * ⚠ SAPMA OLUP OLMADIGI BURADAN OKUNMAZ: `storeId == trip.storeId` olan bir
+     * satir sapma DEGIL, yalnizca hedefi tekrar ediyor. Karsilastirmayi
+     * `ListState` yapiyor cunku hedef bu sorguya girmiyor.
+     */
+    val storeId: String? = null,
+    /** [storeId]'nin gorunen adi - yalnizca CIZIM icin. */
+    val storeName: String? = null,
+
     // --- Fiyat ipucu (E16) --------------------------------------------------
     //
     // Hepsi AYNI sorgudan geliyor. Satir basina ikinci bir sorgu acmak

@@ -77,4 +77,92 @@ class TurkishSuffixTest {
         assertEquals("", turkishLocative("   "))
         assertEquals("BİM'de", turkishLocative("  BİM  "))
     }
+
+    /**
+     * IYELIK EKI: BEYAN CUMLESININ IKINCI YARISI (karar 117).
+     *
+     * *"BİM'e gidiyorsun · 2'si A101'de"* - buradaki `2'si`. Birler
+     * basamaginin okunusu eki belirliyor ve dokuz rakamin uretttigi ek
+     * BES AYRI: `i`, `si`, `ü`, `sı`, `u`. Tek ek secmek (hep `i`) dokuz
+     * vakanin altisinda yanlis olurdu, yani bu test tabloyu tek tek tutuyor.
+     */
+    @Test
+    fun everySingleDigitGetsItsOwnPossessiveSuffix() {
+        assertEquals("i", possessiveSuffix(1)) // bir
+        assertEquals("si", possessiveSuffix(2)) // iki
+        assertEquals("ü", possessiveSuffix(3)) // üç
+        assertEquals("ü", possessiveSuffix(4)) // dört
+        assertEquals("i", possessiveSuffix(5)) // beş
+        assertEquals("sı", possessiveSuffix(6)) // altı
+        assertEquals("si", possessiveSuffix(7)) // yedi
+        assertEquals("i", possessiveSuffix(8)) // sekiz
+        assertEquals("u", possessiveSuffix(9)) // dokuz
+    }
+
+    /**
+     * EK SON KELIMEYI IZLIYOR, sayinin tamamini degil.
+     *
+     * "yirmi bir" -> `bir` -> `i`, yani `21'i`. Onluga BAKAN bir kural
+     * (`21` -> yirmi -> `si`) burada yanlis cevap verirdi ve fark yalnizca
+     * birler basamagi sifirdan farkliyken goruluyor - bu yuzden ikisi de
+     * ayni testte.
+     */
+    @Test
+    fun theSuffixFollowsTheLastSpokenWord() {
+        assertEquals("u", possessiveSuffix(10)) // on
+        assertEquals("i", possessiveSuffix(11)) // on bir
+        assertEquals("si", possessiveSuffix(20)) // yirmi
+        assertEquals("si", possessiveSuffix(22)) // yirmi iki
+        assertEquals("u", possessiveSuffix(30)) // otuz
+        assertEquals("ı", possessiveSuffix(40)) // kırk
+        assertEquals("u", possessiveSuffix(99)) // doksan dokuz
+    }
+
+    /**
+     * SINIR DISINDA EK YAZILMIYOR - cumle eksiz de okunuyor ("100 A101'de").
+     *
+     * Sifir ve negatif hic cizilmiyor (sapan satir yoksa cumlenin o yarisi
+     * kurulmuyor), ama fonksiyon yine de bos donmeli: cagiran tarafta bir
+     * hata olursa ekranda `null` ya da cop bir ek degil, hicbir sey cikar.
+     */
+    @Test
+    fun outOfRangeCountsGetNoSuffix() {
+        assertEquals("", possessiveSuffix(0))
+        assertEquals("", possessiveSuffix(-3))
+        assertEquals("", possessiveSuffix(100))
+    }
+
+    /**
+     * YONELME HALI - beyan cumlesinin ilk yarisi: *"BIM'e gidiyorsun"*.
+     *
+     * YEDI ZINCIRIN UCU KAYNASTIRMA ISTIYOR (File, CarrefourSA, Tarim Kredi),
+     * yani `y`siz bir kural yedide ucunu bozardi - istisna degil, cogunluga
+     * yakin bir hal. Bu yuzden hepsi tek tek yaziliyor.
+     */
+    @Test
+    fun theSevenSeedChainsGetTheirCorrectDativeSuffix() {
+        assertEquals("BİM'e", turkishDative("BİM")) // ince, unsuz
+        assertEquals("ŞOK'a", turkishDative("ŞOK")) // kalin, unsuz
+        assertEquals("Migros'a", turkishDative("Migros")) // kalin, unsuz
+        assertEquals("A101'e", turkishDative("A101")) // "bir" -> ince, unsuz
+        assertEquals("File'ye", turkishDative("File")) // ince, UNLU
+        assertEquals("CarrefourSA'ya", turkishDative("CarrefourSA")) // kalin, UNLU
+        assertEquals("Tarım Kredi'ye", turkishDative("Tarım Kredi")) // ince, UNLU
+    }
+
+    /**
+     * RAKAMIN OKUNUSU KAYNASTIRMAYI DA BELIRLIYOR, harfin kendisi degil.
+     *
+     * "A102" -> *"iki"* -> unluyle bitiyor -> `y` giriyor. Rakama bakan bir
+     * kural burada "A102'e" yazardi; harfe bakan bir kural ise `2` unlu
+     * olmadigi icin yine "A102'e" yazardi. Ikisi de yanlis.
+     */
+    @Test
+    fun aDigitReadAsEndingInAVowelTakesTheBufferConsonant() {
+        assertEquals("A102'ye", turkishDative("A102")) // iki
+        assertEquals("A106'ya", turkishDative("A106")) // altı - kalin
+        assertEquals("A107'ye", turkishDative("A107")) // yedi
+        assertEquals("A103'e", turkishDative("A103")) // üç - unsuz
+        assertEquals("A109'a", turkishDative("A109")) // dokuz - kalin, unsuz
+    }
 }

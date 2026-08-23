@@ -53,13 +53,14 @@ import com.neydi.app.ui.theme.Spacing
  * MIT lisansli. viewBox 256x256, tek `path`, dolgu ile cizilmis konturlar -
  * `Icon` zaten tinting yaptigi icin dolgunun rengi onemsiz.
  *
- * ## Envanter: 20 (tasarim karari 34, uzerine karar 64 ve 107)
+ * ## Envanter: 21 (tasarim karari 34, uzerine karar 64, 107 ve 118)
  *
  * Bu baslik "17" diyordu - karar 34'un sayisiydi ve karar 64'e kadar dogruydu.
  * 64 ekleme akisini iki yola ayirinca envanter iki ikon buyudu: [GridView]
  * kesif yolunun kapisi, [Keyboard] o yoldan yazma yoluna donus. Karar 107
  * miktar sayacini getirince [Remove] eklendi - [Add] tek basina bir sayaci
- * ifade edemiyor, azaltmanin da bir isareti olmali.
+ * ifade edemiyor, azaltmanin da bir isareti olmali. Karar 118 market beyanini
+ * getirince [Storefront] eklendi.
  *
  * `check` ile `check_circle` AYRI kaliyor ve bu kasitli: ciplak `check` satirda
  * *"isaretlendi"*, `check_circle` ise cipte/secicide *"secili"* demek. Ikisini
@@ -209,6 +210,29 @@ object NeydiIcons {
      * oldugu icin dolu cizime gecti.
      * Karanlik tema telafisi almaz (karar 33); bkz. [NeydiIcon].
      */
+    /**
+     * Market (tasarim adi `storefront`) - karar 117-118'in TEK yeni ikonu.
+     *
+     * Iki yerde ciziliyor ve ikisi de ayni seyi soyluyor: baslikta hedef
+     * marketin beyani (*"BIM'e gidiyorsun"*, 15px), satirda hedeften SAPMA
+     * (*"A101 · bugun"*, 14px).
+     *
+     * ## Neden yeni bir ikon, var olan biri degil
+     *
+     * Envanterdeki yirmi ikonun hicbiri "yer/dukkan" demiyordu; en yakini
+     * [GridView] ve o kesif yolunun kapisi - anlamini iki isle paylastirmak
+     * ikonu okunamaz yapardi. Envanter 20 -> 21.
+     */
+    val Storefront: ImageVector = phosphor(
+        "Storefront",
+        "M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24" +
+            ".31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40," +
+            "0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,2" +
+            "1.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,4" +
+            "0,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0" +
+            "-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z",
+    )
+
     val PushPin: ImageVector = phosphor(
         "PushPin",
         "M235.33,104l-53.47,53.65c4.56,12.67,6.45,33.89-13.19,60A15.93,15.93,0,0,1,157,224c-.38,0-.75,0-1.13,0a16," +
