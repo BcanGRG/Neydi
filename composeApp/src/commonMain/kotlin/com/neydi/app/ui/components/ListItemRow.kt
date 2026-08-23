@@ -11,17 +11,18 @@ import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,7 +44,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.neydi.app.data.formatAge
+import androidx.compose.ui.unit.sp
 import com.neydi.app.ui.theme.LocalNeydiExtraColors
 import com.neydi.app.ui.theme.LocalNeydiTextStyles
 import com.neydi.app.ui.theme.Motion
@@ -76,12 +77,21 @@ private val SWIPE_THRESHOLD = 60.dp
 /**
  * Liste satiri - uygulamanin en cok gorulen bileseni.
  *
- * Anatomi:
- *   [onay 24dp] [adet rozeti*] [AD 17sp/500] ......... [fiyat cipi] [es avatari*]
- *                              [ikinci satir 14sp %60*]
- *   (* = kosullu)
+ * ## Iki bant (karar 102)
  *
- * Yukseklik: 56dp (tek satir) / 68dp (ikinci satirli) / 72dp (alisveris modu).
+ * ```
+ * [onay] [rozet] [AD 17sp/500] .......... [avatar*] [raptiye*]   <- kimlik
+ *        [meta 14sp ...............] [delta*]      [fiyat cipi*] <- ekonomi
+ * ```
+ *
+ * KIMLIK BANDI *ne alinacagini* soyler, EKONOMI BANDI *ne bildigimizi*.
+ * Ayrimin sebebi olculmus bir basarisizlik: tek katta sekiz kosullu oge
+ * yarisiyordu ve 360dp'de ucu birden dusuyordu - dusenlerden biri adet
+ * rozetiydi, yani kural *"yanlis adedin bedeli parayla odenir"* derken adedi
+ * siliyordu. Iki bantta kimlik bandi HICBIR genislikte dusmuyor; ekonomi
+ * bandinin da tek feda edilebilir ogesi kaldi (delta).
+ *
+ * Yukseklik: 56dp (yalniz kimlik) / 72dp (iki bant) / 72dp (alisveris modu).
  *
  * SATIRIN TAMAMI isaretleme hedefidir - kucuk bir kutuyu tutturmak gerekmez.
  * Tek istisna fiyat cipi: kendi 44dp hedefi var ve fiyat gecmisini acar.
@@ -295,18 +305,31 @@ fun ListItemRow(
     ) {
         CheckTarget(checked = row.checked, shoppingMode = shoppingMode)
 
-        Row(
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(start = SpacingExtra.betweenCheckboxAndName),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            // BANTLAR ARASI 5dp - maketin olcusu. Sifir birakilsaydi meta ada
+            // yapisir ve iki bant tek blok gibi okunurdu; buyutmek de satiri
+            // 72dp'nin uzerine cikarirdi.
+            verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically),
         ) {
-            if (row.isStaple) StaplePin()
-            if (row.quantity != null) QuantityBadge(row.quantity)
+            // --- KIMLIK BANDI: ne alinacak (karar 103) ---------------------
+            //
+            // BU BANDA FEDA SIRASI DOKUNMAZ. Dort ogenin dordu de her
+            // genislikte ciziliyor; eski duzende 360dp'de ucu birden
+            // dusuyordu ve dusenlerden biri adet rozetiydi - yani kural
+            // "yanlis adedin bedeli parayla odenir" derken adedi siliyordu.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                // ROZET BASTA VE HER SATIRDA (karar 103): miktar, adin
+                // solunda okunan ilk sey - ve dokununca duzenlenen yer.
+                QuantityBadge(row.quantity, modified = row.quantityModified)
 
-            Column(modifier = Modifier.weight(1f).widthIn(min = NAME_FLOOR)) {
                 Text(
+                    modifier = Modifier.weight(1f),
                     text = row.name,
                     style = if (shoppingMode) styles.itemNameShopping else styles.itemName,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -314,39 +337,37 @@ fun ListItemRow(
                     overflow = TextOverflow.Ellipsis,
                     textDecoration = if (row.checked) TextDecoration.LineThrough else null,
                 )
-                // Alisveris modunda ikincil metadata katlanir: reyonda 10-11 degil
-                // 7-8 satir gorunmeli, ve gerekli olan tek bilgi urun adi.
-                if (hasSecondLine && !shoppingMode) {
-                    SecondLineContent(second, cheaper)
-                }
+
+                if (row.addedByInitial != null) MemberAvatar(row.addedByInitial)
+                if (row.isStaple) StaplePin()
             }
 
-            // DELTA + SPARKLINE ANA SATIRDA (karar 82), `flex:none`.
+            // --- EKONOMI BANDI: ne biliyoruz (karar 104) -------------------
             //
-            // Maket ikisini bastan beri burada ciziyordu; kod onlari ikinci
-            // satirin icine koymustu ve orada AD SUTUNUNUN genisligini
-            // paylasiyorlardi - kaybeden hep cumle oluyordu. Burada paylarini
-            // feda sirasindan aliyorlar: dar ekranda once sus duser, cumle
-            // kalir.
-            val trend = (row.priceHint as? PriceHint.Trend)?.takeIf { !shoppingMode }
-            if (trend != null && cheaper == null) {
-                DeltaChip(trend.deltaPercent, trend.rising)
-                // SPARKLINE NOTR: butun maketler outline ciziyor - yaninda
-                // kirmizi bir delta cipi olan orneklerde bile. Cizgi TARIHI
-                // gosteriyor, YARGIYI degil; yargiyi cip zaten tasiyor.
-                Sparkline(values = trend.history, color = MaterialTheme.colorScheme.outline)
+            // Yalnizca ICERIK VARSA ciziliyor - bos bir bant satiri 56dp'den
+            // 72dp'ye cikarir ve hicbir sey soylemez.
+            //
+            // Alisveris modunda hic cizilmiyor: reyonda gerekli tek bilgi urun
+            // adi, ve 8-9 satir yerine 7-8 satir gormek burada bedel.
+            if (hasSecondLine && !shoppingMode) {
+                // FIYAT CIPI EKONOMI BANDININ ICINDE - kolonun disinda degil.
+                //
+                // Disarida durursa kimlik bandi 92dp daralir ve raptiye ile
+                // avatar satirin ORTASINDA asili kalir; maket ikisini bandin
+                // TAM SAG UCUNDA, fiyat cipiyle ayni dikeyde ciziyor. Cipin
+                // 48dp'lik hedefi bu yuzden yukseklikten degil kendi olcum
+                // hilesinden geliyor (bkz. `PriceChip`).
+                EconomyBand(
+                    second = second,
+                    cheaper = cheaper,
+                    priceText = (row.priceHint as? PriceHint.Single)
+                        ?.takeIf { it.daysAgo <= FRESH_DAYS }?.price
+                        ?: (row.priceHint as? PriceHint.Trend)?.to,
+                    onPriceClick = onPriceClick,
+                )
             }
         }
 
-        val priceText = (row.priceHint as? PriceHint.Single)?.price
-            ?: (row.priceHint as? PriceHint.Trend)?.to
-        if (priceText != null && !shoppingMode) {
-            PriceChip(priceText, onClick = onPriceClick)
-        }
-
-        if (row.addedByInitial != null) {
-            MemberAvatar(row.addedByInitial, Modifier.padding(start = Spacing.sm))
-        }
     }
     }
 }
@@ -418,76 +439,104 @@ private fun CheckTarget(checked: Boolean, shoppingMode: Boolean) {
 /** "Her zamankiler" raptiyesi - 12dp, satirin sabit oldugunu gosterir. */
 @Composable
 private fun StaplePin() {
-    // TASARIMIN IKONU: push_pin, 12sp, textSecondary. Onceki hali 12dp'lik
-    // yesil bir NOKTAYDI - "sabit" anlamini tasimiyordu, yalnizca satirin
-    // farkli oldugunu soyluyordu. Raptiye ise ne oldugunu kendisi anlatiyor.
+    // TASARIMIN IKONU: push_pin, textSecondary. Onceki hali 12dp'lik yesil bir
+    // NOKTAYDI - "sabit" anlamini tasimiyordu, yalnizca satirin farkli
+    // oldugunu soyluyordu. Raptiye ise ne oldugunu kendisi anlatiyor.
     NeydiIcon(
         icon = NeydiIcons.PushPin,
         // Bolum basligi ("Her zamankiler") zaten ayni seyi soyluyor; ekran
         // okuyucuya iki kez okutmak gurultu.
         contentDescription = null,
-        size = 12.dp,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        // 14dp (karar 103): kimlik bandinda artik feda edilmedigi icin
+        // okunakli olmasi gerekiyor - 12dp'de ne oldugu secilmiyordu.
+        size = 14.dp,
+        // `outline` (#8A7666), `onSurfaceVariant` (#5C4F45) DEGIL: maket
+        // raptiyeyi metadan bir tik soluk ciziyor. Raptiye bir DURUM isareti,
+        // okunacak bir cumle degil - metayla ayni koyulukta olmasi ikisini
+        // esit onemde gosterirdi.
+        tint = MaterialTheme.colorScheme.outline,
     )
 }
 
 /**
- * Ikinci satir. GUNCEL FIYATI YAZMAZ - onu sagdaki fiyat cipi tasiyor.
- * Burada sadece cipin soyleyemedigi sey var: nerede, ne zaman, oncesinde kacti.
- * Ayni sayiyi iki kez yazmak satiri kalabaliklastirip hicbir sey eklemez.
+ * Ekonomi bandi - satirin *"ne biliyoruz"* kati (karar 104).
+ *
+ * Ucu de burada: gecmis metasi, delta cipi, fiyat cipi. Fiyat cipi cizim
+ * olarak satirin kendisinde duruyor (dokunma hedefi satir yuksekliginden
+ * gelsin diye) ama HIZASI bu bant.
+ *
+ * GUNCEL FIYATI YAZMAZ - onu cip tasiyor. Burada sadece cipin soyleyemedigi
+ * sey var: nerede, ne zaman, oncesinde kacti. Tek istisna cipin HIC OLMADIGI
+ * hal: gozlem eskimisse guncel fiyat yoktur, hatirlanan fiyat cumleye girer
+ * (karar 105) - ve fiyat yine tek yerde yazilmis olur.
  */
 @Composable
-private fun SecondLineContent(
+private fun EconomyBand(
     second: SecondLine,
     cheaper: String?,
+    priceText: String?,
+    onPriceClick: (() -> Unit)?,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    // IKINCI SATIR TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz
-    // cipi YA oneri gerekcesi - asla ikisi.
+    // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz cipi YA
+    // oneri gerekcesi - asla ikisi.
     //
     // Birlikteligin dislanmasi YENI BIR KISIT DEGIL, var olan kurallarin
     // sonucu: cip varken trend bastiriliyor (karar 41) ve `PackChanged` cipi
     // zaten imkansiz kiliyor (kanitli ayni ambalaj sarti). Kod bunu artik
     // veriyle degil KURALLA biliyor.
-    if (cheaper != null) {
-        CheaperChip(cheaper)
-        return
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        when (second) {
-            is SecondLine.Reason -> MetaText(second.text, muted, Modifier.weight(1f, false))
-            is SecondLine.Note -> MetaText(second.text, muted, Modifier.weight(1f, false))
-            SecondLine.Empty -> Unit
-            is SecondLine.Price -> when (val h = second.hint) {
-                PriceHint.None -> Unit
-                is PriceHint.Single ->
-                    // YAS BICIMI, merdiven DEGIL (F11.25): burada okunan sey
-                    // gozlemin yasi ve "gecen hafta" yedi ile on uc arasini
-                    // silerdi - oysa "8 gun once" ile "12 gun once" arasindaki
-                    // fark tam da kullanicinin baktigi sey.
-                    MetaText("${h.store} · ${formatAge(h.daysAgo)}", muted, Modifier.weight(1f, false))
+    val text = if (cheaper != null) "" else second.metaText()
+    // SPARKLINE SILINDI (karar 106): 24x14dp'de okunmuyordu ve tam da bu
+    // yuzden feda sirasinin ilk uyesiydi. Siralamak yerine kaldirildi; yeri
+    // Urun Detayi'ndaki grafik, orada gercekten okunuyor.
+    val trend = (second as? SecondLine.Price)?.hint as? PriceHint.Trend
 
-                // DELTA VE SPARKLINE ARTIK ANA SATIRDA (karar 82): burada
-                // yalnizca CUMLE var. Ikisi burada dururken cumleye 44dp
-                // kaliyordu - "önce 1.234,56" yerine "önce…" ciziliyordu, yani
-                // sus kaliyor bilgi gidiyordu.
-                is PriceHint.Trend ->
-                    MetaText("önce ${h.from}", muted, Modifier.weight(1f, false))
-
-                // GUNCEL FIYAT YAZMIYOR (karar 83): meta GECMISI anlatir,
-                // guncel fiyat her zaman ve yalniz fiyat cipindedir. Bu dal
-                // eskiden iki fiyati birden yaziyordu ve satirda fiyat cipi de
-                // olmadigi icin kural dal basina degisiyordu.
-                is PriceHint.PackChanged ->
-                    MetaText(
-                        "ambalaj küçüldü: ${h.fromPack} → ${h.toPack}",
-                        muted,
-                        Modifier.weight(1f, false),
-                    )
+    BoxWithConstraints {
+        // DELTA CIZILMEDEN ONCE OLCULUYOR (karar 104).
+        //
+        // Bandin tek feda edilebilir ogesi delta ve olcut *"cumle tam
+        // kalir"*: cip cumleyi kirpacaksa cip duser, cumle degil. Bunu
+        // bilmenin tek yolu ikisinin genisligini cizimden ONCE hesaplamak -
+        // `weight` ile birakilsaydi kaybeden hep cumle olurdu, cunku esneyen
+        // taraf o.
+        val measurer = rememberTextMeasurer()
+        val metaStyle = MaterialTheme.typography.bodySmall
+        val deltaStyle = MaterialTheme.typography.labelSmall
+        val density = LocalDensity.current
+        // CIPIN 92dp'SI BUTCEDEN DUSULUYOR: cip asla dusmuyor, yani butcenin
+        // konusu degil - sadece bir eksiltme. Unutulursa 360dp'lik cihazda
+        // hesap "delta rahat sigar" der, oysa cumle kirpilir.
+        val room = if (priceText != null) maxWidth - SizesExtra.priceColumn - 6.dp else maxWidth
+        val visibleTrend = trend?.takeIf {
+            with(density) {
+                deltaSurvives(
+                    available = room,
+                    metaWidth = measurer.measure(text, metaStyle).size.width.toDp(),
+                    deltaWidth = measurer
+                        .measure("%${it.deltaPercent}", deltaStyle)
+                        .size.width.toDp() + DELTA_CHIP_CHROME,
+                )
             }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            // BANT TEK ICERIK TASIR (karar 83-84-86): gecmis metasi YA ucuz
+            // cipi - asla ikisi. Birliktelik YENI BIR KISIT DEGIL, var olan
+            // kurallarin sonucu: cip varken trend bastiriliyor (karar 41) ve
+            // `PackChanged` cipi zaten imkansiz kiliyor.
+            if (cheaper != null) {
+                CheaperChip(cheaper)
+                Spacer(Modifier.weight(1f))
+            } else if (text.isNotEmpty()) {
+                MetaText(text, muted, Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            if (visibleTrend != null) DeltaChip(visibleTrend.deltaPercent, visibleTrend.rising)
+            if (priceText != null) PriceChip(priceText, onClick = onPriceClick)
         }
     }
 }
@@ -497,8 +546,15 @@ private fun MetaText(text: String, color: Color, modifier: Modifier = Modifier) 
     Text(
         modifier = modifier,
         text = text,
-        // 14sp - govde minimumu. 13sp %60 opaklikla okunabilirlik sinirinin altina duser.
+        // 13sp - maketin olcusu.
+        //
+        // Burada eskiden 14sp vardi ve gerekcesi *"13sp %60 opaklikla
+        // okunabilirlik sinirinin altina duser"*di. O gerekce ALFAYLA
+        // BIRLIKTE dustu: metin artik `onSurfaceVariant` ile ciziliyor ve
+        // ustunde opaklik yok (isikta 7.40:1). Alfa gidince punto itirazinin
+        // dayanagi da gitti.
         style = MaterialTheme.typography.bodySmall,
+        fontSize = 13.sp,
         // ALFA YOK. onSurfaceVariant ZATEN soluklastirma token'i (isikta 7.40:1,
         // onSurface 16.06:1). Ustune 0.75 alfa koymak cift-soluklastiriyordu ve
         // efektif orani 3.98:1'e dusuruyordu - 14sp normal metin icin AA sinirinin
@@ -535,7 +591,6 @@ private fun ListItemRowPriceHintsPreview() = NeydiPreview {
             "Ayçiçek Yağı 5 L",
             priceHint = PriceHint.Trend(
                 from = "389,00", to = "455,00 TL", deltaPercent = 17, rising = true,
-                history = listOf(371f, 375f, 389f, 389f, 402f, 431f, 448f, 455f),
             ),
         ),
     )

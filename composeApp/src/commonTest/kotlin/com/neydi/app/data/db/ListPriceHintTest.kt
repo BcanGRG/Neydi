@@ -342,37 +342,6 @@ class ListPriceHintTest {
     }
 
     /**
-     * SPARKLINE GECMISI ESKIDEN YENIYE.
-     *
-     * SQL yeniden eskiye siraliyor (`ORDER BY observedAt DESC`), sparkline ise
-     * soldan saga ZAMAN okuyor. Ters cevrilmezse yukselen bir fiyat grafikte
-     * duser gorunurdu - sessiz ve tam ters bir yalan.
-     */
-    @Test
-    fun theSparklineRunsOldestToNewest() = runTest {
-        val (db, trip) = setup()
-        val p = lineFor(db, trip, "Un")
-        observe(db, p, 1_000, at = now - 30 * day, id = "a")
-        observe(db, p, 2_000, at = now - 20 * day, id = "b")
-        observe(db, p, 3_000, at = now - 10 * day, id = "c")
-
-        val hint = assertIs<PriceHint.Trend>(hintFor(db, trip, p))
-        assertEquals(listOf(1_000f, 2_000f, 3_000f), hint.history)
-    }
-
-    /** Gecmis SEKIZ gozlemle sinirli - sparkline'in cizebildigi kadar. */
-    @Test
-    fun theHistoryIsCappedAtEight() = runTest {
-        val (db, trip) = setup()
-        val p = lineFor(db, trip, "Pirinç")
-        repeat(12) { i -> observe(db, p, (i + 1) * 1_000L, at = now - (12 - i) * day, id = "o$i") }
-
-        val hint = assertIs<PriceHint.Trend>(hintFor(db, trip, p))
-        assertEquals(8, hint.history.size)
-        assertEquals(12_000f, hint.history.last(), "en yeni gozlem sonda olmali")
-    }
-
-    /**
      * SILINMIS GOZLEM IPUCUNA GIRMIYOR.
      *
      * `deletedAt IS NULL` her alt sorguda ayri ayri yaziliyor ve biri

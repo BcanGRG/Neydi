@@ -1079,7 +1079,98 @@ gösterirdi.
 geliyor (karar 85). `heightIn(48dp)` fiyatlı her satırı 56dp yerine 64dp
 yapıyor ve *"10–11 satır görünür"* hedefini dokuza düşürüyordu.
 
-### Açık kalan iki şey
+---
 
-`docs/33` ve `docs/34` tasarımda: satırın **yeniden çizilmesi** (feda sırası
-son hâl mi ara adım mı) ve **miktar düzenleme** (hiçbir yerde yok).
+## Kararlar 102–106 — satır yeniden çizildi: iki bant
+
+`docs/33`'ün sorusuna gelen cevap net: **feda sırası bir ara adımdı.**
+
+### Kimlik bandı ve ekonomi bandı (102–104)
+
+Ölçüm 80–86'yı kendi gerekçesiyle çürüttü: 360dp'de avatar, raptiye **ve adet
+rozeti** birlikte düşüyordu — yani *"yanlış adedin bedeli parayla ödenir"*
+diyen kural adedi siliyordu, çünkü feda edecek başka şey kalmamıştı.
+
+Satır artık tek katta yarışmıyor:
+
+| Bant | Ne söyler | Üyeleri | Feda |
+|---|---|---|---|
+| **Kimlik** | ne alınacak | rozet · ad (flex) · avatar 20dp · raptiye 14dp | **hiçbiri, hiçbir genişlikte** |
+| **Ekonomi** | ne biliyoruz | meta (flex) · delta · fiyat çipi 92dp | **yalnız delta** |
+
+Ad tabanı (`widthIn(min = 120dp)`) **kalktı** — gereği kalmadı: 411dp'de ada
+231dp, 360dp'de 180dp kalıyor. Eski düzen 192dp'yi ancak üç öğeyi düşürerek
+buluyordu.
+
+Yükseklik **56dp** (yalnız kimlik) / **72dp** (iki bant). 68dp gitti.
+
+Delta'nın düşme ölçütü bir eşik değil bir **karşılaştırma**: *"cümle tam
+kalır."* Çip cümleyi kırpacaksa çip düşer, cümle değil — bu yüzden ikisi de
+çizilmeden önce ölçülüyor (`deltaSurvives`). `weight`'e bırakılsaydı kaybeden
+hep esneyen taraf, yani cümle olurdu.
+
+### Sparkline silindi (106)
+
+24×14dp'de okunmuyordu ve **tam da bu yüzden** feda sırasının ilk üyesiydi.
+Sıralamak yerine kaldırıldı; yeri Ürün Detayı'ndaki grafik.
+
+Bileşenle birlikte **veri hattı da** silindi: `Trend.history`, `parseHistory`
+ve satır başına korele bir `group_concat` alt sorgusu. Çizgiyi kaldırıp
+hattı ayakta bırakmak sessiz çürüme olurdu — alan yalnızca yazılan, hiç
+okunmayan bir şeye dönüşecekti.
+
+### Karar 83'ün çelişkisi çözüldü (105)
+
+Karar 83 *"Single'ın ikinci satırı yok"* diyordu, maket üç yerde `son 24,90
+TL · Migros · 8 gün önce` çiziyordu, kod da üçüncü bir şey yazıyordu. Üçü de
+haklıymış — **iki farklı tazelik hâliymiş**:
+
+| Gözlem | Fiyat çipi | Ekonomi bandı |
+|---|---|---|
+| ≤ 7 gün | **var** — güncel fiyat | `BİM · bugün` |
+| > 7 gün | **yok** | `son 24,90 TL · Migros · 8 gün önce` |
+
+*"Fiyat iki yerde asla yazılmaz"* kuralı iki hâlde de ayakta. Çipin ne zaman
+çizildiği ile cümlenin ne yazdığı ayrı yerlerde kararlaştığı için ikisi
+`FRESH_DAYS` üzerinden aynı sınıra bağlandı ve sınır teste alındı.
+
+### Adet rozeti her satırda (103)
+
+Eski kural (*"her satıra 1x yazmak gürültü"*) rozet yalnızca **okunan** bir şey
+olduğu sürece doğruydu. Karar 107 onu miktarın **düzenlendiği** yer yapınca
+çizilmeyen rozet, düzenlenemeyen miktar anlamına gelmeye başladı.
+
+Gürültü itirazı susturarak değil **küçülterek** çözüldü: 20sp/800 → **14sp/700**
+(ada rakip olmasın), "1x" değil yalın **"1"**, ve varsayılan miktar
+**dolgusuz kontur** — dolgu artık "bunu ben seçtim" demek.
+
+### "Birebir aynı" turu — maketin sayıları okundu
+
+Kullanıcı *"her şey tasarımdaki görünüm ile birebir aynı olsun"* dedi. Maket
+tarayıcıda açılıp her öğenin **hesaplanmış stili** okundu (`getComputedStyle`),
+göz kararı yapılmadı. Bulunan ve düzeltilen farklar:
+
+| Öğe | Maket | Koddaydı |
+|---|---|---|
+| Bantlar arası boşluk | 5px | yoktu |
+| Onay → kimlik bandı | 10px | 12dp |
+| Adet rozeti | h 24, yan dolgu 8, min 30 | h 26, dolgu 6 |
+| Eş avatarı | **dolu** `#3F6B54` + beyaz harf, 10sp/700 | %18 zemin + yeşil harf |
+| Raptiye rengi | `#8A7666` (`outline`) | `onSurfaceVariant` |
+| Meta puntosu | 13px | 14sp |
+| Delta çipi | h 22, yan dolgu 7, 12sp/600 | dolgu 6/2, 11sp |
+| Fiyat hapı | yan dolgu 10 | 12 |
+
+Rozetin zemini maketde `#EADCCB` — palette **olmayan** bir değer, fiyat
+çipinin zemininden (`#F1E7DB`) bir tık koyu, ki aynı satırdaki iki hap
+birbirinden ayrılsın. En yakın token `hairline` (`#E7DACB`) kullanıldı; fark
+gözle seçilmiyor ve karar 101'in az önce sildiği renk çoğalmasını geri
+getirmek istemedik.
+
+### Açık kalan
+
+- **Fiyat çipinin 48dp hedefi** sağlanamıyor — `docs/35`. Maketin kendi
+  geometrisinde ekonomi bandı 26dp ve iki standart Compose yolu da cihazda
+  başarısız oldu. Görünüm birebir, eksik olan yalnızca hedef.
+- `docs/34`'ün asıl cevabı olan **miktar düzenleme** (107–109) bu turda
+  uygulanmadı — kendi turunda gelecek.

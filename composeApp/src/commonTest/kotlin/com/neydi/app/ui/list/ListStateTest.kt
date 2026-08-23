@@ -41,10 +41,21 @@ class ListStateTest {
 
     // --- Adet etiketi -------------------------------------------------------
 
-    /** Adet 1 ve birim "adet" ise rozet CIZILMEZ - her satira "1x" yazmak gurultu. */
+    /**
+     * ADET 1 + BIRIM "adet" -> YALIN "1". Rozet ARTIK HER SATIRDA (karar 103).
+     *
+     * Bu iddia tam tersine cevrildi ve gerekcesi kayda deger: eski kural
+     * (*"her satira 1x yazmak gurultu"*) rozet yalnizca OKUNAN bir sey oldugu
+     * surece dogruydu. Karar 107 onu miktarin DUZENLENDIGI yer yapinca
+     * cizilmeyen rozet, duzenlenemeyen miktar anlamina gelmeye basladi -
+     * kullanicinin sikayeti zaten tam buydu.
+     *
+     * Gurultu itirazi susturarak degil kucultererek cozuldu: "1x" degil yalin
+     * "1", ve rozet dolgusuz cizilir (bkz. `quantityModified`).
+     */
     @Test
-    fun singleUnitProducesNoBadge() {
-        assertNull(quantityLabel(1.0, "adet"))
+    fun theDefaultQuantityStillDrawsABareBadge() {
+        assertEquals("1", quantityLabel(1.0, "adet"))
     }
 
     @Test

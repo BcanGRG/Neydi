@@ -1045,13 +1045,19 @@ private fun ToolbarAction(
 private fun s(
     id: String,
     name: String,
-    count: String? = null,
+    count: String = "1",
     checked: Boolean = false,
     isStaple: Boolean = false,
 ) = UiRow(
     id = id,
     productId = "p-$id",
-    row = ListRow(name, quantity = count, checked = checked, isStaple = isStaple),
+    row = ListRow(
+        name,
+        quantity = count,
+        quantityModified = count != "1",
+        checked = checked,
+        isStaple = isStaple,
+    ),
 )
 
 private val SAMPLE = ListState(

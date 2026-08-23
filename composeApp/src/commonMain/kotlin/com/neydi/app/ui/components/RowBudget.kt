@@ -4,71 +4,54 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Liste satirinda yer yetmediginde DUSEN ogeler ve sirasi (karar 80).
+ * Ekonomi bandinin yer bulamadiginda DUSURDUGU tek oge (karar 104).
  *
- * Sira bilgi degerine gore ve tasarimin gerekcesi bunu tek tek yaziyor:
- * *"sparkline sus, delta ozeti metada da yasar, avatar baglam, raptiye bolum
- * basliginin tekrari; rozet ise miktar - yanlis adedin bedeli parayla
- * odenir."*
+ * ## Neden bes uye degil bir uye
  *
- * FIYAT CIPI VE AD LISTEDE YOK: ikisi de asla dusmuyor.
+ * Karar 80 bes uyeli bir feda sirasi kurmustu - sparkline, delta, avatar,
+ * raptiye, rozet - ve olculdugunde kendi gerekcesini ihlal ediyordu: 360dp'de
+ * ucu birden dusuyordu, en pahalisi (adet rozeti) dahil. Tasarim bunu bir ARA
+ * ADIM ilan etti (karar 102): *"kural en pahali ogeyi de feda edebiliyordu,
+ * cunku feda edecek baska sey kalmiyordu."*
+ *
+ * Cozum siralamayi duzeltmek degil YARISI KALDIRMAK oldu. Satir iki banda
+ * bolundu; kimlik bandi (rozet, ad, avatar, raptiye) hicbir genislikte
+ * dusmuyor, ekonomi bandinda ise fiyat cipi ile meta da dusmuyor. Geriye tek
+ * feda edilebilir oge kaliyor: delta cipi. Sparkline silindi (karar 106).
+ *
+ * Bu yuzden burada artik bir enum ve bir siralama yok - tek bir soru var.
  */
-enum class RowElement {
-    Sparkline,
-    DeltaChip,
-    PartnerAvatar,
-    StaplePin,
-    QuantityBadge,
-}
 
 /**
- * Adin garanti edilen taban genisligi (karar 80): ~13 karakter.
+ * Delta cipinin yaninda metanin KIRPILMADAN sigacagi genislik.
  *
- * Kodun kendi kurali bastan beri *"ad kirpilmasi kabul edilemez - fiyat ipucu
- * yardimci bilgi, ad ise satirin varlik sebebi"* diyordu ve TUTMUYORDU: 411dp
- * ekranda ada %35 kaliyordu, 360dp'de dokuz karakter. Taban tek basina kimin
- * dusecegini soylemiyor, sira tek basina adin ne kadar korunacagini; ikisi
- * birlikte tam kural.
+ * Tasarimin 360dp olcumu: fiyat 92dp + delta 46dp, metaya 140dp kaliyor ve
+ * *"onceki 324,00 TL"* 92dp tutuyor - yani sigiyor. Bir alt hal de yazili:
+ * *"altta 30 karakterlik meta: yalniz delta duser, cumle tam kalir."*
+ *
+ * Kural bu yuzden bir TABAN GENISLIGI degil bir KARSILASTIRMA: delta, metanin
+ * kendi olculen genisligini yemiyorsa kaliyor. Sabit bir taban koymak uzun
+ * cumleyi kisa cumleyle ayni muameleye tabi tutardi.
  */
-val NAME_FLOOR: Dp = 120.dp
+private val DELTA_GAP: Dp = 6.dp
 
 /**
- * Yer yetmediginde HANGI ogeler cizilecek.
+ * Delta cipi cizilecek mi (karar 104).
  *
  * ## Neden saf bir fonksiyon
  *
- * Karar 80'in aritmetigi bir yerlesim ayrintisi degil bir SOZLESME: 360dp'lik
- * bir cihazda adin 13 karakterin altina inmemesi soz verilmis bir sey. Saf
- * fonksiyon o sozu Compose kurmadan sinanabilir kiliyor - ve maketin verdigi
- * sayilar (411dp'de ad 135dp, 360dp'de 192dp) dogrudan test olarak yazilabiliyor.
+ * *"Cumle tam kalir"* olculebilir bir soz: metin kirpilirsa soz tutulmamis
+ * demektir. Compose kurmadan sinanabilmesi, tasarimin verdigi sayilarin
+ * (360dp'de meta 140dp, *"onceki 324,00 TL"* 92dp) dogrudan test olarak
+ * yazilabilmesi anlamina geliyor.
  *
- * ## Nasil calisiyor
- *
- * Once her sey cizilmis varsayiliyor; ad tabani saglanana kadar [RowElement]
- * sirasiyla ogeler dusuruluyor. Hepsi dustugu halde taban hala saglanmiyorsa
- * geriye ad ile fiyat cipi kaliyor - ikisi de dusmuyor, ad kirpiliyor. O hal
- * bir kural ihlali degil, ekranin fiziksel siniri.
- *
- * @param available adin ve feda edilebilir ogelerin PAYLASTIGI genislik.
- *   Satirin ic genisliginden **onay hedefi ve fiyat cipi dusulmus** olmali -
- *   ikisi de asla dusmuyor, yani butcenin konusu degiller. Fiyat cipini
- *   unutmak, tasarimin kendi maket sayilarini tutturamamak demek: 360dp'lik
- *   cihazda cipsiz hesap "hicbir sey dusmesin" derken maket uc ogenin birden
- *   dustugunu yaziyor.
- * @param costs her ogenin genisligi + ondan onceki bosluk. Sifir olan oge
- *   zaten cizilmiyor demektir ve listeye girmez.
+ * @param available ekonomi bandinin ic genisliginden **fiyat cipi dusulmus**
+ *   hali. Cip 92dp'lik sabit sutun ve asla dusmuyor - yani butcenin konusu
+ *   degil, sadece bir eksiltme. Onu unutmak tasarimin kendi sayilarini
+ *   tutturamamak demek.
+ * @param metaWidth meta cumlesinin OLCULEN (kirpilmamis) genisligi. Sifir ise
+ *   band bos demektir ve delta rahatca yasar.
+ * @param deltaWidth delta cipinin olculen genisligi.
  */
-fun survivingElements(available: Dp, costs: Map<RowElement, Dp>): Set<RowElement> {
-    val present = costs.filterValues { it > 0.dp }
-    val alive = present.keys.toMutableSet()
-    // SIRA `RowElement`IN KENDI SIRASI: enum'un beyan sirasi feda sirasidir ve
-    // ikisini ayirmak, birini degistirip otekini unutmaya davet olurdu.
-    for (element in RowElement.entries) {
-        if (available - alive.totalWidth(present) >= NAME_FLOOR) break
-        alive.remove(element)
-    }
-    return alive
-}
-
-private fun Set<RowElement>.totalWidth(costs: Map<RowElement, Dp>): Dp =
-    fold(0.dp) { acc, e -> acc + (costs[e] ?: 0.dp) }
+fun deltaSurvives(available: Dp, metaWidth: Dp, deltaWidth: Dp): Boolean =
+    available - deltaWidth - DELTA_GAP >= metaWidth

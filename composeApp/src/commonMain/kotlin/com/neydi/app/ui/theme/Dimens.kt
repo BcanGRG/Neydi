@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 
 /** Spacing'de olmayan tek adim: onay kutusu ile urun adi arasi. */
 object SpacingExtra {
-    val betweenCheckboxAndName = 12.dp
+    // 10dp - maketin kendi olcusu (kimlik bandinin sol boslugu).
+    val betweenCheckboxAndName = 10.dp
     val emptyStateBlock = 48.dp
 }
 
@@ -39,7 +40,12 @@ object SizesExtra {
     val categoryTile = 56.dp
     val sparkline = DpSize(24.dp, 16.dp) // 2 gozlemin altinda hic cizilmez
     val priceColumn = 92.dp              // tnum uygulanmasa da duzen bozulmasin diye sabit
-    val qtyBadgeHeight = 26.dp
+    // 24dp: rozet kimlik bandinin yuksekligini BELIRLIYOR (karar 103), yani
+    // bu sayi satirin ust katinin boyu demek. Maket 24px yaziyor.
+    val qtyBadgeHeight = 24.dp
+
+    /** Adet rozetinin taban genisligi - tek haneli "1" de hap gibi dursun diye. */
+    val qtyBadgeMinWidth = 30.dp
     val suggestionChip = 40.dp
     val quickAddField = 52.dp
     val rowBorderShopping = 1.5.dp       // alisveris modunda satir container kenarligi

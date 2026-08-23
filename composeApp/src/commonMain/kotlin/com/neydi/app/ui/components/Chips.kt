@@ -1,6 +1,10 @@
-package com.neydi.app.ui.components
+﻿package com.neydi.app.ui.components
 
 import androidx.compose.foundation.border
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
@@ -8,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -50,7 +53,24 @@ import com.neydi.app.ui.theme.pressable
  * YAZMIYOR ("12sp metinle birlikte" diyor) - deger cihazda gozle ayarlandi,
  * turetilmedi.
  */
-private val DELTA_ARROW = 14.dp
+private val DELTA_ARROW = 12.dp
+
+/**
+ * [DeltaChip]'in metin DISINDAKI genisligi: iki yanda 6dp dolgu + 2dp bosluk
+ * + ok.
+ *
+ * ## Neden disariya aciliyor
+ *
+ * Karar 104 deltayi ekonomi bandinin tek feda edilebilir ogesi yapti ve
+ * kararin olcutu *"cumle tam kalir"*: cipin metayi kirpip kirpmayacagi
+ * CIZILMEDEN once bilinmek zorunda. Bilmenin tek yolu genisligini hesaplamak,
+ * ve hesap cipin kendi dolgulariyla ayni dosyada durmali - ayri dursaydi
+ * dolgu degistiginde sessizce yanlislasirdi.
+ */
+val DELTA_CHIP_CHROME: Dp = 7.dp + DELTA_ARROW + 2.dp + 7.dp
+
+/** Fiyat cipinin GORSEL yuksekligi (karar 105) - dokunma hedefi degil. */
+private val PRICE_CHIP_VISUAL = 26.dp
 
 @Composable
 fun PriceChip(
@@ -71,27 +91,49 @@ fun PriceChip(
     //
     // `SizesExtra.priceColumn` OLU BIR SABITTI: tasarim sistemi ve alti maket
     // kullanimi 92dp diyordu, Compose Spec `Modifier.width(92.dp) +
-    // TextAlign.End` diye yaziyordu, kodda ise hicbir yerde geçmiyordu.
+    // TextAlign.End` diye yaziyordu, kodda ise hicbir yerde geÃ§miyordu.
     // Sonuc: dort haneli fiyat 99,38dp'ye tasip fazlasini addan caliyordu.
     //
     // YUKSEKLIK ARTIK SATIRDAN (karar 85): cipin kendi 48dp hedefi fiyatli
     // her satiri 56dp yerine 64dp yapiyordu ve "10-11 satir gorunur" hedefini
     // dokuza dusuruyordu. Hedef bir GORSEL BOYUT degil bir isabet sozlesmesi;
     // satir zaten 56dp isabet veriyor.
-    // HEDEF SATIR BOYUNCA UZUYOR (karar 85): gorsel hap 32dp kaliyor ama
-    // dokunulabilir alan satirin yuksekligini aliyor. `heightIn(48dp)`
-    // fiyatli her satiri 56dp yerine 64dp yapiyordu; `fillMaxHeight` ayni
-    // isabet garantisini satirin KENDI yuksekliginden aliyor.
-    val base = modifier.width(SizesExtra.priceColumn).fillMaxHeight()
+    // ⚠ DOKUNMA HEDEFI BUGUN 92dp x 26dp - 48dp DEGIL (acik madde).
+    //
+    // Karar 105 *"gorsel 26dp, hedef 48dp, satirin alt yarisina yayilir, cip
+    // gorselini buyutmez"* diyor ve maketin kendi geometrisinde bu UCU BIRDEN
+    // saglanamiyor: satir 72dp, kimlik bandi 24dp, aradaki bosluk 5dp; ekonomi
+    // bandina 26dp kaliyor ve cip o bandin icinde duruyor (maket raptiyeyi
+    // cible ayni dikeyde ciziyor - disari alinca kimlik bandi 92dp daraliyor
+    // ve raptiye satirin ortasinda asili kaliyor).
+    //
+    // Iki standart yol da cihazda denendi ve ikisi de basarisiz:
+    //   - Olcum/yerlesim ayirmak (dugumu 48dp olcup 26dp bildirmek): Compose'un
+    //     isabet testi ust dugumun BILDIRDIGI boyutu kullaniyor, dolayisiyla
+    //     gorselin disina dokunmak satiri isaretledi.
+    //   - `minimumInteractiveComponentSize()`: bu surumde YERLESIMI buyutuyor,
+    //     yani satir 72dp'yi asti.
+    //
+    // Bugunku hedef yatayda comert (92dp), dikeyde 26dp. Tasarima soruldu:
+    // satir 80dp'ye mi cikmali, yoksa cip kimlik bandiyla ayni katta mi
+    // durmali. Cevap gelene kadar GORUNUM maketle birebir, hedef eksik.
+    val base = modifier.width(SizesExtra.priceColumn)
     Box(
         modifier = if (onClick != null) base.pressable(onTap = onClick) else base,
         contentAlignment = Alignment.CenterEnd,
     ) {
         Box(
             Modifier
+                // GORSEL 26dp (karar 105) - dokunma hedegi degil.
+                //
+                // Dikey dolguyla (5dp) yaklasik 30dp cikiyordu ve iki bantli
+                // satirda bu fark bandi tasiriyordu. Hedef zaten disaridaki
+                // kutudan geliyor: 92dp x satir yuksekligi.
+                .height(PRICE_CHIP_VISUAL)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(horizontal = 12.dp, vertical = 5.dp),
+                .padding(horizontal = 10.dp),
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = text,
@@ -119,11 +161,15 @@ fun DeltaChip(
         modifier = modifier
             .clip(CircleShape)
             .background(color.copy(alpha = 0.12f))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            // 22dp / yanlarda 7dp - maketin olcusu. Dikey dolgu YOK: yukseklik
+            // sabit olunca cip, yanindaki 26dp'lik fiyat hapiyla ayni optik
+            // ritmi tutuyor.
+            .height(22.dp)
+            .padding(horizontal = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        // IKON, UNICODE GLIFI DEGIL. Once `Text("↑")` yaziyordu ve iki sorunu
+        // IKON, UNICODE GLIFI DEGIL. Once `Text("â†‘")` yaziyordu ve iki sorunu
         // vardi: karar 32 *"ikonlar `Text` olarak cizilmiyor"* diyor, ve glif
         // sistem fontundan cozuldugu icin Skia'nin yedek zinciri Android ile
         // iOS'ta ayni sekli vermiyordu - kalinligi da yanindaki 12sp metinle
@@ -141,13 +187,15 @@ fun DeltaChip(
         Text(
             text = "%$percent",
             style = MaterialTheme.typography.labelSmall,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
             color = color,
         )
     }
 }
 
 /**
- * Oneri seridi cipi. GEREKCE CIPIN ICINDE: "Yumurta · 14 gun oldu".
+ * Oneri seridi cipi. GEREKCE CIPIN ICINDE: "Yumurta Â· 14 gun oldu".
  * Gerekcesiz bir cip reklam gibi okunur; gerekceli olan hafiza yardimi gibi.
  *
  * Animasyon yok, badge yok, nokta yok - hicbir sey dikkat cekmeye calismaz.
@@ -198,7 +246,7 @@ fun SuggestionChip(
             color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
-            text = "·",
+            text = "Â·",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -215,13 +263,26 @@ fun SuggestionChip(
  * Her satirda "1x" yazmak 20 satirlik bir listede yalnizca gurultudur.
  */
 @Composable
-fun QuantityBadge(text: String, modifier: Modifier = Modifier) {
+fun QuantityBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+    /**
+     * Miktar varsayilanindan cikarildi mi (karar 107): dolgu mu kontur mu.
+     *
+     * Rozet artik HER SATIRDA cizildigi icin dolgu tek basina bir sey
+     * soylemez oldu - onceden zaten "1 degil" demekti. Ayrim yuzeye tasindi:
+     * kontur "dokunulmamis", dolgu "bunu ben sectim".
+     */
+    modified: Boolean = true,
+) {
     // DEGISIMDE 150 ms OLCEK VURGUSU (karar 92).
     //
-    // Rozet adet 1 iken HIC cizilmiyor, yani ikinci eklemede birdenbire
-    // beliriyordu - vurgu degil SICRAMA. Ayni hareket sheet sayacinda da var
-    // (karar 89); ikisi "bir sayi degisti" diyor ve ayni dili konusmalari
-    // tesadufi degil.
+    // Rozet artik her satirda cizildigi icin (karar 103) vurgu gercekten bir
+    // VURGU: yerinde duran bir sayinin degistigini soyluyor. Onceden rozet
+    // adet 1 iken hic cizilmiyordu ve ikinci eklemede birdenbire beliriyordu -
+    // o bir sicramaydi. Ayni hareket sheet sayacinda da var (karar 89); ikisi
+    // "bir sayi degisti" diyor ve ayni dili konusmalari tesadufi degil.
+    val extras = LocalNeydiExtraColors.current
     val pulse = remember { Animatable(1f) }
     LaunchedEffect(text) {
         pulse.snapTo(Motion.PULSE_SCALE)
@@ -230,47 +291,67 @@ fun QuantityBadge(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .graphicsLayer { scaleX = pulse.value; scaleY = pulse.value }
-            .defaultMinSize(minWidth = SizesExtra.qtyBadgeHeight)
+            .defaultMinSize(minWidth = SizesExtra.qtyBadgeMinWidth)
             .heightIn(min = SizesExtra.qtyBadgeHeight)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 6.dp),
+            // DOLGU `hairline`, `surfaceVariant` DEGIL.
+            //
+            // Maket rozete #EADCCB veriyor - fiyat cipinin zemininden (#F1E7DB)
+            // bir tik koyu, ki ayni satirdaki iki hap birbirinden ayrilsin.
+            // Palette bu deger YOK; en yakin token `hairline` (#E7DACB) ve fark
+            // gozle secilmiyor. Yeni bir renk eklemek, karar 101'in az once
+            // sildigi renk cogalmasini geri getirirdi.
+            .background(if (modified) extras.hairline else Color.Transparent)
+            .border(
+                width = if (modified) 0.dp else 1.5.dp,
+                color = if (modified) Color.Transparent else MaterialTheme.colorScheme.outline,
+                shape = CircleShape,
+            )
+            .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        // ROZET SATIRIN EN BUYUK IKINCI SEYI: 20sp/800.
+        // 14sp/700 - ADA RAKIP OLMASIN DIYE 20sp'DEN INDI (karar 103).
         //
-        // `labelMedium` (14sp/Medium) ile ciziliyordu, yani "2x" alt satirdaki
-        // ustveri metniyle ayni agirlikta okunuyordu. Satir anatomisi onu
-        // "[adet rozeti - yalnizca adet 1 degilse, 20sp/800]" diye veriyor:
-        // miktar, urun adindan sonra en cok bakilan sey.
+        // 20sp/800 ile ciziliyordu ve rozet her satirda olmadigi surece bu
+        // dogruydu: nadir gorunen bir sey dikkat cekmeliydi. Rozet her satira
+        // gelince ayni agirlik satirin en buyuk seyi ile - urun adiyla -
+        // yarisir oldu. Tasarimin cumlesi: *"rozet ada rakip olmasin diye
+        // 17sp'den 14sp'ye indi."*
         Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.labelMedium,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
 /**
- * Esin baş harfi. YALNIZCA es ekledigunde cizilir - kendi ekledigimiz satirda
+ * Esin baÅŸ harfi. YALNIZCA es ekledigunde cizilir - kendi ekledigimiz satirda
  * kendi harfimizi gormek bilgi tasimaz.
  */
 @Composable
 fun MemberAvatar(initial: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .defaultMinSize(minWidth = 24.dp)
-            .heightIn(min = 24.dp)
+            // 20dp (karar 103). Onceki 24dp+ hali kimlik bandinda addan yer
+            // caliyordu; avatar bir BAGLAM isareti, bir kimlik degil.
+            .size(20.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)),
+            // DOLU YESIL, %18 DEGIL. Maketin hepsi `background:#3F6B54` +
+            // `color:#fff` ciziyor. Soluk zemin uzerindeki yesil harf 20dp'de
+            // okunmuyordu; dolu daire hem 20dp'de secilebiliyor hem de "bunu
+            // ES ekledi" isaretini bir bakista veriyor.
+            .background(MaterialTheme.colorScheme.secondary),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = initial,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.secondary,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondary,
         )
     }
 }
@@ -293,6 +374,6 @@ private fun ChipsPreview() = NeydiPreview {
     PriceChip("455,00 TL")
     // Dort haneli fiyat: 92dp sutun butcesini zorlayan gercek senaryo.
     PriceChip("1.289,90 TL")
-    SuggestionChip("Yumurta", "14 gün oldu") {}
-    SuggestionChip("Çay", "genelde 4 alışverişte bir") {}
+    SuggestionChip("Yumurta", "14 gÃ¼n oldu") {}
+    SuggestionChip("Ã‡ay", "genelde 4 alÄ±ÅŸveriÅŸte bir") {}
 }
