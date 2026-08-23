@@ -72,15 +72,21 @@ import kotlinx.coroutines.launch
 private val SWIPE_REVEAL = 100.dp
 
 /**
- * Silmeyi tetikleyen esik.
+ * Silmeyi tetikleyen esik: acilan alanin TAMAMI (kullanici bildirdi).
  *
- * Acilan alanin TAMAMI degil %60'i: tasarim *"esik gecilmeden birakilirsa
- * 200 ms'de yerine donuyor"* diyor, yani esik ile acilan alan ayni sey degil.
- * Esigi 100dp'ye esitlemek jesti ancak sonuna kadar cekince calisir hale
- * getirirdi ve yanlislikla silmeyi zorlastirmak yerine kasitli silmeyi
- * zorlastirirdi - geri alma zaten var.
+ * ## Neden %60 degil
+ *
+ * Once 60dp'ydi ve gerekcesi *"kasitli silmeyi zorlastirma, geri alma zaten
+ * var"*di. Kullanicinin yasadigi sey bunun tersiydi: *"bazen yarim cekiyorum
+ * ve hala orada duruyor gibi; tam cekince silsin, tam cekemezsem orasi
+ * kapansin."*
+ *
+ * Ara esik jesti IKI ANLAMLI yapiyordu - yarim cekis bazen siliyor bazen geri
+ * donuyor ve hangisinin olacagi parmagin nerede durdugundan belli degil.
+ * Alanin sonuna kadar cekmek tek anlamli: ya gittin ya gitmedin. Deger zaten
+ * [SWIPE_REVEAL]'e kenetli, yani "sonuna kadar" ulasilabilir bir yer.
  */
-private val SWIPE_THRESHOLD = 60.dp
+private val SWIPE_THRESHOLD = SWIPE_REVEAL
 
 /**
  * Liste satiri - uygulamanin en cok gorulen bileseni.
@@ -285,6 +291,8 @@ fun ListItemRow(
                                 // acilmis halde dogmamali.
                                 offsetX.snapTo(0f)
                             } else {
+                                // KAPANIYOR: esige varilmadiysa satir yerine
+                                // doner - acik yarim bir hal birakmiyor.
                                 offsetX.animateTo(0f, tween(Motion.ROW_DELETE_MS))
                             }
                         },

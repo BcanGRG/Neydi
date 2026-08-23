@@ -8,6 +8,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.SolidColor
@@ -195,6 +197,18 @@ fun ProductSheetContent(
         modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            // SHEET KAYDIRILIYOR (kullanici bildirdi).
+            //
+            // Icerik bir `Column`di ve kaydirmasi yoktu: sheet'ten uzun olan
+            // her sey sessizce KIRPILIYORDU. Sut satirinda uctan uca goruldu -
+            // ucuz cipi, fiyat gecmisi, miktar blogu ve iki anahtar alt alta
+            // gelince "Listeden cikar" ekranin disinda kaliyor ve
+            // erisilemiyordu.
+            //
+            // `skipPartiallyExpanded` (bir onceki turda) sheet'i TAM aciyor
+            // ama tam acik bir sheet de ekran kadar; icerik ondan uzunsa
+            // kaydirma sart. Ikisi ayri sorun, ikisi de gerekliydi.
+            .verticalScroll(rememberScrollState())
             .padding(bottom = bottomPadding),
     ) {
         Row(
