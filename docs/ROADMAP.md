@@ -42,7 +42,8 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | # | İş | Durum | Neyi bekliyor | Ayrıntı |
 |---|---|---|---|---|
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
-| 2 | **Marka okuma kalitesi ölçümü** | `[ ]` | Hiçbir şeyi — 99 fikstür üzerinde, yeni tur **beklemeden** koşulabilir | [→](#marka) |
+| 2 | ~~**Marka okuma kalitesi ölçümü**~~ ✅ | — | **Ölçüldü** (24 Ağu, `docs/40`): BİM 22/24, A101 ve Migros'un sıfırları birer **karar** | [→](#marka) |
+| 2b | **Ad bloğunun ÜST sınırı** | `[ ]` | Ölçümü — 27 BİM etiketinde ad bloğunun fiyata göre dikey konumu; kalan iki çöp bloğun üstünden geliyor | [→](#marka) |
 | 3 | **`priceUnit` yazıcısı** | `[ ]` | — *(karar 96/111–115 **kapandı**; kalan tek delik: kilo fiyatının adet satırına yazılması)* | [→](#tahmin-carpimi) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
@@ -493,14 +494,32 @@ dolduğu** görülmeli.
 olması yanıltıcı; hiçbiri alias yolundan geçmedi. Bu build'le atılacak çekim,
 F4.7'nin ilk gerçek denemesi olacak.
 
-#### Marka okuma kalitesi ölçümü <a id="marka"></a>
+#### Marka okuma kalitesi — ölçüldü <a id="marka"></a>
 
-Bugünkü turda marka bazen çöp geldi (`CE UZ`, `BAlkon`, `BILI BIL`); ölçüm
-dökümü **açık** ve sonraki çekimler kaydediliyor.
+**✅ 24 Ağustos'ta ölçüldü** → [`40-marka-okuma-olcumu.md`](40-marka-okuma-olcumu.md).
+Cihaz gerekmedi; 99 fikstür repoda.
 
-⚠ Ama bu iş **yeni bir tur beklemek zorunda değil**: elde 99 gerçek fikstür
-var ve marka okuyucusu onların üstünde bugün koşturulabilir. Ölçüm önce,
-düzeltme sonra — `readTagName`'in marka dalı da tam olarak böyle yazılmıştı.
+| Zincir | Etiket | Ad | Marka |
+|---|---|---|---|
+| **BİM** | 27 | 27 | **24** (22 gerçek, 2 çöp) |
+| **A101** | 19 | 19 | 0 — **karar 39**, marka ada katılıyor |
+| **Migros** | 19 | **0** | 0 — ölçülmüş ret |
+| **Metro** | 34 | 0 | 0 — grameri yazılmadı |
+
+⚠ **Bu satırın eski hâli yanlıştı.** Verdiği üç çöp örneğinden `BILI BIL`
+**gerçek bir marka** (BİM'in yumurta markası, doğru okunuyor); `CE UZ` ve
+`BAlkon` corpusta artık hiç üretilmiyor. Asıl bulgu bir yüzde değil bir
+çerçeve düzeltmesi: **marka okuması tek bir zincirin özelliği** ve
+ötekilerin sıfırı birer karar.
+
+**Kalan iki çöp** (`Yağlg)`, `Zme`) aynı yapısal sebepten: biri etiketin
+**besin değerleri tablosundan**, öteki kadraja giren **ürün ambalajından** —
+yani ikisi de ad bloğunun ÜSTÜNDEN sızıyor. Corpus temiz bir ayıraç veriyor
+(22 gerçek markanın 22'si büyük harf, iki çöp değil) ama **kural
+yapılmadı**: tek başına çöpü marka yuvasından ad yuvasına *taşıyor*,
+kaldırmıyor. Denendi, ölçüldü, geri alındı — gerekçe `docs/40`'ta.
+
+Sıradaki iş bu yüzden marka yuvasında değil **blok sınırında** (satır 2b).
 
 #### Geçmiş grafiği için üç yeni gezi <a id="gezi"></a>
 
