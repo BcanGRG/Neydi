@@ -19,11 +19,11 @@ import kotlin.test.assertTrue
  * hedef degil bir OLCUM: degismesi gereken sayiyi degistirmek serbest, FARK
  * ETMEDEN degistirmek degil.
  *
- * ## Olcumun bugunku hali (24 Agustos 2026)
+ * ## Olcumun bugunku hali (24 Agustos 2026, ust sinir kuralindan SONRA)
  *
  * | Zincir | Etiket | Ad okunuyor | Marka | Not |
  * |---|---|---|---|---|
- * | BIM | 27 | 27 | **24** (22 gercek, 2 cop) | |
+ * | BIM | 27 | 27 | **25** (23 gercek, 2 marka-olmayan) | `docs/41` ust siniri |
  * | A101 | 19 | 19 | 0 | **karar 39** - marka tahmin edilmiyor, ada katiliyor |
  * | Migros | 19 | 0 | 0 | olculmus ret, `MigrosGrammar.readName` |
  * | Metro | 34 | 0 | 0 | grameri yazilmadi |
@@ -33,10 +33,20 @@ import kotlin.test.assertTrue
  */
 class BrandQualityTest {
 
-    /** Bilinen iki cop - `docs/40`'ta gerekcesiyle. Ikisi de HALA uretiliyor. */
-    private val bilinenCop = mapOf(
-        "20260817_183947" to "Zme",
-        "20260817_183949" to "Yağlg)",
+    /**
+     * Marka OLMAYAN iki cikti - `docs/41`'de gerekcesiyle.
+     *
+     * ⚠ Ikisi de ust sinir kuralindan SONRAKI hal ve ikisi de oncekinden
+     * zararsiz:
+     * - `tçİM.` bozulmus ama DOGRU markayi gosteriyor (`İÇİM`); onceki hali
+     *   `Zme` idi, hicbir seyi gostermiyordu.
+     * - `FIÇI` adin kendi kelimesi, marka degil - ama satirin adi
+     *   (`KORNİŞON TURŞUSU`) artik temiz; onceki hali `U L FIÇI KORNİŞON
+     *   TURŞUSU` idi.
+     */
+    private val markaOlmayan = mapOf(
+        "20260817_183947" to "tçİM.",
+        "20260817_184116" to "FIÇI",
     )
 
     private fun brands(): List<Pair<String, String>> = TagFixtures.all.keys.sorted().mapNotNull { tag ->
@@ -54,9 +64,9 @@ class BrandQualityTest {
      * konusmaktan daha dogru.
      */
     @Test
-    fun theCorpusYieldsTwentyFourBrandsAndAllOfThemFromBim() {
+    fun theCorpusYieldsTwentyFiveBrandsAndAllOfThemFromBim() {
         val found = brands()
-        assertEquals(24, found.size, "corpus marka sayisi degisti: ${found.map { it.second }}")
+        assertEquals(25, found.size, "corpus marka sayisi degisti: ${found.map { it.second }}")
         assertTrue(
             found.all { TagFixtures.chainOf(it.first) == "BIM" },
             "BIM disinda marka uretildi: ${found.filterNot { TagFixtures.chainOf(it.first) == "BIM" }}",
@@ -74,13 +84,13 @@ class BrandQualityTest {
      * iyi haber demek - beklenen listeyi guncelleyip gecin.
      */
     @Test
-    fun theOnlyTwoScrapsAreTheTwoTheMeasurementNamed() {
+    fun theOnlyTwoNonBrandsAreTheTwoTheMeasurementNamed() {
         val found = brands().toMap()
-        bilinenCop.forEach { (tag, cop) ->
-            assertEquals(cop, found[tag], "$tag: bilinen cop degisti")
+        markaOlmayan.forEach { (tag, cikti) ->
+            assertEquals(cikti, found[tag], "$tag: marka-olmayan cikti degisti")
         }
-        val gercek = found.filterKeys { it !in bilinenCop.keys }
-        assertEquals(22, gercek.size)
+        val gercek = found.filterKeys { it !in markaOlmayan.keys }
+        assertEquals(23, gercek.size)
         // Gercek markalarin hepsi buyuk harf; copler degil. Ayirac olculdu ama
         // KURAL YAPILMADI - tek basina copu marka yuvasindan ad yuvasina
         // TASIYOR, kaldirmiyor (bkz. `docs/40`).
@@ -88,26 +98,35 @@ class BrandQualityTest {
             gercek.values.all { b -> b.all { !it.isLetter() || it.isUpperCase() } },
             "buyuk harf olmayan gercek marka cikti: ${gercek.values}",
         )
+        // ⚠ AYIRAC ARTIK AYIRMIYOR: `FIÇI` tamamen buyuk harf. Ust sinir
+        // kurali copun sinifini degistirdi - kalan iki cikti artik "kadraja
+        // giren yabanci metin" degil, "bloktaki ilk satir marka degil".
+        // Buyuk harf ayiraci `docs/40`'ta zaten uygulanmamisti; artik
+        // ayirmadigi da yazili.
         assertTrue(
-            bilinenCop.values.none { b -> b.all { !it.isLetter() || it.isUpperCase() } },
-            "cop buyuk harf cikti - ayirac artik ayirmiyor",
+            markaOlmayan.values.any { b -> b.all { !it.isLetter() || it.isUpperCase() } },
+            "beklenen: en az biri buyuk harf (FIÇI)",
         )
     }
 
     /**
      * COPUN YANINDAKI AD DOGRU - ve duzeltme bunu bozmamali.
      *
-     * `183949`un adi (`AYCA PEYNİR CEŞİTLERİ`) bugun DOGRU; yanlis olan
-     * yalnizca marka yuvasi. Copu eleyen naif bir kural (marka buyuk harf
-     * olmali) bu adi `Yağlg) AYCA PEYNİR CEŞİTLERİ` yapiyor - yani defekti
-     * kaldirmiyor, TASIYOR. Denendi ve geri alindi.
+     * `183949`un adi (`AYCA PEYNİR CEŞİTLERİ`) copa RAGMEN dogruydu; yanlis
+     * olan yalnizca marka yuvasiydi. Copu eleyen naif bir kural (marka buyuk
+     * harf olmali) bu adi `Yağlg) AYCA PEYNİR CEŞİTLERİ` yapiyordu - defekti
+     * kaldirmiyor, TASIYORdu. Denendi, olculdu, geri alindi (`docs/40`).
      *
-     * Bu test o tuzagin nobetcisi: marka duzeltilirken ad bozulmamali.
+     * Ust sinir kurali (`docs/41`) dogru olani yapti: copu bloktan cikardi ve
+     * `AYCA` kendi yuvasina gecti. Bu test o tuzagin nobetcisi.
      */
     @Test
-    fun theNameNextToTheScrapIsAlreadyRight() {
+    fun theNameNextToTheScrapSurvivedTheFix() {
         val fields = readTagFields(TagFixtures.all.getValue("20260817_183949"), chainKey("BIM"))
-        assertEquals("AYCA PEYNİR CEŞİTLERİ", fields.name?.name)
+        // Cop cekilince marka (`AYCA`) adin basindan cikip kendi yuvasina
+        // gecti - ad hala DOGRU, sadece markasi ayrildi.
+        assertEquals("PEYNİR CEŞİTLERİ", fields.name?.name)
+        assertEquals("AYCA", fields.name?.brand)
     }
 
     /**

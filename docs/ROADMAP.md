@@ -43,7 +43,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 |---|---|---|---|---|
 | 1 | **F4.7 — alias sahada doğrulanacak** | `[cihaz]` | Bu build'le atılacak **ilk** çekimi: `product_alias` bugün **0 satır** | [→](#f47) |
 | 2 | ~~**Marka okuma kalitesi ölçümü**~~ ✅ | — | **Ölçüldü** (24 Ağu, `docs/40`): BİM 22/24, A101 ve Migros'un sıfırları birer **karar** | [→](#marka) |
-| 2b | **Ad bloğunun ÜST sınırı** | `[ ]` | Ölçümü — 27 BİM etiketinde ad bloğunun fiyata göre dikey konumu; kalan iki çöp bloğun üstünden geliyor | [→](#marka) |
+| 2b | ~~**Ad bloğunun ÜST sınırı**~~ ✅ | — | **Ölçüldü ve kondu** (`docs/41`): 46 etiket, eşik satır arası boşluk / lira boyu = 1,0. Dokuz satır değişti, sekizi kazanç | [→](#marka) |
 | 3 | **`priceUnit` yazıcısı** | `[ ]` | — *(karar 96/111–115 **kapandı**; kalan tek delik: kilo fiyatının adet satırına yazılması)* | [→](#tahmin-carpimi) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
@@ -519,7 +519,26 @@ yani ikisi de ad bloğunun ÜSTÜNDEN sızıyor. Corpus temiz bir ayıraç veriy
 yapılmadı**: tek başına çöpü marka yuvasından ad yuvasına *taşıyor*,
 kaldırmıyor. Denendi, ölçüldü, geri alındı — gerekçe `docs/40`'ta.
 
-Sıradaki iş bu yüzden marka yuvasında değil **blok sınırında** (satır 2b).
+Sıradaki iş bu yüzden marka yuvasında değil **blok sınırında** — ve o iş
+**yapıldı**: [`41-ad-blogu-ust-siniri.md`](41-ad-blogu-ust-siniri.md).
+
+#### Ad bloğunun üst sınırı — kondu <a id="ustsinir"></a>
+
+Bloğun altı yazılıydı (gramaj satırı), üstü değildi; kadraja giren ne varsa
+bloğa girebiliyordu. Ayıraç **satır arası boşluk** çıktı: blok içi ölçülen en
+büyük **0,62** × lira boyu, davetsiz ölçülen en küçük **1,55**. Eşik ikisinin
+ortasında, **1,0**.
+
+45 satırın **9'u değişti, sekizi kazanç**: iki marka çöpü gitti (`Yağlg)`
+yerine doğru marka `AYCA` çıktı), raf tabelası kırıntıları (`U L …`) ve beş
+A101 adının başındaki tarih/birim fiyat/KDV kalabalığı temizlendi. Tek kayıp
+`FERRERO` — etiketin tepesinde, gerçek davetsizlerle aynı mesafede basılı,
+yani onu tutan bir eşik yok. Kayıp testte yazılı.
+
+⚠ **Ölçümün kendi iki dersi de `docs/41`'de:** araç okuyucunun kendi
+`readableLira()`sını çağırmalı (kendi türetmesini değil), ve eşiği bir
+zincirden ölçüp ötekine uygulamak ölçüm değil varsayımdır — A101 sonradan
+katıldı ve `FERRERO` kaybı ancak o zaman görüldü.
 
 #### Geçmiş grafiği için üç yeni gezi <a id="gezi"></a>
 

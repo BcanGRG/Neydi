@@ -90,7 +90,7 @@ internal fun readTagName(ocr: TagOcr): TagName? {
             !it.text.isStoreCode() &&
             !it.text.looksLikeCount() &&
             !it.text.isTagBoilerplate()
-    }
+    }.trimmedToNameBlock(lira.glyphHeight())
     if (block.isEmpty()) return null
 
     // MARKA AD BLOGUNUN ILK SATIRI ve yalnizca oneri: 25 etikette ilk satir
@@ -113,6 +113,61 @@ internal fun readTagName(ocr: TagOcr): TagName? {
     if (!looksLikeName(name)) return null
     return TagName(brand = brand, name = name)
 }
+
+/**
+ * Ad blogunun UST sinirini keser: cok yukarida kalan satirlar bloga ait degil.
+ *
+ * ## Blogun alti yaziliydi, ustu degildi
+ *
+ * Gramaj satiri blogu ASAGIDAN bitiriyor (`250 G`) ve bu kural olculmustu.
+ * Yukaridan bitiren bir sey yoktu, yani kadraja giren ne varsa - etiketin
+ * kendi besin degerleri tablosu, urunun ambalaji, raf tabelasi - bloga
+ * girebiliyordu.
+ *
+ * ## Ayirac SATIR ARASI BOSLUK, ve olculdu
+ *
+ * 27 BIM etiketinin hepsinde sol kolon olculdu (`docs/41`). Ad blogunun
+ * satirlari SIK dizili, davetsiz misafir ise UZAKTA:
+ *
+ * | | bosluk / lira boyu |
+ * |---|---|
+ * | blok ici, olculen en buyuk | **0,62** |
+ * | davetsiz, olculen en kucuk | **1,55** |
+ *
+ * Esik ikisinin arasinda ve iki yana da genis pay birakiyor. Dort davetsizi
+ * birden yakaliyor: besin tablosundan `Yağlg)` (3,84), ambalajdan `Zme` +
+ * `aği Taze Peynir` (3,89), raf tabelasindan `U` + `L` (1,55).
+ *
+ * ## Neden lira boyuna oranlaniyor
+ *
+ * Mutlak piksel calismaz: ayni etiket yakindan da uzaktan da cekiliyor ve
+ * fikstur setinde lira boyu 227 ile 697 piksel arasinda degisiyor. Lira
+ * etiketin OLCEGI - zaten `readableLira` ile bulunmus durumda, yeni bir
+ * olcum gerektirmiyor.
+ *
+ * ## Neden asagidan yukari
+ *
+ * Blogun bilinen ucu ALT uc (gramaj satiri). Yukaridan baslasaydik nereden
+ * baslayacagimizi bilemezdik - zaten aranan sey o.
+ */
+private fun List<OcrPiece>.trimmedToNameBlock(scale: Int): List<OcrPiece> {
+    if (size < 2 || scale <= 0) return this
+    val maxGap = scale * MAX_BLOCK_GAP
+    var start = lastIndex
+    while (start > 0 && this[start].corners[0].y - this[start - 1].corners[0].y <= maxGap) {
+        start--
+    }
+    return subList(start, size)
+}
+
+/**
+ * Ad blogu icindeki en genis satir araligi, lira boyunun kati (olculdu).
+ *
+ * Olculen blok ici en buyuk 0,62; olculen davetsiz en kucuk 1,55. 1,0 ikisinin
+ * ortasinda: gercek bir satiri dusurmek icin araligin %60 buyumesi, bir
+ * davetsizi kacirmak icin %35 daralmasi gerekir.
+ */
+private const val MAX_BLOCK_GAP = 1.0
 
 /**
  * Marka olabilir mi?
