@@ -46,15 +46,15 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 3 | **`priceUnit` yazıcısı** | `[ ]` | — *(karar 96/111–115 **kapandı**; kalan tek delik: kilo fiyatının adet satırına yazılması)* | [→](#tahmin-carpimi) |
 | 5 | **Geçmiş grafiği + başlık tutarı** | `[cihaz]` | **Bugünden sonra 3 gezi** — 12 gezi kapalı ama `observeTripEstimates` sıfır satır dönüyor | [→](#gezi) |
 | 6 | **F6.5 — üç vuruşta otomatik bastırma** | `[~]` | `suggestion_event`'e yazan kodu ve **şema v6 bump'ını** | [→](#f65) |
-| 7 | **F6.5 — sabit terfisi** | `[~]` | **Tasarımı** (`docs/28`) — iki tasarım dosyası çelişiyor | [→](#f65) |
-| 8 | **docs/29 — ekleme geri bildirimi (beş soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
+| 7 | **F6.5 — kararlar 87–88'in metinleri** | `[ ]` | **Kodu** — tasarım 23 Ağu'da cevapladı: otomatik terfi vaadi düştü (*sabitlik beyandır*, kodun değişmezi onaylandı; üç-gezi önerisi F6.6'ya). Kalan iki metin: Ayarlar boş-sabit notu + engel satırlarının kaynak/tarihi (`BlockedProduct`'a `blockedAt`) | [→](#f65) |
+| 8 | **docs/29 — kararlar 89–92'nin kalan ucu** | `[~]` | **Kodu** — beş kanalın dördü tam. Kalan: *"yapıldı"* dolgusu `RareChip` ve arama sonucu çipinde yok (işaretliyken hâlâ %38'e sönüyor), `onPickWithQuantity` haptiksiz | [→](#tasarim) |
 | 9 | ~~**docs/30 — markete göre tahmin**~~ ✅ | — | **Cevaplandı** (kararlar 117–119): beyan geldi, aritmetik gelmedi; karar 97 ertelenmiş kalıyor | [→](#tasarim) |
 | 9b | ~~**docs/38 — hedef market, altı açık madde**~~ ✅ | — | **Cevaplandı** — kararlar **121–126** (22. tur, 23 Ağu). Altı maddenin altısı da kapandı | [→](#d38) |
 | 9c | ~~**Kararlar 121–126 kodlanacak**~~ ✅ | — | **Kodlandı ve cihazda doğrulandı** (22. tur). Altısı da kapandı; üç kod kararı tasarıma sorulacak | [→](#d38) |
 | 9d | **`docs/39` — 22. turdan kalan üç soru** | `[ ]` | **Yalnızca tasarımı** — rapor 24 Ağu'da `KODDAN-SORULAR-22-KOD-KARARLARI.md` olarak gönderildi | [→](#d38) |
-| 10 | **Ölü primitif sorusunu YAZ** | `[ ]` | — *(ölü primitif maddesi ona bağlı)* | [→](#olu-kod) |
-| 11 | **docs/27 — on ikinci tur (dört soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
-| 12 | **docs/28 — on üçüncü tur (on üç soru)** | `[ ]` | Tasarımı | [→](#tasarim) |
+| 10 | ~~**Ölü primitif sorusunu YAZ**~~ ✅ | — | **Yazıldı ve cevaplandı** — `docs/31` (15. tur, 22 Ağu), kararlar **93–94** | [→](#olu-kod) |
+| 11 | ~~**docs/27 — on ikinci tur (dört soru)**~~ ✅ | — | **Cevaplandı ve kodlandı** — kararlar **76–79** (16. tur); dört sorunun dördü, beş ısıran testle | [→](#tasarim) |
+| 12 | **`docs/28` kalanı — kararlar 86–88** | `[~]` | **Kodu** — on üç sorunun on üçü de cevaplandı (**80–88**, 16. tur); 80–85 kodlandı ve 102–106 ile güncellendi. Kalan: **88** engel satırının kaynak+tarihi, **86**'nın gerekçe satırı (F6.6'ya bağlı) | [→](#f65) |
 | 13 | **F5.7 — ambalaj küçülmesi ipucu** | `[cihaz]` | Aynı üründen **iki farklı boyda** gerçek çekim | [→](#f57) |
 | 14 | **F6.4 — Eksik Olabilir (Ekran 3)** | `[cihaz]` | Göz kontrolünü | [→](#f64) |
 | 15 | **F11.19 — karar 36'nın renk ayrımı** | `[cihaz]` | **Karışık liste**: kimi ürün gözlemli, kimi gözlemsiz | [→](#f1119) |
@@ -64,7 +64,7 @@ buradaki her satırın gerekçesi §3'te açılıyor. **Sıra = öncelik.**
 | 18 | **F3.4 — Pano yapıştırma** | `[cihaz]` | Göz kontrolünü *(pano cihazsız doğrulanamıyor)* | [→](#f34) |
 | 20 | **F3.9 — "Diğer" kategorisi** | `[ ]` | F2.7'yi | [→](#f39) |
 | 21 | **F6.9 — `kategori-tonlari` TODO'su silinecek** | `[ ]` | — *(tek satır)* | [→](#f69) |
-| 22 | **F10.7 + F10.11 + F11.4 — ölü primitifler** | `[ ]` | Önce **soruyu yazmayı** — `focusRing`/`AccentStrip` tasarıma **sorulmadı** | [→](#olu-kod) |
+| 22 | **F10.7 + F10.11 + F11.4 — ölü primitifler** | `[ ]` | **Yalnız kodu** — tasarım cevapladı (**93–94**): `focusRing` bağlanır, `AccentStrip`+`AccentChip` silinir, `AccentSurface` onay kartına bağlanır | [→](#olu-kod) |
 | 23 | **F11.6 — alışveriş modu satır container'ı** | `[ ]` | — | [→](#f116) |
 | 24 | **F10.2 — bottom sheet'leri Nav3 Scene'e taşı** | `[ ]` | — *(F10.5 bağı düştü)* | [→](#f102) |
 | 25 | **F10.3 — `graph.json` takip kararı** | `[ ]` | — | [→](#f103) |
@@ -272,9 +272,20 @@ eksik olan yalnızca DAO'suydu. Cihazda uçtan uca doğrulandı.
   yazılmamış). Ayrıca sorgusu `(householdId, productId, outcome)` indeksi
   istiyor, tablonun `indices` listesi boş → **v6 bump'ı** gerekiyor. Tablo
   boşken şema hatası bedava (bkz. §4 Şema kuralı).
-- **Sabit terfisi** — tasarıma soruldu (`docs/28`). İki tasarım dosyası
-  çelişiyor ve kodun kendi KDoc'u otomatiği yasaklıyor: *"kullanıcı işaretler,
-  motor değil"*.
+- **Kararlar 87–88'in metinleri** — ✅ tasarım cevapladı (23 Ağu). İki
+  tasarım dosyasının çelişkisi **karar 87 ile kapandı**: otomatik terfi vaadi
+  iki dosyadan da düştü, *"sabitlik bir çıkarım değil, beyan"* — yani kodun
+  kendi değişmezi (*"kullanıcı işaretler, motor değil"*) onaylandı ve
+  **terfi diye kodlanacak bir davranış kalmadı**; üç-gezi önerisi F6.6'ya
+  taşındı.
+
+  **Kalan iş iki metin:** (a) Ayarlar'ın boş-sabit notu tasarımın onayladığı
+  tek cümleye iner — bugün `SettingsScreen.kt`'deki yorum hâlâ eski *"üç
+  geziden sonra kendiliğinden"* gerekçesini taşıyor; (b) **karar 88 hiç
+  kodlanmadı**: engel satırları kaynağını ve tarihini yazmalı (*"3 Ağustos'ta
+  engelledin"* / *"12 Ağustos'ta uygulama engelledi"*), ki bu
+  `BlockedProduct` → `BlockedRow` projeksiyonuna `blockedAt` eklemeyi
+  gerektiriyor — sütun `SuggestionBlock`'ta **var ama okunmuyor**.
 
 #### F2.7 ✅ — Katalog yeniden tohumlanabilir oldu <a id="f27"></a>
 
@@ -331,11 +342,11 @@ import etmiyordu), `ListScreen`'deki altı FileKit import'u,
 
 | İsim | Bugünkü durum | Karar |
 |---|---|---|
-| `Modifier.focusRing` | Tanımlı, üretimde **sıfır çağıran** | **AÇIK SORU — soru henüz yazılmadı:** bağlanacak mı, silinecek mi? Odak halkası bir erişilebilirlik sözleşmesi; silmek tasarımın kararı olmalı, bizim değil. |
+| `Modifier.focusRing` | Tanımlı, üretimde **sıfır çağıran** | **Karar 93: bağlanacak** — `pressable`'dan geçen her hedef + üç metin alanı, yalnız klavye/switch odağında. Soru `docs/31`'de soruldu ve cevaplandı; *"silmek tasarımın kararı olmalı"* endişesi karşılandı. |
 | `SafeArea` | Ölü | Silinecek. `SafeArea.top = 44.dp` F10.8'de bu listeye ait olmadığı anlaşılmıştı (güvenli alan boşluğu, dokunma hedefi değil) — ama o düzeltme boyutla ilgiliydi, `SafeArea`'nın kendisi hâlâ çağrılmıyor. |
-| `AccentStrip` | Ölü | **Tasarıma bağlı:** amber şerit 3dp ve amber sözleşmesi 1.5dp kenarlık şart koşuyor, yani iki yandan kenarlık konunca iç dolgu 0dp kalıyor ve amber tamamen kayboluyor. Sorulacak. |
-| `AccentSurface` | Ölü | **Listeye geri girdi.** Eskiden *"bu listeden çıktı, `AccentChip.kt:62` ve `:78`'den çağrılıyor"* yazıyordu; düzeltmenin kendisi yanlıştı — `AccentChip`'in de kendi dosyası dışında sıfır çağıranı var. |
-| `AccentChip` | Ölü | **Listeye geri girdi**, aynı sebeple: repo genelinde kendi dosyası dışında sıfır çağıran. |
+| `AccentStrip` | Ölü | **Karar 94: silinir.** Geometri itirazı (3dp şerit + 1.5dp kenarlık = 0dp iç dolgu) tasarıma iletildi ve kabul edildi. |
+| `AccentSurface` | Ölü | **Karar 94: kalır** — onay kartında **okunamayan alanın** amber değer yuvasına bağlanacak (maket çizildi). Tek kullanım yeri bu. |
+| `AccentChip` | Ölü | **Karar 94: silinir** — repo genelinde kendi dosyası dışında sıfır çağıran. |
 | `storeDisplayName` | Ölü — yalnız testi çağırıyor | Silinecek. *(F11.28 bunu "F10.11 listesinde duruyor" diye gönderiyordu; listede yoktu. Gönderme artık bu maddeye.)* |
 | `parseMinorInput` | Üretimde çağıranı yok, yalnız kendi testi var | **Silinmiyor:** karar 73 onu onay kartından çıkardı, ama F5.4 dış veriyle geri dönebilir. |
 
@@ -415,16 +426,29 @@ delmiş olur.
 
 #### Tasarım cevabı bekleyen sorular <a id="tasarim"></a>
 
-Kod tarafında yapılacak bir şey yok; hepsi tasarımın kalemini bekliyor.
+> ⚠ **Bu bölüm 24 Ağustos'ta denetlendi ve büyük kısmı BAYAT çıktı.**
+> Beş satırın beşi de *"tasarımı bekliyor"* diyordu; beşinin beşi de
+> **cevaplanmıştı** — `docs/27` → 76–79, `docs/28` → 80–88, `docs/29` →
+> 89–92, ölü primitifler → 93–94. Tablo bir turu (16. tur, 23 Ağu) tümden
+> atlamış: ROADMAP'te *"89"* ya da *"92"* hiç geçmiyordu.
+>
+> Bekleyen iş tasarımda değil **kodda**; satırlar ona göre yeniden yazıldı.
+> Denetim, kapatma önerilerinin her birini ayrıca karşı-okumadan geçirdi ve
+> **bir kapatmayı geri çevirdi** (`docs/29`, iki gerçek kod deliği).
 
-- **`docs/38` — hedef market, altı madde.** Yukarıda; ikisi engelleyici.
-- **`docs/27` — on ikinci tur, dört soru.** En görünür olanı: yoğurt satırı
-  hâlâ `↑ %88` yazıyor. Trendin `null` kuralı **tasarımın kuralı**, tek
-  taraflı gevşetilmedi. F5.5'in ambalaj şartını tasarımdakinden **katı**
-  tutmamızın gerekçesi de bu dosyada.
-- **`docs/28` — on üçüncü tur, on üç soru.** İçinde F6.5'in sabit terfisi ve
-  ⚠ `focusRing` / `AccentStrip` bu turlarda **sorulmadı**; sorunun kendisi
-  hâlâ yazılacak iş.
+Bugün tasarımın kalemini bekleyen **tek** dosya var:
+
+- **`docs/39` — 22. turun üç kod kararı.** 24 Ağu'da gönderildi
+  (`KODDAN-SORULAR-22-KOD-KARARLARI.md`). Hedefsiz *"Nereden alınacak"*
+  satırı, *"Belli değil"* yapışkanlığı, POST_SHOPPING okuması — artı üç ayna
+  çelişkisi.
+
+⚠ **Silinen bir iddia:** bu bölüm *"yoğurt satırı hâlâ `↑ %88` yazıyor"*
+diyordu ve bu **olgusal olarak yanlıştı**. `comparablePack` tam olarak bir
+yanın ambalajı bilinmiyorken `false` dönüyor, `PackChanged` dalı
+`fromPack != null && toPack != null` şartında düşüyor ve satır `Single`'a
+iniyor — yani o satır bugün *"son ödediğin … · BİM · bugün"* yazıyor.
+Karar 76 bunu 23 Ağustos'ta kapatmıştı.
 - ~~**`docs/30` — markete göre tahmin.**~~ ✅ **Cevaplandı** (kararlar 117–119).
   Üç şartından ikisi karşılandı (satır istisnası; eklemede market sorulmuyor),
   üçüncüsü — *"hesap gidilecek markete göre"* — **bilinçle reddedildi**: beyan
@@ -707,8 +731,11 @@ yazılacak.
 | [35-fiyat-cipi-dokunma-hedefi.md](35-fiyat-cipi-dokunma-hedefi.md) | **Cevaplandı** — karar 110; iki cihaz denemesinin başarısızlık raporu |
 | [33](33-satir-yeniden-tasarim.md) · [34](34-miktar-duzenleme.md) | **Cevaplandı** — kararlar 102–106 · 107–109 |
 | [30-markete-gore-tahmin.md](30-markete-gore-tahmin.md) | **Cevaplandı** — kararlar 117–119; üç şarttan ikisi karşılandı, biri bilinçle reddedildi |
-| [27-tasarima-sorular-12.md](27-tasarima-sorular-12.md) | **AÇIK** — on ikinci tur, dört soru; F5.5'in katı ambalaj şartının gerekçesi de burada |
-| [28-tasarima-sorular-13.md](28-tasarima-sorular-13.md) | **AÇIK** — on üçüncü tur, on üç soru; F6.5 sabit terfisi ve ölü primitiflerin kaderi |
+| [27-tasarima-sorular-12.md](27-tasarima-sorular-12.md) | **Cevaplandı** — kararlar 76–79; F5.5'in katı ambalaj şartının gerekçesi de burada |
+| [28-tasarima-sorular-13.md](28-tasarima-sorular-13.md) | **Cevaplandı** — kararlar 80–88; kalan iş kod (86 ve 88) |
+| [29-tasarima-sorular-14.md](29-tasarima-sorular-14.md) | **Cevaplandı** — kararlar 89–92; kalan iş kod (iki kanal) |
+| [31-tasarima-sorular-15.md](31-tasarima-sorular-15.md) | **Cevaplandı** — kararlar 93–94, ölü primitiflerin kaderi |
+| [39-kararlar-121-126-kod-kararlari.md](39-kararlar-121-126-kod-kararlari.md) | **AÇIK** — 22. turun üç kod kararı; tasarıma 24 Ağu'da gönderildi |
 | [17](17-e12-etiket-olcumu.md) · [18](18-zincir-karsilastirmasi.md) · [24](24-a101-olcumu.md) | **Etiket ölçüm raporları** — BİM · üç zincir karşılaştırması · A101 |
 | [15-faz7-sema-plani.md](15-faz7-sema-plani.md) | **Faz 7 şema planı** — üç öneri, yirmi beş ölümcül kusur; senkron başlarken okunacak |
 | [19-tasarim-denetimi-girdileri.md](19-tasarim-denetimi-girdileri.md) | 56 ajanlı tasarım denetiminin girdileri |
